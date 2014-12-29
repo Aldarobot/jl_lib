@@ -1,0 +1,10 @@
+TODO:
+	Current Actions:
+		2. Make jvdk
+			REQ: Make compiler generate .JLE files with .jlmi files
+				in them
+			REQ: Make jlvm run jvdk executable so jvdk is unneeded.
+	Future Actions:
+		-Make jlvm read .JLE files
+		-Make JComp Desktop Environment
+			REQ: Make JComp the Standard Program

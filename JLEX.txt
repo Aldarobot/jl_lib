@@ -1,0 +1,450 @@
+JLEX FORMAT[5 reserved]
+
+Folder Structure (Folder Name = "jlex/"+reformated 8 byte TID*
+	init //contains init class
+	_img //contains image data
+	_aud //contains audio data
+	_vrz //contains version number [Current = 0]
+
+Class Structure
+	memory [Array of bytes with execution format]
+	"\0"
+
+*REFORMATED 8 BYTE TID
+	this is the TID but each byte value is stored as a hexadecimal STRING.
+	Example: TID=[LANG=BASIC_LATIN(4 bytes)]LLLL
+		Pretend 0x23 = L
+		BasicLatin = 00000000
+		reformated TID = 0000000023232323
+	0 = DEFAULT PROGRAM
+	1 = UNOFFICIAL PROGRAM [ BUGTEST ]
+	2 = STANDALONE PROGRAM/DEFAULT PROGRAM
+
+3DS/PC/Phn Max # can fit in byte: 256		[ equivalent to 1 computer byte ]
+
+p means tis' a pointer[ not on PC/Phone version ], for the most part everything
+	is static.
+
+Execution Format:
+	Memory is split into classes.  There are 5 mandatory classes: init, kill,
+	loop, rdup, and rddn.  The location of these classes is stored at the
+	beginning of the file.  The init class is always the first thing stored in
+	memory so it's location does not need to be saved at the beginning of the
+	file.  In each class, the first thing stored is what it will do when it is
+	called.  Then, each function in the class is stored.  Variable Data comes
+	after the class function data. Variable Data does not follow the following
+	chart.
+
+Standard Types of Variable Data:
+	u08t	08 bit var	1 byte
+	u16t	16 bit var	2 bytes
+	u24t	24 bit var	3 bytes
+	u32t	32 bit var	4 bytes
+	u40t	40 bit var	5 bytes
+	u48t	48 bit var	6 bytes
+	u56t	56 bit var	7 bytes
+	u64t	64 bit var	8 bytes		
+	strt	String		256 bytes	3DS:1 byte pointer to a string in DIM$(256)
+	u08p	2D array		256x256		3DS:1 byte pointer to DIM(256,256) in DIM$(256,256)
+	u08b	3D array		256x256x256	3DS:1 byte pointer to DIM$(256,256) in DIM$(256,256)
+	strl	String list	256x256		3DS:1 byte pointer to DIM$(256) in DIM$(256,256)
+	u08l	08-bit lst	256 bytes	3DS:1 byte pointer to a string in DIM$(256)
+	u16l	16 bit lst	256x2 bytes	3DS:1 byte pointer to 2 strings in DIM$(256,2)
+	u24l	24 bit lst	256x3 bytes	3DS:1 byte pointer to 3 strings in DIM$(256,3)
+	u32l	32 bit lst	256x4 bytes	3DS:1 byte pointer to 4 strings in DIM$(256,4)
+	u40l	40 bit lst	256x5 bytes	3DS:1 byte pointer to 5 strings in DIM$(256,5)
+	u48l	48 bit lst	256x6 bytes	3DS:1 byte pointer to 6 strings in DIM$(256,6)
+	u56l	56 bit lst	256x7 bytes	3DS:1 byte pointer to 7 strings in DIM$(256,7)
+	u64l	64 bit lst	256x8 bytes	3DS:1 byte pointer to 8 strings in DIM$(256,8)
+	dect	float
+
+In the following chart * = 4 bytes of what class, 4 bytes of where in class
+	* always means a location.
+4 BIT ID'S (0-15)/(0-F)
+|---------|---------------------------|-------------------------------------|
+|ID/ Bytes|Explanation                |Parameters                           |
+|---------|---------------------------|-------------------------------------|
+|0       0|End Of File                |XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX|
+|1       8|Replace Process, 0=shutdown|program ID, ... (parameters of init) |
+|2       8|Load Library Into Mem[lib] |library ID, ... (parameters of init) |
+|3      16|Goto                       |*place                               |
+|4        |On Goto                    |*varToTest,u16t placeCount,*places...|
+|5        |Return                     |void                                 |
+|6    8+16|PORT:Send/Recv message     |u08t portId,u08l buffer              |
+|7        |LIB:Send/Recv message      |u08t tempLibraryId,u08l buffer       |
+|8        |PRG:Send/Recv message      |u64t programId,u08l buffer           |
+|9        |Erase library from mem.    |u08t tempLibraryId                   |
+|A        |Start program in new thread|program ID, ... (parameters of init) |
+|B        |Load Class into memory.    |class temp ID, class start, class end|
+|C        |Erase Class from memory.   |class temp ID                        |
+|D        |Built-in function          |function ID, ...                     |
+|---------|---------------------------|-------------------------------------|
+
+NAMES:
+	All files are attached to an owner and so are all libraries and processes.
+	Your username is your initials followed by a charecter of your choosing:
+	ex(me):
+		Jeron Aldaron Lau = "JAL".
+		Favorite Number = "105".
+		Username = "JAL5".
+	If you don't have a middle name?
+	ex: Nore Aul = "NAU"
+		Favorite Color = "Brown".
+		Username = "NAUB"
+	If you have 2 last names?
+	ex: Tim Thomas Evergreen~Ramirez = "TER"
+		Likes Water A lot = "W"
+		Username = "TERW"
+		NOTE: The username would be the same if this person had no middle name.
+	What If My Name Starts With A Number?
+		5Ce Al Cwee = "5AC"
+		Like dogs = "D"
+		Username = "5ACD"
+	What about aski?
+		WHO'S NAME STARTS WITH ASKI?!! Well, use the next letter because:
+	Aski charecters are reserved for non-people.
+		_OPN = Used for any open source project with no specific owner.
+		_NKL = Used for projects with an unknown owner.
+		& = Used for files owned by a company.  The first 2 letters are the
+			company name are used followed by a letter of the company's choice
+			This doesn't need to be used.  Owner's of the file/company can make
+			it owned by themselves.
+			Ex: CompōCompū
+				First 2 letters = "CO"
+				Letter Of Choice = "C"
+				NAME = "&COC"
+		@ = Used for projects owned by a website the three letters following are
+			the first 2 letters of the website after "www." followed by a letter
+			of website teams' choice.  This doesn't need to be used.  Owners of
+			the website can make the file owned by themselves.
+
+PORTS/PROCESSES/LIBRARIES:
+
+	All process/port/library IDs are reserved.
+
+//STANDARD LIBRARIES
+
+0		JAL5_AMEM	//MEMORY LIBRARY / VARIABLES + DO MATH
+	
+1		DPL7_CLMP	//MEMORY LIBRARY / VARIABLE STRUCTURES
+2		jal5/siop	//IO LIBRARY / TERMINAL PRINTING
+	0	plow(strt pstr); //Print pstr to lowest level terminal
+	1	pmid(strt pstr); //Print to JLVM's bugtesting terminal
+	2	phai(strt pstr); //Print to your project's visible terminal
+	3	smid(
+3		JAL5_FILE	//IO LIBRARY / FILE SYSTEM MODIFICATION
+4		JAL5_COMM	//IO LIBRARY / NETWORK PACKET COMMS OR DISK/USB RW
+5		JAL5_INPT	//IO LIBRARY / GETTING INPUT
+6		JAL5_SGRP	//WINDOW_HANDLING LIBRARY / HANDLE THE 2 SCREENS
+7		_NKL_LSDL	//MEDIA LIBRARY / DRAW 2D SDL OR USE OPENGL
+8		_OPN_EOGL	//GRAPHICS LIBRARY / OPENGL GRAPHICS 2D+3D
+9		JAL5_GRPH	//GRAPHICS LIBRARY / HIGH-LEVEL GRAPHICS 2D+3D
+A		JAL5_VIDE	//VIDEO LIBRARY / BASIC EDIT SOUND AND GRAPHICS
+B		JAL5_AUDI	//SOUND LIBRARY / PLAY+RECORD MUSIC+SOUND EFFECT
+C		JAL5_VIDS	//VIDEO LIBRARY / JL_VIDEO:TRANSITIONS + SPECIAL EFFECTS
+D		DPL7_LBFT	//GAME LIBRARY / FOOTILE: 2D GAME LIBRARY
+E		JAL5_L3DP	//GAME LIBRARY / 3DEPTH: 3D GAME LIBRARY
+F		JAL5_WIDG	//GRAPHICS LIBRA	//-BUILT_OVER: 12-15RY / WIDGET: TEXT BOXES + CANVASES
+
+--------------------------------------
+
+When libraries are loaded they run init();
+Right before upper screen is being redrawn: rdup();
+Right before lower screen is being redrawn: rddn();
+When libraries are deleted they run kill();
+When message needs to be sent(function call): loop(messageFormat);
+
+	Message format is usually:
+		"L" +
+		functionNumber(2 bytes) +
+		":" +
+		parameters
+
+	If continues in another message(1st):
+		"C" +
+		functionNumber(2 bytes) +
+		":" +
+		parameters
+
+	If continued(Non1st):
+		"C:" +
+		parameters
+
+	If End
+		"L:" +
+		parameters
+
+1.LIB_JL_GRPH
+	init();//Creates a graphics window.
+	kill();//Destroy the graphics window
+	loop(messageFormat);
+		1. fupd(void); //update screen
+		2. ffps(u08t fps); //set frames per second to "fps"
+2.LIB_LSDL
+	init();//sets up for audio and video rendering.
+	kill();
+	rdup();
+	rddn();
+	loop(messageFormat);
+		1. void make(u32t w, u32t h);//Create window,set width(w) and height(h)
+		
+3.LIB_OPENGL
+	init();//prepares to draw on window.
+	kill();
+	loop(messageFormat);
+4.LIB_INPT
+	0. void init(void);
+	1.	void loop(void);
+	kill();
+5.LIB_STN_IO
+	0. void init(void);
+		requests a terminal to write to.
+	1.	void loop(void);
+	kill();
+6.LIB_JL_READ_WRITE
+	0. void init(void);
+	1.	void loop(void);
+	kill();
+7.JAL5_SGRP
+	0. void 
+7.LIB_JL_PACKET_COMM
+	0. void init(void);
+	1.	void loop(void);
+	kill();
+8.LIB_JL_CALC
+	0. void init(void);
+	1.	void loop(void);
+	kill();
+9.LIB_JL_SOUND
+	0. void init(void);
+	1.	void loop(void);
+	kill();
+10.LIB_JL_VIDEO
+	0. void init(void);
+	1.	void loop(void);
+	kill();
+
+--------------------------------------
+
+//PORTS 0-255(1 byte)
+
+	0		MEMORY
+	1		OPENGL_GRAPHICS_CARD
+	2		SDL_SOUND_MIXER_CARD
+	3		OPERATION_CARD
+	4		HARD_DRIVE_1_MAIN //default(if die 4&2 replace)
+	5		HARD_DRIVE_2_SECONDARY //videos+songs(if die 1&4 replace)
+	6		HARD_DRIVE_3_THIRDARY //big programs & games(if die 1&5 replace)
+	7		HARD_DRIVE_4_DIFF_OF_1_AND_2
+	8		HARD_DRIVE_5_DIFF_OF_1_AND_3
+	9		HARD_DRIVE_6_REMOVEABLE_NON_BACK_UPPED
+	10		[RESERVED]
+	11		[RESERVED]
+	12		[RESERVED]
+	13		SD_1
+	14		SD_2
+	15		SD_3
+	16		MICROSD_1
+	17		MICROSD_2
+	18		USB_1_FLASH_DRIVE_1
+	19		USB_2_FLASH_DRIVE_2
+	20		USB_3_CHARGER
+	21		USB_4_OTHER
+	22		[RESERVED]
+	23		[RESERVED]
+	24		[RESERVED]
+	25		[RESERVED]
+	26		CD_1
+	27		CD_2
+	28		POWER_SHARE
+	29		JERON_WIRE_1
+	30		JERON_WIRE_2
+	31		JERON_WIRE_3
+	32		JERON_WIRE_4
+	33		JERON_WIRE_5
+	34		JERON_WIRE_6
+	35		JERON_WIRE_7
+	36		JERON_WIRE_8
+	37		JERON_WIRE_9
+	38		JERON_WIRE_10
+	39		GAME_CARTRADGE_1
+	40		GAME_CARTRADGE_2
+	41		GAME_CARTRADGE_3
+	42		WIFI
+	43		INTERBLOCKS_WIRELESS
+	44		WIRED_CONNECTION
+	45		LAN_CONNECTION
+	46		DVD_CONTROL_1
+	47		DVD_CONTROL_2
+	48		VIDEO_INPUT_1_FROM_CAMERA_1
+	49		VIDEO_INPUT_2_FROM_CAMERA_2
+	50		VIDEO_INPUT_3_FROM_CAMERA_3
+	51		VIDEO_INPUT_4_FROM_GAME_CONSOLE
+	52		VIDEO_INPUT_5_FROM_INTERBLOCKS
+	53		VIDEO_INPUT_6_FROM_SATELITE_TV
+	54		VIDEO_INPUT_7_FROM_CABLE_TV
+	55		VIDEO_INPUT_8_FROM_OTHER
+	56		VIDEO_INPUT_9_FROM_WIFI
+	57		VIDEO_INPUT_10_FROM_WIRE
+	58		VIDEO_INPUT_11_FROM_DVD_1
+	59		VIDEO_INPUT_12_FROM_DVD_2
+	60		VIDEO_OUTPUT_SMARTBOARD
+	61		VIDEO_OUTPUT_PROJECTOR
+	62		VIDEO_OUTPUT_UPPER_SCREEN
+	63		VIDEO_OUTPUT_LOWER_SCREEN
+	64		VIDEO_OUTPUT_UPPER_SCREEN_TERMINAL
+	65		VIDEO_OUTPUT_LOWER_SCREEN_TERMINAL
+	66		SOUND_INPUT_1_FROM_MIC
+	67		SOUND_INPUT_2_FROM_GAME_CONSOLE
+	68		SOUND_INPUT_3_FROM_RADIO
+	69		SOUND_INPUT_4_FROM_SATELITE_TV
+	70		SOUND_INPUT_5_FROM_CABLE_TV
+	71		SOUND_INPUT_6_FROM_OTHER
+	72		SOUND_INPUT_7_FROM_WIFI
+	73		SOUND_INPUT_8_FROM_WIRE
+	74		SOUND_INPUT_9_FROM_DVD_1
+	75		SOUND_INPUT_10_FROM_DVD_2
+	76		SOUND_INPUT_11_FROM_INTERBLOCKS
+	77		SOUND_OUTPUT_1_FRONT_SPEAKER
+	78		SOUND_OUTPUT_2_BACK_SPEAKER
+	79		SOUND_OUTPUT_3_FRONT_LEFT_SPEAKER
+	80		SOUND_OUTPUT_4_FRONT_RIGHT_SPEAKER
+	81		SOUND_OUTPUT_5_BACK_LEFT_SPEAKER
+	82		SOUND_OUTPUT_6_BACK_RIGHT_SPEAKER
+	83		SOUND_OUTPUT_7_LEFT_SPEAKER
+	84		SOUND_OUTPUT_8_RIGHT_SPEAKER
+	85		SOUND_OUTPUT_9_ABOVE_SPEAKER
+	86		SOUND_OUTPUT_10_BELOW_SPEAKER
+	87		SOUND_OUTPUT_11_WIRE
+	88		SOUND_OUTPUT_12_GAME_CONSOLE
+	89		SOUND_OUTPUT_13_OTHER_1
+	90		SOUND_OUTPUT_14_OTHER_2
+	91		INPUT_KEYBOARD
+	92		INPUT_MOUSE
+	93		INPUT_JOYSTICK
+	94		INPUT_GAME_CUBE_XBOX_ETC_CONTROLLER_1
+	95		INPUT_GAME_CUBE_XBOX_ETC_CONTROLLER_2
+	96		INPUT_GAME_CUBE_XBOX_ETC_CONTROLLER_3
+	97		INPUT_GAME_CUBE_XBOX_ETC_CONTROLLER_4
+	98		INPUT_OTHER
+	99		SELECTED_INPUT
+	100		SELECTED_STORAGE (DEFAULT_HARD_DRIVE/USB/SD/ETC)
+	101		SELECTED_COMMUNICATION (WIFI/WIRED_CONNECTION/INTERBLOCKS)
+	102		KERNELS_DEBUGGING_TERMINAL
+	103		KERNELS_VISIBLE_TERMINAL
+	104		PROGRAMS_DEBUGGING_TERMINAL
+	105		PROGRAMS_VISIBLE_TERMINAL
+	106 	[RESERVED]
+	107		[RESERVED]
+	108		ETHERNET_CABLE_1
+	109		ETHERNET_CABLE_2
+	110		ETHERNET_CABLE_3
+	111		ETHERNET_CABLE_4
+	112		ETHERNET_CABLE_5
+	
+-------------------------------------------------
+
+PROCESS 206: PORT_0_MEMORY
+
+	1	GET(*get,*set) //sets memory at set to memory at get
+	2	GET 1D element(*g,*x,*s) //set memory at s to memory at g[x]
+	3	GET 2D element(*g,*x,*y,*s) //set memory at s to memory at g[x][y]
+	4	GET 3D element(*g,*x,*y,*z,*s) //set memory at s to memory at g[x][y][z]
+	5	SET 1D element(*v,*x,*s) //sets memory at v[x] to memory at s
+	6	SET 2D element(*v,*x,*y,*s) //set memory at v[x][y] to memory at s
+	7	SET 3D element(*v,*x,*y,*z,*s) //set memory at v[x][y][z] to memory at s
+	8	SET static(*var,64_t setting) //set memory at var to setting
+	9	SET 1D element static(*v,*x,64_t s) //set memory at v[x] to s
+	10	SET 2D element static(*v,*x,*y,64_t s) //set memory at v[x][y] to s
+	11	SET 3D element static(*v,*x,*y,*z,64_t s) //set memory at v[x][y][z] to s
+
+PROCESS 207: PORT_107_OPERATION_CARD
+
+ MODIFY VARIABLES
+	1	Bitshift(*var,*amount) //[>>]
+	2	Add(*var,*amount)
+	3	Subtract(*var,*amount)
+	4	Multiply(*var,*amount)
+	5	Divide(*var,*amount)
+	6	Remainder(*var,*amount) //[%]
+	7	StaticBitshift(*var,s64_t amount) //[>>]
+	8	StaticAdd(*var,s64_t amount)
+	9	StaticSubtract(*var,s64_t amount)
+	10	StaticMultiply(*var,s64_t amount)
+	11	StaticDivide(*var,s64_t amount)
+	12	StaticRemainder(*var,s64_t amount) //[%]
+ COMPARISONS
+	13	Equal(*var1,*var2) //1 if equal else 0 [==]
+	14	NotEqual(*var1,*var2) //0 if equal else 1 [!=]
+	15	NOT(*var1) //if 0 then 1 else 0 [!]
+	16	AND(*var1,*var2) //1 if both !0 else 0 [&&]
+	17	COR(*var1,*var2) //1 if 1 true else 0 [||]
+	18	NOR(*var1,*var2) //1 if both 0 else 0
+	19	MOR(*var1,*var2) //1 if is more else 0 [>]
+	20	LES(*var1,*var2) //1 if is less else 0 [<]
+	21	NXR(*var1,*var2) //1 if only 1 is true else 0
+	22 XOR(*var1,*var2) //1 if same else 0
+
+//Built-In Function
+	These functions don't belong to a library.
+
+//DEFAULT PROGRAMS
+
+	In the TID Underscore followed by a number: "_001" means that it's a program
+	without a file format.  When you are in a terminal and type the TID it will
+	run the program of that TID.  TID stands for "(file) Type IDentification"
+	Grave Accent followed by a number: "`001" is the same except for non-default
+	programs.  The numbers go in order.  They are hexadecimal.
+
+	25 is the maximum length of charecters for the full name of a program.
+
+-------------------------------------------------
+|	ID		TID			Full Name               |
+-------------------------------------------------
+
+	//DEFAULT: 0-1000
+	0		_000	PRG_SHUTDOWN
+	1		_001	PRG_HIBERNATE
+	2		_002	PRG_RESTART
+	3		JLEX	PRG_JCOMP
+	4		SDOC	PRG_JL_WRITER
+	5		S3DP	PRG_3_DEPTH
+	6		KPRG	PRG_PROGRAM_WRITER
+	7		SPDF	PRG_DOCUMENT_VIEW
+	8		KCHM	PRG_JERON_WEB / _JÊRÔN_WEB
+	9		JLFD	PRG_FUNDRAW / _FUNDRA
+	10		SOGG	PRG_JL_MUSIC / _JL_MȲŪZYK
+	11		SVID	PRG_JL_VIDEO / _JL_VYDĒŌ
+	12		_003	PRG_FILE_FORMAT_CONVERTER / _FAĒŶL_FŌRMĀT_CONVÛRTÛR
+	13		_004	PRG_SYSTEM_PROCESSES / _SYSTEM_PROSESE'S
+	14		JLVG	PRG_VECTOR_IMAGE_CREATOR / _ḞEKTÛR_YMYJ_KRĒÊĒTÛR
+	15		JYMJ	PRG_JL_IMAGE / _JL_YMYJ
+	16		KYMJ	PRG_IMAGE_PACKAGER
+	//OTHERS 1001-
+	1001	GJAA	GAME_AERILS_ADVENTURE
+	1002	GJAS	A_SNOWMANS_SWORD_AND_PICK
+|-----------------------------------------------|
+
+FILE FORMAT RULES
+	All file formats have a prefix.
+	Each format can only be used once.
+	File formats can be in any language.
+	The first 4 bytes of the 8 is what language.
+	
+	F-
+		APPLE/LINUX/WINDOWS FORMAT
+	G-
+		GAME:
+			J- COMPOCOMPU RESERVED
+	JL-
+		COMPOCOMPU RESERVED
+	K-
+		PACKAGE FORMAT
+	S-
+		STANDARD FORMAT
+	_-
+		UNUSED
+	`-
+		UNUSED
+
+--------------------------------------------------------------------------------
