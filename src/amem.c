@@ -15,7 +15,7 @@ uint32_t jlvm_amem_tbiu(void) {
 
 void *_jlvm_amem_hydd_allc(jvct_t* pjct, void *a, uint32_t size) {
 	if((a = realloc(a, size)) == NULL) {
-		jlvm_dies(pjct, Strt("malloc() memory error!"));
+		jlvm_dies(pjct, Strt("realloc() memory error!"));
 	}
 	return a;
 }
@@ -33,6 +33,15 @@ static inline void _jlvm_amem_resz(jvct_t* pjct, uint32_t kb) {
 	malloc_trim(0); //Remove Free Memory
 }
 
+void * amem_list_allc(u32t size) {
+	u08t * a = malloc(size);
+	u32t i;
+	for(i = 0; i < size; i++) {
+		a[i] = 0;
+	}
+	return a;
+}
+
 strt amem_strt_make(u32t size, u08t type) {
 	strt a = malloc(sizeof(strt));
 	a->data = malloc(size+1);
@@ -40,10 +49,15 @@ strt amem_strt_make(u32t size, u08t type) {
 	a->curs = 0;
 	a->type = type;
 	int i;
-	for( i = 0; i < size; i++) {
+	for( i = 0; i < size + 1; i++) {
 		a->data[i] = '\0';
 	}
 	return a;
+}
+
+void amem_strt_free(strt pstr) {
+	free(pstr->data);
+	free(pstr);
 }
 
 strt amem_strt_c8ts(char *string) {
@@ -59,6 +73,10 @@ strt amem_strt_c8ts(char *string) {
 	}
 	a->data[size] = '\0';
 	return a;
+}
+
+u08t amem_strt_byte(strt pstr) {
+	return pstr->data[pstr->curs];
 }
 
 void _jal5_amem_vary_make(u32t vari, u08t size) {
@@ -99,14 +117,29 @@ u32t amem_rand_nint(u32t a) {
 	return rand()%a;
 }
 
-u08t amem_test_next(char * script, char * particle) {
-	char * point = script;//make the beginning the command
-	char * place = strstr(point, particle);//search for partical
+u08t amem_test_next(strt script, strt particle) {
+	char * point = (void*)script->data + script->curs;//the cursor
+	char * place = strstr(point, (void*)particle->data);//search for partical
 	if(place == point) {//if partical at begining return true otherwise false
 		return 1;
 	}else{
 		return 0;
 	}
+}
+
+strt amem_read_upto(strt script, u08t end, u32t psize) {
+	int i;
+	strt compiled = amem_strt_make(psize, STRT_KEEP);
+	for(i = 0; i < psize; i++) {
+		compiled->data[i] = '\0';
+	}
+	while((amem_strt_byte(script) != end) && (amem_strt_byte(script) != 0)) {
+		strncat((void*)compiled->data,
+			(void*)script->data + script->curs, 1);
+		script->curs++;
+	}
+//	strcat(compiled, "\0");
+	return compiled;
 }
 
 void _jal5_amem_init(void) {

@@ -169,7 +169,7 @@ void _jal5_audi_init(jvct_t *jcpt) {
 	}
 	//Load Sound Effects & Music
 	uint8_t *aud = NULL;
-	aud = file_pkdj_load(jcpt->Sgrp.usrd, "jlex/2/_aud");
+	aud = file_pkdj_mnld(jcpt->Sgrp.usrd, "jlex/2/_aud");
 	#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
 	jal5_siop_cplo(0,"JLVM","Loading Audiostuffs...");
 	#endif

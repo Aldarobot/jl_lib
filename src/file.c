@@ -71,14 +71,14 @@ void JL_ResetCursor(char *file_name) {
 	close(fd);
 }
 
-uint8_t *file_file_load(sgrp_user_t* pusr, char *file_name) {
-	jvct_t * pjct = pusr->pjct;
+strt file_file_load(sgrp_user_t* pusr, char *file_name) {
 	JL_ResetCursor(file_name);
+	u32t i;
 	unsigned char *file = malloc(MAXFILELEN);
 	int fd = open(file_name, O_RDWR);
 	if(fd <= 0) {
 		printf("failed to open %s\n", file_name);
-		jlvm_dies(pjct, Strt("file_file_load: Failed to open file"));
+		jlvm_dies(pusr->pjct, Strt("file_file_load: Failed to open file"));
 	}
 	int Read = read(fd, file, MAXFILELEN + 1);
 	JL_bytesRead = Read;
@@ -86,7 +86,12 @@ uint8_t *file_file_load(sgrp_user_t* pusr, char *file_name) {
 	printf("[JLVM/FILE/FILE/LOAD] read %d bytes\n", JL_bytesRead);
 	#endif
 	close(fd);
-	return file;
+	strt frtn = amem_strt_make(JL_bytesRead, STRT_KEEP);
+	for( i = 0; i < JL_bytesRead; i++) {
+		frtn->data[i] = file[i];
+	}
+	frtn->data = file;
+	return frtn;
 }
 
 char file_pkdj_save(sgrp_user_t* pusr, char *packageFileName, char *fileName,
@@ -155,19 +160,21 @@ char file_pkdj_save(sgrp_user_t* pusr, char *packageFileName, char *fileName,
 	return 0;
 }
 
-uint8_t *_jal5_file_load(jvct_t * pjct, char *packageFileName, char *filename)
+uint8_t *file_pkdj_load(sgrp_user_t* pusr, char *packageFileName, char *filename)
 {
 	int zerror;
 	#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
-	jal5_siop_cplo(0,"JLVM/FILE/LOAD",amem_strt_merg(amem_strt_merg("loading package:\"",packageFileName), "\"..."));
+	jal5_siop_cplo(0,"JLVM/FILE/LOAD",amem_strt_merg(
+		amem_strt_merg("loading package:\"",packageFileName), "\"..."));
 	#endif
 	struct zip *zipfile = zip_open(packageFileName, ZIP_CHECKCONS, &zerror);
 	if(zerror == ZIP_ER_OPEN) {
 		jal5_siop_cplo(0,"JLVM"," NO EXIST!");
+		pusr->errf = ERRF_FIND;
 		return NULL;
 	}
 	if(zipfile == NULL) {
-		jlvm_dies(pjct, Strt("couldn't load pckg!"));
+		jlvm_dies(pusr->pjct, Strt("couldn't load pckg!"));
 	}
 	#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
 	jal5_siop_cplo(0,"JLVM/FILE/LOAD",(char *)zip_strerror(zipfile));
@@ -191,7 +198,7 @@ uint8_t *_jal5_file_load(jvct_t * pjct, char *packageFileName, char *filename)
 		siop_prnt_lwst(0,Strt("JLVM/FILE/LOAD"),
 			amem_strt_merg(Strt("because: "),
 				Strt(zip_strerror(zipfile)), STRT_TEMP));
-//		jlvm_dies();
+		pusr->errf = ERRF_NONE;
 		return NULL;
 	}else{
 		#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
@@ -202,7 +209,7 @@ uint8_t *_jal5_file_load(jvct_t * pjct, char *packageFileName, char *filename)
 	printf("[JLVM/FILE/LOAD] reading opened file....\n");
 	#endif
 	if((JL_bytesRead = zip_fread(file, fileToLoad, PKFMAX)) == -1) {
-		jlvm_dies(pjct, Strt("file reading failed"));
+		jlvm_dies(pusr->pjct, Strt("file reading failed"));
 	}
 	printf("[JLVM/FILE/LOAD]read %d bytes\n", JL_bytesRead);
 	#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
@@ -212,17 +219,19 @@ uint8_t *_jal5_file_load(jvct_t * pjct, char *packageFileName, char *filename)
 	#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
 	printf("[JLVM/FILE/LOAD] done.\n");
 	#endif
+	pusr->errf = ERRF_NERR;
 	return fileToLoad;
 }
 
-uint8_t *file_pkdj_load(sgrp_user_t* pusr, char *Fname) {
-	jvct_t * pjct = pusr->pjct;
+uint8_t *file_pkdj_mnld(sgrp_user_t* pusr, char *Fname) {
 	uint8_t *freturn;
-	if((freturn = _jal5_file_load(pjct,gvar_pkfl,Fname)) == NULL) {
+	if(
+		((freturn = file_pkdj_load(pusr,gvar_pkfl,Fname)) == NULL) &&
+		pusr->errf == ERRF_FIND ) //Package doesn't exist!! - create
+	{
 		#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
-		jal5_siop_cplo(0,"JLVM","Creating File...");
+		jal5_siop_cplo(0,"JLVM","Creating Package...");
 		#endif
-		//File doesn't exist!!
 		file_file_save(pusr, jal5_head_jlvm(), gvar_pkfl,
 			jal5_head_size());
 		#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
@@ -232,8 +241,12 @@ uint8_t *file_pkdj_load(sgrp_user_t* pusr, char *Fname) {
 		#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
 		jal5_siop_cplo(0,"JLVM","Try loading again....");
 		#endif
-		if((freturn = _jal5_file_load(pjct,gvar_pkfl,Fname)) == NULL) {
-			jlvm_dies(pjct, Strt("Failed To Create jlvm.zip"));
+		if(
+			((freturn = file_pkdj_load(pusr,gvar_pkfl,Fname))
+				== NULL) &&
+			pusr->errf == ERRF_FIND )//Package still doesn't exist!!
+		{
+			jlvm_dies(pusr->pjct, Strt("Failed To Create jlvm.zip"));
 		}
 		#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
 		jal5_siop_cplo(0,"JLVM","Good loading!");
@@ -275,9 +288,13 @@ void _jal5_file_init(jvct_t * pjct) {
 	jlvmpi_prg_name(fprg_name);
 
 	#if PLATFORM == 1 //PHONE
-	char *filebase = amem_strt_merg(JLVM_FILEBASE,
-		amem_strt_merg(fprg_name, "/"));
-	errf = amem_strt_merg(JLVM_FILEBASE, "errf.txt");
+	char *filebase = (void*)amem_strt_merg(
+		Strt(JLVM_FILEBASE),
+		amem_strt_merg(Strt(fprg_name), Strt("/"), STRT_TEMP),
+		STRT_KEEP
+	)->data;
+	errf = amem_strt_merg(Strt(JLVM_FILEBASE), Strt("errf.txt"), STRT_KEEP)
+		->data;
 	#elif PLATFORM == 0 //COMPUTER
 	char *filebase = SDL_GetPrefPath("JLVM",fprg_name);
 	if(filebase == NULL) {

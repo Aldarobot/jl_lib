@@ -12,50 +12,56 @@
 #define FIELD_MAX 9
 
 #define INFO_DESKTOP "umed/dat.text"
-char * fields[FIELD_MAX] = {
-	"username",
-	"prgmname",
-	"company_name",
-	"company_city",
-	"company_province",
-	"company_country",
-	"android_alias",
-	"android_passphrase",
-	"android_activity"
-};
 
 void hack_user_init(sgrp_user_t* pusr) {
 	siop_prnt_cplo(0,"ANDROID","Setting up...");
-	s08t *list = file_file_load(pusr, INFO_DESKTOP);
-	s08t prpt[FIELD_MAX][64];
-	int i, j;
+	
+	strt fields[FIELD_MAX] = {
+		Strt("username"),
+		Strt("prgmname"),
+		Strt("company_name"),
+		Strt("company_city"),
+		Strt("company_province"),
+		Strt("company_country"),
+		Strt("android_alias"),
+		Strt("android_passphrase"),
+		Strt("android_activity")
+	};
+
+	siop_prnt_cplo(0,"ANDROID","...");
+
+	strt list = file_file_load(pusr, INFO_DESKTOP);
+	strl prpt = List(FIELD_MAX);
+	int i;
 	while(1) {
+		if(amem_strt_byte(list) == '\0') {
+			break;
+		}
 		for(i = 0; i < FIELD_MAX; i++) {
 			if(amem_test_next(list, fields[i])) {
-				list+=strlen(fields[i]);
+				list->curs += fields[i]->size;
 				while(1) {
-					list++;
-					if(list[0] == '=') { break; }
+					list->curs++;
+					if(amem_strt_byte(list) == '=') break;
 				}
-				j = 0;
+				list->curs++;
 				while(1) {
-					list++;
-					if(list[0] == ' ') {
-						continue;
-					}else{
-						prpt[i][j] = list[0];
-						j++;
-					} 
-					if(list[0] == '\n') {
-						list[0] = '\0';
+					if(amem_strt_byte(list) != ' ' &&
+						amem_strt_byte(list) != '\t')
+					{
 						break;
 					}
+					list->curs++;	
 				}
+				prpt[i] = amem_read_upto(list, '\n', 64);
+				siop_prnt_lwst(0,Strt("ANDROID/"),prpt[i]);
+				break;
 			}
 		}
+		list->curs++;
 	}
 	for(i = 0; i < FIELD_MAX; i++) {
-		siop_prnt_cplo(0,"ANDROID",fields[i]);
-		siop_prnt_cplo(0,"ANDROID",prpt[i]);
+		siop_prnt_lwst(0,Strt("ANDROID"),fields[i]);
+		siop_prnt_lwst(0,Strt("ANDROID"),prpt[i]);
 	}
 }

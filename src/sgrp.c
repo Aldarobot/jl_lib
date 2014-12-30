@@ -294,13 +294,15 @@ static inline float _jal5_sgrp_istm(void) {
 
 void _jal5_sgrp_init(jvct_t * pjct) {
 	//Set Up Variables
+	pjct->Sgrp.usrd->errf = ERRF_NERR; //no error
+	pjct->Sgrp.usrd->psec = 0.f;
 	pjct->Sgrp.usrd->mode = 0;
 	pjct->Sgrp.usrd->mdec = 0;
 	pjct->Sgrp.usrd->loop = SGRP_TERM; //Set Default Window To Terminal
 	SDL_GetMouseState(&pjct->Sgrp.xmse, &pjct->Sgrp.ymse);
 	//Load Graphics
 	uint8_t *img;
-	img = file_pkdj_load(pjct->Sgrp.usrd, "jlex/2/_img");
+	img = file_pkdj_mnld(pjct->Sgrp.usrd, "jlex/2/_img");
 	#if JLVM_DEBUG >= JLVM_DEBUG_PROGRESS
 	jal5_siop_cplo(0,"JLVM/SGRP/INIT","Loading Images...");
 	#endif
@@ -375,7 +377,7 @@ static inline void jlvm_ini(jvct_t *jcpt) {
 int32_t main(int argc, char *argv[]) {
 	jvct_t* jcpt = _jlvm_init_blib(); //Set Up Memory And Logging
 	#if JLVM_DEBUG >= JLVM_DEBUG_MINIMAL
-	jal5_siop_cplo(0,"JLVM","STARTING JLVM V-3.1.0-e0....");
+	jal5_siop_cplo(0,"JLVM","STARTING JLVM V-3.2.0-e0....");
 	#endif
 	jlvm_ini(jcpt);//initialize
 	jal5_file_errf(jcpt, "going into loop....");

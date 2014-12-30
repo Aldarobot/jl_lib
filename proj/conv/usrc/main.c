@@ -74,7 +74,8 @@ strt strt_(uint32_t size) {
 }
 
 uint8_t *jgr_load_stn_img(char *fileName) {
-	siop_prnt_cplo(0,"MEDI/CONV","Lōdēŋ ymydj...");
+	siop_prnt_lwst(0,Strt("MEDI/CONV"),amem_strt_merg(
+		Strt("Lōdēŋ ymydj..."), Strt(fileName), STRT_TEMP));
 	//1=format,256*4=key,1024*1024=pixelmap
 	strt data_out = strt_(STN_IMG_SIZE);
 	SDL_Surface *image = IMG_Load((void *)
@@ -174,7 +175,8 @@ void hack_user_init(sgrp_user_t* pusr) {
 		if(list[0] == '\n') {
 			printf(" [MEDI/CONV] COMPILING %s...\n", file_name);
 			char *fdat = (void*)jgr_load_stn_img((void *)
-				amem_strt_merg(Strt(file_name), Strt(".gif"), STRT_KEEP));
+				amem_strt_merg(Strt(file_name), Strt(".gif"),
+					STRT_KEEP)->data);
 			file_file_save(pusr,fdat,
 				(void*)amem_strt_merg(
 					amem_strt_merg(Strt("umed/IMG/"),

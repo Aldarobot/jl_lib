@@ -44,10 +44,10 @@ Standard Types of Variable Data:
 	u48t	48 bit var	6 bytes
 	u56t	56 bit var	7 bytes
 	u64t	64 bit var	8 bytes		
-	strt	String		256 bytes	3DS:1 byte pointer to a string in DIM$(256)
+	strt	String		x bytes	3DS:1 byte pointer to a string in DIM$(256)
 	u08p	2D array		256x256		3DS:1 byte pointer to DIM(256,256) in DIM$(256,256)
 	u08b	3D array		256x256x256	3DS:1 byte pointer to DIM$(256,256) in DIM$(256,256)
-	strl	String list	256x256		3DS:1 byte pointer to DIM$(256) in DIM$(256,256)
+	strl	String list	XxY bytes	3DS:1 byte pointer to DIM$(256) in DIM$(256,256)
 	u08l	08-bit lst	256 bytes	3DS:1 byte pointer to a string in DIM$(256)
 	u16l	16 bit lst	256x2 bytes	3DS:1 byte pointer to 2 strings in DIM$(256,2)
 	u24l	24 bit lst	256x3 bytes	3DS:1 byte pointer to 3 strings in DIM$(256,3)

@@ -153,6 +153,9 @@
 	uint8_t processCount = 1;
 	uint8_t GTerminal = 1;
 #endif
+
+#define STRT_NULL "(NULL)"
+
 typedef struct{
 	
 }_jal5_sgrp_main_data_t;

@@ -44,6 +44,7 @@ void dont(void);
 #define f32t s32t	//32-bit fixed point decimal
 #define f64t s64t	//64-bit fixed point decimal
 #define strt strt_t *
+#define strl strt *
 
 //5 bytes of information about the string are included
 typedef struct{
@@ -69,21 +70,35 @@ typedef struct{
 		getting variables, and doing simple and complicated math functions on
 		the variables.  Has a specialized string type.
 */
-	// convert "string" into a (temporary) sstrt and return it.
-	strt amem_strt_c8ts(char *string);
-	#define Strt(x) amem_strt_c8ts((void*)x)
+	//Allocate space of "size" bytes
+	void * amem_list_allc(u32t size);
+	#define List(x) amem_list_allc(sizeof(void*)*x)
 
 	// allocates a strt of size "size" and returns it.
 	strt amem_strt_make(u32t size, u08t type);
+	
+	// frees a strt ("pstr")
+	void amem_strt_free(strt pstr);
+	
+	// convert "string" into a (temporary) strt and return it.
+	strt amem_strt_c8ts(char *string);
+	#define Strt(x) amem_strt_c8ts((void*)x)
 	
 	strt amem_strt_merg(strt a, strt b, u08t type);
 	
 	strt amem_strt_fnum(s32t a);
 	
+	//Returns the byte at the cursor
+	u08t amem_strt_byte(strt pstr);
+	
 	u32t amem_rand_nint(u32t a);
 	
 	// Tests if the next thing in array script is equivalent to particle
-	u08t amem_test_next(char * script, char * particle);
+	u08t amem_test_next(strt script, strt particle);
+	
+	// Returns string "script" truncated to "psize" or to the byte "end" in
+	// "script".  It is dependant on which happens first. (Type=STRT_KEEP)
+	strt amem_read_upto(strt script, u08t end, u32t psize);
 
 /*
 	DPL7_CLMP
@@ -190,10 +205,17 @@ typedef struct{
 		uint32_t bytes);
 
 	// Load a File from the file system.  Returns bytes loaded from "file_name"
-	uint8_t *file_file_load(sgrp_user_t* pusr, char *file_name);
+	strt file_file_load(sgrp_user_t* pusr, char *file_name);
 
-	// Load a file "filename" in package "packageFileName". Return bytes loaded
-	uint8_t *file_pkdj_load(sgrp_user_t* pusr, char *Fname);
+	// Load file "filename" in package "packageFileName" & Return contents
+	//-ERRF:
+	//	ERRF_NONE	can't find filename in packageFileName
+	//	ERRF_FIND	can't find packageFileName
+	uint8_t *file_pkdj_load(sgrp_user_t* pusr, char *packageFileName,
+		char *filename);
+	
+	//Load file "Fname" in default package & Return contents.
+	uint8_t *file_pkdj_mnld(sgrp_user_t* pusr, char *Fname);
 
 	// Save file "filename" with contents "data" of size "dataSize" to package
 	// "packageFileName"
