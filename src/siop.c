@@ -5,11 +5,43 @@
 
 #include "header/jlvmpu.h"
 
-void jal5_siop_cplo(sgrp_user_t* pusr, char * print) {
+static void _siop_indt(sgrp_user_t* pusr) {
 	int i;
 	for(i = 0; i < ((jvct_t *)pusr->pjct)->Siop.offs; i++) {
 		printf(" ");
 	}
+}
+
+void jal5_siop_cplo(sgrp_user_t* pusr, char * print) {
+	int i;
+	if(((jvct_t *)pusr->pjct)->Siop.ofs2 > 0) {
+		_siop_indt(pusr);
+		printf("[/");
+		for(i = ((jvct_t *)pusr->pjct)->Siop.offs -
+				((jvct_t *)pusr->pjct)->Siop.ofs2;
+			i < ((jvct_t *)pusr->pjct)->Siop.offs;
+			i++)
+		{
+			printf( ((jvct_t *)pusr->pjct)->Siop.head[i+1]);
+			printf("/");
+		}
+		printf("\b]\n");
+		((jvct_t *)pusr->pjct)->Siop.ofs2 = 0;
+	}else if(((jvct_t *)pusr->pjct)->Siop.ofs2 < 0) {
+		_siop_indt(pusr);
+		printf("[\\");
+		for(i = ((jvct_t *)pusr->pjct)->Siop.offs;
+			i > ((jvct_t *)pusr->pjct)->Siop.offs +
+				((jvct_t *)pusr->pjct)->Siop.ofs2;
+			i--)
+		{
+			printf( ((jvct_t *)pusr->pjct)->Siop.head[i+1]);
+			printf("\\");
+		}
+		printf("\b]\n");
+		((jvct_t *)pusr->pjct)->Siop.ofs2 = 0;
+	}
+	_siop_indt(pusr);
 #if PLATFORM==0
 	printf("[%s] %s",
 		((jvct_t *)pusr->pjct)->Siop.head[
@@ -30,10 +62,18 @@ void siop_offs_sett(sgrp_user_t* pusr, char * this) {
 	int i;
 	for(i = 0; i < ((jvct_t *)pusr->pjct)->Siop.offs; i++) {
 		if(strcmp(this, ((jvct_t *)pusr->pjct)->Siop.head[i]) == 0) {
+			if(((jvct_t *)pusr->pjct)->Siop.ofs2 > 0) {
+				jal5_siop_cplo(pusr, "\n");
+			}
+			((jvct_t *)pusr->pjct)->Siop.ofs2 -=
+				((jvct_t *)pusr->pjct)->Siop.offs - i;
 			((jvct_t *)pusr->pjct)->Siop.offs = i;
-			jal5_siop_cplo(pusr, "");
 			return;
 		}
+	}
+	//extend
+	if(((jvct_t *)pusr->pjct)->Siop.ofs2 < 0) {
+		jal5_siop_cplo(pusr, "\n");
 	}
 	((jvct_t *)pusr->pjct)->Siop.offs++;
 	for(i = 0; i < 4; i++) {
@@ -42,7 +82,7 @@ void siop_offs_sett(sgrp_user_t* pusr, char * this) {
 	}
 	((jvct_t *)pusr->pjct)->Siop.head[
 			((jvct_t *)pusr->pjct)->Siop.offs][4] = '\0';
-	jal5_siop_cplo(pusr, "");
+	((jvct_t *)pusr->pjct)->Siop.ofs2 ++;
 	return;
 }
 

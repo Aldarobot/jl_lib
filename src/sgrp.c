@@ -199,11 +199,11 @@ static inline u08t jgr_load_jlpx(jvct_t * pjct, uint8_t *data, uint32_t id) {
 
 //Load the images in the image file
 static inline void jlvm_ini_images(jvct_t * pjct, uint8_t *data) {
+	int i = 0;
 //	siop_offs_sett(pjct->Sgrp.usrd, "INIM");
 	begin_image_id = image_id;
 	#if JLVM_DEBUG >= JLVM_DEBUG_PROGRESS
 	printf("[JLVM/LIM] loading images...\n");
-	int i = 0;
 	printf("lne %d\n", (int)strlen((void *)data));
 	#endif
 //load textures
@@ -308,7 +308,7 @@ void _jal5_sgrp_init(jvct_t * pjct) {
 	uint8_t *img;
 	img = file_pkdj_mnld(pjct->Sgrp.usrd, "jlex/2/_img");
 	#if JLVM_DEBUG >= JLVM_DEBUG_PROGRESS
-	jal5_siop_cplo(pjct->Sgrp.usrd, "Loading Images...");
+	jal5_siop_cplo(pjct->Sgrp.usrd, "Loading Images...\n");
 	#endif
 	if(img != NULL) {
 		jlvm_ini_images(pjct, img);
@@ -338,7 +338,7 @@ void _jal5_sgrp_loop(sgrp_user_t* pusr) {
 static inline void jlvm_ini_finish(void) {
 	grph_draw_msge("LOADING JLLIB....");
 	#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
-	jal5_siop_cplo(jcpt->Sgrp.usrd, "started up display.");
+	jal5_siop_cplo(jcpt->Sgrp.usrd, "started up display.\n");
 	#endif
 }
 
@@ -363,24 +363,25 @@ static inline void _jlvm_init_libs(jvct_t *jcpt) {
 
 static inline void jlvm_ini(jvct_t *jcpt) {
 	#if JLVM_DEBUG >= JLVM_DEBUG_MINIMAL
-	jal5_siop_cplo(jcpt->Sgrp.usrd, "Initializing...");
+	jal5_siop_cplo(jcpt->Sgrp.usrd, "Initializing...\n");
 	#endif
 	_jlvm_init_libs(jcpt);
 	jlvm_ini_finish();
 	hack_user_init(jcpt->Sgrp.usrd);
+	siop_offs_sett(jcpt->Sgrp.usrd, "JLVM");
 	#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
-	jal5_siop_cplo(jcpt->Sgrp.usrd, "Init5...");
+	jal5_siop_cplo(jcpt->Sgrp.usrd, "Init5...\n");
 	#endif
 //	jlvm_ini_memory_allocate();
 	#if JLVM_DEBUG >= JLVM_DEBUG_MINIMAL
-	jal5_siop_cplo(jcpt->Sgrp.usrd, "Initialized!");
+	jal5_siop_cplo(jcpt->Sgrp.usrd, "Initialized!\n");
 	#endif
 }
 
 int32_t main(int argc, char *argv[]) {
 	jvct_t* jcpt = _jlvm_init_blib(); //Set Up Memory And Logging
 	#if JLVM_DEBUG >= JLVM_DEBUG_MINIMAL
-	jal5_siop_cplo(jcpt->Sgrp.usrd, "STARTING JLVM V-3.2.0-e0....");
+	jal5_siop_cplo(jcpt->Sgrp.usrd, "STARTING JLVM V-3.2.0-e0....\n");
 	#endif
 	jlvm_ini(jcpt);//initialize
 	jal5_file_errf(jcpt, "going into loop....");

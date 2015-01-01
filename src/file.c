@@ -233,16 +233,16 @@ uint8_t *file_pkdj_mnld(sgrp_user_t* pusr, char *Fname) {
 		pusr->errf == ERRF_FIND ) //Package doesn't exist!! - create
 	{
 		#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
-		jal5_siop_cplo(pusr, "Creating Package...");
+		jal5_siop_cplo(pusr, "Creating Package...\n");
 		#endif
 		file_file_save(pusr, jal5_head_jlvm(), gvar_pkfl,
 			jal5_head_size());
 		#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
-		jal5_siop_cplo(pusr, "Attempt Complete!");
+		jal5_siop_cplo(pusr, "Attempt Complete!\n");
 		#endif
 		SDL_Delay(1000); //give file system time to update
 		#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
-		jal5_siop_cplo(pusr, "Try loading again....");
+		jal5_siop_cplo(pusr, "Try loading again....\n");
 		#endif
 		if(
 			((freturn = file_pkdj_load(pusr,gvar_pkfl,Fname))
@@ -252,7 +252,7 @@ uint8_t *file_pkdj_mnld(sgrp_user_t* pusr, char *Fname) {
 			jlvm_dies(pusr->pjct, Strt("Failed To Create jlvm.zip"));
 		}
 		#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
-		jal5_siop_cplo(pusr, "Good loading!");
+		jal5_siop_cplo(pusr, "Good loading!\n");
 		#endif
 	}
 	return freturn;
@@ -263,7 +263,7 @@ void jal5_make_fdir(jvct_t * pjct, const char *pfilebase) {
 		int errsv = errno;
 		if(errsv == EEXIST) {
 			#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
-			jal5_siop_cplo(pusr, "Directory Exist! Continue...");
+			jal5_siop_cplo(pusr, "Directory Exist! Continue...\n");
 			#endif
 		}else{
 			jlvm_dies(pjct,
@@ -275,7 +275,7 @@ void jal5_make_fdir(jvct_t * pjct, const char *pfilebase) {
 		}
 	}else{
 		#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
-		jal5_siop_cplo(pusr, "Created Directory!");
+		jal5_siop_cplo(pusr, "Created Directory!\n");
 		#endif
 	}
 }
@@ -357,7 +357,7 @@ void _jal5_file_init(jvct_t * pjct) {
 	#endif
 	strcat(gvar_pkfl, filebase);
 	#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
-	jal5_siop_cplo(pjct->Sgrp.usrd, "fake");
+	jal5_siop_cplo(pjct->Sgrp.usrd, "fake\n");
 	#endif
 	strcat(gvar_pkfl, fake);
 	siop_offs_sett(pjct->Sgrp.usrd, "INIT");

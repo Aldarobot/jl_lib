@@ -6,6 +6,7 @@
 
 	typedef struct{
 		uint8_t offs;
+		int8_t ofs2;
 		char head[16][5];
 		strt lines[45]; //length 90
 	}_jal5_siop_t;
