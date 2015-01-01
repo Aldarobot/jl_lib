@@ -33,7 +33,8 @@ void ex_term(sgrp_user_t* pusr) {
 }
 
 void hack_user_init(sgrp_user_t* pusr) {
-	siop_prnt_cplo(0,"EXAMPLE","Initializing...");
+	siop_offs_sett(pusr, "EXMP");
+	siop_prnt_cplo(pusr,"Initializing...");
 	sgrp_mode_init(pusr, EX_MODE_MAXX); //Allocate 1 Mode
 	pusr->mode = EX_MODE_EDIT; //Set Mode To 0
 	sgrp_mode_iset(pusr, ex_loop, ex_wups, ex_wdns, ex_term); //Set mode data

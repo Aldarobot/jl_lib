@@ -185,14 +185,18 @@ typedef struct{
 
 		SIOP is like stdio.
 */
-	// Print "pstr" to the lowest level terminal [the one not drawn with
-	// SDL/OpenGL]
-	void siop_prnt_lwst(int8_t offs, strt this, strt print);
+
+	//Change offset header to "this"
+	void siop_offs_sett(sgrp_user_t* pusr, char * this);
 
 	// Print "pstr" to the lowest level terminal [the one not drawn with
 	// SDL/OpenGL]
-	void jal5_siop_cplo(int8_t offs, char * this, char * print);
-	#define siop_prnt_cplo(x,y,z) jal5_siop_cplo(x,y,z)
+	void siop_prnt_lwst(sgrp_user_t* pusr, strt print);
+
+	// Print "pstr" to the lowest level terminal [the one not drawn with
+	// SDL/OpenGL]
+	void jal5_siop_cplo(sgrp_user_t* pusr, char * print);
+	#define siop_prnt_cplo(x,z) jal5_siop_cplo(x,z)
 
 /*
 	JAL5_FILE

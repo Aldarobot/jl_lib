@@ -9,8 +9,9 @@
 void jls_lms(jvct_t *jcpt, int IDinStack, void *data, int dataSize,
 	char volumeChange)
 {
+	siop_offs_sett(jcpt->Sgrp.usrd, "AUDI");
 	#if JLVM_DEBUG >= JLVM_DEBUG_PROGRESS
-	siop_prnt_lwst(0, Strt("JLVM/AUDI"),
+	siop_prnt_lwst(jcpt->Sgrp.usrd,
 		amem_strt_merg(
 			amem_strt_merg(Strt("loading music "),
 				amem_strt_fnum(IDinStack),
@@ -33,7 +34,7 @@ void jls_lms(jvct_t *jcpt, int IDinStack, void *data, int dataSize,
 		);
 	}else{
 		#if JLVM_DEBUG >= JLVM_DEBUG_PROGRESS
-		siop_prnt_lwst(0, Strt("JLVM/AUDI"), 
+		siop_prnt_lwst(jcpt->Sgrp.usrd,
 			amem_strt_merg(
 				amem_strt_merg(
 					Strt("loaded music "),
@@ -115,11 +116,12 @@ void _jal5_audi_loop(jvct_t* jcpt) {
 }
 
 static inline void jlvm_ini_sounds(jvct_t *jcpt, u08t *data) {
+	siop_offs_sett(jcpt->Sgrp.usrd, "LOAD");
 	int i;
 //	uint32_t cursor = 0;
 	jls_ini(jcpt, 1000000);
 	#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
-	jal5_siop_cplo(0, "JLVM/AUDI/INIT/LOAD","meanwhile....");
+	jal5_siop_cplo(jcpt->Sgrp.usrd, "meanwhile....\n");
 	#endif
 	u32t fil = 0;
 	u32t fid = 0;
@@ -127,17 +129,17 @@ static inline void jlvm_ini_sounds(jvct_t *jcpt, u08t *data) {
 		u32t *bytes = (void *)data;
 		uint8_t *fdat = malloc(bytes[0]);
 		#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
-		jal5_siop_cplo(0, "JLVM/AUDI/INIT/LOAD",amem_strt_fnum(bytes[0]));
+		jal5_siop_cplo(jcpt->Sgrp.usrd, amem_strt_fnum(bytes[0]));
 		#endif
 		#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
-		jal5_siop_cplo(0, "JLVM/AUDI/INIT/LOAD","getting data....");
+		jal5_siop_cplo(jcpt->Sgrp.usrd,"getting data....\n");
 		#endif
 		for(i = 0; i < bytes[0]; i++) {
 			fdat[i] = data[fil+i+sizeof(uint32_t)];
 		}
 
 		#if JLVM_DEBUG >= JLVM_DEBUG_PROGRESS
-		jal5_siop_cplo(0, "JLVM/AUDI/INIT/LOAD","loading music....");
+		jal5_siop_cplo(jcpt->Sgrp.usrd, "loading music....\n");
 		#endif
 		jls_lms(jcpt,fid,fdat,bytes[0],255);
 
@@ -147,14 +149,16 @@ static inline void jlvm_ini_sounds(jvct_t *jcpt, u08t *data) {
 			break;
 	}
 	#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
-	jal5_siop_cplo(0, "JLVM/AUDI/INIT/LOAD","loaded music!");
+	jal5_siop_cplo(jcpt->Sgrp.usrd, "loaded music!\n");
 	#endif
 }
 
 void _jal5_audi_init(jvct_t *jcpt) {
+	siop_offs_sett(jcpt->Sgrp.usrd, "AUDI");
+	siop_offs_sett(jcpt->Sgrp.usrd, "INIT");
 	// Open the audio device
 	#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
-	jal5_siop_cplo(0,"JLVM","initailizing audio...");
+	jal5_siop_cplo(jcpt->Sgrp.usrd, "initailizing audio...\n");
 	#endif
 	if ( Mix_OpenAudio(11025, AUDIO_S16, 1, 2048) < 0 ) {
 		jlvm_dies(jcpt, amem_strt_merg(
@@ -164,27 +168,29 @@ void _jal5_audi_init(jvct_t *jcpt) {
 		));
 	}else{
 		#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
-		jal5_siop_cplo(0,"JLVM","audio has been set.\n");
+		jal5_siop_cplo(jcpt->Sgrp.usrd, "audio has been set.\n");
 		#endif
 	}
 	//Load Sound Effects & Music
 	uint8_t *aud = NULL;
 	aud = file_pkdj_mnld(jcpt->Sgrp.usrd, "jlex/2/_aud");
 	#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
-	jal5_siop_cplo(0,"JLVM","Loading Audiostuffs...");
+	jal5_siop_cplo(jcpt->Sgrp.usrd, "Loading Audiostuffs...\n");
 	#endif
 	if(aud != NULL) {
 		jlvm_ini_sounds(jcpt,aud);
 	}
 	jcpt->Audi.idis = UINT32_MAX; //Audio by default is disabled
 	#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
-	jal5_siop_cplo(0,"JLVM","Loaded Audiostuffs!");
+	jal5_siop_cplo(jcpt->Sgrp.usrd, "Loaded Audiostuffs!\n");
 	#endif
+	siop_offs_sett(jcpt->Sgrp.usrd, "JLVM");
 }
 
 void _jal5_audi_kill(jvct_t *jcpt) {
+	siop_offs_sett(jcpt->Sgrp.usrd, "AUDI");
 	#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
-	jal5_siop_cplo(0,"[JLVM/AUDI]","Quiting....");
+	jal5_siop_cplo(jcpt->Sgrp.usrd, "Quiting....\n");
 	#endif
 	Mix_CloseAudio();
 	u32t i;
@@ -193,6 +199,7 @@ void _jal5_audi_kill(jvct_t *jcpt) {
 	}
 	free(jcpt->Audi.jmus);
 	#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
-	jal5_siop_cplo(0,"[JLVM/AUDI]","Quit Successfully!");
+	jal5_siop_cplo(jcpt->Sgrp.usrd, "Quit Successfully!\n");
 	#endif
+	siop_offs_sett(jcpt->Sgrp.usrd, "JLVM");
 }

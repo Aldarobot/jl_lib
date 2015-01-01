@@ -14,7 +14,8 @@
 #define INFO_DESKTOP "umed/dat.text"
 
 void hack_user_init(sgrp_user_t* pusr) {
-	siop_prnt_cplo(0,"ANDROID","Setting up...");
+	siop_offs_sett(pusr, "ANDR");
+	siop_prnt_cplo(pusr, "Setting up...");
 	
 	strt fields[FIELD_MAX] = {
 		Strt("username"),
@@ -28,7 +29,7 @@ void hack_user_init(sgrp_user_t* pusr) {
 		Strt("android_activity")
 	};
 
-	siop_prnt_cplo(0,"ANDROID","...");
+	siop_prnt_cplo(pusr, "...");
 
 	strt list = file_file_load(pusr, INFO_DESKTOP);
 	strl prpt = List(FIELD_MAX);
@@ -54,14 +55,14 @@ void hack_user_init(sgrp_user_t* pusr) {
 					list->curs++;	
 				}
 				prpt[i] = amem_read_upto(list, '\n', 64);
-				siop_prnt_lwst(0,Strt("ANDROID/"),prpt[i]);
+				siop_prnt_lwst(pusr, prpt[i]);
 				break;
 			}
 		}
 		list->curs++;
 	}
 	for(i = 0; i < FIELD_MAX; i++) {
-		siop_prnt_lwst(0,Strt("ANDROID"),fields[i]);
-		siop_prnt_lwst(0,Strt("ANDROID"),prpt[i]);
+		siop_prnt_lwst(pusr, fields[i]);
+		siop_prnt_lwst(pusr, prpt[i]);
 	}
 }

@@ -12,8 +12,8 @@ void file_file_save(sgrp_user_t* pusr, char *file, char *name, uint32_t bytes) {
 	#endif
 	jvct_t * pjct = pusr->pjct;
 	#if JLVM_DEBUG >= JLVM_DEBUG_INTENSE
-	jal5_siop_cplo(0,"JLVM","doing....");
-	jal5_siop_cplo(0,"JLVM",amem_strt_fnum(bytes));
+	jal5_siop_cplo(pusr, "doing....");
+	jal5_siop_cplo(pusr, amem_strt_fnum(bytes));
 	#endif
 	int errsv;
 	ssize_t n_bytes;
@@ -22,7 +22,7 @@ void file_file_save(sgrp_user_t* pusr, char *file, char *name, uint32_t bytes) {
 	if(fd <= 0) {
 		errsv = errno;
 
-		siop_prnt_lwst(0, Strt("JLVM"),
+		siop_prnt_lwst(pusr,
 			amem_strt_merg(
 				amem_strt_merg(
 					Strt("file_file_save: Failed to open file: "),
@@ -162,14 +162,16 @@ char file_pkdj_save(sgrp_user_t* pusr, char *packageFileName, char *fileName,
 
 uint8_t *file_pkdj_load(sgrp_user_t* pusr, char *packageFileName, char *filename)
 {
+	siop_offs_sett(pusr, "FILE");
+	siop_offs_sett(pusr, "LOAD");
 	int zerror;
 	#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
-	jal5_siop_cplo(0,"JLVM/FILE/LOAD",amem_strt_merg(
+	jal5_siop_cplo(pusr, amem_strt_merg(
 		amem_strt_merg("loading package:\"",packageFileName), "\"..."));
 	#endif
 	struct zip *zipfile = zip_open(packageFileName, ZIP_CHECKCONS, &zerror);
 	if(zerror == ZIP_ER_OPEN) {
-		jal5_siop_cplo(0,"JLVM"," NO EXIST!");
+		jal5_siop_cplo(pusr, " NO EXIST!");
 		pusr->errf = ERRF_FIND;
 		return NULL;
 	}
@@ -177,25 +179,25 @@ uint8_t *file_pkdj_load(sgrp_user_t* pusr, char *packageFileName, char *filename
 		jlvm_dies(pusr->pjct, Strt("couldn't load pckg!"));
 	}
 	#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
-	jal5_siop_cplo(0,"JLVM/FILE/LOAD",(char *)zip_strerror(zipfile));
-	jal5_siop_cplo(0,"JLVM/FILE/LOAD","loaded package.\n");
+	jal5_siop_cplo(pusr, (char *)zip_strerror(zipfile));
+	jal5_siop_cplo(pusr, "loaded package.\n");
 	#endif
 	unsigned char *fileToLoad = malloc(PKFMAX);
 	#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
-	jal5_siop_cplo(0,"JLVM/FILE/LOAD","opening file in package....\n");
+	jal5_siop_cplo(pusr, "opening file in package....\n");
 	#endif
 	struct zip_file *file = zip_fopen(zipfile, filename, ZIP_FL_UNCHANGED);
 	#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
-	jal5_siop_cplo(0,"JLVM/FILE/LOAD", "call pass.");
+	jal5_siop_cplo(pusr, "call pass.");
 	#endif
 	if(file == NULL) {
-		siop_prnt_lwst(0,Strt("JLVM/FILE/LOAD"),
+		siop_prnt_lwst(pusr,
 			amem_strt_merg(
 			amem_strt_merg(Strt("couldn't open up file: \""),
 				Strt(filename), STRT_TEMP),
 			amem_strt_merg(Strt("\" in "),
 				Strt(packageFileName), STRT_TEMP),STRT_TEMP));
-		siop_prnt_lwst(0,Strt("JLVM/FILE/LOAD"),
+		siop_prnt_lwst(pusr,
 			amem_strt_merg(Strt("because: "),
 				Strt(zip_strerror(zipfile)), STRT_TEMP));
 		pusr->errf = ERRF_NONE;
@@ -220,6 +222,7 @@ uint8_t *file_pkdj_load(sgrp_user_t* pusr, char *packageFileName, char *filename
 	printf("[JLVM/FILE/LOAD] done.\n");
 	#endif
 	pusr->errf = ERRF_NERR;
+	siop_offs_sett(pusr, "JLVM");
 	return fileToLoad;
 }
 
@@ -230,16 +233,16 @@ uint8_t *file_pkdj_mnld(sgrp_user_t* pusr, char *Fname) {
 		pusr->errf == ERRF_FIND ) //Package doesn't exist!! - create
 	{
 		#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
-		jal5_siop_cplo(0,"JLVM","Creating Package...");
+		jal5_siop_cplo(pusr, "Creating Package...");
 		#endif
 		file_file_save(pusr, jal5_head_jlvm(), gvar_pkfl,
 			jal5_head_size());
 		#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
-		jal5_siop_cplo(0,"JLVM","Attempt Complete!");
+		jal5_siop_cplo(pusr, "Attempt Complete!");
 		#endif
 		SDL_Delay(1000); //give file system time to update
 		#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
-		jal5_siop_cplo(0,"JLVM","Try loading again....");
+		jal5_siop_cplo(pusr, "Try loading again....");
 		#endif
 		if(
 			((freturn = file_pkdj_load(pusr,gvar_pkfl,Fname))
@@ -249,7 +252,7 @@ uint8_t *file_pkdj_mnld(sgrp_user_t* pusr, char *Fname) {
 			jlvm_dies(pusr->pjct, Strt("Failed To Create jlvm.zip"));
 		}
 		#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
-		jal5_siop_cplo(0,"JLVM","Good loading!");
+		jal5_siop_cplo(pusr, "Good loading!");
 		#endif
 	}
 	return freturn;
@@ -260,7 +263,7 @@ void jal5_make_fdir(jvct_t * pjct, const char *pfilebase) {
 		int errsv = errno;
 		if(errsv == EEXIST) {
 			#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
-			jal5_siop_cplo(0,"JLVM","Directory Exist! Continue...");
+			jal5_siop_cplo(pusr, "Directory Exist! Continue...");
 			#endif
 		}else{
 			jlvm_dies(pjct,
@@ -272,18 +275,21 @@ void jal5_make_fdir(jvct_t * pjct, const char *pfilebase) {
 		}
 	}else{
 		#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
-		jal5_siop_cplo(0,"JLVM","Created Directory!");
+		jal5_siop_cplo(pusr, "Created Directory!");
 		#endif
 	}
 }
 
 void _jal5_file_init(jvct_t * pjct) {
 
+	siop_offs_sett(pjct->Sgrp.usrd, "FILE");
+	siop_offs_sett(pjct->Sgrp.usrd, "INIT");
+
 	int i;
 	const char *fprg_name = "JLVM";
 
 	#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
-	jal5_siop_cplo(0,"JLVM","program name:");
+	jal5_siop_cplo(pjct->Sgrp.usrd, "program name:");
 	#endif
 	jlvmpi_prg_name(fprg_name);
 
@@ -320,8 +326,9 @@ void _jal5_file_init(jvct_t * pjct) {
 		#endif
 	#else //OTHER
 	#endif
+		siop_offs_sett(pjct->Sgrp.usrd, "FLBS");
 		#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
-		jal5_siop_cplo(0,"JLVM/FLBS",filebase);
+		jal5_siop_cplo(pjct->Sgrp.usrd, filebase);
 		#endif
 	const char *fake = "jlvm.zip";
 	int fvar_maxx = strlen(filebase)+strlen(fake)+2;
@@ -346,16 +353,19 @@ void _jal5_file_init(jvct_t * pjct) {
 	jal5_make_fdir(pjct, filebase);
 
 	#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
-	jal5_siop_cplo(0,"JLVM/FLBS",gvar_pkfl);
+	jal5_siop_cplo(pjct->Sgrp.usrd, gvar_pkfl);
 	#endif
 	strcat(gvar_pkfl, filebase);
 	#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
-	jal5_siop_cplo(0,"JLVM/FLBS","fake");
+	jal5_siop_cplo(pjct->Sgrp.usrd, "fake");
 	#endif
 	strcat(gvar_pkfl, fake);
+	siop_offs_sett(pjct->Sgrp.usrd, "INIT");
+	siop_offs_sett(pjct->Sgrp.usrd, "PKFL");
 	#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
-	jal5_siop_cplo(0,"JLVM/PKFL",gvar_pkfl);
+	jal5_siop_cplo(pjct->Sgrp.usrd, gvar_pkfl);
 	#endif
 	remove(gvar_pkfl);
 	jal5_file_errf(pjct, "Segmentation Fault / Floatation Exception etc.");
+	siop_offs_sett(pjct->Sgrp.usrd, "JLVM");
 }

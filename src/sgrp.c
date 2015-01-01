@@ -199,6 +199,7 @@ static inline u08t jgr_load_jlpx(jvct_t * pjct, uint8_t *data, uint32_t id) {
 
 //Load the images in the image file
 static inline void jlvm_ini_images(jvct_t * pjct, uint8_t *data) {
+//	siop_offs_sett(pjct->Sgrp.usrd, "INIM");
 	begin_image_id = image_id;
 	#if JLVM_DEBUG >= JLVM_DEBUG_PROGRESS
 	printf("[JLVM/LIM] loading images...\n");
@@ -234,7 +235,7 @@ static uint32_t jlvm_quit(jvct_t* pjct, int rc) {
 	jal5_file_errf(pjct, "Quitting...."); //Exited properly
 	#endif
 	_jal5_lsdl_kill(pjct);
-	jlvm_vmap_kill(pjct);
+	_jal5_amem_kill(pjct);
 	#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
 	jal5_file_errf(pjct, "No Error! YAY!"); //Exited properly
 	#endif
@@ -245,7 +246,8 @@ static uint32_t jlvm_quit(jvct_t* pjct, int rc) {
 
 //Quit, And Return -1 to show there was an error, also save message in errf.text
 static void jlvm_erqt(jvct_t* pjct, char *msg) {
-	jal5_siop_cplo(0, "JLVM/ERQT", msg);
+	siop_offs_sett(pjct->Sgrp.usrd, "ERQT");
+	jal5_siop_cplo(pjct->Sgrp.usrd, msg);
 	jal5_file_errf(pjct, msg);
 	jlvm_quit(pjct, -1);
 }
@@ -293,6 +295,8 @@ static inline float _jal5_sgrp_istm(void) {
 }
 
 void _jal5_sgrp_init(jvct_t * pjct) {
+	siop_offs_sett(pjct->Sgrp.usrd, "SGRP");
+	siop_offs_sett(pjct->Sgrp.usrd, "INIT");
 	//Set Up Variables
 	pjct->Sgrp.usrd->errf = ERRF_NERR; //no error
 	pjct->Sgrp.usrd->psec = 0.f;
@@ -304,7 +308,7 @@ void _jal5_sgrp_init(jvct_t * pjct) {
 	uint8_t *img;
 	img = file_pkdj_mnld(pjct->Sgrp.usrd, "jlex/2/_img");
 	#if JLVM_DEBUG >= JLVM_DEBUG_PROGRESS
-	jal5_siop_cplo(0,"JLVM/SGRP/INIT","Loading Images...");
+	jal5_siop_cplo(pjct->Sgrp.usrd, "Loading Images...");
 	#endif
 	if(img != NULL) {
 		jlvm_ini_images(pjct, img);
@@ -334,15 +338,14 @@ void _jal5_sgrp_loop(sgrp_user_t* pusr) {
 static inline void jlvm_ini_finish(void) {
 	grph_draw_msge("LOADING JLLIB....");
 	#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
-	jal5_siop_cplo(0, " [JLVM/LIB/JGR]", "started up display.");
+	jal5_siop_cplo(jcpt->Sgrp.usrd, "started up display.");
 	#endif
 }
 
 //The Libraries Needed At Very Beginning: The Base Of It All
 static inline jvct_t* _jlvm_init_blib(void) {
-	//VMAP
-	jvct_t* jcpt = _jlvm_vmap_init();
-	_jal5_amem_init();
+	//MEMORY
+	jvct_t* jcpt = _jal5_amem_init();
 	//OTHER
 	_jal5_siop_init(jcpt);
 	return jcpt;
@@ -360,24 +363,24 @@ static inline void _jlvm_init_libs(jvct_t *jcpt) {
 
 static inline void jlvm_ini(jvct_t *jcpt) {
 	#if JLVM_DEBUG >= JLVM_DEBUG_MINIMAL
-	jal5_siop_cplo(0,"JLVM","Initializing...");
+	jal5_siop_cplo(jcpt->Sgrp.usrd, "Initializing...");
 	#endif
 	_jlvm_init_libs(jcpt);
 	jlvm_ini_finish();
 	hack_user_init(jcpt->Sgrp.usrd);
 	#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
-	jal5_siop_cplo(0,"JLVM","Init5...");
+	jal5_siop_cplo(jcpt->Sgrp.usrd, "Init5...");
 	#endif
 //	jlvm_ini_memory_allocate();
 	#if JLVM_DEBUG >= JLVM_DEBUG_MINIMAL
-	jal5_siop_cplo(0,"JLVM","Initialized!");
+	jal5_siop_cplo(jcpt->Sgrp.usrd, "Initialized!");
 	#endif
 }
 
 int32_t main(int argc, char *argv[]) {
 	jvct_t* jcpt = _jlvm_init_blib(); //Set Up Memory And Logging
 	#if JLVM_DEBUG >= JLVM_DEBUG_MINIMAL
-	jal5_siop_cplo(0,"JLVM","STARTING JLVM V-3.2.0-e0....");
+	jal5_siop_cplo(jcpt->Sgrp.usrd, "STARTING JLVM V-3.2.0-e0....");
 	#endif
 	jlvm_ini(jcpt);//initialize
 	jal5_file_errf(jcpt, "going into loop....");

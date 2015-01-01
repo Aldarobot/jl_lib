@@ -5,6 +5,9 @@
 //SIOP:
 
 	typedef struct{
+		uint8_t offs;
+		char head[16][5];
+		strt lines[45]; //length 90
 	}_jal5_siop_t;
 
 	typedef struct{
@@ -90,7 +93,5 @@ typedef struct{
 }jvct_t;
 
 //For Internal Use Only: DO NOT USE
-	void _jal5_amem_init(void);
-
-	jvct_t* _jlvm_vmap_init(void);
-	void jlvm_vmap_kill(jvct_t* jprg);
+	jvct_t* _jal5_amem_init(void);
+	void _jal5_amem_kill(jvct_t* jprg);

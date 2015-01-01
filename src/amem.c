@@ -142,14 +142,10 @@ strt amem_read_upto(strt script, u08t end, u32t psize) {
 	return compiled;
 }
 
-void _jal5_amem_init(void) {
-//		__jal5_vmap_cprg()->Amem;
-}
-
 //struct cl_list *g_vmap_list;
 
 //VMAP
-jvct_t* _jlvm_vmap_init(void) {
+jvct_t* _jal5_amem_init(void) {
 	//Create a context for the currently loaded program
 	jvct_t* jprg = malloc(sizeof(jvct_t));
 	//Set the current program ID to 0[RESERVED DEFAULT]
@@ -166,7 +162,7 @@ jvct_t* _jlvm_vmap_init(void) {
 	return jprg;
 }
 
-void jlvm_vmap_kill(jvct_t* jprg) {
+void _jal5_amem_kill(jvct_t* jprg) {
 	free(jprg);
 //	cl_list_destroy(g_vmap_list);
 }
