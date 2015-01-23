@@ -7,6 +7,9 @@ SDL_Window *displayWindow; //where everything is blitted to
 SDL_GLContext *glcontext;
 SDL_DisplayMode current;
 
+//void SDL_Init(int a) {
+//}
+
 //STATIC FUNCTIONS
 static inline void jlvmpi_ini_sdl(void) {
 	#if JLVM_DEBUG >= JLVM_DEBUG_MINIMAL

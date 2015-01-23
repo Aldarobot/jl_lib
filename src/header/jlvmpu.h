@@ -17,7 +17,8 @@
 	
 //SDL
 	#if PLATFORM==0 //PC/MAC
-		#include "../lib/SDL/header/SDL.h"
+//		#include "../lib/SDL/header/SDL.h"
+		#include <SDL2/SDL.h>
 		#ifdef JLVM_USEL_COGL
 //			#include "../lib/SDL/header/SDL_opengl.h"
 			#include "../lib/glew/glew.h"
@@ -30,7 +31,7 @@
 		#include "../lib/SDL/header/SDL_opengles2.h"
 		#include "../lib/SDL/header/SDL_main.h"
 	#endif
-	#include "../lib/SDL_mixer/SDL_mixer.h"
+	#include "../lib/SDL_mixer.h"
 //LIBZIP
 	#include "../lib/libzip/jni/zip.h"
 //OPENGL
