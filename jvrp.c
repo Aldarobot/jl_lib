@@ -16,7 +16,7 @@
 #include <stdint.h>
 #include <unistd.h>
 #include <errno.h>
-#include <zip.h>
+#include "src/lib/libzip/jni/zip.h"
 
 #define MAXFILELEN 100000000
 #define IMAGE_DESKTOP "umed/img.text"

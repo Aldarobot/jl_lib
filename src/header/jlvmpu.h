@@ -39,7 +39,8 @@
 		#ifdef APPLE
 			#include <OpenGL/glext.h>
 		#elif PLATFORM == 0
-			#include <GL/glext.h>
+//			#include <GL/glext.h>
+			#include "../lib/glext.h"
 		#else
 			#error "cogl ain't supported by non-pc comps, man!"
 		#endif
