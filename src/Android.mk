@@ -5,102 +5,100 @@ include $(CLEAR_VARS)
 LOCAL_MODULE := main
 
 LIB_ZIP := lib/libzip/jni/
-LIB_SDL := lib/SDL/
+LIB_SDL := lib/SDL/src/
 LIB_MIX := lib/SDL_mixer/
-
-LOCAL_SRC_FILES := gen/main.c
 
 #load SDL
 LOCAL_SRC_FILES += \
-	$(LIB_SDL)src/SDL.c \
-	$(LIB_SDL)src/SDL_assert.c \
-	$(LIB_SDL)src/SDL_error.c \
-	$(LIB_SDL)src/SDL_hints.c \
-	$(LIB_SDL)src/SDL_log.c \
-	$(LIB_SDL)src/audio/SDL_audio.c \
-	$(LIB_SDL)src/audio/SDL_audiocvt.c \
-	$(LIB_SDL)src/audio/SDL_audiodev.c \
-	$(LIB_SDL)src/audio/SDL_audiotypecvt.c \
-	$(LIB_SDL)src/audio/SDL_mixer.c \
-	$(LIB_SDL)src/audio/SDL_wave.c \
-	$(LIB_SDL)src/audio/android/*.c \
-	$(LIB_SDL)src/audio/dummy/*.c \
-	$(LIB_SDL)src/atomic/SDL_atomic.c \
-	$(LIB_SDL)src/atomic/SDL_spinlock.c.arm \
-	$(LIB_SDL)src/core/android/*.c \
-	$(LIB_SDL)src/cpuinfo/*.c \
-	$(LIB_SDL)src/dynapi/*.c \
-	$(LIB_SDL)src/events/SDL_clipboardevents.c \
-	$(LIB_SDL)src/events/SDL_dropevents.c \
-	$(LIB_SDL)src/events/SDL_events.c \
-	$(LIB_SDL)src/events/SDL_gesture.c \
-	$(LIB_SDL)src/events/SDL_keyboard.c \
-	$(LIB_SDL)src/events/SDL_mouse.c \
-	$(LIB_SDL)src/events/SDL_quit.c \
-	$(LIB_SDL)src/events/SDL_touch.c \
-	$(LIB_SDL)src/events/SDL_windowevents.c \
-	$(LIB_SDL)src/file/*.c \
-	$(LIB_SDL)src/haptic/*.c \
-	$(LIB_SDL)src/haptic/dummy/*.c \
-	$(LIB_SDL)src/joystick/SDL_gamecontroller.c \
-	$(LIB_SDL)src/joystick/SDL_joystick.c \
-	$(LIB_SDL)src/joystick/android/*.c \
-	$(LIB_SDL)src/loadso/dlopen/*.c \
-	$(LIB_SDL)src/power/*.c \
-	$(LIB_SDL)src/power/android/*.c \
-	$(LIB_SDL)src/filesystem/dummy/*.c \
-	$(LIB_SDL)src/render/SDL_d3dmath.c \
-	$(LIB_SDL)src/render/SDL_render.c \
-	$(LIB_SDL)src/render/SDL_yuv_mmx.c \
-	$(LIB_SDL)src/render/SDL_yuv_sw.c \
-	$(LIB_SDL)src/render/software/SDL_blendfillrect.c \
-	$(LIB_SDL)src/render/software/SDL_blendline.c \
-	$(LIB_SDL)src/render/software/SDL_blendpoint.c \
-	$(LIB_SDL)src/render/software/SDL_drawline.c \
-	$(LIB_SDL)src/render/software/SDL_drawpoint.c \
-	$(LIB_SDL)src/render/software/SDL_render_sw.c \
-	$(LIB_SDL)src/render/software/SDL_rotate.c \
-	$(LIB_SDL)src/stdlib/SDL_getenv.c \
-	$(LIB_SDL)src/stdlib/SDL_iconv.c \
-	$(LIB_SDL)src/stdlib/SDL_malloc.c \
-	$(LIB_SDL)src/stdlib/SDL_qsort.c \
-	$(LIB_SDL)src/stdlib/SDL_stdlib.c \
-	$(LIB_SDL)src/stdlib/SDL_string.c \
-	$(LIB_SDL)src/thread/*.c \
-	$(LIB_SDL)src/thread/pthread/SDL_syscond.c \
-	$(LIB_SDL)src/thread/pthread/SDL_sysmutex.c \
-	$(LIB_SDL)src/thread/pthread/SDL_syssem.c \
-	$(LIB_SDL)src/thread/pthread/SDL_systhread.c \
-	$(LIB_SDL)src/thread/pthread/SDL_systls.c \
-	$(LIB_SDL)src/timer/*.c \
-	$(LIB_SDL)src/timer/unix/*.c \
-	$(LIB_SDL)src/video/SDL_blit.c \
-	$(LIB_SDL)src/video/SDL_blit_0.c \
-	$(LIB_SDL)src/video/SDL_blit_1.c \
-	$(LIB_SDL)src/video/SDL_blit_A.c \
-	$(LIB_SDL)src/video/SDL_blit_auto.c \
-	$(LIB_SDL)src/video/SDL_blit_copy.c \
-	$(LIB_SDL)src/video/SDL_blit_N.c \
-	$(LIB_SDL)src/video/SDL_blit_slow.c \
-	$(LIB_SDL)src/video/SDL_bmp.c \
-	$(LIB_SDL)src/video/SDL_clipboard.c \
-	$(LIB_SDL)src/video/SDL_egl.c \
-	$(LIB_SDL)src/video/SDL_fillrect.c \
-	$(LIB_SDL)src/video/SDL_pixels.c \
-	$(LIB_SDL)src/video/SDL_rect.c \
-	$(LIB_SDL)src/video/SDL_RLEaccel.c \
-	$(LIB_SDL)src/video/SDL_shape.c \
-	$(LIB_SDL)src/video/SDL_stretch.c \
-	$(LIB_SDL)src/video/SDL_surface.c \
-	$(LIB_SDL)src/video/SDL_video.c \
-	$(LIB_SDL)src/video/android/SDL_androidclipboard.c \
-	$(LIB_SDL)src/video/android/SDL_androidevents.c \
-	$(LIB_SDL)src/video/android/SDL_androidgl.c \
-	$(LIB_SDL)src/video/android/SDL_androidkeyboard.c \
-	$(LIB_SDL)src/video/android/SDL_androidtouch.c \
-	$(LIB_SDL)src/video/android/SDL_androidvideo.c \
-	$(LIB_SDL)src/video/android/SDL_androidwindow.c \
-	$(LIB_SDL)src/main/android/SDL_android_main.c
+	$(LIB_SDL)SDL.c\
+	$(LIB_SDL)SDL_assert.c \
+	$(LIB_SDL)SDL_error.c \
+	$(LIB_SDL)SDL_hints.c \
+	$(LIB_SDL)SDL_log.c \
+	$(LIB_SDL)audio/SDL_audio.c \
+	$(LIB_SDL)audio/SDL_audiocvt.c \
+	$(LIB_SDL)audio/SDL_audiodev.c \
+	$(LIB_SDL)audio/SDL_audiotypecvt.c \
+	$(LIB_SDL)audio/SDL_mixer.c \
+	$(LIB_SDL)audio/SDL_wave.c \
+	$(LIB_SDL)audio/android/*.c \
+	$(LIB_SDL)audio/dummy/*.c \
+	$(LIB_SDL)atomic/SDL_atomic.c \
+	$(LIB_SDL)atomic/SDL_spinlock.c.arm \
+	$(LIB_SDL)core/android/*.c \
+	$(LIB_SDL)cpuinfo/*.c \
+	$(LIB_SDL)dynapi/*.c \
+	$(LIB_SDL)events/SDL_clipboardevents.c \
+	$(LIB_SDL)events/SDL_dropevents.c \
+	$(LIB_SDL)events/SDL_events.c \
+	$(LIB_SDL)events/SDL_gesture.c \
+	$(LIB_SDL)events/SDL_keyboard.c \
+	$(LIB_SDL)events/SDL_mouse.c \
+	$(LIB_SDL)events/SDL_quit.c \
+	$(LIB_SDL)events/SDL_touch.c \
+	$(LIB_SDL)events/SDL_windowevents.c \
+	$(LIB_SDL)file/*.c \
+	$(LIB_SDL)haptic/*.c \
+	$(LIB_SDL)haptic/dummy/*.c \
+	$(LIB_SDL)joystick/SDL_gamecontroller.c \
+	$(LIB_SDL)joystick/SDL_joystick.c \
+	$(LIB_SDL)joystick/android/*.c \
+	$(LIB_SDL)loadso/dlopen/*.c \
+	$(LIB_SDL)power/*.c \
+	$(LIB_SDL)power/android/*.c \
+	$(LIB_SDL)filesystem/dummy/*.c \
+	$(LIB_SDL)render/SDL_d3dmath.c \
+	$(LIB_SDL)render/SDL_render.c \
+	$(LIB_SDL)render/SDL_yuv_mmx.c \
+	$(LIB_SDL)render/SDL_yuv_sw.c \
+	$(LIB_SDL)render/software/SDL_blendfillrect.c \
+	$(LIB_SDL)render/software/SDL_blendline.c \
+	$(LIB_SDL)render/software/SDL_blendpoint.c \
+	$(LIB_SDL)render/software/SDL_drawline.c \
+	$(LIB_SDL)render/software/SDL_drawpoint.c \
+	$(LIB_SDL)render/software/SDL_render_sw.c \
+	$(LIB_SDL)render/software/SDL_rotate.c \
+	$(LIB_SDL)stdlib/SDL_getenv.c \
+	$(LIB_SDL)stdlib/SDL_iconv.c \
+	$(LIB_SDL)stdlib/SDL_malloc.c \
+	$(LIB_SDL)stdlib/SDL_qsort.c \
+	$(LIB_SDL)stdlib/SDL_stdlib.c \
+	$(LIB_SDL)stdlib/SDL_string.c \
+	$(LIB_SDL)thread/*.c \
+	$(LIB_SDL)thread/pthread/SDL_syscond.c \
+	$(LIB_SDL)thread/pthread/SDL_sysmutex.c \
+	$(LIB_SDL)thread/pthread/SDL_syssem.c \
+	$(LIB_SDL)thread/pthread/SDL_systhread.c \
+	$(LIB_SDL)thread/pthread/SDL_systls.c \
+	$(LIB_SDL)timer/*.c \
+	$(LIB_SDL)timer/unix/*.c \
+	$(LIB_SDL)video/SDL_blit.c \
+	$(LIB_SDL)video/SDL_blit_0.c \
+	$(LIB_SDL)video/SDL_blit_1.c \
+	$(LIB_SDL)video/SDL_blit_A.c \
+	$(LIB_SDL)video/SDL_blit_auto.c \
+	$(LIB_SDL)video/SDL_blit_copy.c \
+	$(LIB_SDL)video/SDL_blit_N.c \
+	$(LIB_SDL)video/SDL_blit_slow.c \
+	$(LIB_SDL)video/SDL_bmp.c \
+	$(LIB_SDL)video/SDL_clipboard.c \
+	$(LIB_SDL)video/SDL_egl.c \
+	$(LIB_SDL)video/SDL_fillrect.c \
+	$(LIB_SDL)video/SDL_pixels.c \
+	$(LIB_SDL)video/SDL_rect.c \
+	$(LIB_SDL)video/SDL_RLEaccel.c \
+	$(LIB_SDL)video/SDL_shape.c \
+	$(LIB_SDL)video/SDL_stretch.c \
+	$(LIB_SDL)video/SDL_surface.c \
+	$(LIB_SDL)video/SDL_video.c \
+	$(LIB_SDL)video/android/SDL_androidclipboard.c \
+	$(LIB_SDL)video/android/SDL_androidevents.c \
+	$(LIB_SDL)video/android/SDL_androidgl.c \
+	$(LIB_SDL)video/android/SDL_androidkeyboard.c \
+	$(LIB_SDL)video/android/SDL_androidtouch.c \
+	$(LIB_SDL)video/android/SDL_androidvideo.c \
+	$(LIB_SDL)video/android/SDL_androidwindow.c \
+	$(LIB_SDL)main/android/SDL_android_main.c
 
 #load libzip
 LOCAL_SRC_FILES += \
@@ -210,9 +208,9 @@ LOCAL_SRC_FILES +=\
 	amem.c clmp.c siop.c file.c comm.c inpt.c\
 	sgrp.c lsdl.c eogl.c grph.c vide.c audi.c
 
-# Load The User's Program Merged Into One File
+# Load The Programmers C files
 LOCAL_SRC_FILES +=\
-	gen/hack_user_main.c
+	gen/*.c
 
 LOCAL_CFLAGS += -DGL_GLEXT_PROTOTYPES
 

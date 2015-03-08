@@ -1,4 +1,4 @@
-#include "header/jlvmpu.h"
+#include "header/jlvm_pr.h"
 
 //MESSAGES
 char *GScreenMesg;
@@ -88,10 +88,10 @@ char *GMessage[2] = {
 		printf("flipping!!%d\n", pjct->Sgrp.usrd->loop);
 		#endif
 		if(pjct->Sgrp.usrd->loop == SGRP_WUPS) {
-			sgrp_wind_sett(pjct->Sgrp.usrd, SGRP_WDNS);
+			jl_sg_set_window(pjct->Sgrp.usrd, SGRP_WDNS);
 			timeTilMessageVanish = 255;
 		}else{
-			sgrp_wind_sett(pjct->Sgrp.usrd, SGRP_WUPS);
+			jl_sg_set_window(pjct->Sgrp.usrd, SGRP_WUPS);
 			timeTilMessageVanish = 255;
 		}
 	}
@@ -103,10 +103,12 @@ char *GMessage[2] = {
 	}
 
 	void _jal5_grph_loop(sgrp_user_t* pusr) {
+	//Menu Bar
 		grph_draw_simg(pusr, 1, .9, 0., .1, .1, 2, 255);
 	//if computer, draw mouse
 	#if PLATFORM == 0
-		grph_draw_simg(pusr, 0, inpt_gets_xmse(), inpt_gets_ymse(),
+		grph_draw_simg(pusr, 0,
+			inpt_gets_xmse(pusr), inpt_gets_ymse(pusr),
 			.075, .075, 254,255);
 	#endif
 	}

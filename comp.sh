@@ -6,38 +6,40 @@
 
 printf "[COMP]compiling separate JLVM object files....\n"
 #BLIBS
-gcc src/amem.c -c -o ../../obj/jlvm/amem.o $(sdl2-config --cflags) -Wall #1
-gcc src/clmp.c -c -o ../../obj/jlvm/clmp.o $(sdl2-config --cflags) -Wall #2
-gcc src/siop.c -c -o ../../obj/jlvm/siop.o $(sdl2-config --cflags) -Wall #3
-gcc src/file.c -c -o ../../obj/jlvm/file.o $(sdl2-config --cflags) -Wall #4
-gcc src/comm.c -c -o ../../obj/jlvm/comm.o $(sdl2-config --cflags) -Wall #5
-gcc src/inpt.c -c -o ../../obj/jlvm/inpt.o $(sdl2-config --cflags) -Wall #6
-gcc src/sgrp.c -c -o ../../obj/jlvm/sgrp.o $(sdl2-config --cflags) -Wall #7
-gcc src/lsdl.c -c -o ../../obj/jlvm/lsdl.o $(sdl2-config --cflags) -Wall #8
-gcc src/eogl.c -c -o ../../obj/jlvm/eogl.o $(sdl2-config --cflags) -Wall #9
-gcc src/grph.c -c -o ../../obj/jlvm/grph.o $(sdl2-config --cflags) -Wall #10
-gcc src/vide.c -c -o ../../obj/jlvm/vide.o $(sdl2-config --cflags) -Wall #11
-gcc src/audi.c -c -o ../../obj/jlvm/audi.o $(sdl2-config --cflags) -Wall #12
+gcc src/me.c -c -o ../../obj/jlvm/me.o $(sdl2-config --cflags) -Wall #1
+gcc src/cl.c -c -o ../../obj/jlvm/cl.o $(sdl2-config --cflags) -Wall #2
+gcc src/io.c -c -o ../../obj/jlvm/io.o $(sdl2-config --cflags) -Wall #3
+gcc src/fl.c -c -o ../../obj/jlvm/fl.o $(sdl2-config --cflags) -Wall #4
+gcc src/cm.c -c -o ../../obj/jlvm/cm.o $(sdl2-config --cflags) -Wall #5
+gcc src/ct.c -c -o ../../obj/jlvm/ct.o $(sdl2-config --cflags) -Wall #6
+gcc src/sg.c -c -o ../../obj/jlvm/sg.o $(sdl2-config --cflags) -Wall #7
+gcc src/dl.c -c -o ../../obj/jlvm/dl.o $(sdl2-config --cflags) -Wall #8
+gcc src/gl.c -c -o ../../obj/jlvm/gl.o $(sdl2-config --cflags) -Wall #9
+gcc src/gr.c -c -o ../../obj/jlvm/gr.o $(sdl2-config --cflags) -Wall #10
+gcc src/vi.c -c -o ../../obj/jlvm/vi.o $(sdl2-config --cflags) -Wall #11
+gcc src/au.c -c -o ../../obj/jlvm/au.o $(sdl2-config --cflags) -Wall #12
 #####
 
 printf "[COMP]compiling singular JLVM object file....\n"
 rm ../../bin/jlvm/jlib/jlvm.o
 rm ../../bin/jlvm/jlib/jlvm.h
-rm ../../bin/jlvm/jlib/jlvm_sgrp.h
-rm ../../bin/jlvm/jlib/jlvm_inpt.h
+rm ../../bin/jlvm/jlib/jlvm_sg.h
+rm ../../bin/jlvm/jlib/jlvm_ct.h
 # 
 
 ar csr ../../bin/jlvm/jlib/jlvm.o \
 ../../obj/jlvm/glew.o \
-../../obj/jlvm/amem.o ../../obj/jlvm/clmp.o ../../obj/jlvm/siop.o ../../obj/jlvm/file.o \
-../../obj/jlvm/comm.o ../../obj/jlvm/inpt.o ../../obj/jlvm/sgrp.o ../../obj/jlvm/lsdl.o \
-../../obj/jlvm/eogl.o ../../obj/jlvm/grph.o ../../obj/jlvm/vide.o ../../obj/jlvm/audi.o \
+../../obj/jlvm/me.o ../../obj/jlvm/cl.o ../../obj/jlvm/io.o ../../obj/jlvm/fl.o \
+../../obj/jlvm/cm.o ../../obj/jlvm/ct.o ../../obj/jlvm/sg.o ../../obj/jlvm/dl.o \
+../../obj/jlvm/gl.o ../../obj/jlvm/gr.o ../../obj/jlvm/vi.o ../../obj/jlvm/au.o \
 
 printf "[COMP]updating jlvm's bin folder....\n"
 cp src/header/jlvm.h ../../bin/jlvm/jlib/jlvm.h
-cp src/header/jlvm_sgrp.h ../../bin/jlvm/jlib/jlvm_sgrp.h
-cp src/header/jlvm_inpt.h ../../bin/jlvm/jlib/jlvm_inpt.h
+cp src/header/jlvm_sg.h ../../bin/jlvm/jlib/jlvm_sg.h
+cp src/header/jlvm_ct.h ../../bin/jlvm/jlib/jlvm_ct.h
 printf "[COMP]updating andr...\n"
 cp --recursive -u -t ../../bin/jlvm/ANDR/andk/ANDROID/jni/src/ src/*
+cp --recursive -u -t ../../bin/jlvm/ANDR/andk/ANDROID/bin/jlvm/jlib/ \
+ ../../bin/jlvm/jlib/*
 
 printf "[COMP]done!\n"

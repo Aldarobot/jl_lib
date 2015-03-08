@@ -3,7 +3,7 @@
  * jlvm_siop is a library for printing to various terminals.
 */
 
-#include "header/jlvmpu.h"
+#include "header/jlvm_pr.h"
 
 static void _siop_indt(sgrp_user_t* pusr) {
 	int i;

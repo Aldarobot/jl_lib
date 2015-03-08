@@ -107,7 +107,8 @@
 	#define INPT_COMP_CLRT 31//NYI: Right Click(PC only) -or- Ctr-Click
 	#define INPT_COMP_CLCR 32//NYI: Middle Click
 	#define INPT_COMP_MSVW 33//NYI: Mouse Move [ 3D: looking around ]
-	#define INPT_COMP_MAXX 34
+	#define INPT_COMP_MENU 34//Menu Key
+	#define INPT_COMP_MAXX 35
 //android
 	//normal buttons
 	#define INPT_ANDR_BTNA 0 //NYI: Virtual button A
@@ -173,7 +174,8 @@
 	#define INPT_ANDR_TCCR 60 //Touch Center
 	#define INPT_ANDR_TOUC 61 //Touch(X,Y) 255-0, 382-0
 	#define INPT_ANDR_TCJS 62 //NYI: Touch(X,Y) 255-0, 255-0
-	#define INPT_ANDR_MAXX 63
+	#define INPT_ANDR_MENU 63 //Menu Key
+	#define INPT_ANDR_MAXX 64
 
 #if PLATFORM == 0 //COMPUTER
 	#define INPT_ALLP(nintendo, computer, android) computer
@@ -182,6 +184,11 @@
 #else //3DS/WiiU
 	#define INPT_ALLP(nintendo, computer, android) nintendo
 #endif
+
+#define INPT_MAXX INPT_ALLP(\
+		INPT_NINT_MAXX,\
+		INPT_COMP_MAXX,\
+		INPT_ANDR_MAXX)
 
 /*
  * When this function is called, how many input modes your program is going to
@@ -239,7 +246,7 @@ void INPT_updm(uint8_t mode);
  *		USR_DEFINED_EVENT1, onEvent);
 */
 void inpt_mode_addi(sgrp_user_t *pusr, uint8_t libevent, uint8_t usrevent,
-	void (*fn)(float x, float y));
+	void (*fn)(sgrp_user_t *pusr, float x, float y));
 /*
  * This adds a directional button (A Joystick/Arrow Keys/WASD etc.)
  * This function has 4 directions: UP/DOWN/LEFT/RIGHT
@@ -256,5 +263,13 @@ void INPT_adde(void);
 void INPT_addn(void);
 void INPT_adda(void);
 
-float inpt_gets_xmse(void);
-float inpt_gets_ymse(void);
+float inpt_gets_xmse(sgrp_user_t *pusr);
+float inpt_gets_ymse(sgrp_user_t *pusr);
+
+/*
+ * Returns 0 if key isn't pressed
+ * Returns 1 if key is just pressed
+ * Returns 2 if key is held down
+ * Returns 3 if key is released
+*/
+uint8_t jl_ct_key_pressed(sgrp_user_t *pusr, uint8_t key);

@@ -3,7 +3,7 @@
  * jlvm_blib_sgrp is a library for handling windows.
 */
 
-#include "header/jlvmpu.h"
+#include "header/jlvm_pr.h"
 #define TEXTURE_WH 1024*1024
 #define JAL5_SGRP_MAIN_SFPS 30//screen frames per second
 #define JAL5_SGRP_MAIN_SAPT 1000/JAL5_SGRP_MAIN_SFPS //Allowed Processing Time
@@ -47,20 +47,19 @@ uint32_t init_image_location = 0;
 uint32_t prev_tick = 0;
 uint32_t this_tick = 0;
 uint32_t processingTimeMillis = 0;
-uint16_t begin_image_id = 0;
 uint16_t image_id = 0;
 
 uint8_t jal5_sgrp_lsdl_gmse(uint8_t a) {
 	return SDL_GetMouseState(NULL,NULL)&SDL_BUTTON(a);
 }
 
-void sgrp_mode_init(sgrp_user_t* pusr, uint8_t mdec) {
+void jl_sg_mode_init(sgrp_user_t* pusr, uint8_t mdec) {
 	jvct_t* pjct = pusr->pjct;
 	pjct->Sgrp.mdes = malloc(mdec * sizeof(__jal5_sgrp_mode_t));
 	pjct->Sgrp.usrd->mdec = mdec;
 }
 
-void sgrp_mode_iset(
+void jl_sg_smode_fncs(
 	sgrp_user_t* pusr,
 	void (* exit)(sgrp_user_t* pusr),
 	void (* wups)(sgrp_user_t* pusr),
@@ -74,7 +73,7 @@ void sgrp_mode_iset(
 	pjct->Sgrp.mdes[pjct->Sgrp.usrd->mode].tclp[SGRP_TERM].func = term;
 }
 
-void sgrp_wind_sett(sgrp_user_t* pusr, uint8_t window) {
+void jl_sg_set_window(sgrp_user_t* pusr, uint8_t window) {
 	pusr->loop = window;
 }
 
@@ -199,15 +198,13 @@ static inline u08t jgr_load_jlpx(jvct_t * pjct, uint8_t *data, uint32_t id) {
 
 //Load the images in the image file
 static inline void jlvm_ini_images(jvct_t * pjct, uint8_t *data) {
-	int i = 0;
 //	siop_offs_sett(pjct->Sgrp.usrd, "INIM");
-	begin_image_id = image_id;
 	#if JLVM_DEBUG >= JLVM_DEBUG_PROGRESS
 	printf("[JLVM/LIM] loading images...\n");
 	printf("lne %d\n", (int)strlen((void *)data));
 	#endif
 //load textures
-	for(i = 0; i < 5; i++) {
+	while(1) {
 		if(jgr_load_jlpx(pjct, data, IMGID_TEXT_IMAGE))
 			continue;
 		else
@@ -268,8 +265,11 @@ void jlvm_kill(jvct_t* pjct, char *msg) {
 }
 
 //quit the program
-void sgrp_wind_kill(sgrp_user_t* pusr) {
-	jlvm_quit(pusr->pjct, 0);
+void jl_sg_kill(sgrp_user_t* pusr) {
+	if(pusr->loop == SGRP_EXIT)
+		jlvm_quit(pusr->pjct, 0);
+	else
+		pusr->loop = SGRP_EXIT;
 }
 
 //Do Nothing
@@ -294,6 +294,24 @@ static inline float _jal5_sgrp_istm(void) {
 	}
 }
 
+/*
+ * Add images From program "pprg" in file "pfile"
+*/
+void jl_sg_add_image(sgrp_user_t* pusr, strt pprg, strt pfile) {
+	//Load Graphics
+	uint8_t *img;
+	img = file_pkdj_load(
+		pusr,
+		(void*)(file_reso_loca(pusr, pprg, pfile)->data),
+		"jlex/2/_img");
+	#if JLVM_DEBUG >= JLVM_DEBUG_PROGRESS
+	jal5_siop_cplo(pusr, "Loading Images...\n");
+	#endif
+	if(img != NULL) {
+		jlvm_ini_images(pusr->pjct, img);
+	}
+}
+
 void _jal5_sgrp_init(jvct_t * pjct) {
 	siop_offs_sett(pjct->Sgrp.usrd, "SGRP");
 	siop_offs_sett(pjct->Sgrp.usrd, "INIT");
@@ -305,14 +323,7 @@ void _jal5_sgrp_init(jvct_t * pjct) {
 	pjct->Sgrp.usrd->loop = SGRP_TERM; //Set Default Window To Terminal
 	SDL_GetMouseState(&pjct->Sgrp.xmse, &pjct->Sgrp.ymse);
 	//Load Graphics
-	uint8_t *img;
-	img = file_pkdj_mnld(pjct->Sgrp.usrd, "jlex/2/_img");
-	#if JLVM_DEBUG >= JLVM_DEBUG_PROGRESS
-	jal5_siop_cplo(pjct->Sgrp.usrd, "Loading Images...\n");
-	#endif
-	if(img != NULL) {
-		jlvm_ini_images(pjct, img);
-	}
+	jl_sg_add_image(pjct->Sgrp.usrd, Strt("JLVM"), Strt("jlvm.zip"));
 }
 
 //Run Loop X
@@ -388,6 +399,6 @@ int32_t main(int argc, char *argv[]) {
 	if(jcpt->Sgrp.usrd->mdec) {
 		while(1) _jal5_sgrp_loop(jcpt->Sgrp.usrd); //main loop
 	}
-	sgrp_wind_kill(jcpt->Sgrp.usrd);//kill the program
+	jl_sg_kill(jcpt->Sgrp.usrd);//kill the program
 	return 126;
 }

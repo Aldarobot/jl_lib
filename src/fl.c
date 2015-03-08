@@ -1,9 +1,10 @@
-#include "header/jlvmpu.h"
+#include "header/jlvm_pr.h"
 
 #define PKFMAX 10000000
+#define FAKE "jlvm.zip"
 
 int32_t JL_bytesRead;
-char *gvar_pkfl;
+strt gvar_pkfl;
 char *errf;
 
 void file_file_save(sgrp_user_t* pusr, char *file, char *name, uint32_t bytes) {
@@ -229,13 +230,13 @@ uint8_t *file_pkdj_load(sgrp_user_t* pusr, char *packageFileName, char *filename
 uint8_t *file_pkdj_mnld(sgrp_user_t* pusr, char *Fname) {
 	uint8_t *freturn;
 	if(
-		((freturn = file_pkdj_load(pusr,gvar_pkfl,Fname)) == NULL) &&
+		((freturn = file_pkdj_load(pusr,(void *)gvar_pkfl->data,Fname)) == NULL) &&
 		pusr->errf == ERRF_FIND ) //Package doesn't exist!! - create
 	{
 		#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
 		jal5_siop_cplo(pusr, "Creating Package...\n");
 		#endif
-		file_file_save(pusr, jal5_head_jlvm(), gvar_pkfl,
+		file_file_save(pusr, jal5_head_jlvm(), (void *)gvar_pkfl->data,
 			jal5_head_size());
 		#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
 		jal5_siop_cplo(pusr, "Attempt Complete!\n");
@@ -245,7 +246,7 @@ uint8_t *file_pkdj_mnld(sgrp_user_t* pusr, char *Fname) {
 		jal5_siop_cplo(pusr, "Try loading again....\n");
 		#endif
 		if(
-			((freturn = file_pkdj_load(pusr,gvar_pkfl,Fname))
+			((freturn = file_pkdj_load(pusr,(void *)gvar_pkfl->data,Fname))
 				== NULL) &&
 			pusr->errf == ERRF_FIND )//Package still doesn't exist!!
 		{
@@ -258,15 +259,18 @@ uint8_t *file_pkdj_mnld(sgrp_user_t* pusr, char *Fname) {
 	return freturn;
 }
 
-void jal5_make_fdir(jvct_t * pjct, const char *pfilebase) {
-	if(mkdir(pfilebase, 0)) {
+/*
+ * Create a folder (directory)
+*/
+void file_make_fdir(sgrp_user_t* pusr, strt pfilebase) {
+	if(mkdir((void *)pfilebase->data, 0)) {
 		int errsv = errno;
 		if(errsv == EEXIST) {
 			#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
 			jal5_siop_cplo(pusr, "Directory Exist! Continue...\n");
 			#endif
 		}else{
-			jlvm_dies(pjct,
+			jlvm_dies(pusr->pjct,
 				amem_strt_merg(
 					Strt("Directory: Uh oh..."),
 					Strt(strerror(errsv)), STRT_TEMP
@@ -280,32 +284,26 @@ void jal5_make_fdir(jvct_t * pjct, const char *pfilebase) {
 	}
 }
 
-void _jal5_file_init(jvct_t * pjct) {
-
-	siop_offs_sett(pjct->Sgrp.usrd, "FILE");
-	siop_offs_sett(pjct->Sgrp.usrd, "INIT");
-
+/*
+ * Return the location of the resource pack for program with name
+ * "pprg_name"
+*/
+strt file_reso_loca(sgrp_user_t* pusr, strt pprg_name, strt pfilename) {
 	int i;
-	const char *fprg_name = "JLVM";
-
-	#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
-	jal5_siop_cplo(pjct->Sgrp.usrd, "program name:");
-	#endif
-	jlvmpi_prg_name(fprg_name);
-
+	
 	#if PLATFORM == 1 //PHONE
 	char *filebase = (void*)amem_strt_merg(
 		Strt(JLVM_FILEBASE),
-		amem_strt_merg(Strt(fprg_name), Strt("/"), STRT_TEMP),
+		amem_strt_merg(pprg_name, Strt("/"), STRT_TEMP),
 		STRT_KEEP
 	)->data;
 	errf = amem_strt_merg(Strt(JLVM_FILEBASE), Strt("errf.txt"), STRT_KEEP)
 		->data;
 	#elif PLATFORM == 0 //COMPUTER
-	char *filebase = SDL_GetPrefPath("JLVM",fprg_name);
+	char *filebase = SDL_GetPrefPath("JLVM",(char *)pprg_name->data);
 	if(filebase == NULL) {
 		filebase = (void*) amem_strt_merg(
-			Strt("JLVM/"),Strt(fprg_name),STRT_KEEP)->data;
+			Strt("JLVM/"),pprg_name,STRT_KEEP)->data;
 	}
 	printf("filebase: %s\n", filebase);
 	errf = malloc(strlen(filebase)+3);
@@ -326,20 +324,15 @@ void _jal5_file_init(jvct_t * pjct) {
 		#endif
 	#else //OTHER
 	#endif
-		siop_offs_sett(pjct->Sgrp.usrd, "FLBS");
-		#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
-		jal5_siop_cplo(pjct->Sgrp.usrd, filebase);
-		#endif
-	const char *fake = "jlvm.zip";
-	int fvar_maxx = strlen(filebase)+strlen(fake)+2;
-	gvar_pkfl = malloc(fvar_maxx);
-	for(i = 0; i < fvar_maxx; i++) {
-		gvar_pkfl[i] = '\0';
-	}
-
+	
+	siop_offs_sett(pusr, "FLBS");
+	#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
+	jal5_siop_cplo(pusr, filebase);
+	#endif
+	
 	//filebase maker
 	#if PLATFORM == 1
-	jal5_make_fdir(pjct, JLVM_FILEBASE);
+	file_make_fdir(pusr, Strt(JLVM_FILEBASE));
 	#else
 	int fsize = strlen(filebase)+strlen(JLVM_FILEBASE);
 	char *filebase2 = malloc(fsize);
@@ -348,24 +341,36 @@ void _jal5_file_init(jvct_t * pjct) {
 	}
 	strcat(filebase2,filebase);
 	strcat(filebase2,JLVM_FILEBASE);
-	jal5_make_fdir(pjct, filebase2);
+	file_make_fdir(pusr, Strt(filebase2));
 	#endif
-	jal5_make_fdir(pjct, filebase);
+	file_make_fdir(pusr, Strt(filebase));
+
+	strt pvar_pkfl = amem_strt_merg(Strt(filebase), Strt(FAKE), STRT_KEEP);
+	#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
+	jal5_siop_cplo(pusr, pvar_pkfl);
+	#endif
+	
+	siop_offs_sett(pusr, "INIT");
+	siop_offs_sett(pusr, "PKFL");
+	#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
+	jal5_siop_cplo(pusr, pvar_pkfl);
+	#endif
+	return pvar_pkfl;
+}
+
+void _jal5_file_init(jvct_t * pjct) {
+
+	siop_offs_sett(pjct->Sgrp.usrd, "FILE");
+	siop_offs_sett(pjct->Sgrp.usrd, "INIT");
 
 	#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
-	jal5_siop_cplo(pjct->Sgrp.usrd, gvar_pkfl);
+	jal5_siop_cplo(pjct->Sgrp.usrd, "program name:");
 	#endif
-	strcat(gvar_pkfl, filebase);
-	#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
-	jal5_siop_cplo(pjct->Sgrp.usrd, "fake\n");
-	#endif
-	strcat(gvar_pkfl, fake);
-	siop_offs_sett(pjct->Sgrp.usrd, "INIT");
-	siop_offs_sett(pjct->Sgrp.usrd, "PKFL");
-	#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
-	jal5_siop_cplo(pjct->Sgrp.usrd, gvar_pkfl);
-	#endif
-	remove(gvar_pkfl);
+	lsdl_prog_name(Strt("JLVM"));
+
+	gvar_pkfl = file_reso_loca(pjct->Sgrp.usrd, Strt("JLVM"), Strt(FAKE));
+	remove((void*)gvar_pkfl->data);
+
 	jal5_file_errf(pjct, "Segmentation Fault / Floatation Exception etc.");
 	siop_offs_sett(pjct->Sgrp.usrd, "JLVM");
 }

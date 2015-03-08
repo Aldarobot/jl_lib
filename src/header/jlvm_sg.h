@@ -1,6 +1,6 @@
 /*
  * (c) Jeron A. Lau
- * jlvm_sgrp is a library for handling windows
+ * jl/sg is a library for handling windows
 */
 
 //Platform Declarations

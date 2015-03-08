@@ -1,4 +1,4 @@
-#include "header/jlvmpu.h"
+#include "header/jlvm_pr.h"
 
 //VARS
 char windowTitle[2][16];
@@ -121,11 +121,15 @@ void _jal5_lsdl_glpt_view(jvct_t *pjct, uint16_t x, uint16_t y) {
 	SDL_GL_SwapWindow(displayWindow);
 }
 
-void jlvmpi_prg_name(const char name[]) {
+/*
+ * Set the program title.  Used as window name, and as resource
+ * directory.
+*/
+void lsdl_prog_name(strt name) {
 	int ii;
 	for(ii = 0; ii < 16; ii++) {
-		windowTitle[0][ii] = name[ii];
-		if(name[ii] == '\0') { break; }
+		windowTitle[0][ii] = name->data[ii];
+		if(name->data[ii] == '\0') { break; }
 	}
 	windowTitle[0][15] = '\0';
 #if PLATFORM == 0

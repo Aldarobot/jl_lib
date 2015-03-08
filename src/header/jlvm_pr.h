@@ -60,7 +60,7 @@
 	#include <stdlib.h>
 	#include <math.h>
 	
-	#include "jlvm_vmap.h"
+	#include "jlvm_vm.h" //Variable Map
 
 #define MAXFILELEN 1000 * 100000 //100,000 kb
 
@@ -233,7 +233,6 @@ int32_t jlvmpi_quit(void);
 void jlvmpi_gev_key(void);
 void jlvmpi_ini_events(void ( *onClick )(uint8_t x, uint8_t y));
 void jlvmpi_set_fps(uint8_t PFps);
-void jlvmpi_prg_name(const char name[]);
 void jlvm_bind_buffer(uint32_t p_buffer_id);
 void jlvm_set_buffer(GLfloat p_buffer[], uint8_t size);
 void jlvmpi_ini_wname(void);

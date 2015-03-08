@@ -39,7 +39,33 @@
 
 //INPT:
 	typedef struct{
+		void ( *OnEvent )(sgrp_user_t *pusr, float x, float y);
+		uint8_t Type;
+	}jlvm_evnt_t;
+
+	typedef struct{
+		void ( *Event )(sgrp_user_t *pusr, jlvm_evnt_t * PMode);
+	}jlvm_slib_evnt_t;
+
+	typedef struct{
 		uint8_t *CtrC;
+		#if PLATFORM == 1 //PHONE
+		uint8_t menu;
+		#endif
+		jlvm_slib_evnt_t getEvents[INPT_MAXX];
+		void **events;
+
+		float msx, msy;
+		int msxi, msyi;
+		uint8_t heldDown;
+		uint32_t sd; //NYI: stylus delete
+		SDL_Event event;
+
+		#if PLATFORM == 0
+		const Uint8 *keys;
+		#endif
+		
+		uint8_t keyDown;
 	}_jal5_inpt_t;
 
 //AUDI:

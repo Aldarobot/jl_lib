@@ -6,10 +6,10 @@
 
 printf "[COMP/DEVK]compiling Devk programs....\n"
 printf "[COMP/DEVK]inch....\n"
-gcc ../JLVM_BIN/jlib/libzip.o inch.c cuhc.c -o ../JLVM_BIN/jlvm_inch
+gcc ../../bin/jlvm/jlib/libzip.o inch.c cuhc.c -o ../../bin/jlvm/jlvm_inch
 printf "[COMP/DEVK]jvrp....\n"
-gcc jvrp.c -o ../JLVM_BIN/jlvm_jvrp ../JLVM_BIN/jlib/libzip.o -lz
+gcc jvrp.c -o ../../bin/jlvm/jlvm_jvrp ../../bin/jlvm/jlib/libzip.o -lz
 printf "[COMP/DEVK]conv....\n"
-cd proj/conv/
+cd ../jlvm_proj/conv/
 sh comp.sh
 printf "[COMP/DEVK] DONE!\n"

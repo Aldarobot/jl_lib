@@ -4,8 +4,8 @@
 */
 
 #include <stdint.h>
-#include "jlvm_sgrp.h"
-#include "jlvm_inpt.h"
+#include "jlvm_sg.h"
+#include "jlvm_ct.h"
 
 //Fixed point numbers go from -8.f to 8.f
 #define JFXD(x) ((int16_t)(x*4000)) //create fixed number from float
@@ -118,14 +118,14 @@ typedef struct{
 		of a game and the actual game would be on different modes.
 */
 	//Create a window.  Allocate modes of count "mdec"
-	void sgrp_mode_init(sgrp_user_t* pusr, u08t mdec);
+	void jl_sg_mode_init(sgrp_user_t* pusr, u08t mdec);
 
 	// Exit unsuccessfully with an error message.  "prop" is used for
 	// customizing the error message
 		//	void (* dies)(char *message, sgrp_t *prop);
 
 	//Set the current mode loop functions
-	void sgrp_mode_iset(
+	void jl_sg_smode_fncs(
 		sgrp_user_t* pusr,
 		void (* exit)(sgrp_user_t* pusr),
 		void (* wups)(sgrp_user_t* pusr),
@@ -133,16 +133,26 @@ typedef struct{
 		void (* term)(sgrp_user_t* pusr));
 
 	//Set Which Window
-	void sgrp_wind_sett(sgrp_user_t* pusr, uint8_t window);
+	void jl_sg_set_window(sgrp_user_t* pusr, uint8_t window);
 
 	//Kill The Program
-	void sgrp_wind_kill(sgrp_user_t* pusr);
+	void jl_sg_kill(sgrp_user_t* pusr);
+	
+	/*
+	 * Add images From program "pprg" in file "pfile"
+	*/
+	void jl_sg_add_image(sgrp_user_t* pusr, strt pprg, strt pfile);
 
 /*
 	_NKL_LSDL
 		LSDL AKA. SDL or Simple Direct Media Layer:  LSDL is a popular library
 		for making games.
 */
+	/*
+	 * Set the program title.  Used as window name, and as resource
+	 * directory.
+	*/
+	void lsdl_prog_name(strt name);
 
 /*
 	JAL5_GRPH
@@ -151,11 +161,11 @@ typedef struct{
 		2D rendering & 3D rendering.
 */
 	/*
-	 * Draw An Image, 'jvct' is the library context, 'i' is the ID of the
-	 * image.  'xywh' is where it is and how big it is drawn.  'chr' is 0
-	 * unless you want to use the image as a charecter map, then it will
-	 * zoom into charecter 'chr'.  'a' is the transparency each pixel is
-	 * multiplied by; 255 is solid and 0 is totally invisble
+	 * Draw An Image, 'i' is the ID of the image.  'xywh' is where it is and
+	 * how big it is drawn.  'chr' is 0 unless you want to use the image as
+	 * a charecter map, then it will zoom into charecter 'chr'.  'a' is the
+	 * transparency each pixel is multiplied by; 255 is solid and 0 is
+	 * totally invisble.
 	*/
 	void grph_draw_simg(sgrp_user_t* pusr, s32t i,
 		float x,float y,float w,float h,
@@ -225,6 +235,16 @@ typedef struct{
 	// "packageFileName"
 	char file_pkdj_save(sgrp_user_t* pusr, char *packageFileName,
 		char *fileName,	void *data, uint64_t dataSize);
+	/*
+	 * Create a folder (directory)
+	*/
+	void file_make_fdir(sgrp_user_t* pusr, strt pfilebase);
+	/*
+	 * Return the location of the resource pack for program with name
+	 * "pprg_name"
+	*/
+	strt file_reso_loca(sgrp_user_t* pusr, strt pprg_name, strt pfilename);
+	
 
 /*
 	JAL5_COMM

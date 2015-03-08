@@ -1,4 +1,4 @@
-#include "header/jlvmpu.h"
+#include "header/jlvm_pr.h"
 
 char *source_frag_tex = 
 #ifdef GL_ES_VERSION_2_0
