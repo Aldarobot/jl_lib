@@ -5,7 +5,7 @@
  * devices.
 */
 
-#include "header/jlvm_pr.h"
+#include "header/jl_pr.h"
 
 #if PLATFORM == 0
 	void jl_ct_key(sgrp_user_t *pusr, jlvm_evnt_t * PMode, uint8_t key) {
@@ -55,9 +55,9 @@
 		jvct_t* pjct = pusr->pjct;
 		if(
 		#if PLATFORM == 0 //COMPUTER
-			pjct->Inpt.keys[SDL_SCANCODE_APPLICATION]
+			pjct->ct.keys[SDL_SCANCODE_APPLICATION]
 		#elif PLATFORM == 1 //PHONE
-			pjct->Inpt.menu
+			pjct->ct.menu
 		#endif
 		) {
 			PMode->OnEvent(pusr, 255, 0);
@@ -66,11 +66,11 @@
 	
 	void jl_ct_left_click(sgrp_user_t *pusr, jlvm_evnt_t * PMode) {
 		jvct_t* pjct = pusr->pjct;
-		if(pjct->Inpt.heldDown &&
-			((pjct->Inpt.msx <= .9) || (pjct->Inpt.msy >= .1)))
+		if(pjct->ct.heldDown &&
+			((pjct->ct.msx <= .9) || (pjct->ct.msy >= .1)))
 		{
 			PMode->OnEvent(pusr,
-				inpt_gets_xmse(pusr), inpt_gets_ymse(pusr));
+				jl_ct_gmousex(pusr), jl_ct_gmousey(pusr));
 		}
 	}
 	
@@ -134,65 +134,65 @@
 	}
 
 	void tuch(sgrp_user_t *pusr, jlvm_evnt_t * PMode) { //Any touch
-		PMode->OnEvent(pusr,inpt_gets_xmse(pusr), inpt_gets_ymse(pusr));
+		PMode->OnEvent(pusr,jl_ct_gmousex(pusr), jl_ct_gmousey(pusr));
 	}
 #endif
 
-void INPT_txty(void) {
+void jl_ct_txty(void) {
 	SDL_StartTextInput();
 }
 
-void INPT_txtn(void) {
+void jl_ct_txtn(void) {
 	SDL_StopTextInput();
 }
 
-float inpt_gets_xmse(sgrp_user_t *pusr) {
+float jl_ct_gmousex(sgrp_user_t *pusr) {
 	jvct_t* pjct = pusr->pjct;
-	return pjct->Inpt.msx;
+	return pjct->ct.msx;
 }
 
-float inpt_gets_ymse(sgrp_user_t *pusr) {
+float jl_ct_gmousey(sgrp_user_t *pusr) {
 	jvct_t* pjct = pusr->pjct;
-	return pjct->Inpt.msy;
+	return pjct->ct.msy;
 }
 
-static inline void _jal5_inpt_hndl(jvct_t *pjct) {
+static inline void _jal5_jl_ct_hndl(jvct_t *pjct) {
 	#if PLATFORM == 1 //PHONE
-		pjct->Inpt.menu = 0;
-		if(pjct->Inpt.event.type==SDL_WINDOWEVENT) {
-			if(pjct->Inpt.event.window.event ==
+		pjct->ct.menu = 0;
+		if(pjct->ct.event.type==SDL_WINDOWEVENT) {
+			if(pjct->ct.event.window.event ==
 				SDL_WINDOWEVENT_RESIZED)
 			{
 				_jal5_lsdl_glpt_view(pjct,
-					pjct->Inpt.event.window.data1,
-					pjct->Inpt.event.window.data2);
+					pjct->ct.event.window.data1,
+					pjct->ct.event.window.data2);
 				jal5_file_errf(pjct, "windoweventresize....");
 			}
-		}else if( pjct->Inpt.event.type==SDL_FINGERDOWN ) {
+		}else if( pjct->ct.event.type==SDL_FINGERDOWN ) {
 			msx = event.tfinger.x;
 			msy = event.tfinger.y;
-			pjct->Inpt.heldDown = 1;
-		}else if( pjct->Inpt.event.type==SDL_FINGERUP ) {
-			pjct->Inpt.heldDown = 0;
-		}else if( pjct->Inpt.event.type==SDL_KEYDOWN ) {
-			if( pjct->Inpt.event.key.keysym.scancode ==
+			pjct->ct.heldDown = 1;
+		}else if( pjct->ct.event.type==SDL_FINGERUP ) {
+			pjct->ct.heldDown = 0;
+		}else if( pjct->ct.event.type==SDL_KEYDOWN ) {
+			if( pjct->ct.event.key.keysym.scancode ==
 				SDL_SCANCODE_AC_BACK)
 			{ //Back Key
 				#if JLVM_DEBUG >= JLVM_DEBUG_MINIMAL
-				jal5_siop_cplo(0,"JLVM","JLVM sêȳ'ēŋ: \"a'kwyt'ēŋ\"");
+				jl_io_print_lowc(0,"JLVM","JLVM sêȳ'ēŋ: \"a'kwyt'ēŋ\"");
 				#endif
 				exit(0);
 			}else{ //Menu Key
-				pjct->Inpt.menu = 1;
+				pjct->ct.menu = 1;
 			}
 		}
 	#elif PLATFORM == 0 //PC
-		if ( pjct->Inpt.event.wheel.y > 0 &&
-			 pjct->Inpt.event.wheel.type == SDL_MOUSEWHEEL)
+		if ( pjct->ct.event.wheel.y > 0 &&
+			 pjct->ct.event.wheel.type == SDL_MOUSEWHEEL)
 		{
 			//Grscrup = JL_PP;
-		}else if ( pjct->Inpt.event.wheel.y < 0 &&
-			 pjct->Inpt.event.wheel.type == SDL_MOUSEWHEEL )
+		}else if ( pjct->ct.event.wheel.y < 0 &&
+			 pjct->ct.event.wheel.type == SDL_MOUSEWHEEL )
 		{
 			//Glscrdn = JL_PP;
 		}
@@ -200,153 +200,153 @@ static inline void _jal5_inpt_hndl(jvct_t *pjct) {
 }
 
 //Run Pre-set Events currently being activated
-static inline void _jal5_inpt_evnt_runa(jvct_t * pjct) {
+static inline void _jal5_jl_ct_evnt_runa(jvct_t * pjct) {
 	int i;
 
-	if( (pjct->Inpt.msx > .9) && (pjct->Inpt.msy < .1) &&
-		(pjct->Inpt.heldDown == 1))
+	if( (pjct->ct.msx > .9) && (pjct->ct.msy < .1) &&
+		(pjct->ct.heldDown == 1))
 	{
 		_grph_flip_scrn(pjct);
-		pjct->Inpt.heldDown = 2;
+		pjct->ct.heldDown = 2;
 		return;
 	}
-	if( pjct->Inpt.events
+	if( pjct->ct.events
 		#if PLATFORM == 1 //PHONE
-			&& pjct->Inpt.heldDown
+			&& pjct->ct.heldDown
 		#endif
 	)
 	{
-		jlvm_evnt_t *Mode = pjct->Inpt.events[pjct->Sgrp.usrd->mode];
-		if(pjct->Inpt.getEvents == NULL) {
+		jlvm_evnt_t *Mode = pjct->ct.events[pjct->sg.usrd->mode];
+		if(pjct->ct.getEvents == NULL) {
 			jlvm_dies(pjct, Strt(
-				"[ERR] Null Pointer: pjct->Inpt.getEvents\n"));
+				"[ERR] Null Pointer: pjct->ct.getEvents\n"));
 		}
-		for(i = 0; i < pjct->Inpt.CtrC[pjct->Sgrp.usrd->mode]; i++) {
-			if(pjct->Inpt.getEvents[Mode[i].Type].Event == NULL) {
+		for(i = 0; i < pjct->ct.CtrC[pjct->sg.usrd->mode]; i++) {
+			if(pjct->ct.getEvents[Mode[i].Type].Event == NULL) {
 				jlvm_dies(pjct,
-					amem_strt_merg(
+					jl_me_strt_merg(
 					Strt(
 						"[INPT/ERR] Null Pointer: pjct\
-						->Inpt.getEvents.Event"),
-					amem_strt_fnum(Mode[i].Type),
+						->ct.getEvents.Event"),
+					jl_me_strt_fnum(Mode[i].Type),
 					STRT_TEMP));
 			}
-			pjct->Inpt.getEvents[Mode[i].Type].Event(
-				pjct->Sgrp.usrd, &Mode[i]);
+			pjct->ct.getEvents[Mode[i].Type].Event(
+				pjct->sg.usrd, &Mode[i]);
 		}
 		#if PLATFORM == 1 //PHONE
-		pjct->Inpt.heldDown = 2;
+		pjct->ct.heldDown = 2;
 		#endif
 	}
 }
 
-static inline void _jal5_inpt_evnt_updt(jvct_t * pjct) {
-	while(SDL_PollEvent(&pjct->Inpt.event)) _jal5_inpt_hndl(pjct);
+static inline void _jal5_jl_ct_evnt_updt(jvct_t * pjct) {
+	while(SDL_PollEvent(&pjct->ct.event)) _jal5_jl_ct_hndl(pjct);
 	#if PLATFORM == 0 //PC
-		pjct->Inpt.keys = SDL_GetKeyboardState(NULL);
+		pjct->ct.keys = SDL_GetKeyboardState(NULL);
 	#endif
 }
 
 //Main Input Loop
-void _jal5_inpt_loop(jvct_t* pjct) {
-	_jal5_inpt_evnt_updt(pjct);
+void _jl_ct_loop(jvct_t* pjct) {
+	_jal5_jl_ct_evnt_updt(pjct);
 	#if PLATFORM == 0 //PC
 		//Get Whether mouse is down or not and xy coordinates
 		if(
 			SDL_GetMouseState(
-				&pjct->Inpt.msxi,&pjct->Inpt.msyi)
+				&pjct->ct.msxi,&pjct->ct.msyi)
 			&SDL_BUTTON(1))
 		{
-			if(pjct->Inpt.heldDown) {
-				pjct->Inpt.heldDown = 2;
+			if(pjct->ct.heldDown) {
+				pjct->ct.heldDown = 2;
 			}else{
-				pjct->Inpt.heldDown = 1;
+				pjct->ct.heldDown = 1;
 			}
 		}else{
-			pjct->Inpt.heldDown = 0;
+			pjct->ct.heldDown = 0;
 		}
 		//translate integer into float by clipping [0-1]
-		pjct->Inpt.msx =
-			((float)(pjct->Inpt.msxi-2)) / _jal5_lsdl_sres_getw();
-		pjct->Inpt.msy =
-			((float)pjct->Inpt.msyi) / _jal5_lsdl_sres_geth();
+		pjct->ct.msx =
+			((float)(pjct->ct.msxi-2)) / _jal5_lsdl_sres_getw();
+		pjct->ct.msy =
+			((float)pjct->ct.msyi) / _jal5_lsdl_sres_geth();
 		//If Escape key is pressed, then quit the program
-		if(jl_ct_key_pressed(pjct->Sgrp.usrd, SDL_SCANCODE_ESCAPE) == 1)
-			jl_sg_kill(pjct->Sgrp.usrd);
+		if(jl_ct_key_pressed(pjct->sg.usrd, SDL_SCANCODE_ESCAPE) == 1)
+			jl_sg_kill(pjct->sg.usrd);
 	#endif
-	_jal5_inpt_evnt_runa(pjct); //Run Events currently being activated
+	_jal5_jl_ct_evnt_runa(pjct); //Run Events currently being activated
 }
 
-void _jal5_inpt_init(jvct_t* pjct) {
+void _jl_ct_init(jvct_t* pjct) {
 #if PLATFORM == 0
-	pjct->Inpt.getEvents[INPT_COMP_RETN].Event = jl_ct_key_retn;
-	pjct->Inpt.getEvents[INPT_COMP_KEYW].Event = jl_ct_key_keyw;
-	pjct->Inpt.getEvents[INPT_COMP_KEYA].Event = jl_ct_key_keya;
-	pjct->Inpt.getEvents[INPT_COMP_KEYS].Event = jl_ct_key_keys;
-	pjct->Inpt.getEvents[INPT_COMP_KEYD].Event = jl_ct_key_keyd;
-	pjct->Inpt.getEvents[INPT_COMP_ARUP].Event = jl_ct_key_arup;
-	pjct->Inpt.getEvents[INPT_COMP_ARDN].Event = jl_ct_key_ardn;
-	pjct->Inpt.getEvents[INPT_COMP_ARRT].Event = jl_ct_key_arrt;
-	pjct->Inpt.getEvents[INPT_COMP_ARLT].Event = jl_ct_key_arlt;
-//	pjct->Inpt.getEvents[INPT_COMP_MSXY].Event = mous_over;
-	pjct->Inpt.getEvents[INPT_COMP_CLLT].Event = jl_ct_left_click;
-	pjct->Inpt.getEvents[INPT_COMP_MENU].Event = jl_ct_key_menu;
+	pjct->ct.getEvents[JL_CT_COMP_RETN].Event = jl_ct_key_retn;
+	pjct->ct.getEvents[JL_CT_COMP_KEYW].Event = jl_ct_key_keyw;
+	pjct->ct.getEvents[JL_CT_COMP_KEYA].Event = jl_ct_key_keya;
+	pjct->ct.getEvents[JL_CT_COMP_KEYS].Event = jl_ct_key_keys;
+	pjct->ct.getEvents[JL_CT_COMP_KEYD].Event = jl_ct_key_keyd;
+	pjct->ct.getEvents[JL_CT_COMP_ARUP].Event = jl_ct_key_arup;
+	pjct->ct.getEvents[JL_CT_COMP_ARDN].Event = jl_ct_key_ardn;
+	pjct->ct.getEvents[JL_CT_COMP_ARRT].Event = jl_ct_key_arrt;
+	pjct->ct.getEvents[JL_CT_COMP_ARLT].Event = jl_ct_key_arlt;
+//	pjct->ct.getEvents[JL_CT_COMP_MSXY].Event = mous_over;
+	pjct->ct.getEvents[JL_CT_COMP_CLLT].Event = jl_ct_left_click;
+	pjct->ct.getEvents[JL_CT_COMP_MENU].Event = jl_ct_key_menu;
 #elif PLATFORM == 1
-	pjct->Inpt.getEvents[INPT_ANDR_TCCR].Event = tuch_cntr;
-	pjct->Inpt.getEvents[INPT_ANDR_TFUP].Event = tuch_frup;
-	pjct->Inpt.getEvents[INPT_ANDR_TFDN].Event = tuch_frdn;
-	pjct->Inpt.getEvents[INPT_ANDR_TFRT].Event = tuch_frrt;
-	pjct->Inpt.getEvents[INPT_ANDR_TFLT].Event = tuch_frlt;
-	pjct->Inpt.getEvents[INPT_ANDR_TNUP].Event = tuch_nrup;
-	pjct->Inpt.getEvents[INPT_ANDR_TNDN].Event = tuch_nrdn;
-	pjct->Inpt.getEvents[INPT_ANDR_TNRT].Event = tuch_nrrt;
-	pjct->Inpt.getEvents[INPT_ANDR_TNLT].Event = tuch_nrlt;
-	pjct->Inpt.getEvents[INPT_ANDR_TOUC].Event = tuch;
+	pjct->ct.getEvents[JL_CT_ANDR_TCCR].Event = tuch_cntr;
+	pjct->ct.getEvents[JL_CT_ANDR_TFUP].Event = tuch_frup;
+	pjct->ct.getEvents[JL_CT_ANDR_TFDN].Event = tuch_frdn;
+	pjct->ct.getEvents[JL_CT_ANDR_TFRT].Event = tuch_frrt;
+	pjct->ct.getEvents[JL_CT_ANDR_TFLT].Event = tuch_frlt;
+	pjct->ct.getEvents[JL_CT_ANDR_TNUP].Event = tuch_nrup;
+	pjct->ct.getEvents[JL_CT_ANDR_TNDN].Event = tuch_nrdn;
+	pjct->ct.getEvents[JL_CT_ANDR_TNRT].Event = tuch_nrrt;
+	pjct->ct.getEvents[JL_CT_ANDR_TNLT].Event = tuch_nrlt;
+	pjct->ct.getEvents[JL_CT_ANDR_TOUC].Event = tuch;
 #endif
 }
 
-void inpt_mode_init(sgrp_user_t *pusr) {
+void jl_ct_mode_init(sgrp_user_t *pusr) {
 	jvct_t* pjct = pusr->pjct;
 	uint8_t modecount = pusr->mdec;
-	pjct->Inpt.events = malloc(sizeof(void *) * modecount);
-	pjct->Inpt.CtrC = malloc(modecount);
+	pjct->ct.events = malloc(sizeof(void *) * modecount);
+	pjct->ct.CtrC = malloc(modecount);
 }
 
-void inpt_mode_setm(sgrp_user_t *pusr, uint8_t mode, uint8_t controlCount) {
+void jl_ct_mode_setm(sgrp_user_t *pusr, uint8_t mode, uint8_t controlCount) {
 	jvct_t* pjct = pusr->pjct;
 //	printf("mde:%d\n",FMode);
 	if(controlCount)
-		pjct->Inpt.events[mode] = malloc(sizeof(jlvm_evnt_t) * controlCount);
-	pjct->Inpt.CtrC[mode] = controlCount;
+		pjct->ct.events[mode] = malloc(sizeof(jlvm_evnt_t) * controlCount);
+	pjct->ct.CtrC[mode] = controlCount;
 	pusr->mode = mode;
 }
 
-void inpt_mode_addi(sgrp_user_t *pusr, uint8_t libevent, uint8_t usrevent,
+void jl_ct_mode_addi(sgrp_user_t *pusr, uint8_t libevent, uint8_t usrevent,
 	void (*fn)(sgrp_user_t *pusr, float x, float y))
 {
 	jvct_t* pjct = pusr->pjct;
-	jlvm_evnt_t *Mode = pjct->Inpt.events[pusr->mode];
+	jlvm_evnt_t *Mode = pjct->ct.events[pusr->mode];
 	Mode[usrevent].Type = libevent;
 	Mode[usrevent].OnEvent = fn;
 }
 
-void INPT_addr(uint8_t controlNum,
+void jl_ct_addr(uint8_t controlNum,
 	void (*up)(uint8_t p), void (*down)(uint8_t p),
 	void (*right)(uint8_t p), void (*left)(uint8_t p)
 	)
 {
 }
 
-void INPT_adds(void) {
+void jl_ct_adds(void) {
 }
 
-void INPT_adde(void) {
+void jl_ct_adde(void) {
 }
 
-void INPT_addn(void) {
+void jl_ct_addn(void) {
 }
 
-void INPT_adda(void) {
+void jl_ct_adda(void) {
 }
 
 /*
@@ -356,7 +356,7 @@ uint8_t jlvmpi_key(void) {
 	uint8_t j;
 	uint8_t k = 1;
 	for(j = ' '; j <= '~'; j++) {
-		if(1/\*pjct->Inpt.keys[j]*\/) {
+		if(1/\*pjct->ct.keys[j]*\/) {
 			k=0;
 			break;
 		}
@@ -370,15 +370,15 @@ uint8_t jlvmpi_key(void) {
 */
 uint8_t jl_ct_key_pressed(sgrp_user_t *pusr, uint8_t key) {
 	jvct_t* pjct = pusr->pjct;
-	if(pjct->Inpt.keyDown == 0) {
-		pjct->Inpt.keyDown = pjct->Inpt.keys[key];
-		return pjct->Inpt.keyDown; //1: Just Pressed, 0: Not pressed
-	}else if(pjct->Inpt.keyDown == 2 && !pjct->Inpt.keys[key]) {
+	if(pjct->ct.keyDown == 0) {
+		pjct->ct.keyDown = pjct->ct.keys[key];
+		return pjct->ct.keyDown; //1: Just Pressed, 0: Not pressed
+	}else if(pjct->ct.keyDown == 2 && !pjct->ct.keys[key]) {
 		//If Was Held Down And Now Isnt | 3: Release
-		pjct->Inpt.keyDown = 0;
+		pjct->ct.keyDown = 0;
 		return 3;
 	}else{
-		pjct->Inpt.keyDown = 2; //2: Held Down
+		pjct->ct.keyDown = 2; //2: Held Down
 		return 2;
 	}
 }

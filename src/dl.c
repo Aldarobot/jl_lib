@@ -1,4 +1,8 @@
-#include "header/jlvm_pr.h"
+/*
+ * dl: upper level SDL2
+*/
+
+#include "header/jl_pr.h"
 
 //VARS
 char windowTitle[2][16];
@@ -30,7 +34,7 @@ static inline void jlvmpi_ini_sdl(void) {
 static void _jlvm_curd_mode(jvct_t *pjct) {
 	if(SDL_GetCurrentDisplayMode(0, &current)) {
 		jlvm_dies(pjct,
-			amem_strt_merg(
+			jl_me_strt_merg(
 				Strt("failed to get current display mode! "),
 				Strt((char *)SDL_GetError()),
 				STRT_TEMP
@@ -61,7 +65,7 @@ static inline void _jlvm_crea_wind(jvct_t *pjct) {
     )) == NULL)
 	{
 		jlvm_dies(pjct,
-			amem_strt_merg(
+			jl_me_strt_merg(
 				Strt("Failed to create display window"),
 				Strt((char *)SDL_GetError()),
 				STRT_TEMP

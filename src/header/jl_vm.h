@@ -52,7 +52,7 @@
 		#if PLATFORM == 1 //PHONE
 		uint8_t menu;
 		#endif
-		jlvm_slib_evnt_t getEvents[INPT_MAXX];
+		jlvm_slib_evnt_t getEvents[JL_CT_MAXX];
 		void **events;
 
 		float msx, msy;
@@ -108,17 +108,13 @@ typedef struct{
 
 //JLVM Context Structure
 typedef struct{
-	_jal5_siop_t Siop; //Terminal Data
-	_jal5_sgrp_t Sgrp; //Window Info
-	_jal5_inpt_t Inpt; //Input Information
-	_jal5_audi_t Audi; //Audio Info
-	_jal5_eogl_t Eogl; //Opengl Data
-//	_jal5_amem_t Amem; NYI
+	_jal5_siop_t io; //Terminal Data
+	_jal5_sgrp_t sg; //Window Info
+	_jal5_inpt_t ct; //Input Information
+	_jal5_audi_t au; //Audio Info
+	_jal5_eogl_t gl; //Opengl Data
+//	_jal5_amem_t me; NYI
 
 	uint64_t cprg; //current program ID
 	_jal5_sgrp_sprt_t fncs; //Functions that change
 }jvct_t;
-
-//For Internal Use Only: DO NOT USE
-	jvct_t* _jal5_amem_init(void);
-	void _jal5_amem_kill(jvct_t* jprg);

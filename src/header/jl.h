@@ -1,11 +1,11 @@
 /*
- * JLVM(c) Jeron A. Lau
- * The header to be included within your programs you make with JLVM.
+ * JL_lib(c) Jeron A. Lau
+ * The header to be included within your programs you make with JL_lib.
 */
 
 #include <stdint.h>
-#include "jlvm_sg.h"
-#include "jlvm_ct.h"
+#include "jl_sg.h"
+#include "jl_ct.h"
 
 //Fixed point numbers go from -8.f to 8.f
 #define JFXD(x) ((int16_t)(x*4000)) //create fixed number from float
@@ -64,41 +64,51 @@ typedef struct{
 }sgrp_t;
 
 /*
-	JAL5_AMEM
+	JAL5_jl_me
 
 		A simple memory library.  Includes creating variables, setting and
 		getting variables, and doing simple and complicated math functions on
 		the variables.  Has a specialized string type.
 */
 	//Allocate space of "size" bytes
-	void * amem_list_allc(u32t size);
-	#define List(x) amem_list_allc(sizeof(void*)*x)
+	void * jl_me_alloc(u32t size);
+	#define List(x) jl_me_list_allc(sizeof(void*)*x)
+
+	// Clears an already existing string and resets it's cursor value.
+	void jl_me_strt_clear(strt pa);
 
 	// allocates a strt of size "size" and returns it.
-	strt amem_strt_make(u32t size, u08t type);
+	strt jl_me_strt_make(u32t size, u08t type);
 	
 	// frees a strt ("pstr")
-	void amem_strt_free(strt pstr);
+	void jl_me_strt_free(strt pstr);
 	
 	// convert "string" into a (temporary) strt and return it.
-	strt amem_strt_c8ts(char *string);
-	#define Strt(x) amem_strt_c8ts((void*)x)
+	strt jl_me_strt_c8ts(char *string);
+	#define Strt(x) jl_me_strt_c8ts((void*)x)
 	
-	strt amem_strt_merg(strt a, strt b, u08t type);
+	//Return a string that has the contents of "a" followed by "b"
+	strt jl_me_strt_merg(strt a, strt b, u08t type);
 	
-	strt amem_strt_fnum(s32t a);
+	//Print a number out as a string and return it
+	strt jl_me_strt_fnum(s32t a);
 	
 	//Returns the byte at the cursor
-	u08t amem_strt_byte(strt pstr);
+	u08t jl_me_strt_byte(strt pstr);
 	
-	u32t amem_rand_nint(u32t a);
+	//Add a byte ( "pvalue" ) at the cursor in "pstr", then increment the
+	// cursor value [ truncated to the string size ]
+	void jl_me_strt_add_byte(strt pstr, u08t pvalue);
+	
+	//Returns a random integer from 0 to "a"
+	u32t jl_me_random_int(u32t a);
 	
 	// Tests if the next thing in array script is equivalent to particle
-	u08t amem_test_next(strt script, strt particle);
+	u08t jl_me_test_next(strt script, strt particle);
 	
 	// Returns string "script" truncated to "psize" or to the byte "end" in
 	// "script".  It is dependant on which happens first. (Type=STRT_KEEP)
-	strt amem_read_upto(strt script, u08t end, u32t psize);
+	strt jl_me_read_upto(strt script, u08t end, u32t psize);
 
 /*
 	DPL7_CLMP
@@ -112,8 +122,8 @@ typedef struct{
 /*
 	JAL5_SGRP
 
-		SGRP AKA. Simple JLVM Graphics Library is a window handling library.
-		It is needed for handling the 2 screens that JLVM provides.  It also
+		SGRP AKA. Simple JL_lib Graphics Library is a window handling library.
+		It is needed for handling the 2 screens that JL_lib provides.  It also
 		has support for things called modes.  An example is: your title screen
 		of a game and the actual game would be on different modes.
 */
@@ -191,22 +201,21 @@ typedef struct{
 */
 
 /*
-	JAL5_SIOP
+	JL/IO
 
-		SIOP is like stdio.
+		IO is like <stdio>.
 */
 
 	//Change offset header to "this"
-	void siop_offs_sett(sgrp_user_t* pusr, char * this);
+	void jl_io_offset(sgrp_user_t* pusr, char * this);
 
 	// Print "pstr" to the lowest level terminal [the one not drawn with
 	// SDL/OpenGL]
-	void siop_prnt_lwst(sgrp_user_t* pusr, strt print);
+	void jl_io_print_lows(sgrp_user_t* pusr, strt print);
 
 	// Print "pstr" to the lowest level terminal [the one not drawn with
 	// SDL/OpenGL]
-	void jal5_siop_cplo(sgrp_user_t* pusr, char * print);
-	#define siop_prnt_cplo(x,z) jal5_siop_cplo(x,z)
+	void jl_io_print_lowc(sgrp_user_t* pusr, char * print);
 
 /*
 	JAL5_FILE
@@ -215,35 +224,36 @@ typedef struct{
 */
 	// Save A File To The File System.  Save Data of "bytes" bytes in "file" to
 	// file "name"
-	void file_file_save(sgrp_user_t* pusr, char *file, char *name,
+	void jl_fl_save(sgrp_user_t* pusr, void *file, char *name,
 		uint32_t bytes);
 
 	// Load a File from the file system.  Returns bytes loaded from "file_name"
-	strt file_file_load(sgrp_user_t* pusr, char *file_name);
+	strt jl_fl_load(sgrp_user_t* pusr, char *file_name);
+
+	// Save file "filename" with contents "data" of size "dataSize" to package
+	// "packageFileName"
+	char jl_fl_pk_save(sgrp_user_t* pusr, char *packageFileName,
+		char *fileName,	void *data, uint64_t dataSize);
 
 	// Load file "filename" in package "packageFileName" & Return contents
 	//-ERRF:
 	//	ERRF_NONE	can't find filename in packageFileName
 	//	ERRF_FIND	can't find packageFileName
-	uint8_t *file_pkdj_load(sgrp_user_t* pusr, char *packageFileName,
+	uint8_t *jl_fl_pk_load(sgrp_user_t* pusr, char *packageFileName,
 		char *filename);
 	
 	//Load file "Fname" in default package & Return contents.
-	uint8_t *file_pkdj_mnld(sgrp_user_t* pusr, char *Fname);
+	uint8_t *jl_fl_pk_mnld(sgrp_user_t* pusr, char *Fname);
 
-	// Save file "filename" with contents "data" of size "dataSize" to package
-	// "packageFileName"
-	char file_pkdj_save(sgrp_user_t* pusr, char *packageFileName,
-		char *fileName,	void *data, uint64_t dataSize);
 	/*
 	 * Create a folder (directory)
 	*/
-	void file_make_fdir(sgrp_user_t* pusr, strt pfilebase);
+	void jl_fl_mkdir(sgrp_user_t* pusr, strt pfilebase);
 	/*
 	 * Return the location of the resource pack for program with name
 	 * "pprg_name"
 	*/
-	strt file_reso_loca(sgrp_user_t* pusr, strt pprg_name, strt pfilename);
+	strt jl_fl_get_resloc(sgrp_user_t* pusr, strt pprg_name, strt pfilename);
 	
 
 /*
@@ -283,5 +293,5 @@ typedef struct{
 	void audi_sdir_setd(void);
 
 /*
-	This a Jeron Lau project. JLVM (c) 2014 
+	This a Jeron Lau project. JL_lib (c) 2014 
 */

@@ -1,4 +1,4 @@
-#include "header/jlvm_pr.h"
+#include "header/jl_pr.h"
 
 //MESSAGES
 char *GScreenMesg;
@@ -83,15 +83,15 @@ char *GMessage[2] = {
 /*BACKGROUND FUNCTIONS*/
 
 	void _grph_flip_scrn(jvct_t *pjct) {
-//		printf("%p\n", pjct->Sgrp.usrd);
+//		printf("%p\n", pjct->sg.usrd);
 		#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
-		printf("flipping!!%d\n", pjct->Sgrp.usrd->loop);
+		printf("flipping!!%d\n", pjct->sg.usrd->loop);
 		#endif
-		if(pjct->Sgrp.usrd->loop == SGRP_WUPS) {
-			jl_sg_set_window(pjct->Sgrp.usrd, SGRP_WDNS);
+		if(pjct->sg.usrd->loop == SGRP_WUPS) {
+			jl_sg_set_window(pjct->sg.usrd, SGRP_WDNS);
 			timeTilMessageVanish = 255;
 		}else{
-			jl_sg_set_window(pjct->Sgrp.usrd, SGRP_WUPS);
+			jl_sg_set_window(pjct->sg.usrd, SGRP_WUPS);
 			timeTilMessageVanish = 255;
 		}
 	}
@@ -108,7 +108,7 @@ char *GMessage[2] = {
 	//if computer, draw mouse
 	#if PLATFORM == 0
 		grph_draw_simg(pusr, 0,
-			inpt_gets_xmse(pusr), inpt_gets_ymse(pusr),
+			jl_ct_gmousex(pusr), jl_ct_gmousey(pusr),
 			.075, .075, 254,255);
 	#endif
 	}
@@ -119,7 +119,7 @@ void usr_run(void) {
 }*/
 
 	void _jal5_grph_init(jvct_t *pjct) {
-	//	printf("%p\n", pjct->Sgrp.usrd);
+	//	printf("%p\n", pjct->sg.usrd);
 	//	fnc_lst_msg = bjl_fnc_lst_new(MSG_MAX);
 	//	bjl_fnc_lst_add(fnc_lst_msg, MSG_ONN, jgr_updn_screen_message);
 	//	bjl_fnc_lst_add(fnc_lst_msg, MSG_OFF, do_nothing);

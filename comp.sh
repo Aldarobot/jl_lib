@@ -21,22 +21,22 @@ gcc src/au.c -c -o ../../obj/jlvm/au.o $(sdl2-config --cflags) -Wall #12
 #####
 
 printf "[COMP]compiling singular JLVM object file....\n"
-rm ../../bin/jlvm/jlib/jlvm.o
-rm ../../bin/jlvm/jlib/jlvm.h
-rm ../../bin/jlvm/jlib/jlvm_sg.h
-rm ../../bin/jlvm/jlib/jlvm_ct.h
+rm ../../bin/jlvm/jlib/jl.o
+rm ../../bin/jlvm/jlib/jl.h
+rm ../../bin/jlvm/jlib/jl_sg.h
+rm ../../bin/jlvm/jlib/jl_ct.h
 # 
 
-ar csr ../../bin/jlvm/jlib/jlvm.o \
+ar csr ../../bin/jlvm/jlib/jl.o \
 ../../obj/jlvm/glew.o \
 ../../obj/jlvm/me.o ../../obj/jlvm/cl.o ../../obj/jlvm/io.o ../../obj/jlvm/fl.o \
 ../../obj/jlvm/cm.o ../../obj/jlvm/ct.o ../../obj/jlvm/sg.o ../../obj/jlvm/dl.o \
 ../../obj/jlvm/gl.o ../../obj/jlvm/gr.o ../../obj/jlvm/vi.o ../../obj/jlvm/au.o \
 
 printf "[COMP]updating jlvm's bin folder....\n"
-cp src/header/jlvm.h ../../bin/jlvm/jlib/jlvm.h
-cp src/header/jlvm_sg.h ../../bin/jlvm/jlib/jlvm_sg.h
-cp src/header/jlvm_ct.h ../../bin/jlvm/jlib/jlvm_ct.h
+cp src/header/jl.h ../../bin/jlvm/jlib/jl.h
+cp src/header/jl_sg.h ../../bin/jlvm/jlib/jl_sg.h
+cp src/header/jl_ct.h ../../bin/jlvm/jlib/jl_ct.h
 printf "[COMP]updating andr...\n"
 cp --recursive -u -t ../../bin/jlvm/ANDR/andk/ANDROID/jni/src/ src/*
 cp --recursive -u -t ../../bin/jlvm/ANDR/andk/ANDROID/bin/jlvm/jlib/ \

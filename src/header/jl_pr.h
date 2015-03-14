@@ -6,7 +6,7 @@
 #define JLVM_DEBUG JLVM_DEBUG_NONE
 
 //Jal5 Standard Libraries
-	#include "jlvm.h"
+	#include "jl.h"
 	#if PLATFORM == 0
 		#define JLVM_USEL_COGL
 		//#define JLVM_USEL_GLES
@@ -60,7 +60,7 @@
 	#include <stdlib.h>
 	#include <math.h>
 	
-	#include "jlvm_vm.h" //Variable Map
+	#include "jl_vm.h" //Variable Map
 
 #define MAXFILELEN 1000 * 100000 //100,000 kb
 
@@ -169,34 +169,13 @@ typedef struct{
 
 //USER's Functions
 void hack_user_init(sgrp_user_t* pusr);
-
 //USER's MAIN
 char *jal5_head_jlvm(void);
 uint32_t jal5_head_size(void);
 
-//LIB INITIALIZATION fn(Context)
-void _jal5_comm_init(jvct_t* pjct);
-void _jal5_audi_init(jvct_t* pjct);
-void _jal5_file_init(jvct_t* pjct);
-void _jal5_grph_init(jvct_t* pjct);
-void _jal5_inpt_init(jvct_t* pjct);
-void _jal5_sgrp_init(jvct_t* pjct);
-void _jal5_eogl_init(jvct_t* pjct);
-void _jal5_siop_init(jvct_t* pjct);
-void _jal5_lsdl_init(jvct_t* pjct);
-
-//LIB LOOPS: parameter is context
-void _jal5_grph_loop(sgrp_user_t* pusr);
-void _jal5_inpt_loop(jvct_t* pjct);
-void _jal5_sgrp_loop(sgrp_user_t* pusr);
-void _jal5_lsdl_loop(void);
-void _jal5_audi_loop(jvct_t* pjct);
-
-//LIB KILLS
-void _jal5_lsdl_kill(jvct_t *jcpt);
 
 //OTHER LIB STUFF
-void jal5_file_errf(jvct_t * pjct, char *msg);
+void _jl_fl_errf(jvct_t * pjct, char *msg);
 void jal5_eogl_make_txtr(jvct_t *pjct, uint8_t id, void *pixels, int width,
 	int height);
 
@@ -205,7 +184,7 @@ void jal5_eogl_txtr(jvct_t *pjct, u08t map, u08t a, s32t pi);
 void jal5_eogl_draw(jvct_t *pjct);
 
 //Change Mem's Size To "size" and return new pointer if changed.
-void *_jlvm_amem_hydd_allc(jvct_t* pjct, void *mem, uint32_t size);
+void *_jl_me_hydd_allc(jvct_t* pjct, void *mem, uint32_t size);
 //void jal5_eogl_draw(uint8_t vertices, uint8_t map, float *xyz);
 
 u16t _jal5_lsdl_sres_getw(void);

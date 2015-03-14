@@ -25,6 +25,7 @@ typedef struct{
 	uint8_t mode; //Current Mode
 	uint8_t loop; //[WINDOW MODE] ( terminal,up,down)
 	void* pjct; //The library's context
+	void* uctx;
 }sgrp_user_t;
 
 //ERROR MESSAGES
