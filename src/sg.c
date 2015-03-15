@@ -7,23 +7,23 @@
 
 //Prototypes
 	//LIB INITIALIZATION fn(Context)
-	void _jal5_comm_init(jvct_t* pjct);
-	void _jal5_audi_init(jvct_t* pjct);
-	void _jal5_file_init(jvct_t* pjct);
-	void _jal5_grph_init(jvct_t* pjct);
-	void _jl_ct_init(jvct_t* pjct);
-	void _jal5_sgrp_init(jvct_t* pjct);
-	void _jal5_eogl_init(jvct_t* pjct);
-	void _jl_io_init(jvct_t* pjct);
-	void _jal5_lsdl_init(jvct_t* pjct);
+	void _jal5_comm_init(jvct_t* pjlc);
+	void _jal5_audi_init(jvct_t* pjlc);
+	void _jal5_file_init(jvct_t* pjlc);
+	void _jal5_jl_gr_init(jvct_t* pjlc);
+	void _jl_ct_init(jvct_t* pjlc);
+	void _jal5_sgrp_init(jvct_t* pjlc);
+	void _jal5_eogl_init(jvct_t* pjlc);
+	void _jl_io_init(jvct_t* pjlc);
+	void _jal5_lsdl_init(jvct_t* pjlc);
 	jvct_t* _jl_me_init(void);
 
 	//LIB LOOPS: parameter is context
-	void _jal5_grph_loop(sgrp_user_t* pusr);
-	void _jl_ct_loop(jvct_t* pjct);
-	void _jal5_sgrp_loop(sgrp_user_t* pusr);
+	void _jal5_jl_gr_loop(jl_t* pusr);
+	void _jl_ct_loop(jvct_t* pjlc);
+	void _jal5_sgrp_loop(jl_t* pusr);
 	void _jal5_lsdl_loop(void);
-	void _jal5_audi_loop(jvct_t* pjct);
+	void _jal5_audi_loop(jvct_t* pjlc);
 
 	//LIB KILLS
 	void _jal5_lsdl_kill(jvct_t *jcpt);
@@ -70,63 +70,55 @@ typedef struct{
 	uint8_t tex_pixels[1024*1024];//stored as uint8_t(1)
 }jgr_img_t;
 
-//Global Vars
-uint32_t taskbar[5];
-uint32_t init_image_location = 0;
-uint32_t prev_tick = 0;
-uint32_t this_tick = 0;
-uint32_t processingTimeMillis = 0;
-uint16_t image_id = 0;
-
 uint8_t jal5_sgrp_lsdl_gmse(uint8_t a) {
 	return SDL_GetMouseState(NULL,NULL)&SDL_BUTTON(a);
 }
 
-void jl_sg_mode_init(sgrp_user_t* pusr, uint8_t mdec) {
-	jvct_t* pjct = pusr->pjct;
-	pjct->sg.mdes = malloc(mdec * sizeof(__jal5_sgrp_mode_t));
-	pjct->sg.usrd->mdec = mdec;
+void jl_sg_mode_init(jl_t* pusr, uint8_t mdec) {
+	jvct_t* pjlc = pusr->pjlc;
+	pjlc->sg.mdes = malloc(mdec * sizeof(__sg_mode_t));
+	pjlc->sg.usrd->mdec = mdec;
 }
 
 void jl_sg_smode_fncs(
-	sgrp_user_t* pusr,
-	void (* exit)(sgrp_user_t* pusr),
-	void (* wups)(sgrp_user_t* pusr),
-	void (* wdns)(sgrp_user_t* pusr),
-	void (* term)(sgrp_user_t* pusr))
+	jl_t* pusr,
+	void (* exit)(jl_t* pusr),
+	void (* wups)(jl_t* pusr),
+	void (* wdns)(jl_t* pusr),
+	void (* term)(jl_t* pusr))
 {
-	jvct_t* pjct = pusr->pjct;
-	pjct->sg.mdes[pjct->sg.usrd->mode].tclp[SGRP_EXIT].func = exit;
-	pjct->sg.mdes[pjct->sg.usrd->mode].tclp[SGRP_WUPS].func = wups;
-	pjct->sg.mdes[pjct->sg.usrd->mode].tclp[SGRP_WDNS].func = wdns;
-	pjct->sg.mdes[pjct->sg.usrd->mode].tclp[SGRP_TERM].func = term;
+	jvct_t* pjlc = pusr->pjlc;
+	pjlc->sg.mdes[pjlc->sg.usrd->mode].tclp[JL_SG_WM_EXIT].func = exit;
+	pjlc->sg.mdes[pjlc->sg.usrd->mode].tclp[JL_SG_WM_UP].func = wups;
+	pjlc->sg.mdes[pjlc->sg.usrd->mode].tclp[JL_SG_WM_DN].func = wdns;
+	pjlc->sg.mdes[pjlc->sg.usrd->mode].tclp[JL_SG_WM_TERM].func = term;
 }
 
-void jl_sg_set_window(sgrp_user_t* pusr, uint8_t window) {
+void jl_sg_set_window(jl_t* pusr, uint8_t window) {
 	pusr->loop = window;
 }
 
 #define HEADER "JLVM0:JYMJ\0"
-void _jlvm_load_jlpx(jvct_t* pjct,uint8_t *data,void **pixels,int *w,int *h) {
+void _jlvm_load_jlpx(jvct_t* pjlc,uint8_t *data,void **pixels,int *w,int *h) {
 	if(data == NULL) {
-		jlvm_dies(pjct, Strt("NULL DATA!"));
-	}else if(data[init_image_location] == 0) {
+		jlvm_dies(pjlc, Strt("NULL DATA!"));
+	}else if(data[pjlc->sg.init_image_location] == 0) {
 		return;
 	}
 	jgr_img_t *image = NULL;
-	image = _jl_me_hydd_allc(pjct, image, sizeof(jgr_img_t));
+	image = _jl_me_hydd_allc(pjlc, image, sizeof(jgr_img_t));
 	char *testing = malloc(strlen(HEADER)+1);
 	uint32_t i;
 
 	for(i = 0; i < strlen(HEADER); i++) {
-		testing[i] = data[init_image_location+i];
+		testing[i] = data[pjlc->sg.init_image_location+i];
 	}
 	testing[strlen(HEADER)] = '\0';        
 	#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
 	printf("header:%s\n", testing);
 	#endif
 	if(strcmp(testing, HEADER) != 0) {
-		jlvm_dies(pjct, jl_me_strt_merg(
+		jlvm_dies(pjlc, jl_me_strt_merg(
 			jl_me_strt_merg(
 				Strt("error: bad file type:\n"),
 				Strt(testing), STRT_TEMP
@@ -137,7 +129,7 @@ void _jlvm_load_jlpx(jvct_t* pjct,uint8_t *data,void **pixels,int *w,int *h) {
 			STRT_TEMP)
 		);
 	}
-	uint8_t tester = data[init_image_location+strlen(HEADER)];
+	uint8_t tester = data[pjlc->sg.init_image_location+strlen(HEADER)];
 	int FSIZE;
 	if(tester == 1) { //Normal Quality[Lowy]
 		FSIZE = 1048832;
@@ -156,35 +148,35 @@ void _jlvm_load_jlpx(jvct_t* pjct,uint8_t *data,void **pixels,int *w,int *h) {
 		#endif
 	}else{
 		printf("bad file type(must be 1,2 or 3) is: %d\n", tester);
-		jlvm_dies(pjct, Strt("bad file type(must be 1,2 or 3)"));
+		jlvm_dies(pjlc, Strt("bad file type(must be 1,2 or 3)"));
 	}
 	uint32_t ki;
 	ki = strlen(HEADER)+1;
 	for(i = 0; i < 256; i++) {
-		image->key[i].r = data[init_image_location+ki];
+		image->key[i].r = data[pjlc->sg.init_image_location+ki];
 		ki++;
-		image->key[i].g = data[init_image_location+ki];
+		image->key[i].g = data[pjlc->sg.init_image_location+ki];
 		ki++;
-		image->key[i].b = data[init_image_location+ki];
+		image->key[i].b = data[pjlc->sg.init_image_location+ki];
 		ki++;
-		image->key[i].a = data[init_image_location+ki];
+		image->key[i].a = data[pjlc->sg.init_image_location+ki];
 		ki++;
 	}
 	#if JLVM_DEBUG >= JLVM_DEBUG_INTENSE
 	printf("[JLVM/KEYYYY] %d,%d,%d,%d\n", image->key[0].r, image->key[0].g, image->key[0].b, image->key[0].a);
 	#endif
 	for(i = 0; i < TEXTURE_WH; i++) {
-		image->tex_pixels[i] = data[init_image_location+ki];
+		image->tex_pixels[i] = data[pjlc->sg.init_image_location+ki];
 		ki++;
 	}
-	init_image_location+=FSIZE;
+	pjlc->sg.init_image_location+=FSIZE;
 	#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
 	printf("[JLVM/LIMG/JLPX] creating texture...\n");
 	#endif
 
 	uint8_t *tex_pixels = NULL;
 	//R(1)+G(1)+B(1)+A(1) = 4
-	tex_pixels =_jl_me_hydd_allc(pjct, tex_pixels, TEXTURE_WH*4);
+	tex_pixels =_jl_me_hydd_allc(pjlc, tex_pixels, TEXTURE_WH*4);
 	for(i = 0; i < TEXTURE_WH; i++) {
 		tex_pixels[(i*4)+0] = image->key[image->tex_pixels[i]].r;
 		tex_pixels[(i*4)+1] = image->key[image->tex_pixels[i]].g;
@@ -192,7 +184,7 @@ void _jlvm_load_jlpx(jvct_t* pjct,uint8_t *data,void **pixels,int *w,int *h) {
 		tex_pixels[(i*4)+3] = image->key[image->tex_pixels[i]].a;
 	}
 	int *a = NULL;
-	a = _jl_me_hydd_allc(pjct, a, 2*sizeof(int));
+	a = _jl_me_hydd_allc(pjlc, a, 2*sizeof(int));
 	a[0] = 1024;
 	a[1] = 1024;
 	//Set Return values
@@ -204,37 +196,43 @@ void _jlvm_load_jlpx(jvct_t* pjct,uint8_t *data,void **pixels,int *w,int *h) {
 }
 
 //loads next image in the file contents pointed to by "data"
-static inline u08t jgr_load_jlpx(jvct_t * pjct, uint8_t *data, uint32_t id) {
+static inline u08t jgr_load_jlpx(jvct_t * pjlc, uint8_t *data, uint32_t id) {
 //	jlvm_dies(data);
 	void *fpixels = NULL;
 	int fw;
 	int fh;
-	_jlvm_load_jlpx(pjct, data, &fpixels, &fw, &fh);
+	_jlvm_load_jlpx(pjlc, data, &fpixels, &fw, &fh);
 	if(fpixels == NULL) {
 		#if JLVM_DEBUG >= JLVM_DEBUG_PROGRESS
-		printf("[JLVM/LIMG/JLPX] loaded %d images!\n", image_id);
+		printf("[JLVM/LIMG/JLPX] loaded %d images!\n",
+			pjlc->sg.image_id);
 		#endif
+		pjlc->sg.usrd->info = pjlc->sg.image_id;
+		pjlc->sg.image_id=0; //Reset Image Id
+		pjlc->sg.igid++; //Next Image Group Id
 		return 0;
 	}else{
-		jal5_eogl_make_txtr(pjct, image_id,fpixels,1024,1024);
+		eogl_make_txtr(pjlc, pjlc->sg.igid, pjlc->sg.image_id,
+			fpixels, 1024, 1024);
 		#if JLVM_DEBUG >= JLVM_DEBUG_PROGRESS
-		printf("[JLVM/LIMG/JLPX] created image #%d!\n", image_id);
+		printf("[JLVM/LIMG/JLPX] created image #%d:%d!\n",
+			pjlc->sg.igid, pjlc->sg.image_id);
 		#endif
-		image_id++;
+		pjlc->sg.image_id++;
 		return 1;
 	}
 }
 
 //Load the images in the image file
-static inline void jlvm_ini_images(jvct_t * pjct, uint8_t *data) {
-//	jl_io_offset(pjct->sg.usrd, "INIM");
+static inline void jlvm_ini_images(jvct_t * pjlc, uint8_t *data) {
+//	jl_io_offset(pjlc->sg.usrd, "INIM");
 	#if JLVM_DEBUG >= JLVM_DEBUG_PROGRESS
 	printf("[JLVM/LIM] loading images...\n");
 	printf("lne %d\n", (int)strlen((void *)data));
 	#endif
 //load textures
 	while(1) {
-		if(jgr_load_jlpx(pjct, data, IMGID_TEXT_IMAGE))
+		if(jgr_load_jlpx(pjlc, data, IMGID_TEXT_IMAGE))
 			continue;
 		else
 			break;
@@ -256,49 +254,49 @@ static inline void jlvm_ini_images(jvct_t * pjct, uint8_t *data) {
 	mouse = jgr_make_sprite(0,0,10,10,textg);*/
 }
 
-static uint32_t jlvm_quit(jvct_t* pjct, int rc) {
+static uint32_t jlvm_quit(jvct_t* pjlc, int rc) {
 	#if JLVM_DEBUG >= JLVM_DEBUG_MINIMAL
-	_jl_fl_errf(pjct, "Quitting...."); //Exited properly
+	_jl_fl_errf(pjlc, "Quitting...."); //Exited properly
 	#endif
-	_jal5_lsdl_kill(pjct);
-	_jl_me_kill(pjct);
+	_jal5_lsdl_kill(pjlc);
+	_jl_me_kill(pjlc);
 	#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
-	_jl_fl_errf(pjct, "No Error! YAY!"); //Exited properly
+	_jl_fl_errf(pjlc, "No Error! YAY!"); //Exited properly
 	#endif
 	exit(rc);
-	_jl_fl_errf(pjct, "What The Hell?  This is an impossible error!"); //??
+	_jl_fl_errf(pjlc, "What The Hell?  This is an impossible error!"); //??
 	return 105;
 }
 
 //Quit, And Return -1 to show there was an error, also save message in errf.text
-static void jlvm_erqt(jvct_t* pjct, char *msg) {
-	jl_io_offset(pjct->sg.usrd, "ERQT");
-	jl_io_print_lowc(pjct->sg.usrd, msg);
-	_jl_fl_errf(pjct, msg);
-	jlvm_quit(pjct, -1);
+static void jlvm_erqt(jvct_t* pjlc, char *msg) {
+	jl_io_offset(pjlc->sg.usrd, "ERQT");
+	jl_io_print_lowc(pjlc->sg.usrd, msg);
+	_jl_fl_errf(pjlc, msg);
+	jlvm_quit(pjlc, -1);
 }
 
 //Show Error On Screen
-void jlvm_dies(jvct_t* pjct, strt msg) {
+void jlvm_dies(jvct_t* pjlc, strt msg) {
 	//TODO: Make Screen With Window Saying Error Message Followed By Prompt.
 	//	Also, don't automatically quit, like it does now!  ERQT can be
 	//	inline at that point.
-	jlvm_erqt(pjct, (void*) msg->data);
+	jlvm_erqt(pjlc, (void*) msg->data);
 }
 
 //If, you can't use jlvm_dies(), because the screen hasn't been created, use
 //This function.  Otherwise, DON'T! It makes it hard to debug.  The error message
 //Will Be saved to a file, like in jlvm_dies().
-void jlvm_kill(jvct_t* pjct, char *msg) {
-	jlvm_erqt(pjct, msg);
+void jlvm_kill(jvct_t* pjlc, char *msg) {
+	jlvm_erqt(pjlc, msg);
 }
 
 //quit the program
-void jl_sg_kill(sgrp_user_t* pusr) {
-	if(pusr->loop == SGRP_EXIT)
-		jlvm_quit(pusr->pjct, 0);
+void jl_sg_kill(jl_t* pusr) {
+	if(pusr->loop == JL_SG_WM_EXIT)
+		jlvm_quit(pusr->pjlc, 0);
 	else
-		pusr->loop = SGRP_EXIT;
+		pusr->loop = JL_SG_WM_EXIT;
 }
 
 //Do Nothing
@@ -306,19 +304,26 @@ void dont(void) { }
 
 //void sgrp_
 
+static void _sg_time_reset(jvct_t* pjlc) {
+	pjlc->sg.prev_tick = pjlc->sg.this_tick;
+}
+
 //return how many frames passed since last call
-static inline float _jal5_sgrp_istm(void) {
-	processingTimeMillis=(this_tick=SDL_GetTicks())-prev_tick;
-	if(processingTimeMillis <= JAL5_SGRP_MAIN_SAPT) {
-		SDL_Delay(JAL5_SGRP_MAIN_SAPT-processingTimeMillis);
+static inline float _jal5_sgrp_istm(jvct_t* pjlc) {
+	pjlc->sg.processingTimeMillis=
+		(pjlc->sg.this_tick=SDL_GetTicks())-pjlc->sg.prev_tick;
+	if(pjlc->sg.processingTimeMillis <= JAL5_SGRP_MAIN_SAPT) {
+		SDL_Delay(JAL5_SGRP_MAIN_SAPT-pjlc->sg.processingTimeMillis);
 //		printf("[TIMING] fast: 1\n");
-		prev_tick = this_tick;
+		_sg_time_reset(pjlc);
 		return 1.f;
 	}else{
-		float frames = (float)processingTimeMillis/(float)JAL5_SGRP_MAIN_SAPT;
+		float frames =
+			(float)pjlc->sg.processingTimeMillis/
+			(float)JAL5_SGRP_MAIN_SAPT;
 //		printf("[TIMING] slow: %d, %d, %f\n", processingTimeMillis,
 //			JAL5_SGRP_MAIN_SAPT, frames);
-		prev_tick = this_tick;
+		_sg_time_reset(pjlc);
 		return frames;
 	}
 }
@@ -326,7 +331,7 @@ static inline float _jal5_sgrp_istm(void) {
 /*
  * Add images From program "pprg" in file "pfile"
 */
-void jl_sg_add_image(sgrp_user_t* pusr, strt pprg, strt pfile) {
+void jl_sg_add_image(jl_t* pusr, strt pprg, strt pfile) {
 	//Load Graphics
 	uint8_t *img;
 	img = jl_fl_pk_load(
@@ -337,34 +342,38 @@ void jl_sg_add_image(sgrp_user_t* pusr, strt pprg, strt pfile) {
 	jl_io_print_lowc(pusr, "Loading Images...\n");
 	#endif
 	if(img != NULL) {
-		jlvm_ini_images(pusr->pjct, img);
+		jlvm_ini_images(pusr->pjlc, img);
 	}
 }
 
-void _jal5_sgrp_init(jvct_t * pjct) {
-	jl_io_offset(pjct->sg.usrd, "SGRP");
-	jl_io_offset(pjct->sg.usrd, "INIT");
+void _jal5_sgrp_init(jvct_t * pjlc) {
+	jl_io_offset(pjlc->sg.usrd, "SGRP");
+	jl_io_offset(pjlc->sg.usrd, "INIT");
 	//Set Up Variables
-	pjct->sg.usrd->errf = ERRF_NERR; //no error
-	pjct->sg.usrd->psec = 0.f;
-	pjct->sg.usrd->mode = 0;
-	pjct->sg.usrd->mdec = 0;
-	pjct->sg.usrd->loop = SGRP_TERM; //Set Default Window To Terminal
-	SDL_GetMouseState(&pjct->sg.xmse, &pjct->sg.ymse);
+	pjlc->gl.textures = NULL;
+	pjlc->gl.uniforms.textures = NULL;
+	pjlc->sg.usrd->errf = JL_ERRF_NERR; //no error
+	pjlc->sg.usrd->psec = 0.f;
+	pjlc->sg.usrd->mode = 0;
+	pjlc->sg.usrd->mdec = 0;
+	pjlc->sg.usrd->loop = JL_SG_WM_TERM; //Set Default Window To Terminal
+	pjlc->sg.image_id= 0; //Reset Image Id
+	pjlc->sg.igid = 0; //Reset Image Group Id
+	SDL_GetMouseState(&pjlc->sg.xmse, &pjlc->sg.ymse);
 	//Load Graphics
-	jl_sg_add_image(pjct->sg.usrd, Strt("JLVM"), Strt("jlvm.zip"));
+	jl_sg_add_image(pjlc->sg.usrd, Strt("JLVM"), Strt("jlvm.zip"));
 }
 
 //Run Loop X
-void _jal5_sgrp_loop(sgrp_user_t* pusr) {
-	jvct_t *pjct = pusr->pjct;
-	_jl_ct_loop(pjct);//Update events
-	pusr->psec = _jal5_sgrp_istm();//Check time
+void _jal5_sgrp_loop(jl_t* pusr) {
+	jvct_t *pjlc = pusr->pjlc;
+	_jl_ct_loop(pjlc);//Update events
+	pusr->psec = _jal5_sgrp_istm(pjlc);//Check time
 	//Run mode specific loop
-	pjct->sg.mdes[pusr->mode].tclp[pusr->loop].func(pusr);
-	_jal5_grph_loop(pusr);
+	pjlc->sg.mdes[pusr->mode].tclp[pusr->loop].func(pusr);
+	_jal5_jl_gr_loop(pusr);
 	_jal5_lsdl_loop();
-	_jal5_audi_loop(pjct);
+	_jal5_audi_loop(pjlc);
 //	jgr_upd(255, 0, 255); //Update Screen
 }
 
@@ -376,7 +385,7 @@ void _jal5_sgrp_loop(sgrp_user_t* pusr) {
 //NON_USER FUNCTION
 
 static inline void jlvm_ini_finish(void) {
-	grph_draw_msge("LOADING JLLIB....");
+	jl_gr_draw_msge("LOADING JLLIB....");
 	#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
 	jl_io_print_lowc(jcpt->sg.usrd, "started up display.\n");
 	#endif
@@ -398,7 +407,7 @@ static inline void _jlvm_init_libs(jvct_t *jcpt) {
 	_jal5_audi_init(jcpt); //Load audiostuffs from packages
 	_jal5_sgrp_init(jcpt); //Load graphics from packages
 	_jal5_eogl_init(jcpt);
-	_jal5_grph_init(jcpt); //
+	_jal5_jl_gr_init(jcpt); //
 }
 
 static inline void jlvm_ini(jvct_t *jcpt) {

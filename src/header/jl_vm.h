@@ -9,42 +9,50 @@
 		int8_t ofs2;
 		char head[16][5];
 		strt lines[45]; //length 90
-	}_jal5_siop_t;
+	}_siop_t;
 
 	typedef struct{
-		void (* func)(sgrp_user_t* pusr);
-	}__jal5_sgrp_func_t;
+		void (* func)(jl_t* pusr);
+	}__sg_func_t;
 
 	typedef struct{
 		u32t var_set_count;
 		void **vars;
-	}_jal5_sgrp_sprt_t;
+	}_sg_sprt_t;
 
 	//Standard Mode Class
 	typedef struct{
 		//Sprites
 		u32t sprite_count;
-		_jal5_sgrp_sprt_t *sprites;
+		_sg_sprt_t *sprites;
 
 		//Standard Functions
-		__jal5_sgrp_func_t tclp[SGRP_MAKS];
-	}__jal5_sgrp_mode_t;
+		__sg_func_t tclp[JL_SG_WM_MAX];
+	}__sg_mode_t;
 
 	typedef struct{
-		sgrp_user_t * usrd;
-		__jal5_sgrp_mode_t *mdes; //Array Sizof Number Of Modes
+		jl_t * usrd;
+		__sg_mode_t *mdes; //Array Sizof Number Of Modes
 		int32_t xmse;
 		int32_t ymse;
-	}_jal5_sgrp_t;
+		
+		uint32_t taskbar[5];
+		uint32_t init_image_location;
+		uint32_t prev_tick;
+		uint32_t this_tick;
+		uint32_t processingTimeMillis;
+		uint16_t image_id;
+		uint16_t igid;
+	}_sg_t;
 
 //INPT:
 	typedef struct{
-		void ( *OnEvent )(sgrp_user_t *pusr, float x, float y);
+		void ( *OnEvent )(jl_t *pusr, float x, float y);
 		uint8_t Type;
 	}jlvm_evnt_t;
 
 	typedef struct{
-		void ( *Event )(sgrp_user_t *pusr, jlvm_evnt_t * PMode);
+		void ( *Event )(jl_t *pusr, jlvm_evnt_t * PMode);
 	}jlvm_slib_evnt_t;
 
 	typedef struct{
@@ -65,14 +73,14 @@
 		const Uint8 *keys;
 		#endif
 		
-		uint8_t keyDown;
-	}_jal5_inpt_t;
+		uint8_t keyDown[255];
+	}_inpt_t;
 
 //AUDI:
 	typedef struct{
 		Mix_Music *_MUS;
 		char _VOL;
-	}__jal5_mixr_jmus;
+	}__mixr_jmus;
 
 	typedef struct{
 		uint32_t idis; //Which music to play next
@@ -80,26 +88,29 @@
 		uint8_t sofo; //Seconds Of Fade Out
 
 		int smax; //Music Stack Maximum Music pieces
-		__jal5_mixr_jmus *jmus; //Pointer Of "smax" Music Pieces
+		__mixr_jmus *jmus; //Pointer Of "smax" Music Pieces
 		double pofr; //Point Of Return (Where Music Should Start)
-	}_jal5_audi_t;
+	}_audi_t;
 
 	typedef struct {
 		GLuint temp_buff_vrtx, temp_buff_txtr;
-		GLuint textures[1];
+		GLuint **textures;
 		GLuint vertex_shader, fragment_shader, program;
 		
+		uint16_t allocatedg;
+		uint16_t allocatedi;
+		
 		struct {
-		    GLint textures[1];
+			GLint **textures;
 		} uniforms;
 
 		struct {
-		    GLint position;
+			GLint position;
 			GLint texpos;
 		} attributes;
 
 		float buff_vert[255*3];
-	}_jal5_eogl_t;
+	}_gl_t;
 
 //OTHER:
 typedef struct{
@@ -108,13 +119,13 @@ typedef struct{
 
 //JLVM Context Structure
 typedef struct{
-	_jal5_siop_t io; //Terminal Data
-	_jal5_sgrp_t sg; //Window Info
-	_jal5_inpt_t ct; //Input Information
-	_jal5_audi_t au; //Audio Info
-	_jal5_eogl_t gl; //Opengl Data
-//	_jal5_amem_t me; NYI
+	_siop_t io; //Terminal Data
+	_sg_t sg; //Window Info
+	_inpt_t ct; //Input Information
+	_audi_t au; //Audio Info
+	_gl_t gl; //Opengl Data
+//	_amem_t me; NYI
 
 	uint64_t cprg; //current program ID
-	_jal5_sgrp_sprt_t fncs; //Functions that change
+	_sg_sprt_t fncs; //Functions that change
 }jvct_t;

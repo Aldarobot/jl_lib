@@ -195,7 +195,7 @@
  * have is determined by the number of modes you have created.
  * Allocating space for each input mode is done by using "JL_CT_setm()"
 */
-void jl_ct_mode_init(sgrp_user_t *pusr);
+void jl_ct_mode_init(jl_t *pusr);
 
 /*
  * Allocate space for how many controls you want.
@@ -226,7 +226,7 @@ void jl_ct_mode_init(sgrp_user_t *pusr);
  *        Used for attack combos in games (That's really it's only use I think)
  *        There is 15 different combinations that you can make.
 */
-void jl_ct_mode_setm(sgrp_user_t *pusr, uint8_t mode, uint8_t controlCount);
+void jl_ct_mode_setm(jl_t *pusr, uint8_t mode, uint8_t controlCount);
 /*
  * Set input mode and update controls on the screen.  Call this after you set
  * all of the controls
@@ -245,8 +245,8 @@ void jl_ct_updm(uint8_t mode);
  *			JL_CT_ANDR_TFUP), //Returns event for platform
  *		USR_DEFINED_EVENT1, onEvent);
 */
-void jl_ct_mode_addi(sgrp_user_t *pusr, uint8_t libevent, uint8_t usrevent,
-	void (*fn)(sgrp_user_t *pusr, float x, float y));
+void jl_ct_mode_addi(jl_t *pusr, uint8_t libevent, uint8_t usrevent,
+	void (*fn)(jl_t *pusr, float x, float y));
 /*
  * This adds a directional button (A Joystick/Arrow Keys/WASD etc.)
  * This function has 4 directions: UP/DOWN/LEFT/RIGHT
@@ -263,8 +263,8 @@ void jl_ct_adde(void);
 void jl_ct_addn(void);
 void jl_ct_adda(void);
 
-float jl_ct_gmousex(sgrp_user_t *pusr);
-float jl_ct_gmousey(sgrp_user_t *pusr);
+float jl_ct_gmousex(jl_t *pusr);
+float jl_ct_gmousey(jl_t *pusr);
 
 /*
  * Returns 0 if key isn't pressed
@@ -272,4 +272,4 @@ float jl_ct_gmousey(sgrp_user_t *pusr);
  * Returns 2 if key is held down
  * Returns 3 if key is released
 */
-uint8_t jl_ct_key_pressed(sgrp_user_t *pusr, uint8_t key);
+uint8_t jl_ct_key_pressed(jl_t *pusr, uint8_t key);

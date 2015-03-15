@@ -168,7 +168,7 @@ typedef struct{
 }jal5_sgrp_main_data_t;
 
 //USER's Functions
-void hack_user_init(sgrp_user_t* pusr);
+void hack_user_init(jl_t* pusr);
 //USER's MAIN
 char *jal5_head_jlvm(void);
 uint32_t jal5_head_size(void);
@@ -176,12 +176,12 @@ uint32_t jal5_head_size(void);
 
 //OTHER LIB STUFF
 void _jl_fl_errf(jvct_t * pjct, char *msg);
-void jal5_eogl_make_txtr(jvct_t *pjct, uint8_t id, void *pixels, int width,
-	int height);
+void eogl_make_txtr(jvct_t *pjct, uint16_t gid, uint16_t id, void *pixels,
+	int width, int height);
 
-void jal5_eogl_vrtx(jvct_t *pjct, u08t vertices, dect *xyzw);
-void jal5_eogl_txtr(jvct_t *pjct, u08t map, u08t a, s32t pi);
-void jal5_eogl_draw(jvct_t *pjct);
+void eogl_vrtx(jvct_t *pjct, u08t vertices, dect *xyzw);
+void eogl_txtr(jvct_t *pjct, u08t map, u08t a, u16t pgid, u16t pi);
+void eogl_draw(jvct_t *pjct);
 
 //Change Mem's Size To "size" and return new pointer if changed.
 void *_jl_me_hydd_allc(jvct_t* pjct, void *mem, uint32_t size);
@@ -194,7 +194,7 @@ void _jal5_lsdl_glpt_view(jvct_t *pjct, u16t x, u16t y);
 float jal5_inpt_xmse(void);
 float jal5_inpt_ymse(void);
 
-void _grph_flip_scrn(jvct_t *pjct);
+void _jl_gr_flip_scrn(jvct_t *pjct);
 
 //
 void jlvm_dies(jvct_t* pjct, strt msg);

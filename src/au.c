@@ -61,7 +61,7 @@ static inline void jls_ini(jvct_t *jcpt, int PMusMax) {
 	printf(" [JLL/jls/ini] allocating music space:%d\n",PMusMax);
 	#endif
 	if(PMusMax) {
-		jcpt->au.jmus = malloc(PMusMax * sizeof(__jal5_mixr_jmus));
+		jcpt->au.jmus = malloc(PMusMax * sizeof(__mixr_jmus));
 		jcpt->au.smax = PMusMax;
 	}
 	#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
@@ -94,10 +94,10 @@ void audi_musi_halt(u08t p_secondsOfFadeOut) {
 	Mix_FadeOutMusic(p_secondsOfFadeOut * 1000);
 }
 
-void audi_musi_play(sgrp_user_t* pusr, u32t p_IDinStack,
+void audi_musi_play(jl_t* pusr, u32t p_IDinStack,
 	u08t p_secondsOfFadeOut, u08t p_secondsOfFadeIn)
 {
-	jvct_t *jcpt = pusr->pjct;
+	jvct_t *jcpt = pusr->pjlc;
 	jcpt->au.idis = p_IDinStack;
 	jcpt->au.sofi = p_secondsOfFadeIn;
 	jcpt->au.sofo = p_secondsOfFadeOut;

@@ -17,15 +17,15 @@ uint32_t jl_me_tbiu(void) {
 	return mi.uordblks;
 }
 
-void *_jl_me_hydd_allc(jvct_t* pjct, void *a, uint32_t size) {
+void *_jl_me_hydd_allc(jvct_t* pjlc, void *a, uint32_t size) {
 	if((a = realloc(a, size)) == NULL) {
-		jlvm_dies(pjct, Strt("realloc() memory error!"));
+		jlvm_dies(pjlc, Strt("realloc() memory error!"));
 	}
 	return a;
 }
 
 //Update Memory To Size "kb" kilobytes
-static inline void _jlvm_jl_me_resz(jvct_t* pjct, uint32_t kb) {
+static inline void _jlvm_jl_me_resz(jvct_t* pjlc, uint32_t kb) {
 	printf("[jl_me] updating memory size....\n");
 	printf("[jl_me] total size = %d\n", jl_me_tbiu());
 	printf("[jl_me] update to =  %d\n", kb);
@@ -33,7 +33,7 @@ static inline void _jlvm_jl_me_resz(jvct_t* pjct, uint32_t kb) {
 	printf("[jl_me] JLVM Size =  %d\n", 0);
 	printf("[jl_me] NonLib Size =%d\n", 0);
 	printf("[jl_me] Unknown =    %d\n", 0);
-	memory = _jl_me_hydd_allc(pjct, memory, (1000*kb));
+	memory = _jl_me_hydd_allc(pjlc, memory, (1000*kb));
 	malloc_trim(0); //Remove Free Memory
 }
 
@@ -124,7 +124,7 @@ strt jl_me_strt_merg(strt a, strt b, u08t type) {
 	return str;
 }
 
-//Get a string from a number.
+//Print a number out as a string and return it (Type=STRT_TEMP)
 strt jl_me_strt_fnum(s32t a) {
 	strt new = jl_me_strt_make(30, STRT_TEMP);
 	int i;
@@ -172,12 +172,12 @@ jvct_t* _jl_me_init(void) {
 	//Set the current program ID to 0[RESERVED DEFAULT]
 	jprg->cprg = 0;
 	//Prepare user data structure
-	jprg->sg.usrd = malloc(sizeof(sgrp_user_t));
-	jprg->sg.usrd->pjct = jprg;
+	jprg->sg.usrd = malloc(sizeof(jl_t));
+	jprg->sg.usrd->pjlc = jprg;
 	#if JLVM_DEBUG >= JLVM_DEBUG_INTENSE
 	printf("u %p, %p, c %p,%p\n",
-		jprg->sg.usrd, ((jvct_t *)(jprg->sg.usrd->pjct))->sg.usrd,
-		jprg, jprg->sg.usrd->pjct);
+		jprg->sg.usrd, ((jvct_t *)(jprg->sg.usrd->pjlc))->sg.usrd,
+		jprg, jprg->sg.usrd->pjlc);
 	#endif
 //	g_vmap_list = cl_list_create();
 	return jprg;

@@ -187,17 +187,37 @@ GLuint createProgram(jvct_t *pjct, const char* pVertexSource,
 	return program;
 }
 
-void jal5_eogl_make_txtr(jvct_t *pjct, uint8_t id, void *pixels, int width,
-	int height)
+void eogl_make_txtr(jvct_t *pjct, uint16_t gid, uint16_t id, void *pixels,
+	int width, int height)
 {
 	if (!pixels)
 		jlvm_dies(pjct, Strt("null pixels"));
+	if (pjct->gl.allocatedg < gid + 1) {
+		pjct->gl.textures =
+			realloc(pjct->gl.textures, sizeof(GLuint *) * (gid+1));
+		pjct->gl.uniforms.textures =
+			realloc(pjct->gl.uniforms.textures,
+				sizeof(GLint *) * (gid+1));
+		pjct->gl.allocatedg = gid + 1;
+		pjct->gl.allocatedi = 0;
+		pjct->gl.textures[gid] = NULL;
+		pjct->gl.uniforms.textures[gid] = NULL;
+	}
+	if (pjct->gl.allocatedi < id + 1) {
+		pjct->gl.textures[gid] =
+			realloc(pjct->gl.textures[gid],
+				sizeof(GLuint) * (id+1));
+		pjct->gl.uniforms.textures[gid] =
+			realloc(pjct->gl.uniforms.textures[gid],
+				sizeof(GLint) * (id+1));
+		pjct->gl.allocatedi = id + 1;
+	}
 	#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
 	printf("generating texture...");
 	#endif
-	glGenTextures(1, &pjct->gl.textures[id]);
+	glGenTextures(1, &pjct->gl.textures[gid][id]);
 	jal5_eogl_cerr(pjct, 0,"gen textures");
-	glBindTexture(GL_TEXTURE_2D, pjct->gl.textures[id]);
+	glBindTexture(GL_TEXTURE_2D, pjct->gl.textures[gid][id]);
 	jal5_eogl_cerr(pjct, 0,"bind textures");
 	#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
 	printf("settings pars...");
@@ -222,7 +242,7 @@ void jal5_eogl_make_txtr(jvct_t *pjct, uint8_t id, void *pixels, int width,
 	);
 	jal5_eogl_cerr(pjct, 0,"texture image 2D");
 //	free(pixels);
-	if(pjct->gl.textures[id] == 0) {
+	if(pjct->gl.textures[gid][id] == 0) {
 		printf("bad texture:\n");
 		jal5_eogl_cerr(pjct, 0,"BADT");
 		jlvm_dies(pjct, Strt("Bad Texture, but no gl error? WHY!?"));
@@ -241,12 +261,12 @@ void _opn_eogl_usep(jvct_t *pjct, GLuint prg) {
 	jal5_eogl_cerr(pjct, 0,"glUseProgram");
 }
 
-void _opn_eogl_bind(jvct_t *pjct, uint8_t a) {
+void _opn_eogl_bind(jvct_t *pjct, u16t g, u16t i) {
 	glActiveTexture(GL_TEXTURE0);
 	jal5_eogl_cerr(pjct, 0,"glActiveTexture");
-	glBindTexture(GL_TEXTURE_2D, pjct->gl.textures[a]);
+	glBindTexture(GL_TEXTURE_2D, pjct->gl.textures[g][i]);
 	jal5_eogl_cerr(pjct, 0,"glBindTexture");
-	glUniform1i(pjct->gl.uniforms.textures[a], a);
+	glUniform1i(pjct->gl.uniforms.textures[g][i], i);
 	jal5_eogl_cerr(pjct, 0,"glUniform1i");
 }
 
@@ -275,7 +295,7 @@ void _opn_eogl_drra(jvct_t *pjct, uint8_t count) {
 
 //HIGHER LEVEL
 
-void jal5_eogl_vrtx(jvct_t *pjct, u08t vertices, dect *xyzw) {
+void eogl_vrtx(jvct_t *pjct, u08t vertices, dect *xyzw) {
 	glEnable( GL_BLEND );
 	jal5_eogl_cerr(pjct, 0,"glEnable( GL_BLEND )");
 	glBlendColor(1.f,1.f,1.f,0.f);
@@ -306,7 +326,7 @@ void jal5_eogl_vrtx(jvct_t *pjct, u08t vertices, dect *xyzw) {
 	jal5_eogl_setv(pjct, pjct->gl.attributes.position, 3);
 }
 
-void jal5_eogl_txtr(jvct_t *pjct, u08t map, u08t a, s32t pi) {
+void eogl_txtr(jvct_t *pjct, u08t map, u08t a, u16t pgid, u16t pi) {
 	if(map) {
 		int32_t cX = map%16;
 		int32_t cY = map/16;
@@ -331,13 +351,13 @@ void jal5_eogl_txtr(jvct_t *pjct, u08t map, u08t a, s32t pi) {
 		jal5_eogl_buff_data(pjct, pjct->gl.temp_buff_txtr, tex2, 8);
 	}
 	jal5_eogl_setv(pjct, pjct->gl.attributes.texpos, 2);
-	glBindTexture(GL_TEXTURE_2D, pjct->gl.textures[pi]);
+	glBindTexture(GL_TEXTURE_2D, pjct->gl.textures[pgid][pi]);
 }
 
 //Draw object with "vertices" vertices.  The vertex data is in "x","y" and "z".
 //"map" refers to the charecter map.  0 means don't zoom in to one charecter.
 //Otherwise it will zoom in x16 to a single charecter
-void jal5_eogl_draw(jvct_t *pjct) {
+void eogl_draw(jvct_t *pjct) {
 	_opn_eogl_drra(pjct, 4);
 }
 
@@ -387,7 +407,7 @@ static void make_resources(jvct_t *pjct) {
 	if (pjct->gl.program == 0)
 		jlvm_dies(pjct, Strt("Failed to load program"));
 
-	pjct->gl.uniforms.textures[0] = _opn_eogl_getu(pjct, "texture");
+	pjct->gl.uniforms.textures[0][0] = _opn_eogl_getu(pjct, "texture");
 	jal5_eogl_geta(pjct, &pjct->gl.attributes.position, "position");
 	jal5_eogl_geta(pjct, &pjct->gl.attributes.texpos, "texpos");
 }

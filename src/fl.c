@@ -7,11 +7,11 @@ int32_t JL_bytesRead;
 strt gvar_pkfl;
 char *errf;
 
-void jl_fl_save(sgrp_user_t* pusr, void *file, char *name, uint32_t bytes) {
+void jl_fl_save(jl_t* pusr, void *file, char *name, uint32_t bytes) {
 	#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
 	printf("SAVING....\n");
 	#endif
-	jvct_t * pjct = pusr->pjct;
+	jvct_t * pjlc = pusr->pjlc;
 	#if JLVM_DEBUG >= JLVM_DEBUG_INTENSE
 	jl_io_print_lowc(pusr, "doing....");
 	jl_io_print_lowc(pusr, jl_me_strt_fnum(bytes));
@@ -44,7 +44,7 @@ void jl_fl_save(sgrp_user_t* pusr, void *file, char *name, uint32_t bytes) {
 	if(n_bytes <= 0) {
 		errsv = errno;
 		close(fd);
-		jlvm_dies(pjct,
+		jlvm_dies(pjlc,
 			jl_me_strt_merg(Strt("Write failed: "),Strt(strerror(errsv)),STRT_TEMP));
 	}
 	#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
@@ -59,11 +59,11 @@ void jl_fl_save(sgrp_user_t* pusr, void *file, char *name, uint32_t bytes) {
 	return;
 }
 
-void _jl_fl_errf(jvct_t * pjct, char *msg) {
+void _jl_fl_errf(jvct_t * pjlc, char *msg) {
 	#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
 	printf("[JLVM] saving to errf: %s: %s\n", errf, msg);
 	#endif
-	jl_fl_save(pjct->sg.usrd, msg,errf,strlen(msg));
+	jl_fl_save(pjlc->sg.usrd, msg,errf,strlen(msg));
 }
 
 static inline void _jl_fl_reset_cursor(char *file_name) {
@@ -72,14 +72,14 @@ static inline void _jl_fl_reset_cursor(char *file_name) {
 	close(fd);
 }
 
-strt jl_fl_load(sgrp_user_t* pusr, char *file_name) {
+strt jl_fl_load(jl_t* pusr, char *file_name) {
 	_jl_fl_reset_cursor(file_name);
 	u32t i;
 	unsigned char *file = malloc(MAXFILELEN);
 	int fd = open(file_name, O_RDWR);
 	if(fd <= 0) {
 		printf("failed to open %s\n", file_name);
-		jlvm_dies(pusr->pjct, Strt("file_file_load: Failed to open file"));
+		jlvm_dies(pusr->pjlc, Strt("file_file_load: Failed to open file"));
 	}
 	int Read = read(fd, file, MAXFILELEN + 1);
 	JL_bytesRead = Read;
@@ -95,7 +95,7 @@ strt jl_fl_load(sgrp_user_t* pusr, char *file_name) {
 	return frtn;
 }
 
-char jl_fl_pk_save(sgrp_user_t* pusr, char *packageFileName, char *fileName,
+char jl_fl_pk_save(jl_t* pusr, char *packageFileName, char *fileName,
 	void *data, uint64_t dataSize)
 {
 	#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
@@ -115,7 +115,7 @@ char jl_fl_pk_save(sgrp_user_t* pusr, char *packageFileName, char *fileName,
 	struct zip_source *s;
 	if ((s=zip_source_buffer(archive, (void *)data, dataSize, 0)) == NULL) {
 		zip_source_free(s);
-		jlvm_dies(pusr->pjct, jl_me_strt_merg(
+		jlvm_dies(pusr->pjlc, jl_me_strt_merg(
 			Strt("[JLVM/FILE/PKDJ/SAVE] src null error[replace]: "),
 			Strt(zip_strerror(archive)), STRT_TEMP
 		));
@@ -130,7 +130,7 @@ char jl_fl_pk_save(sgrp_user_t* pusr, char *packageFileName, char *fileName,
 		struct zip_stat sb;
 		if(zip_stat(archive, fileName, 0, &sb)!=0) {
 
-			jlvm_dies(pusr->pjct, jl_me_strt_merg(
+			jlvm_dies(pusr->pjlc, jl_me_strt_merg(
 				Strt("[JLVM/FILE/PKDJ/SAVE] !!index getting fail\n"),
 				jl_me_strt_merg(
 					Strt("[JLVM/FILE/PKDJ/SAVE] index f: "),
@@ -161,7 +161,7 @@ char jl_fl_pk_save(sgrp_user_t* pusr, char *packageFileName, char *fileName,
 	return 0;
 }
 
-uint8_t *jl_fl_pk_load(sgrp_user_t* pusr, char *packageFileName, char *filename)
+uint8_t *jl_fl_pk_load(jl_t* pusr, char *packageFileName, char *filename)
 {
 	jl_io_offset(pusr, "FILE");
 	jl_io_offset(pusr, "LOAD");
@@ -173,11 +173,11 @@ uint8_t *jl_fl_pk_load(sgrp_user_t* pusr, char *packageFileName, char *filename)
 	struct zip *zipfile = zip_open(packageFileName, ZIP_CHECKCONS, &zerror);
 	if(zerror == ZIP_ER_OPEN) {
 		jl_io_print_lowc(pusr, " NO EXIST!");
-		pusr->errf = ERRF_FIND;
+		pusr->errf = JL_ERRF_FIND;
 		return NULL;
 	}
 	if(zipfile == NULL) {
-		jlvm_dies(pusr->pjct, Strt("couldn't load pckg!"));
+		jlvm_dies(pusr->pjlc, Strt("couldn't load pckg!"));
 	}
 	#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
 	jl_io_print_lowc(pusr, (char *)zip_strerror(zipfile));
@@ -201,7 +201,7 @@ uint8_t *jl_fl_pk_load(sgrp_user_t* pusr, char *packageFileName, char *filename)
 		jl_io_print_lows(pusr,
 			jl_me_strt_merg(Strt("because: "),
 				Strt(zip_strerror(zipfile)), STRT_TEMP));
-		pusr->errf = ERRF_NONE;
+		pusr->errf = JL_ERRF_NONE;
 		return NULL;
 	}else{
 		#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
@@ -212,7 +212,7 @@ uint8_t *jl_fl_pk_load(sgrp_user_t* pusr, char *packageFileName, char *filename)
 	printf("[JLVM/FILE/LOAD] reading opened file....\n");
 	#endif
 	if((JL_bytesRead = zip_fread(file, fileToLoad, PKFMAX)) == -1) {
-		jlvm_dies(pusr->pjct, Strt("file reading failed"));
+		jlvm_dies(pusr->pjlc, Strt("file reading failed"));
 	}
 	printf("[JLVM/FILE/LOAD]read %d bytes\n", JL_bytesRead);
 	#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
@@ -222,16 +222,16 @@ uint8_t *jl_fl_pk_load(sgrp_user_t* pusr, char *packageFileName, char *filename)
 	#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
 	printf("[JLVM/FILE/LOAD] done.\n");
 	#endif
-	pusr->errf = ERRF_NERR;
+	pusr->errf = JL_ERRF_NERR;
 	jl_io_offset(pusr, "JLVM");
 	return fileToLoad;
 }
 
-uint8_t *jl_fl_pk_mnld(sgrp_user_t* pusr, char *Fname) {
+uint8_t *jl_fl_pk_mnld(jl_t* pusr, char *Fname) {
 	uint8_t *freturn;
 	if(
 		((freturn = jl_fl_pk_load(pusr,(void *)gvar_pkfl->data,Fname)) == NULL) &&
-		pusr->errf == ERRF_FIND ) //Package doesn't exist!! - create
+		pusr->errf == JL_ERRF_FIND ) //Package doesn't exist!! - create
 	{
 		#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
 		jl_io_print_lowc(pusr, "Creating Package...\n");
@@ -248,9 +248,9 @@ uint8_t *jl_fl_pk_mnld(sgrp_user_t* pusr, char *Fname) {
 		if(
 			((freturn = jl_fl_pk_load(pusr,(void *)gvar_pkfl->data,Fname))
 				== NULL) &&
-			pusr->errf == ERRF_FIND )//Package still doesn't exist!!
+			pusr->errf == JL_ERRF_FIND )//Package still doesn't exist!!
 		{
-			jlvm_dies(pusr->pjct, Strt("Failed To Create jlvm.zip"));
+			jlvm_dies(pusr->pjlc, Strt("Failed To Create jlvm.zip"));
 		}
 		#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
 		jl_io_print_lowc(pusr, "Good loading!\n");
@@ -262,7 +262,7 @@ uint8_t *jl_fl_pk_mnld(sgrp_user_t* pusr, char *Fname) {
 /*
  * Create a folder (directory)
 */
-void jl_fl_mkdir(sgrp_user_t* pusr, strt pfilebase) {
+void jl_fl_mkdir(jl_t* pusr, strt pfilebase) {
 	if(mkdir((void *)pfilebase->data, 0)) {
 		int errsv = errno;
 		if(errsv == EEXIST) {
@@ -270,7 +270,7 @@ void jl_fl_mkdir(sgrp_user_t* pusr, strt pfilebase) {
 			jl_io_print_lowc(pusr, "Directory Exist! Continue...\n");
 			#endif
 		}else{
-			jlvm_dies(pusr->pjct,
+			jlvm_dies(pusr->pjlc,
 				jl_me_strt_merg(
 					Strt("Directory: Uh oh..."),
 					Strt(strerror(errsv)), STRT_TEMP
@@ -288,7 +288,7 @@ void jl_fl_mkdir(sgrp_user_t* pusr, strt pfilebase) {
  * Return the location of the resource pack for program with name
  * "pprg_name"
 */
-strt jl_fl_get_resloc(sgrp_user_t* pusr, strt pprg_name, strt pfilename) {
+strt jl_fl_get_resloc(jl_t* pusr, strt pprg_name, strt pfilename) {
 	int i;
 	
 	#if PLATFORM == 1 //PHONE
@@ -358,19 +358,19 @@ strt jl_fl_get_resloc(sgrp_user_t* pusr, strt pprg_name, strt pfilename) {
 	return pvar_pkfl;
 }
 
-void _jal5_file_init(jvct_t * pjct) {
+void _jal5_file_init(jvct_t * pjlc) {
 
-	jl_io_offset(pjct->sg.usrd, "FILE");
-	jl_io_offset(pjct->sg.usrd, "INIT");
+	jl_io_offset(pjlc->sg.usrd, "FILE");
+	jl_io_offset(pjlc->sg.usrd, "INIT");
 
 	#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
-	jl_io_print_lowc(pjct->sg.usrd, "program name:");
+	jl_io_print_lowc(pjlc->sg.usrd, "program name:");
 	#endif
 	lsdl_prog_name(Strt("JLVM"));
 
-	gvar_pkfl = jl_fl_get_resloc(pjct->sg.usrd, Strt("JLVM"), Strt(FAKE));
+	gvar_pkfl = jl_fl_get_resloc(pjlc->sg.usrd, Strt("JLVM"), Strt(FAKE));
 	remove((void*)gvar_pkfl->data);
 
-	_jl_fl_errf(pjct, "Segmentation Fault / Floatation Exception etc.");
-	jl_io_offset(pjct->sg.usrd, "JLVM");
+	_jl_fl_errf(pjlc, "Segmentation Fault / Floatation Exception etc.");
+	jl_io_offset(pjlc->sg.usrd, "JLVM");
 }

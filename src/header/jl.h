@@ -90,7 +90,7 @@ typedef struct{
 	//Return a string that has the contents of "a" followed by "b"
 	strt jl_me_strt_merg(strt a, strt b, u08t type);
 	
-	//Print a number out as a string and return it
+	//Print a number out as a string and return it (Type=STRT_TEMP)
 	strt jl_me_strt_fnum(s32t a);
 	
 	//Returns the byte at the cursor
@@ -120,15 +120,15 @@ typedef struct{
 */
 
 /*
-	JAL5_SGRP
+	JAL5_SG
 
-		SGRP AKA. Simple JL_lib Graphics Library is a window handling library.
+		SG AKA. Simple JL_lib Graphics Library is a window handling library.
 		It is needed for handling the 2 screens that JL_lib provides.  It also
 		has support for things called modes.  An example is: your title screen
 		of a game and the actual game would be on different modes.
 */
 	//Create a window.  Allocate modes of count "mdec"
-	void jl_sg_mode_init(sgrp_user_t* pusr, u08t mdec);
+	void jl_sg_mode_init(jl_t* pusr, u08t mdec);
 
 	// Exit unsuccessfully with an error message.  "prop" is used for
 	// customizing the error message
@@ -136,22 +136,27 @@ typedef struct{
 
 	//Set the current mode loop functions
 	void jl_sg_smode_fncs(
-		sgrp_user_t* pusr,
-		void (* exit)(sgrp_user_t* pusr),
-		void (* wups)(sgrp_user_t* pusr),
-		void (* wdns)(sgrp_user_t* pusr),
-		void (* term)(sgrp_user_t* pusr));
+		jl_t* pusr,
+		void (* exit)(jl_t* pusr),
+		void (* wups)(jl_t* pusr),
+		void (* wdns)(jl_t* pusr),
+		void (* term)(jl_t* pusr));
 
 	//Set Which Window
-	void jl_sg_set_window(sgrp_user_t* pusr, uint8_t window);
+	void jl_sg_set_window(jl_t* pusr, uint8_t window);
 
 	//Kill The Program
-	void jl_sg_kill(sgrp_user_t* pusr);
+	void jl_sg_kill(jl_t* pusr);
 	
-	/*
+	/**
 	 * Add images From program "pprg" in file "pfile"
+	 *
+	 * @info info is set to number of images loaded.
+	 * @param pusr:library context
+	 * @param pprg: program title
+	 * @param pfile: name of file to load within the program's directory
 	*/
-	void jl_sg_add_image(sgrp_user_t* pusr, strt pprg, strt pfile);
+	void jl_sg_add_image(jl_t* pusr, strt pprg, strt pfile);
 
 /*
 	_NKL_LSDL
@@ -170,28 +175,31 @@ typedef struct{
 		A High Level Graphics Library that supports sprites, texture loading,
 		2D rendering & 3D rendering.
 */
-	/*
-	 * Draw An Image, 'i' is the ID of the image.  'xywh' is where it is and
-	 * how big it is drawn.  'chr' is 0 unless you want to use the image as
-	 * a charecter map, then it will zoom into charecter 'chr'.  'a' is the
-	 * transparency each pixel is multiplied by; 255 is solid and 0 is
-	 * totally invisble.
+	/**
+	 * Draw An Image,
+	 * @param 'pusr': library context
+	 * @param 'i':  the ID of the image.
+	 * @param 'xywh': where and how big it is drawn.
+	 * @param 'chr': is 0 unless you want to use the image as
+	 * 	a charecter map, then it will zoom into charecter 'chr'.
+	 * @param 'a': the transparency each pixel is multiplied by; 255 is
+	 *	solid and 0 is totally invisble.
 	*/
-	void grph_draw_simg(sgrp_user_t* pusr, s32t i,
+	void jl_gr_draw_image(jl_t* pusr, u16t g, u16t i,
 		float x,float y,float w,float h,
 		u08t chr, u08t a);
 	//Draw "str" at 'x','y', size 'size', transparency 'a', [jvct=context]
-	void grph_draw_text(sgrp_user_t* pusr, char *str, dect x, dect y, dect size,
+	void jl_gr_draw_text(jl_t* pusr, char *str, dect x, dect y, dect size,
 		uint8_t a);
 	//draw a number at "x","y" size: "size" transparency "a"
-	void grph_draw_numi(sgrp_user_t* pusr, uint32_t num, dect x, dect y, dect size,
+	void jl_gr_draw_numi(jl_t* pusr, uint32_t num, dect x, dect y, dect size,
 		uint8_t a);
 	//Draw centered text on screen saying "strt" at y coordinate "p_y"
-	void grph_draw_ctxt(sgrp_user_t* pusr, char *str, dect p_y);
+	void jl_gr_draw_ctxt(jl_t* pusr, char *str, dect p_y);
 	//Print message "str" on the screen
-	void grph_draw_msge(char* str);
+	void jl_gr_draw_msge(char* str);
 	//Print a message on the screen and then terminate the program
-	void grph_term_msge(sgrp_user_t* pusr, char* message);
+	void jl_gr_term_msge(jl_t* pusr, char* message);
 
 /*
 	JAL5_INPT
@@ -207,15 +215,15 @@ typedef struct{
 */
 
 	//Change offset header to "this"
-	void jl_io_offset(sgrp_user_t* pusr, char * this);
+	void jl_io_offset(jl_t* pusr, char * this);
 
 	// Print "pstr" to the lowest level terminal [the one not drawn with
 	// SDL/OpenGL]
-	void jl_io_print_lows(sgrp_user_t* pusr, strt print);
+	void jl_io_print_lows(jl_t* pusr, strt print);
 
 	// Print "pstr" to the lowest level terminal [the one not drawn with
 	// SDL/OpenGL]
-	void jl_io_print_lowc(sgrp_user_t* pusr, char * print);
+	void jl_io_print_lowc(jl_t* pusr, char * print);
 
 /*
 	JAL5_FILE
@@ -224,36 +232,36 @@ typedef struct{
 */
 	// Save A File To The File System.  Save Data of "bytes" bytes in "file" to
 	// file "name"
-	void jl_fl_save(sgrp_user_t* pusr, void *file, char *name,
+	void jl_fl_save(jl_t* pusr, void *file, char *name,
 		uint32_t bytes);
 
 	// Load a File from the file system.  Returns bytes loaded from "file_name"
-	strt jl_fl_load(sgrp_user_t* pusr, char *file_name);
+	strt jl_fl_load(jl_t* pusr, char *file_name);
 
 	// Save file "filename" with contents "data" of size "dataSize" to package
 	// "packageFileName"
-	char jl_fl_pk_save(sgrp_user_t* pusr, char *packageFileName,
+	char jl_fl_pk_save(jl_t* pusr, char *packageFileName,
 		char *fileName,	void *data, uint64_t dataSize);
 
 	// Load file "filename" in package "packageFileName" & Return contents
 	//-ERRF:
 	//	ERRF_NONE	can't find filename in packageFileName
 	//	ERRF_FIND	can't find packageFileName
-	uint8_t *jl_fl_pk_load(sgrp_user_t* pusr, char *packageFileName,
+	uint8_t *jl_fl_pk_load(jl_t* pusr, char *packageFileName,
 		char *filename);
 	
 	//Load file "Fname" in default package & Return contents.
-	uint8_t *jl_fl_pk_mnld(sgrp_user_t* pusr, char *Fname);
+	uint8_t *jl_fl_pk_mnld(jl_t* pusr, char *Fname);
 
 	/*
 	 * Create a folder (directory)
 	*/
-	void jl_fl_mkdir(sgrp_user_t* pusr, strt pfilebase);
+	void jl_fl_mkdir(jl_t* pusr, strt pfilebase);
 	/*
 	 * Return the location of the resource pack for program with name
 	 * "pprg_name"
 	*/
-	strt jl_fl_get_resloc(sgrp_user_t* pusr, strt pprg_name, strt pfilename);
+	strt jl_fl_get_resloc(jl_t* pusr, strt pprg_name, strt pfilename);
 	
 
 /*
@@ -276,7 +284,7 @@ typedef struct{
 	// fade out any previously playing music (If there is any) for
 	// "p_secondsOfFadeOut" seconds, then fade in music with ID "p_IDinStack"
 	// for "p_secondsOfFadeIn" seconds
-	void audi_musi_play(sgrp_user_t* pusr, u32t p_IDinStack,
+	void audi_musi_play(jl_t* pusr, u32t p_IDinStack,
 		u08t p_secondsOfFadeOut, u08t p_secondsOfFadeIn);
 
 	// fade out any previously playing music (if there is any) for
