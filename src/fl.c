@@ -214,7 +214,10 @@ uint8_t *jl_fl_pk_load(jl_t* pusr, char *packageFileName, char *filename)
 	if((JL_bytesRead = zip_fread(file, fileToLoad, PKFMAX)) == -1) {
 		jlvm_dies(pusr->pjlc, Strt("file reading failed"));
 	}
-	printf("[JLVM/FILE/LOAD]read %d bytes\n", JL_bytesRead);
+	char * readbytes = malloc(30);
+	sprintf(readbytes, "read %d bytes", JL_bytesRead);
+	jl_io_print_lowc(pusr, readbytes);
+	free(readbytes);
 	#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
 	printf("[JLVM/FILE/LOAD] read opened file.\n");
 	#endif
@@ -305,7 +308,6 @@ strt jl_fl_get_resloc(jl_t* pusr, strt pprg_name, strt pfilename) {
 		filebase = (void*) jl_me_strt_merg(
 			Strt("JLVM/"),pprg_name,STRT_KEEP)->data;
 	}
-	printf("filebase: %s\n", filebase);
 	errf = malloc(strlen(filebase)+3);
 	for(i = 0; i < strlen(filebase)-5; i++) {
 		errf[i] = filebase[i];
@@ -325,8 +327,8 @@ strt jl_fl_get_resloc(jl_t* pusr, strt pprg_name, strt pfilename) {
 	#else //OTHER
 	#endif
 	
-	jl_io_offset(pusr, "FLBS");
 	#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
+	jl_io_offset(pusr, "FLBS");
 	jl_io_print_lowc(pusr, filebase);
 	#endif
 	
@@ -347,12 +349,13 @@ strt jl_fl_get_resloc(jl_t* pusr, strt pprg_name, strt pfilename) {
 
 	strt pvar_pkfl = jl_me_strt_merg(Strt(filebase), Strt(FAKE), STRT_KEEP);
 	#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
+	jl_io_print_lowc(pusr, "filebase: ");
+	jl_io_print_lowc(pusr, filebase);
 	jl_io_print_lowc(pusr, pvar_pkfl);
-	#endif
-	
+
 	jl_io_offset(pusr, "INIT");
 	jl_io_offset(pusr, "PKFL");
-	#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
+
 	jl_io_print_lowc(pusr, pvar_pkfl);
 	#endif
 	return pvar_pkfl;

@@ -43,12 +43,12 @@ void jl_io_print_lowc(jl_t* pusr, char * print) {
 	}
 	_jl_io_indt(pusr);
 #if PLATFORM==0
-	printf("[%s] %s",
+	printf("[%s] %s\n",
 		((jvct_t *)pusr->pjlc)->io.head[
 			((jvct_t *)pusr->pjlc)->io.offs],
 		print);
 #else
-	SDL_Log("[%s] %s",
+	SDL_Log("[%s] %s\n",
 		((jvct_t *)pusr->pjlc)->io.head[
 			((jvct_t *)pusr->pjlc)->io.offs],
 		print);
@@ -62,9 +62,6 @@ void jl_io_offset(jl_t* pusr, char * this) {
 	int i;
 	for(i = 0; i < ((jvct_t *)pusr->pjlc)->io.offs; i++) {
 		if(strcmp(this, ((jvct_t *)pusr->pjlc)->io.head[i]) == 0) {
-			if(((jvct_t *)pusr->pjlc)->io.ofs2 > 0) {
-				jl_io_print_lowc(pusr, "\n");
-			}
 			((jvct_t *)pusr->pjlc)->io.ofs2 -=
 				((jvct_t *)pusr->pjlc)->io.offs - i;
 			((jvct_t *)pusr->pjlc)->io.offs = i;
@@ -72,9 +69,6 @@ void jl_io_offset(jl_t* pusr, char * this) {
 		}
 	}
 	//extend
-	if(((jvct_t *)pusr->pjlc)->io.ofs2 < 0) {
-		jl_io_print_lowc(pusr, "\n");
-	}
 	((jvct_t *)pusr->pjlc)->io.offs++;
 	for(i = 0; i < 4; i++) {
 		((jvct_t *)pusr->pjlc)->io.head[

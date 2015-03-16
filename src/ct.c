@@ -372,16 +372,13 @@ uint8_t jl_ct_key_pressed(jl_t *pusr, uint8_t key) {
 	jvct_t* pjlc = pusr->pjlc;
 	if(pjlc->ct.keyDown[key] == 0) {
 		pjlc->ct.keyDown[key] = pjlc->ct.keys[key];
-		if(pjlc->ct.keyDown[key]) printf("pressed\n");
 		return pjlc->ct.keyDown[key]; //1: Just Pressed, 0: Not pressed
 	}else if(pjlc->ct.keyDown[key] == 2 && !pjlc->ct.keys[key]) {
 		//If Was Held Down And Now Isnt | 3: Release
 		pjlc->ct.keyDown[key] = 0;
-		printf("released\n");
 		return 3;
 	}else{
 		pjlc->ct.keyDown[key] = 2; //2: Held Down
-		printf("held down\n");
 		return 2;
 	}
 }
