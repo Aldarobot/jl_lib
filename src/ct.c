@@ -195,7 +195,7 @@ static inline void _jal5_jl_ct_hndl(jvct_t *pjlc) {
 	#endif
 }
 
-void _jl_ct_run_event(jvct_t * pjlc, uint8_t pevent, fnc_onevent_t(prun)) {
+static void _jl_ct_run_event(jvct_t * pjlc, uint8_t pevent, fnc_onevent_t(prun)) {
 	if(pjlc->ct.getEvents[pevent] == NULL) {
 		jlvm_dies(pjlc,
 			jl_me_strt_merg(
@@ -206,6 +206,10 @@ void _jl_ct_run_event(jvct_t * pjlc, uint8_t pevent, fnc_onevent_t(prun)) {
 			STRT_TEMP));
 	}
 	pjlc->ct.getEvents[pevent](pjlc->sg.usrd, prun);
+}
+
+void jl_ct_run_event(jl_t *pusr, uint8_t pevent, fnc_onevent_t(prun)) {
+	_jl_ct_run_event(pusr->pjlc, pevent, prun);
 }
 
 //Run Pre-set Events currently being activated

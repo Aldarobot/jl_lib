@@ -16,59 +16,59 @@
  *   1:  Then it continues the loop
  *   2:  Then it quits the loop, but continues the main loop.
 */
-//nintendo
+//nintendo game systems, or other.
 	//Normal buttons
-	#define JL_CT_NINT_BTNL 0 //NYI: L button: Up/Left
-	#define JL_CT_NINT_BTNR 1 //NYI: R button: Down/Right
-	#define JL_CT_NINT_BTNA 2 //NYI: A button: Right
-	#define JL_CT_NINT_BTNB 3 //NYI: B button: Down
-	#define JL_CT_NINT_BTNX 4 //NYI: X button: Up
-	#define JL_CT_NINT_BTNY 5 //NYI: Y button: Left
-	#define JL_CT_NINT_STRT 6 //NYI: Start button
+	#define JL_CT_GAME_BTNL 0 //NYI: L button: Up/Left
+	#define JL_CT_GAME_BTNR 1 //NYI: R button: Down/Right
+	#define JL_CT_GAME_BTNA 2 //NYI: A button: Right
+	#define JL_CT_GAME_BTNB 3 //NYI: B button: Down
+	#define JL_CT_GAME_BTNX 4 //NYI: X button: Up
+	#define JL_CT_GAME_BTNY 5 //NYI: Y button: Left
+	#define JL_CT_GAME_STRT 6 //NYI: Start button
 	//XY
-	#define JL_CT_NINT_STYL 7 //NYI: Stylus
-	#define JL_CT_NINT_CPAD 8 //NYI: Circle Pad -or- left joystick (WiiU)
-	#define JL_CT_NINT_JSTK 9 //NYI: Cirle Pad + X -or- right joystick (WiiU)
-	#define JL_CT_NINT_UDLR 10//NYI: LR buttons (Y if B pressed, X if not)
-	#define JL_CT_NINT_DPAD 11//NYI: D-Pad
-	#define JL_CT_NINT_ABXY 12//NYI: ABXY buttons
+	#define JL_CT_GAME_STYL 7 //NYI: Stylus
+	#define JL_CT_GAME_CPAD 8 //NYI: Circle Pad -or- left joystick (WiiU)
+	#define JL_CT_GAME_JSTK 9 //NYI: Cirle Pad + X -or- right joystick (WiiU)
+	#define JL_CT_GAME_UDLR 10//NYI: LR buttons (Y if B pressed, X if not)
+	#define JL_CT_GAME_DPAD 11//NYI: D-Pad
+	#define JL_CT_GAME_ABXY 12//NYI: ABXY buttons
 	//Stylus
-	#define JL_CT_NINT_SSUP 13 //NYI: Up
-	#define JL_CT_NINT_SSDN 14 //NYI: Down
-	#define JL_CT_NINT_SSRT 15 //NYI: Right
-	#define JL_CT_NINT_SSLT 16 //NYI: Left
-	#define JL_CT_NINT_SSUR 17 //NYI: Up Right
-	#define JL_CT_NINT_SSDR 18 //NYI: Down Right
-	#define JL_CT_NINT_SSUL 19 //NYI: Up Left
-	#define JL_CT_NINT_SSDL 20 //NYI: Down Left
+	#define JL_CT_GAME_SSUP 13 //NYI: Up
+	#define JL_CT_GAME_SSDN 14 //NYI: Down
+	#define JL_CT_GAME_SSRT 15 //NYI: Right
+	#define JL_CT_GAME_SSLT 16 //NYI: Left
+	#define JL_CT_GAME_SSUR 17 //NYI: Up Right
+	#define JL_CT_GAME_SSDR 18 //NYI: Down Right
+	#define JL_CT_GAME_SSUL 19 //NYI: Up Left
+	#define JL_CT_GAME_SSDL 20 //NYI: Down Left
 	//Cirle Pad -or- left joystick(WiiU)
-	#define JL_CT_NINT_CPUP 21 //NYI: Up
-	#define JL_CT_NINT_CPDN 22 //NYI: Down
-	#define JL_CT_NINT_CPRT 23 //NYI: Right
-	#define JL_CT_NINT_CPLT 24 //NYI: Left
-	#define JL_CT_NINT_CPUR 25 //NYI: Up Right
-	#define JL_CT_NINT_CPDR 26 //NYI: Down Right
-	#define JL_CT_NINT_CPUL 27 //NYI: Up Left
-	#define JL_CT_NINT_CPDL 28 //NYI: Down Left
+	#define JL_CT_GAME_CPUP 21 //NYI: Up
+	#define JL_CT_GAME_CPDN 22 //NYI: Down
+	#define JL_CT_GAME_CPRT 23 //NYI: Right
+	#define JL_CT_GAME_CPLT 24 //NYI: Left
+	#define JL_CT_GAME_CPUR 25 //NYI: Up Right
+	#define JL_CT_GAME_CPDR 26 //NYI: Down Right
+	#define JL_CT_GAME_CPUL 27 //NYI: Up Left
+	#define JL_CT_GAME_CPDL 28 //NYI: Down Left
 	//Cirle Pad + X -or- right joystick (WiiU)
-	#define JL_CT_NINT_JSUP 29 //NYI: Up
-	#define JL_CT_NINT_JSDN 30 //NYI: Down
-	#define JL_CT_NINT_JSRT 31 //NYI: Right
-	#define JL_CT_NINT_JSLT 32 //NYI: Left
-	#define JL_CT_NINT_JSUR 33 //NYI: Up Right
-	#define JL_CT_NINT_JSDR 34 //NYI: Down Right
-	#define JL_CT_NINT_JSUL 35 //NYI: Up Left
-	#define JL_CT_NINT_JSDL 36 //NYI: Down Left
+	#define JL_CT_GAME_JSUP 29 //NYI: Up
+	#define JL_CT_GAME_JSDN 30 //NYI: Down
+	#define JL_CT_GAME_JSRT 31 //NYI: Right
+	#define JL_CT_GAME_JSLT 32 //NYI: Left
+	#define JL_CT_GAME_JSUR 33 //NYI: Up Right
+	#define JL_CT_GAME_JSDR 34 //NYI: Down Right
+	#define JL_CT_GAME_JSUL 35 //NYI: Up Left
+	#define JL_CT_GAME_JSDL 36 //NYI: Down Left
 	//D-Pad
-	#define JL_CT_NINT_DPUP 37 //NYI: Up
-	#define JL_CT_NINT_DPDN 38 //NYI: Down
-	#define JL_CT_NINT_DPRT 39 //NYI: Right
-	#define JL_CT_NINT_DPLT 40 //NYI: Left
-	#define JL_CT_NINT_DPUR 41 //NYI: Up Right
-	#define JL_CT_NINT_DPDR 42 //NYI: Down Right
-	#define JL_CT_NINT_DPUL 43 //NYI: Up Left
-	#define JL_CT_NINT_DPDL 44 //NYI: Down Left
-	#define JL_CT_NINT_MAXX 45
+	#define JL_CT_GAME_DPUP 37 //NYI: Up
+	#define JL_CT_GAME_DPDN 38 //NYI: Down
+	#define JL_CT_GAME_DPRT 39 //NYI: Right
+	#define JL_CT_GAME_DPLT 40 //NYI: Left
+	#define JL_CT_GAME_DPUR 41 //NYI: Up Right
+	#define JL_CT_GAME_DPDR 42 //NYI: Down Right
+	#define JL_CT_GAME_DPUL 43 //NYI: Up Left
+	#define JL_CT_GAME_DPDL 44 //NYI: Down Left
+	#define JL_CT_GAME_MAXX 45
 //computer
 	//normal buttons
 	#define JL_CT_COMP_SCRU 0 //NYI: Scroll Up
@@ -186,18 +186,22 @@
 #endif
 
 #define JL_CT_MAXX JL_CT_ALLP(\
-		JL_CT_NINT_MAXX,\
+		JL_CT_GAME_MAXX,\
 		JL_CT_COMP_MAXX,\
 		JL_CT_ANDR_MAXX)
 
-/*
+/**
+ * Run prun if event pevent is active.
+*/
+void jl_ct_run_event(jl_t *pusr, uint8_t pevent, fnc_onevent_t(prun));
+/**
  * When this function is called, how many input modes your program is going to
  * have is determined by the number of modes you have created.
  * Allocating space for each input mode is done by using "JL_CT_setm()"
 */
 void jl_ct_mode_init(jl_t *pusr);
 
-/*
+/**
  * Allocate space for how many controls you want.
  * The Maximum is 255.  You won't need that much ever!!!
  * You can set controls with:
@@ -228,13 +232,13 @@ void jl_ct_mode_init(jl_t *pusr);
 */
 void jl_ct_mode_setm(jl_t *pusr, uint8_t loop, uint8_t mode,
 	uint8_t controlCount);
-/*
+/**
  * Set input mode and update controls on the screen.  Call this after you set
  * all of the controls
 */
 void jl_ct_updm(uint8_t mode);
 
-/*
+/**
  * This adds a simple input button.
  * Control with Id usrevent is set to event libevent.
  * When libevent happens, event[usrevent].fn is called.
@@ -242,13 +246,13 @@ void jl_ct_updm(uint8_t mode);
  *	#define USR_DEFINED_EVENT1 0
  *	#define USR_DEFINED_EVENTMAX 1
  *	JL_CT_addi(
- *		JL_CT_ALLP(JL_CT_NINT_CPUP, JL_CT_COMP_AROU,
+ *		JL_CT_ALLP(JL_CT_GAME_CPUP, JL_CT_COMP_AROU,
  *			JL_CT_ANDR_TFUP), //Returns event for platform
  *		USR_DEFINED_EVENT1, onEvent);
 */
 void jl_ct_mode_addi(jl_t *pusr, uint8_t libevent, uint8_t usrevent,
 	void (*fn)(jl_t *pusr, float x, float y));
-/*
+/**
  * This adds a directional button (A Joystick/Arrow Keys/WASD etc.)
  * This function has 4 directions: UP/DOWN/LEFT/RIGHT
  * it requires you to give it 4 function pointers:
@@ -267,7 +271,7 @@ void jl_ct_adda(void);
 float jl_ct_gmousex(jl_t *pusr);
 float jl_ct_gmousey(jl_t *pusr);
 
-/*
+/**
  * Returns 0 if key isn't pressed
  * Returns 1 if key is just pressed
  * Returns 2 if key is held down
