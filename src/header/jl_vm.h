@@ -2,18 +2,14 @@
 #include <stdlib.h>
 #include "../lib/clump/clump.h"
 
-//SIOP:
+//IO:
 
 	typedef struct{
 		uint8_t offs;
 		int8_t ofs2;
 		char head[16][5];
 		strt lines[45]; //length 90
-	}_siop_t;
-
-	typedef struct{
-		void (* func)(jl_t* pusr);
-	}__sg_func_t;
+	}_io_t;
 
 	typedef struct{
 		u32t var_set_count;
@@ -27,7 +23,7 @@
 		_sg_sprt_t *sprites;
 
 		//Standard Functions
-		__sg_func_t tclp[JL_SG_WM_MAX];
+		fnct(void, tclp[JL_SG_WM_MAX], jl_t* pusr);
 	}__sg_mode_t;
 
 	typedef struct{
@@ -47,36 +43,34 @@
 
 //INPT:
 	typedef struct{
-		void ( *OnEvent )(jl_t *pusr, float x, float y);
-		uint8_t Type;
-	}jlvm_evnt_t;
+		uint8_t CtrC; //Control Count: how many events to check for
+		fnc_onevent_t(*function); //1 function for each event
+		uint8_t *type; //1 event type for each event
+	}_ct_user_events;
 
 	typedef struct{
-		void ( *Event )(jl_t *pusr, jlvm_evnt_t * PMode);
-	}jlvm_slib_evnt_t;
+		fnc_event_t(getEvents[JL_CT_MAXX]);
 
-	typedef struct{
-		uint8_t *CtrC;
-		#if PLATFORM == 1 //PHONE
-		uint8_t menu;
-		#endif
-		jlvm_slib_evnt_t getEvents[JL_CT_MAXX];
-		void **events;
+		//User Events For Each Mode & Window
+		_ct_user_events *userevents[JL_SG_WM_MAX];
 
 		float msx, msy;
 		int msxi, msyi;
-		uint8_t heldDown;
-		uint32_t sd; //NYI: stylus delete
-		SDL_Event event;
 
-		#if PLATFORM == 0
+		SDL_Event event;
+		
+		#if PLATFORM == 1 //PHONE
+		uint8_t menu;
+		#elif PLATFORM == 0
 		const Uint8 *keys;
 		#endif
 		
+		uint8_t heldDown;
 		uint8_t keyDown[255];
-	}_inpt_t;
+		uint32_t sd; //NYI: stylus delete
+	}_ct_t;
 
-//AUDI:
+//AU:
 	typedef struct{
 		Mix_Music *_MUS;
 		char _VOL;
@@ -90,7 +84,7 @@
 		int smax; //Music Stack Maximum Music pieces
 		__mixr_jmus *jmus; //Pointer Of "smax" Music Pieces
 		double pofr; //Point Of Return (Where Music Should Start)
-	}_audi_t;
+	}_au_t;
 
 	typedef struct {
 		GLuint temp_buff_vrtx, temp_buff_txtr;
@@ -111,6 +105,14 @@
 
 		float buff_vert[255*3];
 	}_gl_t;
+	
+	typedef struct {
+		struct cl_list *filelist; //List of all files in working dir.
+	}_fl_t;
+	
+	typedef struct {
+		fnct(void, menuoverlay, jl_t* pusr);
+	}_gr_t;
 
 //OTHER:
 typedef struct{
@@ -119,11 +121,13 @@ typedef struct{
 
 //JLVM Context Structure
 typedef struct{
-	_siop_t io; //Terminal Data
+	_io_t io; //Terminal Data
 	_sg_t sg; //Window Info
-	_inpt_t ct; //Input Information
-	_audi_t au; //Audio Info
+	_ct_t ct; //Input Information
+	_au_t au; //Audio Info
 	_gl_t gl; //Opengl Data
+	_fl_t fl; //File Manager
+	_gr_t gr; //Graphics
 //	_amem_t me; NYI
 
 	uint64_t cprg; //current program ID

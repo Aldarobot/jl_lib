@@ -226,7 +226,8 @@ void jl_ct_mode_init(jl_t *pusr);
  *        Used for attack combos in games (That's really it's only use I think)
  *        There is 15 different combinations that you can make.
 */
-void jl_ct_mode_setm(jl_t *pusr, uint8_t mode, uint8_t controlCount);
+void jl_ct_mode_setm(jl_t *pusr, uint8_t loop, uint8_t mode,
+	uint8_t controlCount);
 /*
  * Set input mode and update controls on the screen.  Call this after you set
  * all of the controls

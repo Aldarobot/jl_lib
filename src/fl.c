@@ -361,6 +361,29 @@ strt jl_fl_get_resloc(jl_t* pusr, strt pprg_name, strt pfilename) {
 	return pvar_pkfl;
 }
 
+void jl_fl_user_select_init(jl_t* pusr, char *program_name) {
+	DIR *dir;
+	struct dirent *ent;
+	jvct_t * pjlc = pusr->pjlc;
+	
+	pjlc->fl.filelist = cl_list_create();
+	if ((dir = opendir (SDL_GetPrefPath("JLVM",program_name))) != NULL) {
+		/* print all the files and directories within directory */
+		while ((ent = readdir (dir)) != NULL) {
+			char *element = malloc(strlen(ent->d_name));
+			memcpy(element, ent->d_name, strlen(ent->d_name));
+			cl_list_add(pjlc->fl.filelist, element);
+		}
+		closedir (dir);
+	} else {
+		//Couldn't open Directory
+	}
+	cl_list_destroy(pjlc->fl.filelist);
+}
+
+void jl_fl_user_select_loop(jl_t* pusr) {
+}
+
 void _jal5_file_init(jvct_t * pjlc) {
 
 	jl_io_offset(pjlc->sg.usrd, "FILE");

@@ -59,6 +59,7 @@
 	#include <string.h>
 	#include <stdlib.h>
 	#include <math.h>
+	#include <dirent.h>
 	
 	#include "jl_vm.h" //Variable Map
 
@@ -67,7 +68,7 @@
 //resolutions
 #define JGR_STN 0 //standard 1280 by 960
 #define JGR_LOW 1 //Low Res: 640 by 480
-#define JGR_DSI 2 //DSi res: 256 by 192jvct_t *jcpt
+#define JGR_DSI 2 //DSi res: 256 by 192
 
 //Buffer ID's
 //permanent
@@ -90,16 +91,6 @@
 	#define JLVM_FILEBASE "/storage/sdcard0/JLVM/"
 #endif
 #define JLVM_INIT SDL_INIT_AUDIO|SDL_INIT_VIDEO
-
-/*
--top of some file
-
-#define SHADERS
-#define VIRTUAL_MACH_DAT
-#include "header/jlvmpu.h" //platform unindependant
-#undef SHADERS
-#undef VIRTUAL_MACH_DAT
-*/
 
 #ifdef SHADERS
 

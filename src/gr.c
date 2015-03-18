@@ -17,15 +17,20 @@ char *GMessage[2] = {
 
 /*EXPORTED FUNCTIONS*/
 
-	/*
-	 * Draw An Image, 'i' is the ID of the image.  'xywh' is where it is and how big
-	 * It is drawn.  'chr' is 0 unless you want to use the image as a charecter map,
-	 * then it will zoom into charecter 'chr'.  'a' is the transparency each pixel
-	 * is multiplied by; 255 is solid and 0 is totally invisible
-	*/
+	/**
+	 * Draw An Image.
+	 *
+	 * @param 'pusr': library context
+	 * @param 'i':  the ID of the image.
+	 * @param 'xywh': where and how big it is drawn.
+	 * @param 'c': is 0 unless you want to use the image as
+	 * 	a charecter map, then it will zoom into charecter 'chr'.
+	 * @param 'a': the transparency each pixel is multiplied by; 255 is
+	 *	solid and 0 is totally invisble.
+	**/
 	void jl_gr_draw_image(jl_t* pusr, u16t g, u16t i,
 		float x,float y,float w,float h,
-		u08t chr, u08t a)
+		u08t c, u08t a)
 	{
 		dect Oone[] = {
 			x,	h+y,	0.f,
@@ -34,8 +39,79 @@ char *GMessage[2] = {
 			w+x,	h+y,	0.f };
 
 		eogl_vrtx(pusr->pjlc, 4, Oone);
-		eogl_txtr(pusr->pjlc, chr, a, g, i);
+		eogl_txtr(pusr->pjlc, c, a, g, i);
 		eogl_draw(pusr->pjlc);
+	}
+	
+	/**
+	 * Draw the sprite.
+	 *
+	 * @param 'pusr': library context
+	 * @param 'psprite': the sprite to draw.
+	**/
+	void jl_gr_sprite_draw(jl_t* pusr, jl_sprite_t *psprite) {
+		jl_gr_draw_image(pusr, psprite->g, psprite->i,
+			psprite->x, psprite->y, psprite->w, psprite->h,
+			psprite->c, psprite->a);
+	}
+	
+	/**
+	 * Create a sprite
+	 *
+	 * @param 'pusr': library context
+ 	 * @param 'g': the image group.
+ 	 * @param 'i': the ID of the image.
+ 	 * @param 'c': set to 0 unless you want to use the image as a character
+ 	 * 	map, then it will zoom into charecter 'chr'.
+ 	 * @param 'a' the transparency each pixel is multiplied by; 255 is
+	 *	solid and 0 is totally invisble.
+ 	 * @param 'xywh': where and how big it is drawn.
+ 	 * @param 'loop': the loop function.
+ 	 * @param 'ctxs': how many bytes to allocate for the sprite's context.
+ 	 * @return x: the new sprite
+	**/
+	jl_sprite_t * jl_gr_sprite_make(
+		jl_t* pusr, u16t g, u16t i, u08t c, u08t a,
+		dect x, dect y, dect w, dect h,
+		fnct(void, loop, jl_t* pusr), u32t ctxs)
+	{
+		jl_sprite_t *rtn;
+		rtn = malloc(sizeof(jl_sprite_t));
+		rtn->g = g;
+		rtn->i = i;
+		rtn->c = c;
+		rtn->a = a;
+		rtn->x = x; rtn->cx = x;
+		rtn->y = y; rtn->cy = y;
+		rtn->w = w; rtn->cw = w;
+		rtn->h = h; rtn->ch = h;
+		rtn->loop = (void*)loop;
+		if(ctxs) rtn->ctx = malloc(ctxs);
+		return rtn;
+	}
+	
+	/**
+	 * test if 2 sprites collide.
+	 *
+	 * @param 'pusr': library context
+	 * @param 'sprite1': sprite 1
+	 * @param 'sprite2': sprite 2
+	 * @return 0: if the sprites don't collide in their bounding boxes.
+	 * @return 1: if the sprites do collide in their bounding boxes.
+	**/
+	u08t jl_gr_sprite_collide(jl_t* pusr,
+		jl_sprite_t *sprite1, jl_sprite_t *sprite2)
+	{
+		if (
+			(sprite1->cy >= (sprite2->cy+sprite2->ch)) ||
+			(sprite1->cx >= (sprite2->cx+sprite2->cw)) ||
+			(sprite2->cy >= (sprite1->cy+sprite1->ch)) ||
+			(sprite2->cx >= (sprite1->cx+sprite1->cw)) )
+		{
+			return 0;
+		}else{
+			return 1;
+		}
 	}
 
 	//Draw "str" at 'x','y', size 'size', transparency 'a'
@@ -101,26 +177,55 @@ char *GMessage[2] = {
 		jl_gr_draw_ctxt(pusr, GScreenMesg, JAL5_GRPH_YDEP/2);
 		GScreenMesgOn = 0;
 	}
-
-	void _jal5_jl_gr_loop(jl_t* pusr) {
-	//Menu Bar
+	
+	static void _jl_gr_menubar(jl_t* pusr) {
 		jl_gr_draw_image(pusr, 0, 1, .9, 0., .1, .1, 2, 255);
+		
+		jvct_t *pjlc = pusr->pjlc;
+		if( (pjlc->ct.msx > .9) && (pjlc->ct.msy < .1) &&
+			(pjlc->ct.heldDown == 1))
+		{
+			_jl_gr_flip_scrn(pjlc);
+			pjlc->ct.heldDown = 2;
+			return;
+		}
+	}
+	
+	static void _jl_gr_mouse_loop(jl_t* pusr) {
+		jvct_t *pjlc = pusr->pjlc;
+	//Update Mouse
+		pusr->mouse->x = jl_ct_gmousex(pusr);
+		pusr->mouse->y = jl_ct_gmousey(pusr);
+		pusr->mouse->cx = pusr->mouse->x;
+		pusr->mouse->cy = pusr->mouse->y;
 	//if computer, draw mouse
 	#if PLATFORM == 0
-		jl_gr_draw_image(pusr, 0, 0,
-			jl_ct_gmousex(pusr), jl_ct_gmousey(pusr),
-			.075, .075, 254,255);
+		jl_gr_sprite_draw(pusr, pjlc->sg.usrd->mouse);
 	#endif
 	}
 
-/*
-void usr_run(void) {
-	bjl_fnc_lst_run(fnc_lst_msg, MSG_OFF);
-}*/
+	void _jal5_jl_gr_loop(jl_t* pusr) {
+	//Menu Bar
+		jvct_t *pjlc = pusr->pjlc;
+		pjlc->gr.menuoverlay(pusr);
+	//Update mouse
+		pusr->mouse->loop((void*)pusr);
+	}
+	
+	void jl_gr_togglemenubar(jl_t* pusr) {
+		jvct_t *pjlc = pusr->pjlc;
+		if(pjlc->gr.menuoverlay == dont)
+			pjlc->gr.menuoverlay = _jl_gr_menubar;
+		else
+			pjlc->gr.menuoverlay = dont;
+	}
 
 	void _jal5_jl_gr_init(jvct_t *pjlc) {
-	//	printf("%p\n", pjlc->sg.usrd);
-	//	fnc_lst_msg = bjl_fnc_lst_new(MSG_MAX);
-	//	bjl_fnc_lst_add(fnc_lst_msg, MSG_ONN, jgr_updn_screen_message);
-	//	bjl_fnc_lst_add(fnc_lst_msg, MSG_OFF, do_nothing);
+		pjlc->gr.menuoverlay = _jl_gr_menubar;
+		pjlc->sg.usrd->mouse = jl_gr_sprite_make(
+			pjlc->sg.usrd, 0, 0, 254, 255, //G,I,C,A
+			0.f, 0.f, .075f, .075f, //XYWH
+			_jl_gr_mouse_loop, 0);
+		pjlc->sg.usrd->mouse->cw = 0.f;
+		pjlc->sg.usrd->mouse->ch = 0.f;
 	}

@@ -25,6 +25,7 @@ typedef struct{
 	uint8_t mdec; //Number of Modes
 	uint8_t mode; //Current Mode
 	uint8_t loop; //[WINDOW MODE] ( terminal,up,down,exit screen)
+	jl_sprite_t *mouse; //Sprite to represent mouse pointer
 	void* pjlc; //The library's context
 	void* uctx; //The program's context
 }jl_t;

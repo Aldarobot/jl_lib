@@ -82,16 +82,16 @@ void jl_sg_mode_init(jl_t* pusr, uint8_t mdec) {
 
 void jl_sg_smode_fncs(
 	jl_t* pusr,
-	void (* exit)(jl_t* pusr),
-	void (* wups)(jl_t* pusr),
-	void (* wdns)(jl_t* pusr),
-	void (* term)(jl_t* pusr))
+	fnct(void, exit, jl_t* pusr),
+	fnct(void, wups, jl_t* pusr),
+	fnct(void, wdns, jl_t* pusr),
+	fnct(void, term, jl_t* pusr))
 {
 	jvct_t* pjlc = pusr->pjlc;
-	pjlc->sg.mdes[pjlc->sg.usrd->mode].tclp[JL_SG_WM_EXIT].func = exit;
-	pjlc->sg.mdes[pjlc->sg.usrd->mode].tclp[JL_SG_WM_UP].func = wups;
-	pjlc->sg.mdes[pjlc->sg.usrd->mode].tclp[JL_SG_WM_DN].func = wdns;
-	pjlc->sg.mdes[pjlc->sg.usrd->mode].tclp[JL_SG_WM_TERM].func = term;
+	pjlc->sg.mdes[pjlc->sg.usrd->mode].tclp[JL_SG_WM_EXIT] = exit;
+	pjlc->sg.mdes[pjlc->sg.usrd->mode].tclp[JL_SG_WM_UP] = wups;
+	pjlc->sg.mdes[pjlc->sg.usrd->mode].tclp[JL_SG_WM_DN] = wdns;
+	pjlc->sg.mdes[pjlc->sg.usrd->mode].tclp[JL_SG_WM_TERM] = term;
 }
 
 void jl_sg_set_window(jl_t* pusr, uint8_t window) {
@@ -300,7 +300,7 @@ void jl_sg_kill(jl_t* pusr) {
 }
 
 //Do Nothing
-void dont(void) { }
+void dont(jl_t* pusr) { }
 
 //void sgrp_
 
@@ -370,7 +370,7 @@ void _jal5_sgrp_loop(jl_t* pusr) {
 	_jl_ct_loop(pjlc);//Update events
 	pusr->psec = _jal5_sgrp_istm(pjlc);//Check time
 	//Run mode specific loop
-	pjlc->sg.mdes[pusr->mode].tclp[pusr->loop].func(pusr);
+	pjlc->sg.mdes[pusr->mode].tclp[pusr->loop](pusr);
 	_jal5_jl_gr_loop(pusr);
 	_jal5_lsdl_loop();
 	_jal5_audi_loop(pjlc);

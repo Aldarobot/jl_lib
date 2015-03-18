@@ -4,64 +4,13 @@
 */
 
 #include <stdint.h>
+#include "jl_me.h"
 #include "jl_sg.h"
 #include "jl_ct.h"
+#include "clump.h"
 
-//Fixed point numbers go from -8.f to 8.f
-#define JFXD(x) ((int16_t)(x*4000)) //create fixed number from float
-#define JFLT(x) (((float)x)/4000.f) //create float from fixed number
-
-//Do Nothing
-void dont(void);
-
-//JLGR (Prev: grph)
-	/* pre defined screen locations */
-	#define JAL5_GRPH_YDEP (JFXD(9./16.))
-	/* screens */
-	#define JL_SCREEN_UP 0 //upper screen
-	#define JL_SCREEN_DN 1 //lower screen
-	/* functions */
-	void jal5_jlgr_draw_msge(char * str);
-
-//Image ID's
-#define IMGID_TEXT_IMAGE 1
-#define IMGID_TERMINAL_TEXT 2
-#define IMGID_LANDSCAPE 3
-#define IMGID_TASK_BUTTON 4
-
-//Variable Types
-#define u08t uint8_t	//Small int
-#define u16t uint16_t	//Short int
-#define u32t uint32_t	//Normal int
-#define u64t uint64_t	//Large int
-#define s08t int8_t	//Small int
-#define s16t int16_t	//Short int
-#define s32t int32_t	//Normal int
-#define s64t int64_t	//Large int
-#define dect float	//floating point decimal
-#define f08t s08t	//8-bit fixed point decimal
-#define f16t s16t	//16-bit fixed point decimal
-#define f32t s32t	//32-bit fixed point decimal
-#define f64t s64t	//64-bit fixed point decimal
-#define strt strt_t *
-#define strl strt *
-
-//5 bytes of information about the string are included
-typedef struct{
-	u08t* data; //Actual String
-	u32t size; //Allocated Space In String
-	u32t curs; //Cursor In String
-	u08t type;
-}strt_t;
-
-//strt_t.Type:
-	//TEMPORARY - Free after used
-	#define STRT_TEMP 0 
-	//NOT TEMPORARY
-	#define STRT_KEEP 1 
-
-typedef struct{
-}sgrp_t;
+	//Do Nothing
+	void dont(jl_t* pusr);
 
 /*
 	JAL5_jl_me
@@ -137,10 +86,10 @@ typedef struct{
 	//Set the current mode loop functions
 	void jl_sg_smode_fncs(
 		jl_t* pusr,
-		void (* exit)(jl_t* pusr),
-		void (* wups)(jl_t* pusr),
-		void (* wdns)(jl_t* pusr),
-		void (* term)(jl_t* pusr));
+		fnct(void, exit, jl_t* pusr),
+		fnct(void, wups, jl_t* pusr),
+		fnct(void, wdns, jl_t* pusr),
+		fnct(void, term, jl_t* pusr));
 
 	//Set Which Window
 	void jl_sg_set_window(jl_t* pusr, uint8_t window);
@@ -176,18 +125,45 @@ typedef struct{
 		2D rendering & 3D rendering.
 */
 	/**
-	 * Draw An Image,
+	 * Draw An Image.
+	 *
 	 * @param 'pusr': library context
 	 * @param 'i':  the ID of the image.
 	 * @param 'xywh': where and how big it is drawn.
-	 * @param 'chr': is 0 unless you want to use the image as
+	 * @param 'c': is 0 unless you want to use the image as
 	 * 	a charecter map, then it will zoom into charecter 'chr'.
 	 * @param 'a': the transparency each pixel is multiplied by; 255 is
 	 *	solid and 0 is totally invisble.
-	*/
+	**/
 	void jl_gr_draw_image(jl_t* pusr, u16t g, u16t i,
 		float x,float y,float w,float h,
-		u08t chr, u08t a);
+		u08t c, u08t a);
+
+	/**
+	 * Draw the sprite.
+	 *
+	 * @param 'pusr': library context
+	 * @param 'psprite': the sprite to draw.
+	**/
+	void jl_gr_sprite_draw(jl_t* pusr, jl_sprite_t *psprite);
+	
+	jl_sprite_t * jl_gr_sprite_make(
+		jl_t* pusr, u16t g, u16t i, u08t c, u08t a,
+		dect x, dect y, dect w, dect h,
+		fnct(void, loop, jl_t* pusr), u32t ctxs);
+	
+	/**
+	 * test if 2 sprites collide.
+	 *
+	 * @param 'pusr': library context
+	 * @param 'sprite1': sprite 1
+	 * @param 'sprite2': sprite 2
+	 * @return 0: if the sprites don't collide in their bounding boxes.
+	 * @return 1: if the sprites do collide in their bounding boxes.
+	**/
+	u08t jl_gr_sprite_collide(jl_t* pusr,
+		jl_sprite_t *sprite1, jl_sprite_t *sprite2);
+
 	//Draw "str" at 'x','y', size 'size', transparency 'a', [jvct=context]
 	void jl_gr_draw_text(jl_t* pusr, char *str, dect x, dect y, dect size,
 		uint8_t a);
@@ -200,6 +176,12 @@ typedef struct{
 	void jl_gr_draw_msge(char* str);
 	//Print a message on the screen and then terminate the program
 	void jl_gr_term_msge(jl_t* pusr, char* message);
+	/**
+	 * toggle whether or not to show the menu bar.
+	 *
+	 * @param pusr: the libary context
+	**/
+	void jl_gr_togglemenubar(jl_t* pusr);
 
 /*
 	JAL5_INPT
