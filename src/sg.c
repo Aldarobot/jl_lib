@@ -9,7 +9,7 @@
 	//LIB INITIALIZATION fn(Context)
 	void _jal5_comm_init(jvct_t* pjlc);
 	void _jal5_audi_init(jvct_t* pjlc);
-	void _jal5_file_init(jvct_t* pjlc);
+	void _jl_fl_init(jvct_t * pjlc);
 	void _jal5_jl_gr_init(jvct_t* pjlc);
 	void _jl_ct_init(jvct_t* pjlc);
 	void _jal5_sgrp_init(jvct_t* pjlc);
@@ -28,6 +28,7 @@
 	//LIB KILLS
 	void _jal5_lsdl_kill(jvct_t *jcpt);
 	void _jl_me_kill(jvct_t* jprg);
+	void _jl_fl_kill(jvct_t * pjlc);
 
 // Constants
 
@@ -260,6 +261,7 @@ static uint32_t jlvm_quit(jvct_t* pjlc, int rc) {
 	#endif
 	_jal5_lsdl_kill(pjlc);
 	_jl_me_kill(pjlc);
+	_jl_fl_kill(pjlc);
 	#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
 	_jl_fl_errf(pjlc, "No Error! YAY!"); //Exited properly
 	#endif
@@ -403,7 +405,7 @@ static inline jvct_t* _jlvm_init_blib(void) {
 static inline void _jlvm_init_libs(jvct_t *jcpt) {
 	_jal5_lsdl_init(jcpt); //create window, load sdl
 	_jl_ct_init(jcpt); //Prepare input structures
-	_jal5_file_init(jcpt); //Load needed packages
+	_jl_fl_init(jcpt); //Load needed packages
 	_jal5_audi_init(jcpt); //Load audiostuffs from packages
 	_jal5_sgrp_init(jcpt); //Load graphics from packages
 	_jal5_eogl_init(jcpt);

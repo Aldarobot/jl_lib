@@ -361,30 +361,159 @@ strt jl_fl_get_resloc(jl_t* pusr, strt pprg_name, strt pfilename) {
 	return pvar_pkfl;
 }
 
-void jl_fl_user_select_init(jl_t* pusr, char *program_name) {
+static void _jl_fl_user_select_open_dir(jl_t* pusr, char *dirname) {
 	DIR *dir;
 	struct dirent *ent;
 	jvct_t * pjlc = pusr->pjlc;
-	
-	pjlc->fl.filelist = cl_list_create();
-	if ((dir = opendir (SDL_GetPrefPath("JLVM",program_name))) != NULL) {
+
+	pjlc->fl.dirname = dirname;
+	pjlc->fl.cursor = 0;
+	cl_list_clear(pjlc->fl.filelist);
+	if ((dir = opendir (dirname)) != NULL) {
 		/* print all the files and directories within directory */
 		while ((ent = readdir (dir)) != NULL) {
-			char *element = malloc(strlen(ent->d_name));
+			char *element = malloc(strlen(ent->d_name) + 1);
 			memcpy(element, ent->d_name, strlen(ent->d_name));
+			element[strlen(ent->d_name)] = '\0';
 			cl_list_add(pjlc->fl.filelist, element);
 		}
-		closedir (dir);
+		closedir(dir);
 	} else {
 		//Couldn't open Directory
+		int errsv = errno;
+		if(errsv == ENOTDIR) { //Not a directory - is a file
+			pusr->loop = JL_SG_WM_EXIT; //Go into exit loop
+		}
 	}
-	cl_list_destroy(pjlc->fl.filelist);
+}
+
+void jl_fl_user_select_init(jl_t* pusr, char *program_name) {
+	_jl_fl_user_select_open_dir(pusr, SDL_GetPrefPath("JLVM",program_name));
+}
+
+static void _jl_fl_user_select_up(jl_t* pusr, float x, float y) {
+	if((int)y == 1) {
+		jvct_t * pjlc = pusr->pjlc;
+		if((pjlc->fl.cursor > 0) || pjlc->fl.cpage) pjlc->fl.cursor--;
+	}
+}
+
+static void _jl_fl_user_select_dn(jl_t* pusr, float x, float y) {
+	if((int)y == 1) {
+		jvct_t * pjlc = pusr->pjlc;
+		if(pjlc->fl.cursor + (pjlc->fl.cpage * 21) <
+			cl_list_count(pjlc->fl.filelist) - 1)
+		{
+			pjlc->fl.cursor++;
+		}
+	}
+}
+
+static void _jl_fl_user_select_do(jl_t* pusr, float x, float y) {
+	if((int)y == 1) {
+		jvct_t * pjlc = pusr->pjlc;
+		struct cl_list_iterator *iterator;
+		int i;
+		char *stringtoprint;
+
+		iterator = cl_list_iterator_create(pjlc->fl.filelist);
+		for(i = 0; i < cl_list_count(pjlc->fl.filelist); i++) {
+			stringtoprint = cl_list_iterator_next(iterator);
+			if(i == pjlc->fl.cursor) {
+				pjlc->fl.selecteditem = stringtoprint;
+				cl_list_iterator_destroy(iterator);
+				break;
+			}
+		}
+		if(strcmp(pjlc->fl.selecteditem, "..") == 0) {
+			for(i = strlen(pjlc->fl.dirname)-2; i > 0; i--) {
+				if(pjlc->fl.dirname[i] == '/') break;
+				else pjlc->fl.dirname[i] = '\0';
+			}
+			_jl_fl_user_select_open_dir(pusr,pjlc->fl.dirname);
+		}else if(strcmp(pjlc->fl.selecteditem, ".") == 0) {
+			pusr->loop = JL_SG_WM_EXIT; //Go into exit loop
+		}else{
+			char *newdir = malloc(
+				strlen(pjlc->fl.dirname) +
+				strlen(pjlc->fl.selecteditem) + 2);
+			memcpy(newdir, pjlc->fl.dirname,
+				strlen(pjlc->fl.dirname));
+			memcpy(newdir + strlen(pjlc->fl.dirname),
+				pjlc->fl.selecteditem,
+				strlen(pjlc->fl.selecteditem));
+			newdir[strlen(pjlc->fl.dirname) +
+				strlen(pjlc->fl.selecteditem)] = '/';
+			newdir[strlen(pjlc->fl.dirname) +
+				strlen(pjlc->fl.selecteditem) + 1] = '\0';
+			free(pjlc->fl.dirname);
+			_jl_fl_user_select_open_dir(pusr,newdir);
+		}
+	}
 }
 
 void jl_fl_user_select_loop(jl_t* pusr) {
+	jvct_t * pjlc = pusr->pjlc;
+	struct cl_list_iterator *iterator;
+	int i;
+	char *stringtoprint;
+
+	iterator = cl_list_iterator_create(pjlc->fl.filelist);
+
+	jl_gr_draw_image(pusr, 0, 1, 0., 0., 1., 1., 1, 127);
+	jl_gr_draw_text(pusr, "Select File", .02, .02, .04,255);
+
+	jl_ct_run_event(pusr,
+		JL_CT_ALLP(JL_CT_GAME_CPUP, JL_CT_COMP_ARUP,
+			JL_CT_ANDR_TFUP), _jl_fl_user_select_up
+		);
+	jl_ct_run_event(pusr,
+		JL_CT_ALLP(JL_CT_GAME_CPDN, JL_CT_COMP_ARDN,
+			JL_CT_ANDR_TFDN), _jl_fl_user_select_dn
+		);
+	//Draw up to 20
+	for(i = 0; i < cl_list_count(pjlc->fl.filelist); i++) {
+		stringtoprint = cl_list_iterator_next(iterator);
+		if(strcmp(stringtoprint, "..") == 0) {
+			stringtoprint = "//containing folder//";
+		}else if(strcmp(stringtoprint, ".") == 0) {
+			stringtoprint = "//this folder//";
+		}
+		if(i - (pjlc->fl.cpage * 21) >= 0)
+			jl_gr_draw_text(pusr, stringtoprint,
+				.06, .08 + (.04 * (i - (pjlc->fl.cpage * 21))),
+				.04,255);
+		if(i - (pjlc->fl.cpage * 21) > 19) {
+			break;
+		 	cl_list_iterator_destroy(iterator);
+	 	}
+	}
+	if(pjlc->fl.cursor > 20) {
+		pjlc->fl.cursor = 0;
+		pjlc->fl.cpage++;
+	}
+	if(pjlc->fl.cursor < 0) {
+		pjlc->fl.cursor = 20;
+		pjlc->fl.cpage--;
+	}
+	jl_gr_draw_text(pusr, ">", .02, .08 + (.04 * pjlc->fl.cursor), .04,255);
+	jl_gr_draw_text(pusr, pjlc->fl.dirname, .02, .94, .02, 255);
+	jl_ct_run_event(pusr,
+		JL_CT_ALLP(JL_CT_GAME_BTNA, JL_CT_COMP_RETN,
+			JL_CT_ANDR_TCCR), _jl_fl_user_select_do
+		);
 }
 
-void _jal5_file_init(jvct_t * pjlc) {
+char *jl_fl_user_select_get(jl_t* pusr) {
+	jvct_t * pjlc = pusr->pjlc;
+	return pjlc->fl.selecteditem;
+}
+
+void _jl_fl_kill(jvct_t * pjlc) {
+	cl_list_destroy(pjlc->fl.filelist);
+}
+
+void _jl_fl_init(jvct_t * pjlc) {
 
 	jl_io_offset(pjlc->sg.usrd, "FILE");
 	jl_io_offset(pjlc->sg.usrd, "INIT");
@@ -399,4 +528,7 @@ void _jal5_file_init(jvct_t * pjlc) {
 
 	_jl_fl_errf(pjlc, "Segmentation Fault / Floatation Exception etc.");
 	jl_io_offset(pjlc->sg.usrd, "JLVM");
+	
+	//Create the variables
+	pjlc->fl.filelist = cl_list_create();
 }

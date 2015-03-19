@@ -138,6 +138,19 @@ char *GMessage[2] = {
 		jl_gr_draw_text(pusr, display, x, y, size, a);
 	}
 
+	void jl_gr_draw_text_area(jl_t* pusr, jl_sprite_t * psprite, char *txt){
+		float fontsize = (psprite->w - .1) / strlen(txt);
+		jl_gr_draw_text(pusr, txt,
+			psprite->x + .05,
+			psprite->y + (.5 * (psprite->h - fontsize)),
+			fontsize, 255);
+	}
+	
+	void jl_gr_draw_text_sprite(jl_t* pusr,jl_sprite_t * psprite,char *txt){
+		jl_gr_sprite_draw(pusr, psprite);
+		jl_gr_draw_text_area(pusr, psprite, txt);
+	}
+
 	//Draw centered text on screen saying "strt" at y coordinate "p_y"
 	void jl_gr_draw_ctxt(jl_t* pusr, char *str, dect p_y) {
 		jl_gr_draw_text(pusr->pjlc, str, 0, p_y,
@@ -154,6 +167,21 @@ char *GMessage[2] = {
 	void jl_gr_term_msge(jl_t* pusr, char *message) {
 		jl_gr_draw_msge(message);
 		jlvm_dies(pusr->pjlc, Strt(message));
+	}
+	
+	void jl_gr_draw_slide_button(
+		jl_t* pusr, jl_sprite_t * psprite, char *txt, float defaultx,
+		float slidex, fnc_onevent_t(prun))
+	{
+		jl_gr_draw_text_sprite(pusr, psprite, txt);
+		psprite->x = defaultx;
+		if(jl_gr_sprite_collide(pusr, pusr->mouse, psprite)) {
+			jl_ct_run_event(pusr,
+				JL_CT_ALLP(JL_CT_GAME_STYL, JL_CT_COMP_CLLT,
+					JL_CT_ANDR_TOUC), prun
+				);
+			psprite->x = defaultx + slidex;
+		}
 	}
 
 /*BACKGROUND FUNCTIONS*/

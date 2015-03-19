@@ -108,6 +108,10 @@
 	
 	typedef struct {
 		struct cl_list *filelist; //List of all files in working dir.
+		int8_t cursor;
+		uint8_t cpage;
+		char *dirname;
+		char *selecteditem;
 	}_fl_t;
 	
 	typedef struct {

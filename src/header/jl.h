@@ -170,12 +170,34 @@
 	//draw a number at "x","y" size: "size" transparency "a"
 	void jl_gr_draw_numi(jl_t* pusr, uint32_t num, dect x, dect y, dect size,
 		uint8_t a);
+	/**
+	 * Draw text within the boundary of a sprite
+	 * @param 'pusr': library context
+	 * @param 'psprite': the boundary sprite
+	 * @param 'txt': the text to draw
+	**/
+	void jl_gr_draw_text_area(jl_t* pusr, jl_sprite_t * psprite, char *txt);
+	/**
+	 * Draw a sprite, then draw text within the boundary of a sprite
+ 	 * @param 'pusr': library context
+	 * @param 'psprite': the boundary sprite
+	 * @param 'txt': the text to draw
+	**/
+	void jl_gr_draw_text_sprite(jl_t* pusr,jl_sprite_t * psprite,char *txt);
 	//Draw centered text on screen saying "strt" at y coordinate "p_y"
 	void jl_gr_draw_ctxt(jl_t* pusr, char *str, dect p_y);
 	//Print message "str" on the screen
 	void jl_gr_draw_msge(char* str);
 	//Print a message on the screen and then terminate the program
 	void jl_gr_term_msge(jl_t* pusr, char* message);
+	/**
+	 * Draw a slide button, and activate if it is pressed.
+	 * @param 'pusr': the libary context
+ 	 * @param 'pusr': the libary context
+	**/
+	void jl_gr_draw_slide_button(
+		jl_t* pusr, jl_sprite_t * psprite, char *txt, float defaultx,
+		float slidex, fnc_onevent_t(prun));
 	/**
 	 * toggle whether or not to show the menu bar.
 	 *
@@ -235,15 +257,28 @@
 	//Load file "Fname" in default package & Return contents.
 	uint8_t *jl_fl_pk_mnld(jl_t* pusr, char *Fname);
 
-	/*
+	/**
 	 * Create a folder (directory)
 	*/
 	void jl_fl_mkdir(jl_t* pusr, strt pfilebase);
-	/*
+	/**
 	 * Return the location of the resource pack for program with name
 	 * "pprg_name"
 	*/
 	strt jl_fl_get_resloc(jl_t* pusr, strt pprg_name, strt pfilename);
+	/**
+	 * Open directory for file viewer.
+	**/
+	void jl_fl_user_select_init(jl_t* pusr, char *program_name);
+	/**
+	 * Run the file viewer.
+	**/
+	void jl_fl_user_select_loop(jl_t* pusr);
+	
+	/**
+	 * Get the results from the file viewer.
+	**/
+	char *jl_fl_user_select_get(jl_t* pusr);
 	
 
 /*
