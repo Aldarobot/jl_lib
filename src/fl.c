@@ -368,6 +368,7 @@ static void _jl_fl_user_select_open_dir(jl_t* pusr, char *dirname) {
 
 	pjlc->fl.dirname = dirname;
 	pjlc->fl.cursor = 0;
+	pjlc->fl.cpage = 0;
 	cl_list_clear(pjlc->fl.filelist);
 	if ((dir = opendir (dirname)) != NULL) {
 		/* print all the files and directories within directory */
@@ -406,6 +407,20 @@ static void _jl_fl_user_select_dn(jl_t* pusr, float x, float y) {
 		{
 			pjlc->fl.cursor++;
 		}
+	}
+}
+
+static void _jl_fl_user_select_rt(jl_t* pusr, float x, float y) {
+	int i;
+	for(i = 0; i < 5; i++) {
+		_jl_fl_user_select_dn(pusr, x, y);
+	}
+}
+
+static void _jl_fl_user_select_lt(jl_t* pusr, float x, float y) {
+	int i;
+	for(i = 0; i < 5; i++) {
+		_jl_fl_user_select_up(pusr, x, y);
 	}
 }
 
@@ -470,6 +485,14 @@ void jl_fl_user_select_loop(jl_t* pusr) {
 	jl_ct_run_event(pusr,
 		JL_CT_ALLP(JL_CT_GAME_CPDN, JL_CT_COMP_ARDN,
 			JL_CT_ANDR_TFDN), _jl_fl_user_select_dn
+		);
+	jl_ct_run_event(pusr,
+		JL_CT_ALLP(JL_CT_GAME_CPRT, JL_CT_COMP_ARRT,
+			JL_CT_ANDR_TFRT), _jl_fl_user_select_rt
+		);
+	jl_ct_run_event(pusr,
+		JL_CT_ALLP(JL_CT_GAME_CPLT, JL_CT_COMP_ARLT,
+			JL_CT_ANDR_TFLT), _jl_fl_user_select_lt
 		);
 	//Draw up to 20
 	for(i = 0; i < cl_list_count(pjlc->fl.filelist); i++) {
