@@ -1,3 +1,11 @@
+/*
+ * JL_lib
+ * Copyright (c) 2015 Jeron A. Lau 
+*/
+/** \file
+ * fl.c
+ * 	This allows you to modify the file system.  It uses libzip.
+ */
 #include "header/jl_pr.h"
 
 #define PKFMAX 10000000
@@ -173,7 +181,7 @@ uint8_t *jl_fl_pk_load(jl_t* pusr, char *packageFileName, char *filename)
 	struct zip *zipfile = zip_open(packageFileName, ZIP_CHECKCONS, &zerror);
 	if(zerror == ZIP_ER_OPEN) {
 		jl_io_print_lowc(pusr, " NO EXIST!");
-		pusr->errf = JL_ERRF_FIND;
+		pusr->errf = JL_ERR_FIND;
 		return NULL;
 	}
 	if(zipfile == NULL) {
@@ -201,7 +209,7 @@ uint8_t *jl_fl_pk_load(jl_t* pusr, char *packageFileName, char *filename)
 		jl_io_print_lows(pusr,
 			jl_me_strt_merg(Strt("because: "),
 				Strt(zip_strerror(zipfile)), STRT_TEMP));
-		pusr->errf = JL_ERRF_NONE;
+		pusr->errf = JL_ERR_NONE;
 		return NULL;
 	}else{
 		#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
@@ -225,7 +233,7 @@ uint8_t *jl_fl_pk_load(jl_t* pusr, char *packageFileName, char *filename)
 	#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
 	printf("[JLVM/FILE/LOAD] done.\n");
 	#endif
-	pusr->errf = JL_ERRF_NERR;
+	pusr->errf = JL_ERR_NERR;
 	jl_io_offset(pusr, "JLVM");
 	return fileToLoad;
 }
@@ -234,7 +242,7 @@ uint8_t *jl_fl_pk_mnld(jl_t* pusr, char *Fname) {
 	uint8_t *freturn;
 	if(
 		((freturn = jl_fl_pk_load(pusr,(void *)gvar_pkfl->data,Fname)) == NULL) &&
-		pusr->errf == JL_ERRF_FIND ) //Package doesn't exist!! - create
+		pusr->errf == JL_ERR_FIND ) //Package doesn't exist!! - create
 	{
 		#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
 		jl_io_print_lowc(pusr, "Creating Package...\n");
@@ -251,7 +259,7 @@ uint8_t *jl_fl_pk_mnld(jl_t* pusr, char *Fname) {
 		if(
 			((freturn = jl_fl_pk_load(pusr,(void *)gvar_pkfl->data,Fname))
 				== NULL) &&
-			pusr->errf == JL_ERRF_FIND )//Package still doesn't exist!!
+			pusr->errf == JL_ERR_FIND )//Package still doesn't exist!!
 		{
 			jlvm_dies(pusr->pjlc, Strt("Failed To Create jlvm.zip"));
 		}
@@ -366,6 +374,11 @@ static void _jl_fl_user_select_open_dir(jl_t* pusr, char *dirname) {
 	struct dirent *ent;
 	jvct_t * pjlc = pusr->pjlc;
 
+	if(dirname[strlen(dirname)-1] == '/' &&
+		dirname[strlen(dirname)-2] == '/')
+	{
+		dirname[strlen(dirname)-1] = '\0';
+	}
 	pjlc->fl.dirname = dirname;
 	pjlc->fl.cursor = 0;
 	pjlc->fl.cpage = 0;
@@ -379,16 +392,19 @@ static void _jl_fl_user_select_open_dir(jl_t* pusr, char *dirname) {
 			cl_list_add(pjlc->fl.filelist, element);
 		}
 		closedir(dir);
+		jl_cl_list_alphabetize(pjlc->fl.filelist);
 	} else {
 		//Couldn't open Directory
 		int errsv = errno;
 		if(errsv == ENOTDIR) { //Not a directory - is a file
+			pjlc->fl.dirname[strlen(dirname)-1] = '\0';
 			pusr->loop = JL_SG_WM_EXIT; //Go into exit loop
 		}
 	}
 }
 
 void jl_fl_user_select_init(jl_t* pusr, char *program_name) {
+	pusr->loop = JL_SG_WM_DN;
 	_jl_fl_user_select_open_dir(pusr, SDL_GetPrefPath("JLVM",program_name));
 }
 
@@ -529,7 +545,7 @@ void jl_fl_user_select_loop(jl_t* pusr) {
 
 char *jl_fl_user_select_get(jl_t* pusr) {
 	jvct_t * pjlc = pusr->pjlc;
-	return pjlc->fl.selecteditem;
+	return pjlc->fl.dirname;
 }
 
 void _jl_fl_kill(jvct_t * pjlc) {

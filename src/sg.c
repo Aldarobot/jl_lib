@@ -1,6 +1,13 @@
 /*
- * (c) Jeron A. Lau
- * jlvm_blib_sgrp is a library for handling windows.
+ * JL_lib
+ * Copyright (c) 2015 Jeron A. Lau 
+*/
+/** \file
+ * sg.c
+ *	sg AKA. Simple JL_lib Graphics Library is a window handling library.
+ *	It is needed for handling the 2 screens that JL_lib provides.  It also
+ *	has support for things called modes.  An example is: your title screen
+ *	of a game and the actual game would be on different modes.
 */
 
 #include "header/jl_pr.h"
@@ -75,18 +82,29 @@ uint8_t jal5_sgrp_lsdl_gmse(uint8_t a) {
 	return SDL_GetMouseState(NULL,NULL)&SDL_BUTTON(a);
 }
 
+/**
+ * Create a window & Allocate modes
+ *
+ * @param pusr: the library context
+ * @param mdec: number of modes to allocate
+ */
 void jl_sg_mode_init(jl_t* pusr, uint8_t mdec) {
 	jvct_t* pjlc = pusr->pjlc;
 	pjlc->sg.mdes = malloc(mdec * sizeof(__sg_mode_t));
 	pjlc->sg.usrd->mdec = mdec;
 }
 
-void jl_sg_smode_fncs(
-	jl_t* pusr,
-	fnct(void, exit, jl_t* pusr),
-	fnct(void, wups, jl_t* pusr),
-	fnct(void, wdns, jl_t* pusr),
-	fnct(void, term, jl_t* pusr))
+/**
+ * Set the current mode loop functions
+ *
+ * @param pusr: the library context
+ * @param exit: exit loop
+ * @param wups: upper screen loop
+ * @param wdns: lower screen loop
+ * @param term: terminal screen loop
+*/
+void jl_sg_smode_fncs(jl_t* pusr, jl_simple_fnt exit, jl_simple_fnt wups,
+	jl_simple_fnt wdns, jl_simple_fnt term)
 {
 	jvct_t* pjlc = pusr->pjlc;
 	pjlc->sg.mdes[pjlc->sg.usrd->mode].tclp[JL_SG_WM_EXIT] = exit;
@@ -95,7 +113,10 @@ void jl_sg_smode_fncs(
 	pjlc->sg.mdes[pjlc->sg.usrd->mode].tclp[JL_SG_WM_TERM] = term;
 }
 
-void jl_sg_set_window(jl_t* pusr, uint8_t window) {
+/*
+ *Set the current mode loop/window
+ */
+void jl_sg_set_window(jl_t* pusr, jl_sg_wm_t window) {
 	pusr->loop = window;
 }
 
@@ -197,7 +218,7 @@ void _jlvm_load_jlpx(jvct_t* pjlc,uint8_t *data,void **pixels,int *w,int *h) {
 }
 
 //loads next image in the file contents pointed to by "data"
-static inline u08t jgr_load_jlpx(jvct_t * pjlc, uint8_t *data, uint32_t id) {
+static inline u08t jgr_load_jlpx(jvct_t * pjlc, uint8_t *data) {
 //	jlvm_dies(data);
 	void *fpixels = NULL;
 	int fw;
@@ -225,15 +246,16 @@ static inline u08t jgr_load_jlpx(jvct_t * pjlc, uint8_t *data, uint32_t id) {
 }
 
 //Load the images in the image file
-static inline void jlvm_ini_images(jvct_t * pjlc, uint8_t *data) {
-//	jl_io_offset(pjlc->sg.usrd, "INIM");
+static inline void _jl_sg_init_images(jvct_t * pjlc, uint8_t *data, uint16_t p){
+	pjlc->sg.igid = p;
 	#if JLVM_DEBUG >= JLVM_DEBUG_PROGRESS
+	//jl_io_offset(pjlc->sg.usrd, "INIM");
 	printf("[JLVM/LIM] loading images...\n");
 	printf("lne %d\n", (int)strlen((void *)data));
 	#endif
 //load textures
 	while(1) {
-		if(jgr_load_jlpx(pjlc, data, IMGID_TEXT_IMAGE))
+		if(jgr_load_jlpx(pjlc, data))
 			continue;
 		else
 			break;
@@ -293,7 +315,9 @@ void jlvm_kill(jvct_t* pjlc, char *msg) {
 	jlvm_erqt(pjlc, msg);
 }
 
-//quit the program
+/**
+ * Stop the program.
+ */
 void jl_sg_kill(jl_t* pusr) {
 	if(pusr->loop == JL_SG_WM_EXIT)
 		jlvm_quit(pusr->pjlc, 0);
@@ -330,21 +354,25 @@ static inline float _jal5_sgrp_istm(jvct_t* pjlc) {
 	}
 }
 
-/*
- * Add images From program "pprg" in file "pfile"
+/**
+ * Load all images from a zipfile and give them ID's.
+ * info: info is set to number of images loaded.
+ * @param pusr: library context
+ * @param pzipfile: full file name of a zip file.
+ * @param pigid: which image group to load the images into.
 */
-void jl_sg_add_image(jl_t* pusr, strt pprg, strt pfile) {
+void jl_sg_add_image(jl_t* pusr, char *pzipfile, uint16_t pigid) {
 	//Load Graphics
 	uint8_t *img;
 	img = jl_fl_pk_load(
 		pusr,
-		(void*)(jl_fl_get_resloc(pusr, pprg, pfile)->data),
+		pzipfile,
 		"jlex/2/_img");
 	#if JLVM_DEBUG >= JLVM_DEBUG_PROGRESS
 	jl_io_print_lowc(pusr, "Loading Images...\n");
 	#endif
 	if(img != NULL) {
-		jlvm_ini_images(pusr->pjlc, img);
+		_jl_sg_init_images(pusr->pjlc, img, pigid);
 	}
 }
 
@@ -354,7 +382,7 @@ void _jal5_sgrp_init(jvct_t * pjlc) {
 	//Set Up Variables
 	pjlc->gl.textures = NULL;
 	pjlc->gl.uniforms.textures = NULL;
-	pjlc->sg.usrd->errf = JL_ERRF_NERR; //no error
+	pjlc->sg.usrd->errf = JL_ERR_NERR; //no error
 	pjlc->sg.usrd->psec = 0.f;
 	pjlc->sg.usrd->mode = 0;
 	pjlc->sg.usrd->mdec = 0;
@@ -363,7 +391,10 @@ void _jal5_sgrp_init(jvct_t * pjlc) {
 	pjlc->sg.igid = 0; //Reset Image Group Id
 	SDL_GetMouseState(&pjlc->sg.xmse, &pjlc->sg.ymse);
 	//Load Graphics
-	jl_sg_add_image(pjlc->sg.usrd, Strt("JLVM"), Strt("jlvm.zip"));
+	jl_sg_add_image(pjlc->sg.usrd,
+		(void*)(jl_fl_get_resloc(pjlc->sg.usrd,
+			Strt("JLVM"), Strt("jlvm.zip"))->data),
+		0);
 }
 
 //Run Loop X
@@ -442,3 +473,9 @@ int32_t main(int argc, char *argv[]) {
 	jl_sg_kill(jcpt->sg.usrd);//kill the program
 	return 126;
 }
+
+/**
+ * @mainpage
+ * @section Library Description
+ * 
+*/

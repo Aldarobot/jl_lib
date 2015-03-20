@@ -4,8 +4,8 @@
 */
 
 #include <stdint.h>
-#include "jl_me.h"
 #include "jl_sg.h"
+#include "jl_me.h"
 #include "jl_ct.h"
 #include "clump.h"
 
@@ -19,6 +19,7 @@
 		getting variables, and doing simple and complicated math functions on
 		the variables.  Has a specialized string type.
 */
+//me.c
 	//Allocate space of "size" bytes
 	void * jl_me_alloc(u32t size);
 	#define List(x) jl_me_list_allc(sizeof(void*)*x)
@@ -68,44 +69,18 @@
 	
 */
 
-/*
-	JAL5_SG
+	void jl_cl_list_alphabetize(struct cl_list *list);
 
-		SG AKA. Simple JL_lib Graphics Library is a window handling library.
-		It is needed for handling the 2 screens that JL_lib provides.  It also
-		has support for things called modes.  An example is: your title screen
-		of a game and the actual game would be on different modes.
-*/
-	//Create a window.  Allocate modes of count "mdec"
+//SG
 	void jl_sg_mode_init(jl_t* pusr, u08t mdec);
-
 	// Exit unsuccessfully with an error message.  "prop" is used for
 	// customizing the error message
 		//	void (* dies)(char *message, sgrp_t *prop);
-
-	//Set the current mode loop functions
-	void jl_sg_smode_fncs(
-		jl_t* pusr,
-		fnct(void, exit, jl_t* pusr),
-		fnct(void, wups, jl_t* pusr),
-		fnct(void, wdns, jl_t* pusr),
-		fnct(void, term, jl_t* pusr));
-
-	//Set Which Window
-	void jl_sg_set_window(jl_t* pusr, uint8_t window);
-
-	//Kill The Program
+	void jl_sg_smode_fncs(jl_t* pusr, jl_simple_fnt exit, jl_simple_fnt wups,
+		jl_simple_fnt wdns, jl_simple_fnt term);
+	void jl_sg_set_window(jl_t* pusr, jl_sg_wm_t window);
 	void jl_sg_kill(jl_t* pusr);
-	
-	/**
-	 * Add images From program "pprg" in file "pfile"
-	 *
-	 * @info info is set to number of images loaded.
-	 * @param pusr:library context
-	 * @param pprg: program title
-	 * @param pfile: name of file to load within the program's directory
-	*/
-	void jl_sg_add_image(jl_t* pusr, strt pprg, strt pfile);
+	void jl_sg_add_image(jl_t* pusr, char *pzipfile, uint16_t pigid);
 
 /*
 	_NKL_LSDL
@@ -117,92 +92,29 @@
 	 * directory.
 	*/
 	void lsdl_prog_name(strt name);
-
-/*
-	JAL5_GRPH
-
-		A High Level Graphics Library that supports sprites, texture loading,
-		2D rendering & 3D rendering.
-*/
-	/**
-	 * Draw An Image.
-	 *
-	 * @param 'pusr': library context
-	 * @param 'i':  the ID of the image.
-	 * @param 'xywh': where and how big it is drawn.
-	 * @param 'c': is 0 unless you want to use the image as
-	 * 	a charecter map, then it will zoom into charecter 'chr'.
-	 * @param 'a': the transparency each pixel is multiplied by; 255 is
-	 *	solid and 0 is totally invisble.
-	**/
+// "gr.c"
 	void jl_gr_draw_image(jl_t* pusr, u16t g, u16t i,
 		float x,float y,float w,float h,
 		u08t c, u08t a);
-
-	/**
-	 * Draw the sprite.
-	 *
-	 * @param 'pusr': library context
-	 * @param 'psprite': the sprite to draw.
-	**/
 	void jl_gr_sprite_draw(jl_t* pusr, jl_sprite_t *psprite);
-	
 	jl_sprite_t * jl_gr_sprite_make(
 		jl_t* pusr, u16t g, u16t i, u08t c, u08t a,
 		dect x, dect y, dect w, dect h,
-		fnct(void, loop, jl_t* pusr), u32t ctxs);
-	
-	/**
-	 * test if 2 sprites collide.
-	 *
-	 * @param 'pusr': library context
-	 * @param 'sprite1': sprite 1
-	 * @param 'sprite2': sprite 2
-	 * @return 0: if the sprites don't collide in their bounding boxes.
-	 * @return 1: if the sprites do collide in their bounding boxes.
-	**/
+		jl_simple_fnt loop, u32t ctxs);
 	u08t jl_gr_sprite_collide(jl_t* pusr,
 		jl_sprite_t *sprite1, jl_sprite_t *sprite2);
-
-	//Draw "str" at 'x','y', size 'size', transparency 'a', [jvct=context]
 	void jl_gr_draw_text(jl_t* pusr, char *str, dect x, dect y, dect size,
 		uint8_t a);
-	//draw a number at "x","y" size: "size" transparency "a"
 	void jl_gr_draw_numi(jl_t* pusr, uint32_t num, dect x, dect y, dect size,
 		uint8_t a);
-	/**
-	 * Draw text within the boundary of a sprite
-	 * @param 'pusr': library context
-	 * @param 'psprite': the boundary sprite
-	 * @param 'txt': the text to draw
-	**/
 	void jl_gr_draw_text_area(jl_t* pusr, jl_sprite_t * psprite, char *txt);
-	/**
-	 * Draw a sprite, then draw text within the boundary of a sprite
- 	 * @param 'pusr': library context
-	 * @param 'psprite': the boundary sprite
-	 * @param 'txt': the text to draw
-	**/
 	void jl_gr_draw_text_sprite(jl_t* pusr,jl_sprite_t * psprite,char *txt);
-	//Draw centered text on screen saying "strt" at y coordinate "p_y"
 	void jl_gr_draw_ctxt(jl_t* pusr, char *str, dect p_y);
-	//Print message "str" on the screen
-	void jl_gr_draw_msge(char* str);
-	//Print a message on the screen and then terminate the program
+	void jl_gr_draw_msge(char* message);
 	void jl_gr_term_msge(jl_t* pusr, char* message);
-	/**
-	 * Draw a slide button, and activate if it is pressed.
-	 * @param 'pusr': the libary context
- 	 * @param 'pusr': the libary context
-	**/
 	void jl_gr_draw_slide_button(
 		jl_t* pusr, jl_sprite_t * psprite, char *txt, float defaultx,
-		float slidex, fnc_onevent_t(prun));
-	/**
-	 * toggle whether or not to show the menu bar.
-	 *
-	 * @param pusr: the libary context
-	**/
+		float slidex, jl_ct_onevent_fnt prun);
 	void jl_gr_togglemenubar(jl_t* pusr);
 
 /*
@@ -229,11 +141,7 @@
 	// SDL/OpenGL]
 	void jl_io_print_lowc(jl_t* pusr, char * print);
 
-/*
-	JAL5_FILE
-
-		FILE allows you to modify the file system.  It uses libzip.
-*/
+//FL
 	// Save A File To The File System.  Save Data of "bytes" bytes in "file" to
 	// file "name"
 	void jl_fl_save(jl_t* pusr, void *file, char *name,

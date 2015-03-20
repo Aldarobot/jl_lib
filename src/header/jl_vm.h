@@ -23,7 +23,7 @@
 		_sg_sprt_t *sprites;
 
 		//Standard Functions
-		fnct(void, tclp[JL_SG_WM_MAX], jl_t* pusr);
+		jl_simple_fnt tclp[JL_SG_WM_MAX];
 	}__sg_mode_t;
 
 	typedef struct{
@@ -44,12 +44,12 @@
 //INPT:
 	typedef struct{
 		uint8_t CtrC; //Control Count: how many events to check for
-		fnc_onevent_t(*function); //1 function for each event
+		jl_ct_onevent_fnt *function; //1 function for each event
 		uint8_t *type; //1 event type for each event
 	}_ct_user_events;
 
 	typedef struct{
-		fnc_event_t(getEvents[JL_CT_MAXX]);
+		jl_ct_event_fnt getEvents[JL_CT_MAXX];
 
 		//User Events For Each Mode & Window
 		_ct_user_events *userevents[JL_SG_WM_MAX];
@@ -115,7 +115,7 @@
 	}_fl_t;
 	
 	typedef struct {
-		fnct(void, menuoverlay, jl_t* pusr);
+		jl_simple_fnt menuoverlay;
 	}_gr_t;
 
 //OTHER:

@@ -193,7 +193,7 @@
 /**
  * Run prun if event pevent is active.
 */
-void jl_ct_run_event(jl_t *pusr, uint8_t pevent, fnc_onevent_t(prun));
+void jl_ct_run_event(jl_t *pusr, uint8_t pevent, jl_ct_onevent_fnt prun);
 /**
  * When this function is called, how many input modes your program is going to
  * have is determined by the number of modes you have created.

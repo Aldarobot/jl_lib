@@ -1,12 +1,19 @@
 /*
- * JLVM BaseLibrary: Audio
+ * JL_lib
+ * Copyright (c) 2015 Jeron A. Lau 
+*/
+/** \file
+ * au.c
+ *	JLVM BaseLibrary: Audio
 */
 #include "header/jl_pr.h"
 
 
-/* load music from data pointed to by "data" of length "dataSize" into slot
- * "p_IDinStack", set volume of music to "p_vol"*/
-void jls_lms(jvct_t *jcpt, int IDinStack, void *data, int dataSize,
+/**
+ * load music from data pointed to by "data" of length "dataSize" into slot
+ * "p_IDinStack", set volume of music to "p_vol"
+ */
+void jl_au_load(jvct_t *jcpt, int IDinStack, void *data, int dataSize,
 	char volumeChange)
 {
 	jl_io_offset(jcpt->sg.usrd, "AUDI");
@@ -85,10 +92,12 @@ void audi_sdir_setd(void) {
 	Mix_SetPanning(MIX_CHANNEL_POST,255,255);
 }
 
+/** @cond **/
 void _jal5_audi_play(jvct_t *jcpt) {
 	Mix_VolumeMusic(jcpt->au.jmus[jcpt->au.idis]._VOL);
 	Mix_FadeInMusic(jcpt->au.jmus[jcpt->au.idis]._MUS, 1, jcpt->au.sofi * 1000);
 }
+/** @endcond **/
 
 void audi_musi_halt(u08t p_secondsOfFadeOut) {
 	Mix_FadeOutMusic(p_secondsOfFadeOut * 1000);
@@ -108,12 +117,14 @@ void audi_musi_play(jl_t* pusr, u32t p_IDinStack,
 	}
 }
 
+/** @cond **/
 void _jal5_audi_loop(jvct_t* jcpt) {
 	//If Music Isn't playing AND Music isn't disabled: play music
 	if ( !Mix_PlayingMusic() && (jcpt->au.idis!=UINT32_MAX)) {
 		_jal5_audi_play(jcpt);
 	}
 }
+/** @endcond **/
 
 static inline void jlvm_ini_sounds(jvct_t *jcpt, u08t *data) {
 	jl_io_offset(jcpt->sg.usrd, "LOAD");
@@ -141,7 +152,7 @@ static inline void jlvm_ini_sounds(jvct_t *jcpt, u08t *data) {
 		#if JLVM_DEBUG >= JLVM_DEBUG_PROGRESS
 		jl_io_print_lowc(jcpt->sg.usrd, "loading music....\n");
 		#endif
-		jls_lms(jcpt,fid,fdat,bytes[0],255);
+		jl_au_load(jcpt,fid,fdat,bytes[0],255);
 
 		fil += bytes[0]+4; //move init next location
 		fid++; //increase to the next music id
@@ -153,6 +164,7 @@ static inline void jlvm_ini_sounds(jvct_t *jcpt, u08t *data) {
 	#endif
 }
 
+/** @cond **/
 void _jal5_audi_init(jvct_t *jcpt) {
 	jl_io_offset(jcpt->sg.usrd, "AUDI");
 	jl_io_offset(jcpt->sg.usrd, "INIT");
@@ -203,3 +215,4 @@ void _jal5_audi_kill(jvct_t *jcpt) {
 	#endif
 	jl_io_offset(jcpt->sg.usrd, "JLVM");
 }
+/** @endcond **/

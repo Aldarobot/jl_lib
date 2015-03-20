@@ -1,3 +1,12 @@
+/*
+ * JL_lib
+ * Copyright (c) 2015 Jeron A. Lau 
+*/
+/** \file
+ * gr.c
+ *	A High Level Graphics Library that supports sprites, texture loading,
+ *	2D rendering & 3D rendering.
+ */
 #include "header/jl_pr.h"
 
 //MESSAGES
@@ -15,14 +24,20 @@ char *GMessage[2] = {
 
 /*_jal5_jl_gr_t* g_grph;*/
 
+static void _jl_gr_menubar(jl_t* pusr);
+
 /*EXPORTED FUNCTIONS*/
 
 	/**
 	 * Draw An Image.
 	 *
 	 * @param 'pusr': library context
+  	 * @param 'g': the image group that the image pointed to by 'i' is in.
 	 * @param 'i':  the ID of the image.
-	 * @param 'xywh': where and how big it is drawn.
+ 	 * @param 'x': the x location of the sprite
+ 	 * @param 'y': the y location of the sprite
+ 	 * @param 'w': how wide to draw the sprite
+ 	 * @param 'h': how tall to draw the sprite.
 	 * @param 'c': is 0 unless you want to use the image as
 	 * 	a charecter map, then it will zoom into charecter 'chr'.
 	 * @param 'a': the transparency each pixel is multiplied by; 255 is
@@ -59,13 +74,16 @@ char *GMessage[2] = {
 	 * Create a sprite
 	 *
 	 * @param 'pusr': library context
- 	 * @param 'g': the image group.
+ 	 * @param 'g': the image group that the image pointed to by 'i' is in.
  	 * @param 'i': the ID of the image.
  	 * @param 'c': set to 0 unless you want to use the image as a character
  	 * 	map, then it will zoom into charecter 'chr'.
  	 * @param 'a' the transparency each pixel is multiplied by; 255 is
 	 *	solid and 0 is totally invisble.
- 	 * @param 'xywh': where and how big it is drawn.
+ 	 * @param 'x': the x location of the sprite
+ 	 * @param 'y': the y location of the sprite
+ 	 * @param 'w': how wide to draw the sprite
+ 	 * @param 'h': how tall to draw the sprite.
  	 * @param 'loop': the loop function.
  	 * @param 'ctxs': how many bytes to allocate for the sprite's context.
  	 * @return x: the new sprite
@@ -73,7 +91,7 @@ char *GMessage[2] = {
 	jl_sprite_t * jl_gr_sprite_make(
 		jl_t* pusr, u16t g, u16t i, u08t c, u08t a,
 		dect x, dect y, dect w, dect h,
-		fnct(void, loop, jl_t* pusr), u32t ctxs)
+		jl_simple_fnt loop, u32t ctxs)
 	{
 		jl_sprite_t *rtn;
 		rtn = malloc(sizeof(jl_sprite_t));
@@ -114,7 +132,15 @@ char *GMessage[2] = {
 		}
 	}
 
-	//Draw "str" at 'x','y', size 'size', transparency 'a'
+	/**
+	 * Draw text in the window
+	 * @param 'pusr': library context
+	 * @param 'str': the text to draw
+	 * @param 'x': the x position to draw it at
+	 * @param 'y': the y position to draw it at
+	 * @param 'size': how big to draw the text
+	 * @param 'a': transparency of the text, 255=Opaque 0=Transparent
+	**/
 	void jl_gr_draw_text(jl_t* pusr, char *str, dect x, dect y, dect size,
 		uint8_t a)
 	{
@@ -129,7 +155,15 @@ char *GMessage[2] = {
 		}
 	}
 
-	//draw a number at "x","y" size: "size" transparency "a"
+	/**
+	 * draw a number on the screen
+ 	 * @param 'pusr': library context
+	 * @param 'num': the number to draw
+	 * @param 'x': the x position to draw it at
+	 * @param 'y': the y position to draw it at
+	 * @param 'size': how big to draw the text
+	 * @param 'a': transparency of the text, 255=Opaque 0=Transparent
+	 */
 	void jl_gr_draw_numi(jl_t* pusr, uint32_t num, dect x, dect y, dect size,
 		uint8_t a)
 	{
@@ -138,6 +172,12 @@ char *GMessage[2] = {
 		jl_gr_draw_text(pusr, display, x, y, size, a);
 	}
 
+	/**
+	 * Draw text within the boundary of a sprite
+	 * @param 'pusr': library context
+	 * @param 'psprite': the boundary sprite
+	 * @param 'txt': the text to draw
+	**/
 	void jl_gr_draw_text_area(jl_t* pusr, jl_sprite_t * psprite, char *txt){
 		float fontsize = (psprite->w - .1) / strlen(txt);
 		jl_gr_draw_text(pusr, txt,
@@ -145,33 +185,60 @@ char *GMessage[2] = {
 			psprite->y + (.5 * (psprite->h - fontsize)),
 			fontsize, 255);
 	}
-	
+
+	/**
+	 * Draw a sprite, then draw text within the boundary of a sprite
+ 	 * @param 'pusr': library context
+	 * @param 'psprite': the boundary sprite
+	 * @param 'txt': the text to draw
+	**/
 	void jl_gr_draw_text_sprite(jl_t* pusr,jl_sprite_t * psprite,char *txt){
 		jl_gr_sprite_draw(pusr, psprite);
 		jl_gr_draw_text_area(pusr, psprite, txt);
 	}
 
-	//Draw centered text on screen saying "strt" at y coordinate "p_y"
+	/**
+	 * Draw centered text across screen
+  	 * @param 'pusr': library context.
+	 * @param 'str': the text to draw
+	 * @param 'p_y': y coordinate to draw it at
+	 */
 	void jl_gr_draw_ctxt(jl_t* pusr, char *str, dect p_y) {
 		jl_gr_draw_text(pusr->pjlc, str, 0, p_y,
 			1.f / ((float)(strlen(str))), 255);
 	}
 
-	//Print message "str" on the screen
-	void jl_gr_draw_msge(char * str) {
-		GScreenMesg = str;
+	/**
+	 * Print message on the screen.
+	 * @param 'message': the message 
+	 */
+	void jl_gr_draw_msge(char * message) {
+		GScreenMesg = message;
 		GScreenMesgOn = 1;
 	}
 
-	//Print a message on the screen and then terminate the program
+	/**
+	 * Print a message on the screen and then terminate the program
+ 	 * @param 'pusr': library context
+ 	 * @param 'message': the message 
+	 */
 	void jl_gr_term_msge(jl_t* pusr, char *message) {
 		jl_gr_draw_msge(message);
 		jlvm_dies(pusr->pjlc, Strt(message));
 	}
 	
+	/**
+	 * Draw a slide button, and activate if it is pressed.
+	 * @param 'pusr': the libary context
+ 	 * @param 'psprite': the sprite to draw
+ 	 * @param 'txt': the text to draw on the button.
+ 	 * @param 'defaultx': the default x position of the button.
+ 	 * @param 'slidex': how much the x should change when hovered above.
+ 	 * @param 'prun': the function to run when pressed.
+	**/
 	void jl_gr_draw_slide_button(
 		jl_t* pusr, jl_sprite_t * psprite, char *txt, float defaultx,
-		float slidex, fnc_onevent_t(prun))
+		float slidex, jl_ct_onevent_fnt prun)
 	{
 		jl_gr_draw_text_sprite(pusr, psprite, txt);
 		psprite->x = defaultx;
@@ -183,7 +250,21 @@ char *GMessage[2] = {
 			psprite->x = defaultx + slidex;
 		}
 	}
+	
+	/**
+	 * toggle whether or not to show the menu bar.
+	 *
+	 * @param pusr: the libary context
+	**/
+	void jl_gr_togglemenubar(jl_t* pusr) {
+		jvct_t *pjlc = pusr->pjlc;
+		if(pjlc->gr.menuoverlay == dont)
+			pjlc->gr.menuoverlay = _jl_gr_menubar;
+		else
+			pjlc->gr.menuoverlay = dont;
+	}
 
+/** @cond **/
 /*BACKGROUND FUNCTIONS*/
 
 	void _jl_gr_flip_scrn(jvct_t *pjlc) {
@@ -202,7 +283,7 @@ char *GMessage[2] = {
 
 	//Print a message on the screen
 	void _jl_gr_draw_msge(jl_t* pusr) {
-		jl_gr_draw_ctxt(pusr, GScreenMesg, JAL5_GRPH_YDEP/2);
+		jl_gr_draw_ctxt(pusr, GScreenMesg, (9./16.)/2);
 		GScreenMesgOn = 0;
 	}
 	
@@ -239,14 +320,6 @@ char *GMessage[2] = {
 	//Update mouse
 		pusr->mouse->loop((void*)pusr);
 	}
-	
-	void jl_gr_togglemenubar(jl_t* pusr) {
-		jvct_t *pjlc = pusr->pjlc;
-		if(pjlc->gr.menuoverlay == dont)
-			pjlc->gr.menuoverlay = _jl_gr_menubar;
-		else
-			pjlc->gr.menuoverlay = dont;
-	}
 
 	void _jal5_jl_gr_init(jvct_t *pjlc) {
 		pjlc->gr.menuoverlay = _jl_gr_menubar;
@@ -257,3 +330,4 @@ char *GMessage[2] = {
 		pjlc->sg.usrd->mouse->cw = 0.f;
 		pjlc->sg.usrd->mouse->ch = 0.f;
 	}
+/** @endcond **/
