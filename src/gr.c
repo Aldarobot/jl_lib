@@ -288,6 +288,31 @@ static void _jl_gr_menubar(jl_t* pusr);
 	}
 	
 	static void _jl_gr_menubar(jl_t* pusr) {
+	/*	flip->x = 255;
+		flip->w = 20;
+		for(i = 0; i < 5; i++) {
+			flip->x-=20;
+			if((taskbar[i] == GOOD_IMAGE_ID) && (slow)) {
+				flip->g->w = SLOW_IMAGE_ID;
+				sprintf(windowTitle[1], "%d/%d", processingTimeMillis,
+					TimeProcessingAllowed);
+			}else{
+				flip->g->w = taskbar[i];
+			}
+	//		jgr_upd_sprite_pos(flip);
+	//		jgr_draw_sprite(flip);
+		}
+		flip->w = 155;
+		flip->x = 0;
+		flip->g->w = UNKNOWN_ID;
+	//	jgr_upd_sprite_pos(flip);
+	//	jgr_draw_sprite(flip);
+		jgr_draw_text(windowTitle[0], 0, 0, 10);
+		jgr_draw_text(windowTitle[1], 0, 10, 10);
+		if(timeTilMessageVanish) {
+			jgr_draw_centered_text(GMessage[GScreenDisplayed],0);
+			timeTilMessageVanish--;
+		}*/
 		jl_gr_draw_image(pusr, 0, 1, .9, 0., .1, .1, 2, 255);
 		
 		jvct_t *pjlc = pusr->pjlc;
@@ -313,7 +338,7 @@ static void _jl_gr_menubar(jl_t* pusr);
 	#endif
 	}
 
-	void _jal5_jl_gr_loop(jl_t* pusr) {
+	void _jl_gr_loop(jl_t* pusr) {
 	//Menu Bar
 		jvct_t *pjlc = pusr->pjlc;
 		pjlc->gr.menuoverlay(pusr);
@@ -321,7 +346,7 @@ static void _jl_gr_menubar(jl_t* pusr);
 		pusr->mouse->loop((void*)pusr);
 	}
 
-	void _jal5_jl_gr_init(jvct_t *pjlc) {
+	void _jl_gr_init(jvct_t *pjlc) {
 		pjlc->gr.menuoverlay = _jl_gr_menubar;
 		pjlc->sg.usrd->mouse = jl_gr_sprite_make(
 			pjlc->sg.usrd, 0, 0, 254, 255, //G,I,C,A
@@ -329,5 +354,20 @@ static void _jl_gr_menubar(jl_t* pusr);
 			_jl_gr_mouse_loop, 0);
 		pjlc->sg.usrd->mouse->cw = 0.f;
 		pjlc->sg.usrd->mouse->ch = 0.f;
+		//Taskbar
+		#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
+		printf("[JLVM/LIM] loading taskbar...\n");
+		#endif
+
+	/*	taskbar[0] = FLIP_IMAGE_ID;
+		taskbar[1] = GOOD_IMAGE_ID;
+		taskbar[2] = UNKNOWN_ID;
+		taskbar[3] = UNKNOWN_ID;
+		taskbar[4] = UNKNOWN_ID;
+	//	jgr_load_image(IMGID_TASK_BUTTON, taskbar_items, sizeof(taskbar_items));
+		jgr_grp_t *flipg = jgr_make_graphic(IMGID_TASK_BUTTON,255,0);
+
+		flip = jgr_make_sprite(235,0,20,20,flipg);
+		mouse = jgr_make_sprite(0,0,10,10,textg);*/
 	}
 /** @endcond **/

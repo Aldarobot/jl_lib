@@ -6,9 +6,18 @@ typedef enum{
 	JL_IMGI_LANDSCAPE,
 }jl_imgi_t;
 
+typedef enum{
+	JL_IO_TAG_MINIMAL,	//JL-lib prints starting/started/stopping etc.
+	JL_IO_TAG_PROGRESS,	//JL-lib prints image/audio loading
+	JL_IO_TAG_SIMPLE,	//JL-lib prints all landmarks
+	JL_IO_TAG_INTENSE,	//JL-lib prints all debug info
+	JL_IO_TAG_MAX,
+}jl_io_tag_t;
+
 typedef void(*jl_simple_fnt)(jl_t*pusr);
 typedef void(*jl_ct_onevent_fnt)(jl_t *pusr, float x, float y);
 typedef void(*jl_ct_event_fnt)(jl_t* pusr, jl_ct_onevent_fnt prun);
+typedef void(*jl_io_print_fnt)(jl_t* pusr, char * print);
 
 //Variable Types
 #define u08t uint8_t	//Small int

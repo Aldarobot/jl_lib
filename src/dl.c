@@ -76,11 +76,7 @@ static inline void _jlvm_crea_wind(jvct_t *pjct) {
 }
 
 static inline void jlvmpi_upd(uint8_t r, uint8_t g, uint8_t b) {
-	//end current draw
-	SDL_GL_SwapWindow(displayWindow);
-	//start next draw
-	glClearColor(((float)r)/255.f, ((float)g)/255.f, ((float)b)/255.f, 1.f);
-	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+
 }
 
 //NON-STATIC FUNCTIONS
@@ -141,82 +137,26 @@ void lsdl_prog_name(strt name) {
 #endif
 }
 
-void _jal5_lsdl_init(jvct_t *jcpt) {
+void _jl_dl_init(jvct_t* pjlc) {
 	jlvmpi_ini_sdl();
-	_jlvm_curd_mode(jcpt); //Get Information On How Big To Make Window
-	_jlvm_crea_wind(jcpt); //Create Window With SDL
+	_jlvm_curd_mode(pjlc); //Get Information On How Big To Make Window
+	_jlvm_crea_wind(pjlc); //Create Window With SDL
 	#if PLATFORM == 1 //If Phone (For Reorientation)
-	_jlvm_curd_mode(jcpt);
+	_jlvm_curd_mode(pjlc);
 	#endif
 	//Update viewport to fix any rendering glitches
-	_jal5_lsdl_glpt_view(jcpt, current.w, current.h); 
+	_jal5_lsdl_glpt_view(pjlc, current.w, current.h); 
 }
 
-void _jal5_lsdl_loop(void) {
-	//	jgr_draw_sprite_layer();
-
-/*    glUseProgram(g_program_tex);
-
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, GTextures[0].texp);
-    glUniform1i(GTextures[0].shdp, 0);
-
-//    glActiveTexture(GL_TEXTURE1);
-//    glBindTexture(GL_TEXTURE_2D, g_resources.textures[1]);
-//    glUniform1i(g_resources.uniforms.textures[1], 1);
-
-    GLfloat g_vertex_buffer_data[] = { 
-     -1.0f, -1.0f,
-     1.0f, -1.0f,
-    -1.0f,  1.0f,
-     1.0f,  1.0f
-	};
-
-	//BIND&SET VERTEX BUFFER
-	jlvmpi_bind_buffer(BUFFER_SPRITE);
-	jlvmpi_check_gl_error(0, "SPR/BIND_BUFF");
-	jlvmpi_set_buffer(g_vertex_buffer_data, 8);
-	jlvmpi_check_gl_error(0, "SPR/SET_BUFF");
-	//USE VERTEX BUFFER
-	glEnableVertexAttribArray(TEX_POS);
-	jlvmpi_check_gl_error(0, "SPR/VAA");
-	glVertexAttribPointer(TEX_POS, 2, GL_FLOAT, GL_FALSE, 
-		0, 0);
-	jlvmpi_check_gl_error(0, "SPR/VAP");
-	//DRAW
-    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-	glUseProgram(0);*/
+void _jl_dl_loop(void) {
 	//Update Screen
-	jlvmpi_upd(2,5,255);
-
-/*	flip->x = 255;
-	flip->w = 20;
-	for(i = 0; i < 5; i++) {
-		flip->x-=20;
-		if((taskbar[i] == GOOD_IMAGE_ID) && (slow)) {
-			flip->g->w = SLOW_IMAGE_ID;
-			sprintf(windowTitle[1], "%d/%d", processingTimeMillis,
-				TimeProcessingAllowed);
-		}else{
-			flip->g->w = taskbar[i];
-		}
-//		jgr_upd_sprite_pos(flip);
-//		jgr_draw_sprite(flip);
-	}
-	flip->w = 155;
-	flip->x = 0;
-	flip->g->w = UNKNOWN_ID;
-//	jgr_upd_sprite_pos(flip);
-//	jgr_draw_sprite(flip);
-	jgr_draw_text(windowTitle[0], 0, 0, 10);
-	jgr_draw_text(windowTitle[1], 0, 10, 10);
-	if(timeTilMessageVanish) {
-		jgr_draw_centered_text(GMessage[GScreenDisplayed],0);
-		timeTilMessageVanish--;
-	}*/
+	SDL_GL_SwapWindow(displayWindow); //end current draw
+	//start next draw
+	glClearColor(2.f/255.f, 5./255.f, 255./255.f, 1.f);
+	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 }
 
-void _jal5_lsdl_kill(jvct_t *jcpt) {
+void _jl_dl_kill(jvct_t* pjlc) {
 	if (glcontext != NULL) {
 		SDL_free(glcontext);
 	}

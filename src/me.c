@@ -83,6 +83,20 @@ strt jl_me_strt_c8ts(char *string) {
 	return a;
 }
 
+strt jl_me_strt_mkfrom_data(uint32_t size, void *data) {
+	strt a = malloc(sizeof(strt)+1);
+	a->data = malloc(size);
+	a->size = size;
+	a->curs = 0;
+	a->type = STRT_KEEP;
+	int i;
+	for( i = 0; i < size; i++) {
+		a->data[i] = ((uint8_t *)data)[i];
+	}
+	a->data[size] = '\0';
+	return a;
+}
+
 void _jl_me_truncate_curs(strt pstr) {
 	if(pstr->curs > pstr->size) {
 		pstr->curs = pstr->size;

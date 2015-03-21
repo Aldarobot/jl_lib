@@ -9,6 +9,9 @@
 		int8_t ofs2;
 		char head[16][5];
 		strt lines[45]; //length 90
+		jl_io_print_fnt *printfn;
+		uint16_t maxtag;
+		int16_t tag;
 	}_io_t;
 
 	typedef struct{
@@ -37,8 +40,11 @@
 		uint32_t prev_tick;
 		uint32_t this_tick;
 		uint32_t processingTimeMillis;
+		
+		//For loading images
 		uint16_t image_id;
 		uint16_t igid;
+		void *image_data;
 	}_sg_t;
 
 //INPT:

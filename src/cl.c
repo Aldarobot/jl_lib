@@ -5,6 +5,10 @@
 /** \file
  * cl.c
  *	Clump extensions.
+ *	Uses Clump:
+ *		Clump is a handy memory library that includes various variable
+ *		structures which are: Bitarrays, Linked List, Hash Tables,
+ *		Data Trees and Huffman Codecs.
 */
 #include "header/jl_pr.h"
 

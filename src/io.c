@@ -12,7 +12,7 @@ static void _jl_io_indt(jl_t* pusr) {
 	}
 }
 
-void jl_io_print_lowc(jl_t* pusr, char * print) {
+void _jl_io_print_lowc(jl_t* pusr, char * print) {
 	int i;
 	if(((jvct_t *)pusr->pjlc)->io.ofs2 > 0) {
 		_jl_io_indt(pusr);
@@ -53,6 +53,45 @@ void jl_io_print_lowc(jl_t* pusr, char * print) {
 			((jvct_t *)pusr->pjlc)->io.offs],
 		print);
 #endif
+}
+
+void _jl_io_print_no(jl_t* pusr, char * print) { }
+
+void jl_io_tag_set(jl_t* pusr,
+	uint16_t tag, uint8_t shouldprint, jl_io_print_fnt tagfn)
+{
+	jvct_t *pjlc = pusr->pjlc;
+
+	printf("sdl\n");
+	if(tag > pjlc->io.maxtag) {
+		pjlc->io.maxtag = tag;
+		pjlc->io.printfn = realloc(
+			pjlc->io.printfn, sizeof(void *) * (pjlc->io.maxtag+1));
+	}
+	printf("sdl2\n");
+	if(tagfn) { //User-Defined function
+		printf("sdl3\n");
+		if(shouldprint) pjlc->io.printfn[tag] = tagfn;
+		else pjlc->io.printfn[tag] = _jl_io_print_no;	
+	}else{ //NULL
+		printf("sdl3\n");
+		if(shouldprint) pjlc->io.printfn[tag] = _jl_io_print_lowc;
+		else pjlc->io.printfn[tag] = _jl_io_print_no;
+	}
+	printf("sdl3\n");
+}
+
+void jl_io_tag(jl_t* pusr, int16_t tag) {
+	jvct_t *pjlc = pusr->pjlc;
+	pjlc->io.tag = tag;
+}
+
+void jl_io_print_lowc(jl_t* pusr, char * print) {
+	jvct_t *pjlc = pusr->pjlc;
+
+	//Skip over hidden values
+	pjlc->io.printfn[pjlc->io.tag + JL_IO_TAG_MAX](pusr, print);
+
 }
 
 void jl_io_offset(jl_t* pusr, char * this) {
@@ -102,4 +141,11 @@ void _jl_io_init(jvct_t * pjlc) {
 		}
 	}
 	jl_io_offset(pjlc->sg.usrd, "JLVM");
+	pjlc->io.maxtag = 0;
+	pjlc->io.printfn = malloc(sizeof(void *));
+	jl_io_tag_set(pjlc->sg.usrd, JL_IO_TAG_MINIMAL, 1, NULL);
+	jl_io_tag_set(pjlc->sg.usrd, JL_IO_TAG_PROGRESS, 1, NULL);
+	jl_io_tag_set(pjlc->sg.usrd, JL_IO_TAG_SIMPLE, 1, NULL);
+	jl_io_tag_set(pjlc->sg.usrd, JL_IO_TAG_INTENSE, 1, NULL);
+	jl_io_tag(pjlc->sg.usrd, 0 - JL_IO_TAG_MAX); //Reset
 }

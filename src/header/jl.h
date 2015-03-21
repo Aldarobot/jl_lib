@@ -37,6 +37,8 @@
 	strt jl_me_strt_c8ts(char *string);
 	#define Strt(x) jl_me_strt_c8ts((void*)x)
 	
+	strt jl_me_strt_mkfrom_data(uint32_t size, void *data);
+	
 	//Return a string that has the contents of "a" followed by "b"
 	strt jl_me_strt_merg(strt a, strt b, u08t type);
 	
@@ -60,18 +62,12 @@
 	// "script".  It is dependant on which happens first. (Type=STRT_KEEP)
 	strt jl_me_read_upto(strt script, u08t end, u32t psize);
 
-/*
-	DPL7_CLMP
-
-		Clump is a handy memory library that includes various variable
-		structures which are: Bitarrays, Linked List, Hash Tables,
-		Data Trees and Huffman Codecs.
-	
-*/
-
+// "cl.c"
 	void jl_cl_list_alphabetize(struct cl_list *list);
-
-//SG
+// "gl.c"
+	void jl_gl_maketexture(jl_t* pusr, uint16_t gid, uint16_t id,
+		void *pixels, int width, int height);
+// "sg.c"
 	void jl_sg_mode_init(jl_t* pusr, u08t mdec);
 	// Exit unsuccessfully with an error message.  "prop" is used for
 	// customizing the error message
@@ -132,6 +128,9 @@
 
 	//Change offset header to "this"
 	void jl_io_offset(jl_t* pusr, char * this);
+	void jl_io_tag_set(jl_t* pusr,
+		uint16_t tag, uint8_t shouldprint, jl_io_print_fnt tagfn);
+	void jl_io_tag(jl_t* pusr, int16_t tag);
 
 	// Print "pstr" to the lowest level terminal [the one not drawn with
 	// SDL/OpenGL]

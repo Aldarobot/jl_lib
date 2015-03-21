@@ -1,10 +1,3 @@
-#define JLVM_DEBUG_NONE 0 //JLVM PRINTS NOTHING TO THE TERMINAL
-#define JLVM_DEBUG_MINIMAL 1 //JLVM PRINTS STARTING/STARTED/STOPPING ETC.
-#define JLVM_DEBUG_PROGRESS 2 //JLVM PRINTS IMAGE/AUDIO LOADING
-#define JLVM_DEBUG_SIMPLE 3 //JLVM PRINTS ALL LANDMARKS
-#define JLVM_DEBUG_INTENSE 4 //JLVM PRINTS ALL DEBUG INFO
-#define JLVM_DEBUG JLVM_DEBUG_NONE
-
 //Jal5 Standard Libraries
 	#include "jl.h"
 	#if PLATFORM == 0
@@ -33,7 +26,8 @@
 	#endif
 	#include "../lib/SDL_mixer.h"
 //LIBZIP
-	#include "../lib/libzip/jni/zip.h"
+	#define ZIP_DISABLE_DEPRECATED //Don't allow the old functions.
+	#include "../../../../obj/lb/zip.h"
 //OPENGL
 	#ifdef JLVM_USEL_COGL
 		#ifdef APPLE
@@ -164,11 +158,8 @@ void hack_user_init(jl_t* pusr);
 char *jal5_head_jlvm(void);
 uint32_t jal5_head_size(void);
 
-
 //OTHER LIB STUFF
 void _jl_fl_errf(jvct_t * pjct, char *msg);
-void eogl_make_txtr(jvct_t *pjct, uint16_t gid, uint16_t id, void *pixels,
-	int width, int height);
 
 void eogl_vrtx(jvct_t *pjct, u08t vertices, dect *xyzw);
 void eogl_txtr(jvct_t *pjct, u08t map, u08t a, u16t pgid, u16t pi);
@@ -189,24 +180,3 @@ void _jl_gr_flip_scrn(jvct_t *pjct);
 
 //
 void jlvm_dies(jvct_t* pjct, strt msg);
-
-//JLVMPI
-uint8_t jlvmpi_spk(uint8_t key);
-uint8_t jlvmpi_button_held(uint8_t button);
-uint8_t jlvmpi_button_push(uint8_t button);
-void jlvmpi_check_gl_error(int width, char *fname);
-void jlvmpi_upd_events(void);
-void jlvmpi_fast(void);
-float jlvmpi_is_time(void);
-void jlvmpi_load_glew(void);
-int32_t jlvmpi_quit(void);
-void jlvmpi_gev_key(void);
-void jlvmpi_ini_events(void ( *onClick )(uint8_t x, uint8_t y));
-void jlvmpi_set_fps(uint8_t PFps);
-void jlvm_bind_buffer(uint32_t p_buffer_id);
-void jlvm_set_buffer(GLfloat p_buffer[], uint8_t size);
-void jlvmpi_ini_wname(void);
-void jlvmpi_prep_vertices(GLfloat Oone[], uint32_t p_tri_count);
-
-//JLVMPU
-int32_t jlvm_main(int argc, char *argv[]);

@@ -38,6 +38,7 @@ cp src/header/jl_sg.h ../../bin/jlvm/jlib/jl_sg.h
 cp src/header/jl_ct.h ../../bin/jlvm/jlib/jl_ct.h
 cp src/header/jl_me.h ../../bin/jlvm/jlib/jl_me.h
 cp src/header/clump.h ../../bin/jlvm/jlib/clump.h
+cp ../../obj/lb/lib_zip.o ../../bin/jlvm/jlib/lib_zip.o
 printf "[COMP] updating andr...\n"
 cp --recursive -u -t ../../bin/jlvm/ANDR/andk/ANDROID/jni/src/ src/*
 cp --recursive -u -t ../../bin/jlvm/ANDR/andk/ANDROID/bin/jlvm/jlib/ \
