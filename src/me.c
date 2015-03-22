@@ -156,6 +156,7 @@ u32t jl_me_random_int(u32t a) {
 u08t jl_me_test_next(strt script, strt particle) {
 	char * point = (void*)script->data + script->curs;//the cursor
 	char * place = strstr(point, (void*)particle->data);//search for partical
+	printf("%s, %s\n", point, particle->data);
 	if(place == point) {//if partical at begining return true otherwise false
 		return 1;
 	}else{

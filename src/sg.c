@@ -55,10 +55,16 @@ typedef struct{
 	uint8_t a;
 }jgr_img_col_t;
 
+#define JL_IMG_HEADER "JLVM0:JYMJ\0"
 //ALL IMAGES: 1024x1024
-	//3bpp Picture =	3145728 bytes (No color key, RGB(3)*1024*1024)
-	//2bpp HQ bitmap =	2097664 bytes (Color Key(256*2=512)*RGBA(4), 2*1024*1024)
-	//1bpp Bitmap =	 	1048832 bytes (Color Key(256)*RGBA(4), 1024*1024)
+	//1bpp Bitmap = 1048832 bytes (Color Key(256)*RGBA(4), 1024*1024)
+	#define IMG_FORMAT_LOW 1048832 
+	//2bpp HQ bitmap = 2097664 bytes (Color Key(256*2=512)*RGBA(4), 2*1024*1024)
+	#define IMG_FORMAT_MED 2097664
+	//3bpp Picture = 3145728 bytes (No color key, RGB(3)*1024*1024)
+	#define IMG_FORMAT_PIC 3145728
+
+#define IMG_SIZE_LOW (1+strlen(JL_IMG_HEADER)+(256*4)+(1024*1024)+1)
 
 //Photo-Quality Picture
 typedef struct{
@@ -119,7 +125,6 @@ void jl_sg_set_window(jl_t* pusr, jl_sg_wm_t window) {
 	pusr->loop = window;
 }
 
-#define HEADER "JLVM0:JYMJ\0"
 void _jl_sg_load_jlpx(jvct_t* pjlc,uint8_t *data,void **pixels,int *w,int *h) {
 	if(data == NULL) {
 		jlvm_dies(pjlc, Strt("NULL DATA!"));
@@ -128,17 +133,23 @@ void _jl_sg_load_jlpx(jvct_t* pjlc,uint8_t *data,void **pixels,int *w,int *h) {
 	}
 	jgr_img_t *image = NULL;
 	image = _jl_me_hydd_allc(pjlc, image, sizeof(jgr_img_t));
-	char *testing = malloc(strlen(HEADER)+1);
+	
+	//Check If File Is Of Correct Format
+	printf("[SG/LOAD/JLPX] loading image - header@%d:%8s\n",
+		pjlc->sg.init_image_location,
+		data + pjlc->sg.init_image_location);
+
+	char *testing = malloc(strlen(JL_IMG_HEADER)+1);
 	uint32_t i;
 
-	for(i = 0; i < strlen(HEADER); i++) {
+	for(i = 0; i < strlen(JL_IMG_HEADER); i++) {
 		testing[i] = data[pjlc->sg.init_image_location+i];
 	}
-	testing[strlen(HEADER)] = '\0';        
+	testing[strlen(JL_IMG_HEADER)] = '\0';        
 	#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
 	printf("header:%s\n", testing);
 	#endif
-	if(strcmp(testing, HEADER) != 0) {
+	if(strcmp(testing, JL_IMG_HEADER) != 0) {
 		jlvm_dies(pjlc, jl_me_strt_merg(
 			jl_me_strt_merg(
 				Strt("error: bad file type:\n"),
@@ -146,24 +157,24 @@ void _jl_sg_load_jlpx(jvct_t* pjlc,uint8_t *data,void **pixels,int *w,int *h) {
 			),
 			jl_me_strt_merg(
 				Strt("\n!=\n"),
-				Strt(HEADER), STRT_TEMP),
+				Strt(JL_IMG_HEADER), STRT_TEMP),
 			STRT_TEMP)
 		);
 	}
-	uint8_t tester = data[pjlc->sg.init_image_location+strlen(HEADER)];
-	int FSIZE;
+	uint8_t tester = data[pjlc->sg.init_image_location+strlen(JL_IMG_HEADER)];
+	int FSIZE; //The size of the file.
 	if(tester == 1) { //Normal Quality[Lowy]
-		FSIZE = 1048832;
+		FSIZE = IMG_SIZE_LOW;
 		#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
 		printf("normal quality\n");
 		#endif
 	}else if(tester == 2) { //High Quality[Norm]
-		FSIZE = 2097664;
+		FSIZE = IMG_FORMAT_MED;
 		#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
 		printf("high quality\n");
 		#endif
 	}else if(tester == 3) { //Picture[High]
-		FSIZE = 3145728;
+		FSIZE = IMG_FORMAT_PIC;
 		#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
 		printf("pic quality\n");
 		#endif
@@ -172,7 +183,7 @@ void _jl_sg_load_jlpx(jvct_t* pjlc,uint8_t *data,void **pixels,int *w,int *h) {
 		jlvm_dies(pjlc, Strt("bad file type(must be 1,2 or 3)"));
 	}
 	uint32_t ki;
-	ki = strlen(HEADER)+1;
+	ki = strlen(JL_IMG_HEADER)+1;
 	for(i = 0; i < 256; i++) {
 		image->key[i].r = data[pjlc->sg.init_image_location+ki];
 		ki++;
@@ -190,7 +201,8 @@ void _jl_sg_load_jlpx(jvct_t* pjlc,uint8_t *data,void **pixels,int *w,int *h) {
 		image->tex_pixels[i] = data[pjlc->sg.init_image_location+ki];
 		ki++;
 	}
-	pjlc->sg.init_image_location+=FSIZE;
+	// Don't comment out this line!!!! it will cause an endless freeze!
+	pjlc->sg.init_image_location+=FSIZE+1;
 	#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
 	printf("[JLVM/LIMG/JLPX] creating texture...\n");
 	#endif
@@ -253,6 +265,7 @@ static inline void _jl_sg_init_images(jvct_t * pjlc, uint8_t *data, uint16_t p){
 	printf("lne %d\n", (int)strlen((void *)data));
 	#endif
 //load textures
+//	_jl_sg_load_next_img(pjlc);
 	while(_jl_sg_load_next_img(pjlc));
 }
 

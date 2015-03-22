@@ -132,30 +132,6 @@ char jl_fl_pk_save(jl_t* pusr, char *packageFileName, char *fileName,
 //	printf("%d,%d,%d\n",archive,sb.index,s);
 	if(zip_file_add(archive, fileName, s, ZIP_FL_OVERWRITE)) {
 		printf("[JLVM/FILE/PKDJ/SAVE] add/err: %s\n", zip_strerror(archive));
-/*		printf("[JLVM/FILE/PKDJ/SAVE] maybe exist: trying replacing..\n");
-		printf("[JLVM/FILE/PKDJ/SAVE] getting index....\n");
-		struct zip_stat sb;
-		if(zip_stat(archive, fileName, 0, &sb)!=0) {
-
-			jlvm_dies(pusr->pjlc, jl_me_strt_merg(
-				Strt("[JLVM/FILE/PKDJ/SAVE] !!index getting fail\n"),
-				jl_me_strt_merg(
-					Strt("[JLVM/FILE/PKDJ/SAVE] index f: "),
-					Strt(zip_strerror(archive)), STRT_TEMP
-				), STRT_TEMP
-			));
-		}
-		#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
-		printf("[JLVM/FILE/PKDJ/SAVE] got index.\n");
-		#endif
-
-		if(zip_replace(archive, sb.index, s))
-		{
-			//zip_source_free(s);
-			#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
-			printf("[JLVM/FILE/PKDJ/SAVE] repl/error replacing file: %s\n", zip_strerror(archive));
-			#endif
-		}*/
 	}else{
 		#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
 		printf("[JLVM/FILE/PKDJ/SAVE] added %s to file sys.\n", fileName);
@@ -213,27 +189,24 @@ uint8_t *jl_fl_pk_load(jl_t* pusr, char *packageFileName, char *filename)
 				Strt(zip_strerror(zipfile)), STRT_TEMP));
 		pusr->errf = JL_ERR_NONE;
 		return NULL;
-	}else{
-		#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
-		printf("[JLVM/FILE/LOAD] opened file in package\n");
-		#endif
 	}
 	#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
-	printf("[JLVM/FILE/LOAD] reading opened file....\n");
+	jl_io_print_lowc(pusr, "opened file in package\n");
+	jl_io_print_lowc(pusr, "reading opened file....\n");
 	#endif
 	if((pusr->info = zip_fread(file, fileToLoad, PKFMAX)) == -1) {
 		jlvm_dies(pusr->pjlc, Strt("file reading failed"));
 	}
 	char * readbytes = malloc(30);
-	sprintf(readbytes, "read %d bytes", pusr->info);
+	sprintf(readbytes, "read %d bytes\n", pusr->info);
 	jl_io_print_lowc(pusr, readbytes);
 	free(readbytes);
 	#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
-	printf("[JLVM/FILE/LOAD] read opened file.\n");
+	jl_io_print_lowc(pusr, "read opened file.\n");
 	#endif
 	zip_close(zipfile);
 	#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
-	printf("[JLVM/FILE/LOAD] done.\n");
+	jl_io_print_lowc(pusr, "done.\n");
 	#endif
 	pusr->errf = JL_ERR_NERR;
 	jl_io_offset(pusr, "JLVM");
