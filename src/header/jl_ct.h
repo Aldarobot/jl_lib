@@ -194,12 +194,6 @@
  * Run prun if event pevent is active.
 */
 void jl_ct_run_event(jl_t *pusr, uint8_t pevent, jl_ct_onevent_fnt prun);
-/**
- * When this function is called, how many input modes your program is going to
- * have is determined by the number of modes you have created.
- * Allocating space for each input mode is done by using "JL_CT_setm()"
-*/
-void jl_ct_mode_init(jl_t *pusr);
 
 /**
  * Allocate space for how many controls you want.
@@ -230,8 +224,6 @@ void jl_ct_mode_init(jl_t *pusr);
  *        Used for attack combos in games (That's really it's only use I think)
  *        There is 15 different combinations that you can make.
 */
-void jl_ct_mode_setm(jl_t *pusr, uint8_t loop, uint8_t mode,
-	uint8_t controlCount);
 /**
  * Set input mode and update controls on the screen.  Call this after you set
  * all of the controls
@@ -240,6 +232,11 @@ void jl_ct_updm(uint8_t mode);
 
 /**
  * This adds a simple input button.
+ *
+ * NOTE: 
+ * The first time you call it the amount of input modes your program is going to
+ * have is determined by the number of modes you have created.
+ *
  * Control with Id usrevent is set to event libevent.
  * When libevent happens, event[usrevent].fn is called.
  * Ex:
@@ -250,8 +247,7 @@ void jl_ct_updm(uint8_t mode);
  *			JL_CT_ANDR_TFUP), //Returns event for platform
  *		USR_DEFINED_EVENT1, onEvent);
 */
-void jl_ct_mode_addi(jl_t *pusr, uint8_t libevent, uint8_t usrevent,
-	void (*fn)(jl_t *pusr, float x, float y));
+void jl_ct_mode_addi(jl_t *pusr, uint8_t libevent, jl_ct_onevent_fnt fn);
 /**
  * This adds a directional button (A Joystick/Arrow Keys/WASD etc.)
  * This function has 4 directions: UP/DOWN/LEFT/RIGHT

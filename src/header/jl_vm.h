@@ -49,7 +49,7 @@
 
 //INPT:
 	typedef struct{
-		uint8_t CtrC; //Control Count: how many events to check for
+		uint16_t CtrC; //Control Count: how many events to check for
 		jl_ct_onevent_fnt *function; //1 function for each event
 		uint8_t *type; //1 event type for each event
 	}_ct_user_events;

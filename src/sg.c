@@ -87,42 +87,41 @@ uint8_t jal5_sgrp_lsdl_gmse(uint8_t a) {
 	return SDL_GetMouseState(NULL,NULL)&SDL_BUTTON(a);
 }
 
-/**
- * Create a window & Allocate modes
- *
- * @param pusr: the library context
- * @param mdec: number of modes to allocate
- */
-void jl_sg_mode_init(jl_t* pusr, uint8_t mdec) {
-	jvct_t* pjlc = pusr->pjlc;
-	pjlc->sg.mdes = malloc(mdec * sizeof(__sg_mode_t));
-	pjlc->sg.usrd->mdec = mdec;
+void _jl_sg_mode_add(jvct_t* pjlc) {
+	//Add & Allocate a new mode
+	pjlc->sg.usrd->mdec++;
+	pjlc->sg.mdes = realloc(pjlc->sg.mdes,
+		(pjlc->sg.usrd->mdec + 1) * sizeof(__sg_mode_t));
 }
 
 /**
- * Set the current mode loop functions
+ * Set the loop functions for a mode.
  *
  * @param pusr: the library context
+ * @param mode: the mode to add functions to.
  * @param exit: exit loop
  * @param wups: upper screen loop
  * @param wdns: lower screen loop
  * @param term: terminal screen loop
 */
-void jl_sg_smode_fncs(jl_t* pusr, jl_simple_fnt exit, jl_simple_fnt wups,
-	jl_simple_fnt wdns, jl_simple_fnt term)
+void jl_sg_smode_fncs(jl_t* pusr, uint8_t mode, jl_simple_fnt exit,
+	jl_simple_fnt wups, jl_simple_fnt wdns, jl_simple_fnt term)
 {
 	jvct_t* pjlc = pusr->pjlc;
-	pjlc->sg.mdes[pjlc->sg.usrd->mode].tclp[JL_SG_WM_EXIT] = exit;
-	pjlc->sg.mdes[pjlc->sg.usrd->mode].tclp[JL_SG_WM_UP] = wups;
-	pjlc->sg.mdes[pjlc->sg.usrd->mode].tclp[JL_SG_WM_DN] = wdns;
-	pjlc->sg.mdes[pjlc->sg.usrd->mode].tclp[JL_SG_WM_TERM] = term;
+	
+	if(mode > pjlc->sg.usrd->mdec - 1) _jl_sg_mode_add(pjlc);
+	pjlc->sg.mdes[mode].tclp[JL_SG_WM_EXIT] = exit;
+	pjlc->sg.mdes[mode].tclp[JL_SG_WM_UP] = wups;
+	pjlc->sg.mdes[mode].tclp[JL_SG_WM_DN] = wdns;
+	pjlc->sg.mdes[mode].tclp[JL_SG_WM_TERM] = term;
 }
 
 /*
- *Set the current mode loop/window
+ *Set the current mode & the current mode loop.
  */
-void jl_sg_set_window(jl_t* pusr, jl_sg_wm_t window) {
-	pusr->loop = window;
+void jl_sg_setlm(jl_t* pusr, uint8_t mode, jl_sg_wm_t loop) {
+	pusr->mode = mode;
+	pusr->loop = loop;
 }
 
 void _jl_sg_load_jlpx(jvct_t* pjlc,uint8_t *data,void **pixels,int *w,int *h) {
@@ -317,8 +316,10 @@ void jl_sg_kill(jl_t* pusr) {
 		pusr->loop = JL_SG_WM_EXIT;
 }
 
-//Do Nothing
-void dont(jl_t* pusr) { }
+/**
+ * Do Nothing
+ */
+void jl_dont(jl_t* pusr) { }
 
 //void sgrp_
 

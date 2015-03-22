@@ -213,42 +213,46 @@ void jl_ct_run_event(jl_t *pusr, uint8_t pevent, jl_ct_onevent_fnt prun) {
 }
 
 //Run Pre-set Events currently being activated
-static inline void _jal5_jl_ct_evnt_runa(jvct_t * pjlc) {
+static inline void _jl_ct_event_run(jvct_t * pjlc) {
 	int i;
 
-	if( pjlc->ct.userevents[pjlc->sg.usrd->loop]
-		#if PLATFORM == 1 //PHONE
-			&& pjlc->ct.heldDown
-		#endif
-	)
+	printf("ay1\n");
+	if( !pjlc->ct.userevents[pjlc->sg.usrd->loop] ) return;
+	if( !pjlc->ct.userevents[pjlc->sg.usrd->loop][pjlc->sg.usrd->mode].CtrC)
+		return;
+	printf("ay2\n");
+	#if PLATFORM == 1 //PHONE
+	if(pjlc->ct.heldDown) {
+	#endif
+
+	if(pjlc->ct.getEvents == NULL) {
+		jlvm_dies(pjlc, Strt(
+			"[ERR] Null Pointer: pjlc->ct.getEvents\n"));
+	}
+	if(pjlc->ct.userevents[pjlc->sg.usrd->loop][pjlc->sg.usrd->mode]
+		.type == NULL)
 	{
-		if(pjlc->ct.getEvents == NULL) {
-			jlvm_dies(pjlc, Strt(
-				"[ERR] Null Pointer: pjlc->ct.getEvents\n"));
-		}
-		if(pjlc->ct.userevents[pjlc->sg.usrd->loop][pjlc->sg.usrd->mode]
-			.type == NULL)
-		{
-			#if PLATFORM == 1 //PHONE
-			pjlc->ct.heldDown = 2;
-			#endif
-			return;
-		}
-		for(i = 0;
-			i < pjlc->ct.userevents[pjlc->sg.usrd->loop]
-				[pjlc->sg.usrd->mode].CtrC;
-			i++)
-		{
-			_jl_ct_run_event(pjlc,
-				pjlc->ct.userevents[pjlc->sg.usrd->loop]
-					[pjlc->sg.usrd->mode].type[i],
-				pjlc->ct.userevents[pjlc->sg.usrd->loop]
-					[pjlc->sg.usrd->mode].function[i]);
-		}
 		#if PLATFORM == 1 //PHONE
 		pjlc->ct.heldDown = 2;
 		#endif
+		return;
 	}
+	for(i = 0;
+		i < pjlc->ct.userevents[pjlc->sg.usrd->loop]
+			[pjlc->sg.usrd->mode].CtrC;
+		i++)
+	{
+		_jl_ct_run_event(pjlc,
+			pjlc->ct.userevents[pjlc->sg.usrd->loop]
+				[pjlc->sg.usrd->mode].type[i],
+			pjlc->ct.userevents[pjlc->sg.usrd->loop]
+				[pjlc->sg.usrd->mode].function[i]);
+	}
+
+	#if PLATFORM == 1 //PHONE
+	pjlc->ct.heldDown = 2;
+	}
+	#endif
 }
 
 static inline void _jal5_jl_ct_evnt_updt(jvct_t * pjlc) {
@@ -285,7 +289,7 @@ void _jl_ct_loop(jvct_t* pjlc) {
 		if(jl_ct_key_pressed(pjlc->sg.usrd, SDL_SCANCODE_ESCAPE) == 1)
 			jl_sg_kill(pjlc->sg.usrd);
 	#endif
-	_jal5_jl_ct_evnt_runa(pjlc); //Run Events currently being activated
+	_jl_ct_event_run(pjlc); //Run Events currently being activated
 }
 
 void _jl_ct_init(jvct_t* pjlc) {
@@ -316,14 +320,14 @@ void _jl_ct_init(jvct_t* pjlc) {
 #endif
 }
 
-void jl_ct_mode_init(jl_t *pusr) {
+static inline void _jl_ct_mode_init(jl_t *pusr) {
 	jvct_t* pjlc = pusr->pjlc;
-	uint8_t modecount = pusr->mdec;
 	int i, j;
+	printf("[JL/CT] input mode count = %d\n", pusr->mdec + 1);
 	for(i = 0; i < JL_SG_WM_MAX; i++) {
 		pjlc->ct.userevents[i] =
-			malloc(sizeof(_ct_user_events) * modecount);
-		for(j = 0; j < modecount; j++) {
+			malloc(sizeof(_ct_user_events) * (pusr->mdec + 1));
+		for(j = 0; j < pusr->mdec; j++) {
 			pjlc->ct.userevents[i][j].CtrC = 0;
 			pjlc->ct.userevents[i][j].type = NULL;
 			pjlc->ct.userevents[i][j].function = NULL;
@@ -331,29 +335,33 @@ void jl_ct_mode_init(jl_t *pusr) {
 	}
 }
 
-void jl_ct_mode_setm(jl_t *pusr, uint8_t loop, uint8_t mode,
-	uint8_t controlCount)
-{
-	jvct_t* pjlc = pusr->pjlc;
+static uint16_t _jl_ct_addto_ctrc(jvct_t* pjlc) {
+	jl_t *pusr = pjlc->sg.usrd;
 
-	if(controlCount) {
-		pjlc->ct.userevents[loop][mode].CtrC = controlCount;
-		pjlc->ct.userevents[loop][mode].type =
-			malloc(sizeof(uint8_t) * controlCount);
-		pjlc->ct.userevents[loop][mode].function =
-			malloc(sizeof(void *) * controlCount);
-	}
-	pusr->mode = mode;
-	pusr->loop = loop;
+	//Add an extra control
+	pjlc->ct.userevents[pusr->loop][pusr->mode].CtrC++; 
+	//Adjust memory to add space for new control
+	pjlc->ct.userevents[pusr->loop][pusr->mode].type =
+		realloc(pjlc->ct.userevents[pusr->loop][pusr->mode].type,
+			sizeof(uint8_t) *
+			pjlc->ct.userevents[pusr->loop][pusr->mode].CtrC);
+	pjlc->ct.userevents[pusr->loop][pusr->mode].function =
+		realloc(pjlc->ct.userevents[pusr->loop][pusr->mode].function,
+			sizeof(void *) *
+			pjlc->ct.userevents[pusr->loop][pusr->mode].CtrC);
+	return pjlc->ct.userevents[pusr->loop][pusr->mode].CtrC - 1;
 }
 
-void jl_ct_mode_addi(jl_t *pusr, uint8_t libevent, uint8_t usrevent,
-	void (*fn)(jl_t *pusr, float x, float y))
-{
+void jl_ct_mode_addi(jl_t *pusr, uint8_t libevent, jl_ct_onevent_fnt fn) {
 	jvct_t* pjlc = pusr->pjlc;
 	
-	pjlc->ct.userevents[pusr->loop][pusr->mode].type[usrevent] = libevent;
-	pjlc->ct.userevents[pusr->loop][pusr->mode].function[usrevent] = fn;
+	//Create input modes, if not already created
+	if(pjlc->ct.userevents[pusr->loop] == NULL) _jl_ct_mode_init(pusr);
+	//Add a new control
+	uint16_t ctrl = _jl_ct_addto_ctrc(pjlc);
+	//Set the new control
+	pjlc->ct.userevents[pusr->loop][pusr->mode].type[ctrl] = libevent;
+	pjlc->ct.userevents[pusr->loop][pusr->mode].function[ctrl] = fn;
 }
 
 void jl_ct_addr(uint8_t controlNum,

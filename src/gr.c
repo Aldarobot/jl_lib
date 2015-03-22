@@ -258,25 +258,24 @@ static void _jl_gr_menubar(jl_t* pusr);
 	**/
 	void jl_gr_togglemenubar(jl_t* pusr) {
 		jvct_t *pjlc = pusr->pjlc;
-		if(pjlc->gr.menuoverlay == dont)
+		if(pjlc->gr.menuoverlay == jl_dont)
 			pjlc->gr.menuoverlay = _jl_gr_menubar;
 		else
-			pjlc->gr.menuoverlay = dont;
+			pjlc->gr.menuoverlay = jl_dont;
 	}
 
 /** @cond **/
 /*BACKGROUND FUNCTIONS*/
 
 	void _jl_gr_flip_scrn(jvct_t *pjlc) {
-//		printf("%p\n", pjlc->sg.usrd);
 		#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
 		printf("flipping!!%d\n", pjlc->sg.usrd->loop);
 		#endif
 		if(pjlc->sg.usrd->loop == JL_SG_WM_UP) {
-			jl_sg_set_window(pjlc->sg.usrd, JL_SG_WM_DN);
+			pjlc->sg.usrd->loop = JL_SG_WM_DN;
 			timeTilMessageVanish = 255;
 		}else{
-			jl_sg_set_window(pjlc->sg.usrd, JL_SG_WM_UP);
+			pjlc->sg.usrd->loop = JL_SG_WM_UP;
 			timeTilMessageVanish = 255;
 		}
 	}

@@ -9,8 +9,7 @@
 #include "jl_ct.h"
 #include "clump.h"
 
-	//Do Nothing
-	void dont(jl_t* pusr);
+	void jl_dont(jl_t* pusr);
 
 /*
 	JAL5_jl_me
@@ -72,9 +71,9 @@
 	// Exit unsuccessfully with an error message.  "prop" is used for
 	// customizing the error message
 		//	void (* dies)(char *message, sgrp_t *prop);
-	void jl_sg_smode_fncs(jl_t* pusr, jl_simple_fnt exit, jl_simple_fnt wups,
-		jl_simple_fnt wdns, jl_simple_fnt term);
-	void jl_sg_set_window(jl_t* pusr, jl_sg_wm_t window);
+	void jl_sg_smode_fncs(jl_t* pusr, uint8_t mode, jl_simple_fnt exit,
+		jl_simple_fnt wups, jl_simple_fnt wdns, jl_simple_fnt term);
+	void jl_sg_setlm(jl_t* pusr, uint8_t mode, jl_sg_wm_t loop);
 	void jl_sg_kill(jl_t* pusr);
 	void jl_sg_add_image(jl_t* pusr, char *pzipfile, uint16_t pigid);
 
