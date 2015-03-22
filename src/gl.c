@@ -19,7 +19,9 @@ char *source_frag_tex =
 //	"		texture2D(textures[1], texcoord),\n"
 //	"		fade_factor\n"
 //	"	);\n"
-	"	gl_FragColor = texture2D(texture, vec2(texcoord.x, texcoord.y));"
+//	"	gl_FragColor = texture2D(texture, vec2(texcoord.x, texcoord.y));"
+	"	gl_FragColor = texture2D(texture,"
+	"		vec2(texcoord.x - .0039, texcoord.y + .001));"
 //	"	gl_FragColor = vec4(texcoord.x, texcoord.y, 0.0, 1.0);"
 //	"	gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);"
 	"}\n\0";
@@ -87,7 +89,7 @@ void jal5_eogl_buff_data(jvct_t *pjlc, uint32_t buffer, void *buffer_data,
 	u08t buffer_size)
 {
 	_jal5_eogl_buff_bind(pjlc, buffer);
-	glBufferData(GL_ARRAY_BUFFER, buffer_size * sizeof(float), buffer_data,
+	glBufferData(GL_ARRAY_BUFFER, buffer_size * sizeof(double), buffer_data,
 		GL_STATIC_DRAW);
 	jal5_eogl_cerr(pjlc, 0,"buffer data");
 }
@@ -227,6 +229,7 @@ void jl_gl_maketexture(jl_t* pusr, uint16_t gid, uint16_t id,
 	jal5_eogl_cerr(pjlc, 0,"glTexParameteri");
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	jal5_eogl_cerr(pjlc, 1,"glTexParameteri");
+	//GL_CLAMP_TO_BORDER GL_REPEAT GL_CLAMP_TO_EDGE
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	jal5_eogl_cerr(pjlc, 2,"glTexParameteri");
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
@@ -281,7 +284,7 @@ void jal5_eogl_setv(jvct_t *pjlc, uint32_t vertexAttrib, uint8_t xyzw) {
 	glVertexAttribPointer(
 		vertexAttrib,  	//attribute
 		xyzw,			// x+y+z = 3
-		GL_FLOAT,		// type
+		GL_DOUBLE,		// type
 		GL_FALSE,		// normalized?
 		0,				// stride
 		0				// array buffer offset
@@ -308,18 +311,18 @@ void eogl_vrtx(jvct_t *pjlc, u08t vertices, dect *xyzw) {
 	if(xyzw) {
 		u16t i;
 		for(i = 0; i < vertices*3; i+=3) {
-			pjlc->gl.buff_vert[i] = (xyzw[i]*2.f)-1.f;
-			pjlc->gl.buff_vert[i+1] = -(xyzw[i+1]*2.f)+1.f;
-			pjlc->gl.buff_vert[i+2] = xyzw[i+2]*2.f;
+			pjlc->gl.buff_vert[i] = (xyzw[i]*2.)-1.;
+			pjlc->gl.buff_vert[i+1] = -(xyzw[i+1]*2.)+1.;
+			pjlc->gl.buff_vert[i+2] = xyzw[i+2]*2.;
 		}
 		jal5_eogl_buff_data(pjlc, pjlc->gl.temp_buff_vrtx,
 			pjlc->gl.buff_vert, vertices * 3);
 	}else{
-		GLfloat coord_default[] = {
-			-1.f,1.f,0.f,
-			-1.f,-1.f,0.f,
-			1.f,-1.f,0.f,
-			1.f,1.f,0.f
+		GLdouble coord_default[] = {
+			-1.,1.,0.,
+			-1.,-1.,0.,
+			1.,-1.,0.,
+			1.,1.,0.
 		};
 		jal5_eogl_buff_data(pjlc, pjlc->gl.temp_buff_vrtx,
 			coord_default, 12);
@@ -331,9 +334,9 @@ void eogl_txtr(jvct_t *pjlc, u08t map, u08t a, u16t pgid, u16t pi) {
 	if(map) {
 		int32_t cX = map%16;
 		int32_t cY = map/16;
-		float CX = (((double)cX)/16.) - .005;
-		float CY = 1.001-((double)cY)/16.;
-		GLfloat tex1[] =
+		double CX = (((double)cX)/16.);
+		double CY = 1.-((double)cY)/16.;
+		GLdouble tex1[] =
 		{
 			CX, CY - (1./16.),
 			CX, CY,
@@ -342,12 +345,12 @@ void eogl_txtr(jvct_t *pjlc, u08t map, u08t a, u16t pgid, u16t pi) {
 		};
 		jal5_eogl_buff_data(pjlc, pjlc->gl.temp_buff_txtr, tex1, 8);
 	}else{
-		GLfloat tex2[] =
+		GLdouble tex2[] =
 		{	
-			0.f, 0.f,
-			0.f, 1.f,
-			1.001f, 1.f,
-			1.001f, 0.f
+			0. + (2./1024.), 0.,
+			0. + (2./1024.), 1.,
+			1., 1.,
+			1., 0.
 		};
 		jal5_eogl_buff_data(pjlc, pjlc->gl.temp_buff_txtr, tex2, 8);
 	}

@@ -109,7 +109,7 @@
 			GLint texpos;
 		} attributes;
 
-		float buff_vert[255*3];
+		double buff_vert[255*3];
 	}_gl_t;
 	
 	typedef struct {
