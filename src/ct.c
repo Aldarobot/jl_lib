@@ -8,65 +8,95 @@
 #include "header/jl_pr.h"
 
 #if PLATFORM == 0
-	void jl_ct_key(jl_t *pusr, jl_ct_onevent_fnt prun, uint8_t key) {
+	void jl_ct_key(jl_t *pusr, jl_ct_onevent_fnt prun,
+		jl_ct_onevent_fnt pno, uint8_t key)
+	{
 		uint8_t a;
 		if((a = jl_ct_key_pressed(pusr, key))) {
 			prun(pusr, 255, a + .25);
+		}else{
+			pno(pusr, 255, a + .25);
 		}
 	}
 
-	void jl_ct_key_retn(jl_t *pusr, jl_ct_onevent_fnt prun) {
-		jl_ct_key(pusr, prun, SDL_SCANCODE_RETURN);
+	void jl_ct_key_retn(jl_t *pusr, jl_ct_onevent_fnt prun,
+		jl_ct_onevent_fnt pno)
+	{
+		jl_ct_key(pusr, prun, pno, SDL_SCANCODE_RETURN);
 	}
 
-	void jl_ct_key_arup(jl_t *pusr, jl_ct_onevent_fnt prun) {
-		jl_ct_key(pusr, prun, SDL_SCANCODE_UP);
+	void jl_ct_key_arup(jl_t *pusr, jl_ct_onevent_fnt prun,
+		jl_ct_onevent_fnt pno)
+	{
+		jl_ct_key(pusr, prun, pno, SDL_SCANCODE_UP);
 	}
 
-	void jl_ct_key_ardn(jl_t *pusr, jl_ct_onevent_fnt prun) {
-		jl_ct_key(pusr, prun, SDL_SCANCODE_DOWN);
+	void jl_ct_key_ardn(jl_t *pusr, jl_ct_onevent_fnt prun,
+		jl_ct_onevent_fnt pno)
+	{
+		jl_ct_key(pusr, prun, pno, SDL_SCANCODE_DOWN);
 	}
 
-	void jl_ct_key_arlt(jl_t *pusr, jl_ct_onevent_fnt prun) {
-		jl_ct_key(pusr, prun, SDL_SCANCODE_LEFT);
+	void jl_ct_key_arlt(jl_t *pusr, jl_ct_onevent_fnt prun,
+		jl_ct_onevent_fnt pno)
+	{
+		jl_ct_key(pusr, prun, pno, SDL_SCANCODE_LEFT);
 	}
 
-	void jl_ct_key_arrt(jl_t *pusr, jl_ct_onevent_fnt prun) {
-		jl_ct_key(pusr, prun, SDL_SCANCODE_RIGHT);
+	void jl_ct_key_arrt(jl_t *pusr, jl_ct_onevent_fnt prun,
+		jl_ct_onevent_fnt pno)
+	{
+		jl_ct_key(pusr, prun, pno, SDL_SCANCODE_RIGHT);
 	}
 
-	void jl_ct_key_keyw(jl_t *pusr, jl_ct_onevent_fnt prun) {
-		jl_ct_key(pusr, prun, SDL_SCANCODE_W);
+	void jl_ct_key_keyw(jl_t *pusr, jl_ct_onevent_fnt prun,
+		jl_ct_onevent_fnt pno)
+	{
+		jl_ct_key(pusr, prun, pno, SDL_SCANCODE_W);
 	}
 
-	void jl_ct_key_keya(jl_t *pusr, jl_ct_onevent_fnt prun) {
-		jl_ct_key(pusr, prun, SDL_SCANCODE_A);
+	void jl_ct_key_keya(jl_t *pusr, jl_ct_onevent_fnt prun,
+		jl_ct_onevent_fnt pno)
+	{
+		jl_ct_key(pusr, prun, pno, SDL_SCANCODE_A);
 	}
 
-	void jl_ct_key_keys(jl_t *pusr, jl_ct_onevent_fnt prun) {
-		jl_ct_key(pusr, prun, SDL_SCANCODE_S);
+	void jl_ct_key_keys(jl_t *pusr, jl_ct_onevent_fnt prun,
+		jl_ct_onevent_fnt pno)
+	{
+		jl_ct_key(pusr, prun, pno, SDL_SCANCODE_S);
 	}
 
-	void jl_ct_key_keyd(jl_t *pusr, jl_ct_onevent_fnt prun) {
-		jl_ct_key(pusr, prun, SDL_SCANCODE_D);
+	void jl_ct_key_keyd(jl_t *pusr, jl_ct_onevent_fnt prun,
+		jl_ct_onevent_fnt pno)
+	{
+		jl_ct_key(pusr, prun, pno, SDL_SCANCODE_D);
 	}
 	
-	void jl_ct_key_menu(jl_t *pusr, jl_ct_onevent_fnt prun) {
+	void jl_ct_key_menu(jl_t *pusr, jl_ct_onevent_fnt prun,
+		jl_ct_onevent_fnt pno)
+	{
 		#if PLATFORM == 0 //COMPUTER
-		jl_ct_key(pusr, prun, SDL_SCANCODE_APPLICATION);
+		jl_ct_key(pusr, prun, pno, SDL_SCANCODE_APPLICATION);
 		#elif PLATFORM == 1 //PHONE
 		jvct_t* pjlc = pusr->pjlc;
 		if(pjlc->ct.menu)
 			prun(pusr, 255, pjlc->ct.menu);
+		else
+			pno(pusr, 255, pjlc->ct.menu);
 		#endif
 	}
 	
-	void jl_ct_left_click(jl_t *pusr, jl_ct_onevent_fnt prun) {
+	void jl_ct_left_click(jl_t *pusr, jl_ct_onevent_fnt prun,
+		jl_ct_onevent_fnt pno)
+	{
 		jvct_t* pjlc = pusr->pjlc;
 		if(pjlc->ct.heldDown &&
 			((pjlc->ct.msx <= .9) || (pjlc->ct.msy >= .1)))
 		{
 			prun(pusr, jl_ct_gmousex(pusr), jl_ct_gmousey(pusr));
+		}else{
+			pno(pusr, jl_ct_gmousex(pusr), jl_ct_gmousey(pusr));
 		}
 	}
 	
@@ -74,62 +104,100 @@
 //		prun(255, 0);
 //	}
 #elif PLATFORM == 1 //if Android
-	void tuch_cntr(jl_t *pusr, jl_ct_onevent_fnt prun) { //touch center
+	void tuch_cntr(jl_t *pusr, jl_ct_onevent_fnt prun,
+		jl_ct_onevent_fnt pno)
+	{ //touch center
 		if(((msy>.4f) && (msy<6.f)) && ((msx>.4f) && (msx<6.f))) {
 			prun(pusr, 255, 0);
+		}else{
+			pno(pusr, 255, 0);
 		}
 	}
 	//
-	void tuch_nrrt(jl_t *pusr, jl_ct_onevent_fnt prun) { //near right
+	void tuch_nrrt(jl_t *pusr, jl_ct_onevent_fnt prun,
+		jl_ct_onevent_fnt pno)
+	{ //near right
 		if(((msx>.6f) && (msx<.8f)) && ((msy>.2f) && (msy<8.f))) {
 			prun(pusr, 255, 0);
+		}else{
+			pno(pusr, 255, 0);
 		}
 	}
 
-	void tuch_nrlt(jl_t *pusr, jl_ct_onevent_fnt prun) { //near left
+	void tuch_nrlt(jl_t *pusr, jl_ct_onevent_fnt prun,
+		jl_ct_onevent_fnt pno)
+	{ //near left
 		if(((msx<.4f) && (msx>.2f)) && ((msy>.2f) && (msy<8.f))) {
 			prun(pusr, 255, 0);
+		}else{
+			pno(pusr, 255, 0);
 		}
 	}
 
-	void tuch_nrup(jl_t *pusr, jl_ct_onevent_fnt prun) { //near up
+	void tuch_nrup(jl_t *pusr, jl_ct_onevent_fnt prun,
+		jl_ct_onevent_fnt pno)
+	{ //near up
 		if(((msy<.4f) && (msy>.2f)) && ((msx>.2f) && (msx<8.f))) {
 			prun(pusr, 255, 0);
+		}else{
+			pno(pusr, 255, 0);
 		}
 	}
 
-	void tuch_nrdn(jl_t *pusr, jl_ct_onevent_fnt prun) { //near down
+	void tuch_nrdn(jl_t *pusr, jl_ct_onevent_fnt prun,
+		jl_ct_onevent_fnt pno)
+	{ //near down
 		if(((msy>.6f) && (msy<.8f)) && ((msx>.2f) && (msx<8.f))) {
 			prun(pusr, 255, 0);
+		}else{
+			pno(pusr, 255, 0);
 		}
 	}
 	//
 
-	void tuch_frrt(jl_t *pusr, jl_ct_onevent_fnt prun) { //far right
+	void tuch_frrt(jl_t *pusr, jl_ct_onevent_fnt prun,
+		jl_ct_onevent_fnt pno)
+	{//far right
 		if(msx>.8f) {
 			prun(pusr, 255, 0);
+		}else{
+			pno(pusr, 255, 0);
 		}
 	}
 
-	void tuch_frlt(jl_t *pusr, jl_ct_onevent_fnt prun) { //far left
+	void tuch_frlt(jl_t *pusr, jl_ct_onevent_fnt prun,
+		jl_ct_onevent_fnt pno)
+	{//far left
 		if(msx<.2f) {
 			prun(pusr, 255, 0);
+		}else{
+			pno(pusr, 255, 0);
 		}
 	}
 
-	void tuch_frup(jl_t *pusr, jl_ct_onevent_fnt prun) { //far up
+	void tuch_frup(jl_t *pusr, jl_ct_onevent_fnt prun,
+		jl_ct_onevent_fnt pno)
+	{//far up
 		if(msy<.2f) {
 			prun(pusr, 255, 0);
+		}else{
+			pno(pusr, 255, 0);
 		}
 	}
 
-	void tuch_frdn(jl_t *pusr, jl_ct_onevent_fnt prun) { //far down
+	void tuch_frdn(jl_t *pusr, jl_ct_onevent_fnt prun,
+		jl_ct_onevent_fnt pno)
+	{//far down
 		if(msy>.8f) {
 			prun(pusr, 255, 0);
+		}else{
+			pno(pusr, 255, 0);
 		}
 	}
 
-	void tuch(jl_t *pusr, jl_ct_onevent_fnt prun) { //Any touch
+	void tuch(jl_t *pusr, jl_ct_onevent_fnt prun,
+		jl_ct_onevent_fnt pno)
+	{//Any touch
 		prun(pusr,jl_ct_gmousex(pusr), jl_ct_gmousey(pusr));
 	}
 #endif
@@ -195,7 +263,9 @@ static inline void _jal5_jl_ct_hndl(jvct_t *pjlc) {
 	#endif
 }
 
-static void _jl_ct_run_event(jvct_t * pjlc, uint8_t pevent, jl_ct_onevent_fnt prun) {
+static void _jl_ct_run_event(jvct_t * pjlc, uint8_t pevent,
+	jl_ct_onevent_fnt prun, jl_ct_onevent_fnt pno)
+{
 	if(pjlc->ct.getEvents[pevent] == NULL) {
 		jlvm_dies(pjlc,
 			jl_me_strt_merg(
@@ -205,54 +275,18 @@ static void _jl_ct_run_event(jvct_t * pjlc, uint8_t pevent, jl_ct_onevent_fnt pr
 			jl_me_strt_fnum(pevent),
 			STRT_TEMP));
 	}
-	pjlc->ct.getEvents[pevent](pjlc->sg.usrd, prun);
+	pjlc->ct.getEvents[pevent](pjlc->sg.usrd, prun, pno);
 }
 
-void jl_ct_run_event(jl_t *pusr, uint8_t pevent, jl_ct_onevent_fnt prun) {
-	_jl_ct_run_event(pusr->pjlc, pevent, prun);
-}
+/**
+ * Input function to do nothing.
+*/
+void jl_ct_dont(jl_t* pusr, float x, float y) {}
 
-//Run Pre-set Events currently being activated
-static inline void _jl_ct_event_run(jvct_t * pjlc) {
-	int i;
-
-	printf("ay1\n");
-	if( !pjlc->ct.userevents[pjlc->sg.usrd->loop] ) return;
-	if( !pjlc->ct.userevents[pjlc->sg.usrd->loop][pjlc->sg.usrd->mode].CtrC)
-		return;
-	printf("ay2\n");
-	#if PLATFORM == 1 //PHONE
-	if(pjlc->ct.heldDown) {
-	#endif
-
-	if(pjlc->ct.getEvents == NULL) {
-		jlvm_dies(pjlc, Strt(
-			"[ERR] Null Pointer: pjlc->ct.getEvents\n"));
-	}
-	if(pjlc->ct.userevents[pjlc->sg.usrd->loop][pjlc->sg.usrd->mode]
-		.type == NULL)
-	{
-		#if PLATFORM == 1 //PHONE
-		pjlc->ct.heldDown = 2;
-		#endif
-		return;
-	}
-	for(i = 0;
-		i < pjlc->ct.userevents[pjlc->sg.usrd->loop]
-			[pjlc->sg.usrd->mode].CtrC;
-		i++)
-	{
-		_jl_ct_run_event(pjlc,
-			pjlc->ct.userevents[pjlc->sg.usrd->loop]
-				[pjlc->sg.usrd->mode].type[i],
-			pjlc->ct.userevents[pjlc->sg.usrd->loop]
-				[pjlc->sg.usrd->mode].function[i]);
-	}
-
-	#if PLATFORM == 1 //PHONE
-	pjlc->ct.heldDown = 2;
-	}
-	#endif
+void jl_ct_run_event(jl_t *pusr, uint8_t pevent,
+	jl_ct_onevent_fnt prun, jl_ct_onevent_fnt pno)
+{
+	_jl_ct_run_event(pusr->pjlc, pevent, prun, pno);
 }
 
 static inline void _jal5_jl_ct_evnt_updt(jvct_t * pjlc) {
@@ -288,8 +322,11 @@ void _jl_ct_loop(jvct_t* pjlc) {
 		//If Escape key is pressed, then quit the program
 		if(jl_ct_key_pressed(pjlc->sg.usrd, SDL_SCANCODE_ESCAPE) == 1)
 			jl_sg_kill(pjlc->sg.usrd);
+	#elif PLATFORM == 1 //PHONE
+	if(pjlc->ct.heldDown) {
+		pjlc->ct.heldDown = 2;
+	}
 	#endif
-	_jl_ct_event_run(pjlc); //Run Events currently being activated
 }
 
 void _jl_ct_init(jvct_t* pjlc) {
@@ -318,69 +355,6 @@ void _jl_ct_init(jvct_t* pjlc) {
 	pjlc->ct.getEvents[JL_CT_ANDR_TNLT] = tuch_nrlt;
 	pjlc->ct.getEvents[JL_CT_ANDR_TOUC] = tuch;
 #endif
-}
-
-static inline void _jl_ct_mode_init(jl_t *pusr) {
-	jvct_t* pjlc = pusr->pjlc;
-	int i, j;
-	printf("[JL/CT] input mode count = %d\n", pusr->mdec + 1);
-	for(i = 0; i < JL_SG_WM_MAX; i++) {
-		pjlc->ct.userevents[i] =
-			malloc(sizeof(_ct_user_events) * (pusr->mdec + 1));
-		for(j = 0; j < pusr->mdec; j++) {
-			pjlc->ct.userevents[i][j].CtrC = 0;
-			pjlc->ct.userevents[i][j].type = NULL;
-			pjlc->ct.userevents[i][j].function = NULL;
-		}
-	}
-}
-
-static uint16_t _jl_ct_addto_ctrc(jvct_t* pjlc) {
-	jl_t *pusr = pjlc->sg.usrd;
-
-	//Add an extra control
-	pjlc->ct.userevents[pusr->loop][pusr->mode].CtrC++; 
-	//Adjust memory to add space for new control
-	pjlc->ct.userevents[pusr->loop][pusr->mode].type =
-		realloc(pjlc->ct.userevents[pusr->loop][pusr->mode].type,
-			sizeof(uint8_t) *
-			pjlc->ct.userevents[pusr->loop][pusr->mode].CtrC);
-	pjlc->ct.userevents[pusr->loop][pusr->mode].function =
-		realloc(pjlc->ct.userevents[pusr->loop][pusr->mode].function,
-			sizeof(void *) *
-			pjlc->ct.userevents[pusr->loop][pusr->mode].CtrC);
-	return pjlc->ct.userevents[pusr->loop][pusr->mode].CtrC - 1;
-}
-
-void jl_ct_mode_addi(jl_t *pusr, uint8_t libevent, jl_ct_onevent_fnt fn) {
-	jvct_t* pjlc = pusr->pjlc;
-	
-	//Create input modes, if not already created
-	if(pjlc->ct.userevents[pusr->loop] == NULL) _jl_ct_mode_init(pusr);
-	//Add a new control
-	uint16_t ctrl = _jl_ct_addto_ctrc(pjlc);
-	//Set the new control
-	pjlc->ct.userevents[pusr->loop][pusr->mode].type[ctrl] = libevent;
-	pjlc->ct.userevents[pusr->loop][pusr->mode].function[ctrl] = fn;
-}
-
-void jl_ct_addr(uint8_t controlNum,
-	void (*up)(uint8_t p), void (*down)(uint8_t p),
-	void (*right)(uint8_t p), void (*left)(uint8_t p)
-	)
-{
-}
-
-void jl_ct_adds(void) {
-}
-
-void jl_ct_adde(void) {
-}
-
-void jl_ct_addn(void) {
-}
-
-void jl_ct_adda(void) {
 }
 
 /*

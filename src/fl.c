@@ -54,6 +54,7 @@ void jl_fl_save(jl_t* pusr, void *file, char *name, uint32_t bytes) {
 		jlvm_dies(pjlc,
 			jl_me_strt_merg(Strt("Write failed: "),Strt(strerror(errsv)),STRT_TEMP));
 	}
+	printf("Wrote %d bytes @%d!\n", (int)n_bytes, at);
 /*	jl_io_print_lows(0,
 		jl_me_strt_merg(
 			jl_me_strt_merg(Strt("Wrote "),
@@ -486,22 +487,10 @@ void jl_fl_user_select_loop(jl_t* pusr) {
 	jl_gr_draw_image(pusr, 0, 1, 0., 0., 1., 1., 1, 127);
 	jl_gr_draw_text(pusr, "Select File", .02, .02, .04,255);
 
-	jl_ct_run_event(pusr,
-		JL_CT_ALLP(JL_CT_GAME_CPUP, JL_CT_COMP_ARUP,
-			JL_CT_ANDR_TFUP), _jl_fl_user_select_up
-		);
-	jl_ct_run_event(pusr,
-		JL_CT_ALLP(JL_CT_GAME_CPDN, JL_CT_COMP_ARDN,
-			JL_CT_ANDR_TFDN), _jl_fl_user_select_dn
-		);
-	jl_ct_run_event(pusr,
-		JL_CT_ALLP(JL_CT_GAME_CPRT, JL_CT_COMP_ARRT,
-			JL_CT_ANDR_TFRT), _jl_fl_user_select_rt
-		);
-	jl_ct_run_event(pusr,
-		JL_CT_ALLP(JL_CT_GAME_CPLT, JL_CT_COMP_ARLT,
-			JL_CT_ANDR_TFLT), _jl_fl_user_select_lt
-		);
+	jl_ct_run_event(pusr,JL_CT_MAINUP, _jl_fl_user_select_up, jl_ct_dont);
+	jl_ct_run_event(pusr,JL_CT_MAINDN, _jl_fl_user_select_dn, jl_ct_dont);
+	jl_ct_run_event(pusr,JL_CT_MAINRT, _jl_fl_user_select_rt, jl_ct_dont);
+	jl_ct_run_event(pusr,JL_CT_MAINLT, _jl_fl_user_select_lt, jl_ct_dont);
 	//Draw up to 20
 	for(i = 0; i < cl_list_count(pjlc->fl.filelist); i++) {
 		stringtoprint = cl_list_iterator_next(iterator);
@@ -529,10 +518,7 @@ void jl_fl_user_select_loop(jl_t* pusr) {
 	}
 	jl_gr_draw_text(pusr, ">", .02, .08 + (.04 * pjlc->fl.cursor), .04,255);
 	jl_gr_draw_text(pusr, pjlc->fl.dirname, .02, .94, .02, 255);
-	jl_ct_run_event(pusr,
-		JL_CT_ALLP(JL_CT_GAME_BTNA, JL_CT_COMP_RETN,
-			JL_CT_ANDR_TCCR), _jl_fl_user_select_do
-		);
+	jl_ct_run_event(pusr, JL_CT_SELECT, _jl_fl_user_select_do, jl_ct_dont);
 }
 
 char *jl_fl_user_select_get(jl_t* pusr) {

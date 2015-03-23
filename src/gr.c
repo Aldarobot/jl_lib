@@ -243,10 +243,7 @@ static void _jl_gr_menubar(jl_t* pusr);
 		jl_gr_draw_text_sprite(pusr, psprite, txt);
 		psprite->x = defaultx;
 		if(jl_gr_sprite_collide(pusr, pusr->mouse, psprite)) {
-			jl_ct_run_event(pusr,
-				JL_CT_ALLP(JL_CT_GAME_STYL, JL_CT_COMP_CLLT,
-					JL_CT_ANDR_TOUC), prun
-				);
+			jl_ct_run_event(pusr, JL_CT_PRESS, prun, jl_ct_dont);
 			psprite->x = defaultx + slidex;
 		}
 	}
