@@ -7,55 +7,56 @@
 
 static void _jl_io_indt(jl_t* pusr) {
 	int i;
-	for(i = 0; i < ((jvct_t *)pusr->pjlc)->io.offs; i++) {
+	for(i = 0; i < ((jvct_t *)(pusr->pjlc))->io.offs; i++) {
 		printf(" ");
 	}
 }
 
-void _jl_io_print_lowc(jl_t* pusr, char * print) {
+void _jl_io_print_lowc(jl_t* pusr, const char * print) {
+	jvct_t *pjlc = pusr->pjlc;
 	int i;
-	if(((jvct_t *)pusr->pjlc)->io.ofs2 > 0) {
+	if(pjlc->io.ofs2 > 0) {
 		_jl_io_indt(pusr);
 		printf("[/");
-		for(i = ((jvct_t *)pusr->pjlc)->io.offs -
-				((jvct_t *)pusr->pjlc)->io.ofs2;
-			i < ((jvct_t *)pusr->pjlc)->io.offs;
+		for(i = pjlc->io.offs -
+				pjlc->io.ofs2;
+			i < pjlc->io.offs;
 			i++)
 		{
-			printf( ((jvct_t *)pusr->pjlc)->io.head[i+1]);
+			printf( pjlc->io.head[i+1]);
 			printf("/");
 		}
 		printf("\b]\n");
-		((jvct_t *)pusr->pjlc)->io.ofs2 = 0;
-	}else if(((jvct_t *)pusr->pjlc)->io.ofs2 < 0) {
+		pjlc->io.ofs2 = 0;
+	}else if(pjlc->io.ofs2 < 0) {
 		_jl_io_indt(pusr);
 		printf("[\\");
-		for(i = ((jvct_t *)pusr->pjlc)->io.offs;
-			i > ((jvct_t *)pusr->pjlc)->io.offs +
-				((jvct_t *)pusr->pjlc)->io.ofs2;
+		for(i = pjlc->io.offs;
+			i > pjlc->io.offs +
+				pjlc->io.ofs2;
 			i--)
 		{
-			printf( ((jvct_t *)pusr->pjlc)->io.head[i+1]);
+			printf( pjlc->io.head[i+1]);
 			printf("\\");
 		}
 		printf("\b]\n");
-		((jvct_t *)pusr->pjlc)->io.ofs2 = 0;
+		pjlc->io.ofs2 = 0;
 	}
 	_jl_io_indt(pusr);
 #if PLATFORM==0
 	printf("[%s] %s\n",
-		((jvct_t *)pusr->pjlc)->io.head[
-			((jvct_t *)pusr->pjlc)->io.offs],
+		pjlc->io.head[
+			pjlc->io.offs],
 		print);
 #else
 	SDL_Log("[%s] %s\n",
-		((jvct_t *)pusr->pjlc)->io.head[
-			((jvct_t *)pusr->pjlc)->io.offs],
+		pjlc->io.head[
+			pjlc->io.offs],
 		print);
 #endif
 }
 
-void _jl_io_print_no(jl_t* pusr, char * print) { }
+void _jl_io_print_no(jl_t* pusr, const char * print) { }
 
 void jl_io_tag_set(jl_t* pusr,
 	uint16_t tag, uint8_t shouldprint, jl_io_print_fnt tagfn)
@@ -86,44 +87,50 @@ void jl_io_tag(jl_t* pusr, int16_t tag) {
 	pjlc->io.tag = tag;
 }
 
-void jl_io_print_lowc(jl_t* pusr, char * print) {
+/*
+ * Print the terminal.
+*/
+void jl_io_print_lowc(jl_t* pusr, const char * print) {
 	jvct_t *pjlc = pusr->pjlc;
 
 	//Skip over hidden values
 	pjlc->io.printfn[pjlc->io.tag + JL_IO_TAG_MAX](pusr, print);
-
 }
 
 void jl_io_offset(jl_t* pusr, char * this) {
+	jvct_t *pjlc = pusr->pjlc;
+	int i = 0;
+
 	if(this == NULL) {
 		return;
 	}
-	int i;
-	for(i = 0; i < ((jvct_t *)pusr->pjlc)->io.offs; i++) {
-		if(strcmp(this, ((jvct_t *)pusr->pjlc)->io.head[i]) == 0) {
-			((jvct_t *)pusr->pjlc)->io.ofs2 -=
-				((jvct_t *)pusr->pjlc)->io.offs - i;
-			((jvct_t *)pusr->pjlc)->io.offs = i;
+	for(i = 0; i < pjlc->io.offs; i++) {
+		if(strcmp(this, pjlc->io.head[i]) == 0) {
+			pjlc->io.ofs2 -=
+				pjlc->io.offs - i;
+			pjlc->io.offs = i;
 			return;
 		}
 	}
 	//extend
-	((jvct_t *)pusr->pjlc)->io.offs++;
+	pjlc->io.offs++;
 	for(i = 0; i < 4; i++) {
-		((jvct_t *)pusr->pjlc)->io.head[
-			((jvct_t *)pusr->pjlc)->io.offs][i] = this[i];
+		pjlc->io.head[pjlc->io.offs][i] = this[i];
 	}
-	((jvct_t *)pusr->pjlc)->io.head[
-			((jvct_t *)pusr->pjlc)->io.offs][4] = '\0';
-	((jvct_t *)pusr->pjlc)->io.ofs2 ++;
+	pjlc->io.head[pjlc->io.offs][4] = '\0';
+	pjlc->io.ofs2 ++;
 	return;
 }
 
+/*
+ *
+*/
 void jl_io_print_lows(jl_t* pusr, strt print) {
 	if(print == NULL) {
-		print = Strt(STRT_NULL);
+		jl_io_print_lowc(pusr, "");
+	}else{
+		jl_io_print_lowc(pusr, (void *)print->data);
 	}
-	jl_io_print_lowc(pusr, (void *)print->data);
 	if(print->type == STRT_TEMP) {
 		jl_me_strt_free(print);
 	}
@@ -140,12 +147,15 @@ void _jl_io_init(jvct_t * pjlc) {
 			pjlc->io.head[i][j] = '\0';
 		}
 	}
-	jl_io_offset(pjlc->sg.usrd, "JLVM");
 	pjlc->io.maxtag = 0;
+	pjlc->io.tag = 0;
 	pjlc->io.printfn = malloc(sizeof(void *));
+	pjlc->io.offs = 0;
+	pjlc->io.ofs2 = 0;
 	jl_io_tag_set(pjlc->sg.usrd, JL_IO_TAG_MINIMAL, 1, NULL);
 	jl_io_tag_set(pjlc->sg.usrd, JL_IO_TAG_PROGRESS, 1, NULL);
 	jl_io_tag_set(pjlc->sg.usrd, JL_IO_TAG_SIMPLE, 1, NULL);
 	jl_io_tag_set(pjlc->sg.usrd, JL_IO_TAG_INTENSE, 1, NULL);
 	jl_io_tag(pjlc->sg.usrd, 0 - JL_IO_TAG_MAX); //Reset
+	jl_io_offset(pjlc->sg.usrd, "JLVM");
 }

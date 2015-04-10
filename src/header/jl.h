@@ -33,8 +33,8 @@
 	void jl_me_strt_free(strt pstr);
 	
 	// convert "string" into a (temporary) strt and return it.
-	strt jl_me_strt_c8ts(char *string);
-	#define Strt(x) jl_me_strt_c8ts((void*)x)
+	strt jl_me_strt_c8ts(const char *string);
+	#define Strt(x) jl_me_strt_c8ts((const void*)x)
 	
 	strt jl_me_strt_mkfrom_data(uint32_t size, void *data);
 	
@@ -105,7 +105,7 @@
 	void jl_gr_draw_text_area(jl_t* pusr, jl_sprite_t * psprite, char *txt);
 	void jl_gr_draw_text_sprite(jl_t* pusr,jl_sprite_t * psprite,char *txt);
 	void jl_gr_draw_ctxt(jl_t* pusr, char *str, dect p_y);
-	void jl_gr_draw_msge(char* message);
+	void jl_gr_draw_msge(jl_t* pusr, char* message);
 	void jl_gr_term_msge(jl_t* pusr, char* message);
 	void jl_gr_draw_slide_button(
 		jl_t* pusr, jl_sprite_t * psprite, char *txt, float defaultx,
@@ -137,12 +137,12 @@
 
 	// Print "pstr" to the lowest level terminal [the one not drawn with
 	// SDL/OpenGL]
-	void jl_io_print_lowc(jl_t* pusr, char * print);
+	void jl_io_print_lowc(jl_t* pusr, const char * print);
 
 //FL
 	// Save A File To The File System.  Save Data of "bytes" bytes in "file" to
 	// file "name"
-	void jl_fl_save(jl_t* pusr, void *file, char *name,
+	void jl_fl_save(jl_t* pusr, void *file, const char *name,
 		uint32_t bytes);
 
 	// Load a File from the file system.  Returns bytes loaded from "file_name"
@@ -157,11 +157,12 @@
 	//-ERRF:
 	//	ERRF_NONE	can't find filename in packageFileName
 	//	ERRF_FIND	can't find packageFileName
-	uint8_t *jl_fl_pk_load(jl_t* pusr, char *packageFileName,
-		char *filename);
+	uint8_t *jl_fl_pk_load(jl_t* pusr, const char *packageFileName,
+		const char *filename);
 	
 	//Load file "Fname" in default package & Return contents.
-	uint8_t *jl_fl_pk_mnld(jl_t* pusr, char *Fname);
+	uint8_t *jl_fl_media(jl_t* pusr, char *Fname, char *pzipfile,
+		void *pdata, uint64_t psize);
 
 	/**
 	 * Create a folder (directory)

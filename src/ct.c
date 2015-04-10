@@ -329,7 +329,7 @@ void _jl_ct_loop(jvct_t* pjlc) {
 	#endif
 }
 
-void _jl_ct_init(jvct_t* pjlc) {
+static inline void _jl_ct_fn_init(jvct_t* pjlc) {
 #if PLATFORM == 0
 	pjlc->ct.getEvents[JL_CT_COMP_RETN] = jl_ct_key_retn;
 	pjlc->ct.getEvents[JL_CT_COMP_KEYW] = jl_ct_key_keyw;
@@ -355,6 +355,17 @@ void _jl_ct_init(jvct_t* pjlc) {
 	pjlc->ct.getEvents[JL_CT_ANDR_TNLT] = tuch_nrlt;
 	pjlc->ct.getEvents[JL_CT_ANDR_TOUC] = tuch;
 #endif
+}
+
+static inline void _jl_ct_var_init(jvct_t* pjlc) {
+	int i;
+	for(i = 0; i < 255; i++)
+		pjlc->ct.keyDown[i] = 0;
+}
+
+void _jl_ct_init(jvct_t* pjlc) {
+	_jl_ct_fn_init(pjlc);
+	_jl_ct_var_init(pjlc);
 }
 
 /*

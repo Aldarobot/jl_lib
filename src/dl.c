@@ -95,6 +95,14 @@ uint16_t _jal5_lsdl_sres_geth(void) {
 	return current.h;
 }
 
+void _jl_dl_loop(void) {
+	//Update Screen
+	SDL_GL_SwapWindow(displayWindow); //end current draw
+	//start next draw
+	glClearColor(2.f/255.f, 5./255.f, 255./255.f, 1.f);
+	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+}
+
 void _jal5_lsdl_glpt_view(jvct_t *pjct, uint16_t x, uint16_t y) {
 	glViewport( 0, 0, x, y );
 	if(x > y) { //WIDESCREEN
@@ -118,7 +126,7 @@ void _jal5_lsdl_glpt_view(jvct_t *pjct, uint16_t x, uint16_t y) {
 	if(glGetError() != GL_NO_ERROR ) {
 		jlvm_dies(pjct, Strt("Couldn't initialize(Reshape)"));
 	}
-	SDL_GL_SwapWindow(displayWindow);
+	_jl_dl_loop();
 }
 
 /*
@@ -145,15 +153,8 @@ void _jl_dl_init(jvct_t* pjlc) {
 	_jlvm_curd_mode(pjlc);
 	#endif
 	//Update viewport to fix any rendering glitches
-	_jal5_lsdl_glpt_view(pjlc, current.w, current.h); 
-}
-
-void _jl_dl_loop(void) {
-	//Update Screen
-	SDL_GL_SwapWindow(displayWindow); //end current draw
-	//start next draw
-	glClearColor(2.f/255.f, 5./255.f, 255./255.f, 1.f);
-	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+	_jal5_lsdl_glpt_view(pjlc, current.w, current.h);
+	_jl_dl_loop();
 }
 
 void _jl_dl_kill(jvct_t* pjlc) {

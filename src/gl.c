@@ -392,27 +392,34 @@ void jal5_eogl_geta(jvct_t *pjlc, s32t *attrib, const char *title) {
 static inline void _jl_gl_make_res(jvct_t *pjlc) {
 	//set up opengl
 	//TODO:Later, Add Implementation with this enabled
+	printf("setting properties...\n");
 	glDisable( GL_DEPTH_TEST);
 	jal5_eogl_cerr(pjlc, 0, "glDisable(GL_DEPTH_TEST)");
 	glDisable( GL_DITHER );
 	jal5_eogl_cerr(pjlc, 0, "glDisable(GL_DITHER)");
 	glEnable( GL_BLEND );
 	jal5_eogl_cerr(pjlc, 0, "glEnable(GL_BLEND)");
-
+	printf("set glproperties.\n");
 	//Create the temporary buffers.
+	printf("creating buffers....\n");
 	_jal5_eogl_buff_make(pjlc, &pjlc->gl.temp_buff_vrtx); 
 	_jal5_eogl_buff_make(pjlc, &pjlc->gl.temp_buff_txtr);
+	printf("created buffers.\n");
 
-	if (pjlc->gl.textures[0] == 0/* || pjlc->gl.textures[1] == 0*/)
-		jlvm_dies(pjlc, Strt("Failed to load txtures"));
-
+	printf("making program....\n");
 	pjlc->gl.program = createProgram(pjlc, source_vert_tex, source_frag_tex);
 	if (pjlc->gl.program == 0)
 		jlvm_dies(pjlc, Strt("Failed to load program"));
+	printf("made program.\n");
 
+	printf("setting up shaders....\n");
+	if(pjlc->gl.uniforms.textures == NULL)
+		jlvm_dies(pjlc, Strt("Couldn't create uniforms"));
 	pjlc->gl.uniforms.textures[0][0] = _opn_eogl_getu(pjlc, "texture");
+	printf("setting up shaders more....\n");
 	jal5_eogl_geta(pjlc, &pjlc->gl.attributes.position, "position");
 	jal5_eogl_geta(pjlc, &pjlc->gl.attributes.texpos, "texpos");
+	printf("set up shaders.\n");
 }
 
 void _jl_gl_init(jvct_t *pjlc) {

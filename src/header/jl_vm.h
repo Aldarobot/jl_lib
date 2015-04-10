@@ -8,7 +8,6 @@
 		uint8_t offs;
 		int8_t ofs2;
 		char head[16][5];
-		strt lines[45]; //length 90
 		jl_io_print_fnt *printfn;
 		uint16_t maxtag;
 		int16_t tag;
@@ -118,6 +117,7 @@
 		uint8_t cpage;
 		char *dirname;
 		char *selecteditem;
+		uint8_t returnit;
 	}_fl_t;
 	
 	typedef struct {

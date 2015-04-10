@@ -9,10 +9,6 @@
  */
 #include "header/jl_pr.h"
 
-//MESSAGES
-char *GScreenMesg;
-uint8_t GScreenMesgOn = 0;
-
 /*screen being displayed ( on two screens which one on bottom, if keyboard is
 	being displayed on bottom screen then this will be displayed on top )*/
 uint8_t timeTilMessageVanish = 0;
@@ -24,6 +20,7 @@ char *GMessage[2] = {
 
 /*_jal5_jl_gr_t* g_grph;*/
 
+void _jl_dl_loop(void);
 static void _jl_gr_menubar(jl_t* pusr);
 
 /*EXPORTED FUNCTIONS*/
@@ -144,6 +141,7 @@ static void _jl_gr_menubar(jl_t* pusr);
 	void jl_gr_draw_text(jl_t* pusr, char *str, dect x, dect y, dect size,
 		uint8_t a)
 	{
+		if(str == NULL) return;
 		void *Str = str;
 		uint8_t *STr = Str;
 		uint32_t i;
@@ -204,17 +202,17 @@ static void _jl_gr_menubar(jl_t* pusr);
 	 * @param 'p_y': y coordinate to draw it at
 	 */
 	void jl_gr_draw_ctxt(jl_t* pusr, char *str, dect p_y) {
-		jl_gr_draw_text(pusr->pjlc, str, 0, p_y,
-			1.f / ((float)(strlen(str))), 255);
+		jl_gr_draw_text(pusr, str, 0, p_y,
+			1. / ((float)(strlen(str))), 255);
 	}
 
 	/**
 	 * Print message on the screen.
 	 * @param 'message': the message 
 	 */
-	void jl_gr_draw_msge(char * message) {
-		GScreenMesg = message;
-		GScreenMesgOn = 1;
+	void jl_gr_draw_msge(jl_t* pusr, char * message) {
+		jl_gr_draw_ctxt(pusr, message, (9./16.)/2);
+		_jl_dl_loop(); //Update Screen
 	}
 
 	/**
@@ -223,7 +221,7 @@ static void _jl_gr_menubar(jl_t* pusr);
  	 * @param 'message': the message 
 	 */
 	void jl_gr_term_msge(jl_t* pusr, char *message) {
-		jl_gr_draw_msge(message);
+		jl_gr_draw_msge(pusr, message);
 		jlvm_dies(pusr->pjlc, Strt(message));
 	}
 	
@@ -275,12 +273,6 @@ static void _jl_gr_menubar(jl_t* pusr);
 			pjlc->sg.usrd->loop = JL_SG_WM_UP;
 			timeTilMessageVanish = 255;
 		}
-	}
-
-	//Print a message on the screen
-	void _jl_gr_draw_msge(jl_t* pusr) {
-		jl_gr_draw_ctxt(pusr, GScreenMesg, (9./16.)/2);
-		GScreenMesgOn = 0;
 	}
 	
 	static void _jl_gr_menubar(jl_t* pusr) {
@@ -365,5 +357,6 @@ static void _jl_gr_menubar(jl_t* pusr);
 
 		flip = jgr_make_sprite(235,0,20,20,flipg);
 		mouse = jgr_make_sprite(0,0,10,10,textg);*/
+		printf("[JLVM/LIM] loaded taskbar!\n");
 	}
 /** @endcond **/

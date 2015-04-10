@@ -55,7 +55,7 @@ void jl_me_strt_clear(strt pa) {
 }
 
 strt jl_me_strt_make(u32t size, u08t type) {
-	strt a = malloc(sizeof(strt));
+	strt a = malloc(sizeof(strt_t));
 	a->data = malloc(size+1);
 	a->size = size;
 	a->type = type;
@@ -68,10 +68,10 @@ void jl_me_strt_free(strt pstr) {
 	free(pstr);
 }
 
-strt jl_me_strt_c8ts(char *string) {
+strt jl_me_strt_c8ts(const char *string) {
 	u32t size = strlen(string);
-	strt a = malloc(sizeof(strt)+1);
-	a->data = malloc(size);
+	strt a = malloc(sizeof(strt_t));
+	a->data = malloc(size + 1);
 	a->size = size;
 	a->curs = 0;
 	a->type = STRT_TEMP;
@@ -84,8 +84,8 @@ strt jl_me_strt_c8ts(char *string) {
 }
 
 strt jl_me_strt_mkfrom_data(uint32_t size, void *data) {
-	strt a = malloc(sizeof(strt)+1);
-	a->data = malloc(size);
+	strt a = malloc(sizeof(strt_t));
+	a->data = malloc(size + 1);
 	a->size = size;
 	a->curs = 0;
 	a->type = STRT_KEEP;

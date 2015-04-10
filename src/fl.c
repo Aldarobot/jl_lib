@@ -13,12 +13,16 @@
 strt gvar_pkfl;
 char *errf;
 
-void jl_fl_save(jl_t* pusr, void *file, char *name, uint32_t bytes) {
+void jl_fl_save(jl_t* pusr, void *file, const char *name, uint32_t bytes) {
 	jvct_t * pjlc = pusr->pjlc;
-	
 	int errsv;
 	ssize_t n_bytes;
 	int fd;
+	
+	if(name == NULL) {
+		jl_io_print_lowc(pusr, "No good name");
+		return;
+	}
 
 	jl_io_tag(pusr, JL_IO_TAG_SIMPLE - JL_IO_TAG_MAX);
 	jl_io_print_lowc(pusr, "SAVING....");
@@ -145,27 +149,30 @@ char jl_fl_pk_save(jl_t* pusr, char *packageFileName, char *fileName,
 	return 0;
 }
 
-uint8_t *jl_fl_pk_load(jl_t* pusr, char *packageFileName, char *filename)
+uint8_t *jl_fl_pk_load(jl_t* pusr, const char *packageFileName,
+	const char *filename)
 {
 	jl_io_offset(pusr, "FILE");
 	jl_io_offset(pusr, "LOAD");
-	int zerror;
+	int zerror = 0;
 	#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
-	jl_io_print_lows(pusr, jl_me_strt_merg(
-		jl_me_strt_merg(
-			Strt("loading package:\""), Strt(packageFileName),
-			STRT_TEMP),
-		Strt("\"..."), STRT_TEMP));
+	jl_io_print_lowc(pusr, "loading package:\"");
+	jl_io_print_lowc(pusr, packageFileName);
+	jl_io_print_lowc(pusr, "\"...\n");
 	#endif
+	jl_io_print_lowc(pusr, "error check 1.\n");
 	struct zip *zipfile = zip_open(packageFileName, ZIP_CHECKCONS, &zerror);
+	jl_io_print_lowc(pusr, "error check 2.\n");
 	if(zerror == ZIP_ER_OPEN) {
 		jl_io_print_lowc(pusr, " NO EXIST!");
 		pusr->errf = JL_ERR_FIND;
 		return NULL;
 	}
+	jl_io_print_lowc(pusr, "error check 3.\n");
 	if(zipfile == NULL) {
 		jlvm_dies(pusr->pjlc, Strt("couldn't load pckg!"));
 	}
+	jl_io_print_lowc(pusr, "error check 4.\n");
 	#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
 	jl_io_print_lowc(pusr, (char *)zip_strerror(zipfile));
 	jl_io_print_lowc(pusr, "loaded package.\n");
@@ -179,15 +186,13 @@ uint8_t *jl_fl_pk_load(jl_t* pusr, char *packageFileName, char *filename)
 	jl_io_print_lowc(pusr, "call pass.");
 	#endif
 	if(file == NULL) {
-		jl_io_print_lows(pusr,
-			jl_me_strt_merg(
-			jl_me_strt_merg(Strt("couldn't open up file: \""),
-				Strt(filename), STRT_TEMP),
-			jl_me_strt_merg(Strt("\" in "),
-				Strt(packageFileName), STRT_TEMP),STRT_TEMP));
-		jl_io_print_lows(pusr,
-			jl_me_strt_merg(Strt("because: "),
-				Strt(zip_strerror(zipfile)), STRT_TEMP));
+		jl_io_print_lowc(pusr, "couldn't open up file: \"");
+		jl_io_print_lowc(pusr, filename);
+		jl_io_print_lowc(pusr, "\" in ");
+		jl_io_print_lowc(pusr, packageFileName);
+		jl_io_print_lowc(pusr, "because: ");
+		jl_io_print_lowc(pusr, (void *)zip_strerror(zipfile));
+		jl_io_print_lowc(pusr, "\n");
 		pusr->errf = JL_ERR_NONE;
 		return NULL;
 	}
@@ -250,6 +255,7 @@ void jl_fl_mkdir(jl_t* pusr, strt pfilebase) {
  * @return x: the data contents of the file.
 */
 uint8_t * jl_fl_mkfile(jl_t* pusr, char *pfilebase, char *contents, uint32_t size){
+//	if(!pfilebase) { return; }
 	uint8_t *freturn;
 	#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
 	jl_io_print_lowc(pusr, "Creating File...\n");
@@ -276,16 +282,18 @@ uint8_t * jl_fl_mkfile(jl_t* pusr, char *pfilebase, char *contents, uint32_t siz
 	return freturn;
 }
 
-//
-uint8_t *jl_fl_pk_mnld(jl_t* pusr, char *Fname) {
-	uint8_t *freturn;
-	if(
-		((freturn = jl_fl_pk_load(pusr,(void *)gvar_pkfl->data,Fname)) == NULL) &&
-		pusr->errf == JL_ERR_FIND ) //Package doesn't exist!! - create
-	{
-		jl_fl_mkfile(pusr, Fname, jal5_head_jlvm(), jal5_head_size());
-	}
-	return freturn;
+/*
+ * Load media package, create it if it doesn't exist.
+*/
+uint8_t *jl_fl_media(jl_t* pusr, char *Fname, char *pzipfile,
+	void *pdata, uint64_t psize)
+{
+	uint8_t *freturn = jl_fl_pk_load(pusr, pzipfile, Fname);
+	//If Package doesn't exist!! - create
+	if( (freturn == NULL) && (pusr->errf == JL_ERR_FIND) )
+		return jl_fl_mkfile(pusr, Fname, pdata, psize);
+	else
+		return freturn;
 }
 
 /*
@@ -390,6 +398,7 @@ static void _jl_fl_user_select_open_dir(jl_t* pusr, char *dirname) {
 		//Couldn't open Directory
 		int errsv = errno;
 		if(errsv == ENOTDIR) { //Not a directory - is a file
+			pjlc->fl.returnit = 1;
 			pjlc->fl.dirname[strlen(dirname)-1] = '\0';
 			pusr->loop = JL_SG_WM_EXIT; //Go into exit loop
 		}
@@ -397,7 +406,9 @@ static void _jl_fl_user_select_open_dir(jl_t* pusr, char *dirname) {
 }
 
 void jl_fl_user_select_init(jl_t* pusr, char *program_name) {
+	jvct_t * pjlc = pusr->pjlc;
 	pusr->loop = JL_SG_WM_DN;
+	pjlc->fl.returnit = 0;
 	_jl_fl_user_select_open_dir(pusr, SDL_GetPrefPath("JLVM",program_name));
 }
 
@@ -471,6 +482,7 @@ static void _jl_fl_user_select_do(jl_t* pusr, float x, float y) {
 			newdir[strlen(pjlc->fl.dirname) +
 				strlen(pjlc->fl.selecteditem) + 1] = '\0';
 			free(pjlc->fl.dirname);
+			pjlc->fl.dirname = NULL;
 			_jl_fl_user_select_open_dir(pusr,newdir);
 		}
 	}
@@ -523,7 +535,11 @@ void jl_fl_user_select_loop(jl_t* pusr) {
 
 char *jl_fl_user_select_get(jl_t* pusr) {
 	jvct_t * pjlc = pusr->pjlc;
-	return pjlc->fl.dirname;
+	
+	if(pjlc->fl.returnit)
+		return pjlc->fl.dirname;
+	else
+		return NULL;
 }
 
 void _jl_fl_kill(jvct_t * pjlc) {
@@ -540,8 +556,8 @@ void _jl_fl_init(jvct_t * pjlc) {
 	#endif
 	lsdl_prog_name(Strt("JLVM"));
 
-	gvar_pkfl = jl_fl_get_resloc(pjlc->sg.usrd,
-		Strt("JLVM"), Strt("jlvm.zip"));
+	gvar_pkfl =
+		jl_fl_get_resloc(pjlc->sg.usrd, Strt("JLVM"), Strt("jlvm.zip"));
 	remove((void*)gvar_pkfl->data);
 
 	_jl_fl_errf(pjlc, "Segmentation Fault / Floatation Exception etc.");
