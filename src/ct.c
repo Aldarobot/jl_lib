@@ -249,7 +249,7 @@ static inline void _jal5_jl_ct_hndl(jvct_t *pjlc) {
 				_jal5_lsdl_glpt_view(pjlc,
 					pjlc->ct.event.window.data1,
 					pjlc->ct.event.window.data2);
-				_jl_fl_errf(pjlc, "windoweventresize....");
+				_jl_fl_errf(pjlc, ":windoweventresize....\n");
 			}
 		}else if( pjlc->ct.event.type==SDL_FINGERDOWN ) {
 			pjlc->ct.msx = pjlc->ct.event.tfinger.x;
@@ -314,6 +314,10 @@ static inline void _jal5_jl_ct_evnt_updt(jvct_t * pjlc) {
 
 //Main Input Loop
 void _jl_ct_loop(jvct_t* pjlc) {
+	#if PLATFORM == 1 //PHONE
+	if(pjlc->ct.heldDown) pjlc->ct.heldDown = 2;
+	if(pjlc->ct.menu) pjlc->ct.menu = 2;
+	#endif
 	_jal5_jl_ct_evnt_updt(pjlc); //Get the information on current events
 	#if PLATFORM == 0 //PC
 		//Get Whether mouse is down or not and xy coordinates
@@ -338,10 +342,6 @@ void _jl_ct_loop(jvct_t* pjlc) {
 		//If Escape key is pressed, then quit the program
 		if(jl_ct_key_pressed(pjlc->sg.usrd, SDL_SCANCODE_ESCAPE) == 1)
 			jl_sg_kill(pjlc->sg.usrd);
-	#elif PLATFORM == 1 //PHONE
-	if(pjlc->ct.heldDown) {
-		pjlc->ct.heldDown = 2;
-	}
 	#endif
 }
 
