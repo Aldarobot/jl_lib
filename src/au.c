@@ -34,11 +34,9 @@ void jl_au_load(jvct_t *pjlc, int IDinStack, void *data, int dataSize,
 		Mix_LoadMUS_RW(SDL_RWFromMem(data, dataSize), 1);
 	pjlc->au.jmus[IDinStack]._VOL = volumeChange;
 	if(pjlc->au.jmus[IDinStack]._MUS == NULL) {
-		jlvm_dies(pjlc, jl_me_strt_merg(
-			Strt("Couldn't load music because:"),
-			Strt((char *)SDL_GetError()),
-			STRT_TEMP)
-		);
+		_jl_fl_errf(pjlc, ":Couldn't load music because:");
+		_jl_fl_errf(pjlc, (char *)SDL_GetError());
+		jl_sg_die(pjlc, "\n");
 	}else{
 		#if JLVM_DEBUG >= JLVM_DEBUG_PROGRESS
 		jl_io_print_lows(pjlc->sg.usrd,
@@ -173,11 +171,9 @@ void _jl_au_init(jvct_t *pjlc) {
 	jl_io_print_lowc(pjlc->sg.usrd, "initailizing audio...\n");
 	#endif
 	if ( Mix_OpenAudio(11025, AUDIO_S16, 1, 2048) < 0 ) {
-		jlvm_dies(pjlc, jl_me_strt_merg(
-			Strt("Couldn't set 11025 Hz 16-bit audio because:"),
-			Strt((char *)SDL_GetError()),
-			STRT_TEMP
-		));
+		_jl_fl_errf(pjlc, ":Couldn't set 11025 Hz 16-bit audio because:");
+		_jl_fl_errf(pjlc, (char *)SDL_GetError());
+		jl_sg_die(pjlc, "\n");
 	}else{
 		#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
 		jl_io_print_lowc(pjlc->sg.usrd, "audio has been set.\n");

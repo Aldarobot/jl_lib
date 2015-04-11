@@ -74,10 +74,13 @@ void jal5_eogl_cerr(jvct_t *pjlc, int width, char *fname) {
 	}else{
 		fstrerr = "opengl: unknown error!\n";
 	}
-	jlvm_dies(pjlc, jl_me_strt_merg(
-		jl_me_strt_merg(Strt(fname), Strt(fstrerr), STRT_TEMP),
-		jl_me_strt_merg(Strt(":"), jl_me_strt_fnum(width), STRT_TEMP),
-		STRT_TEMP));
+	_jl_fl_errf(pjlc, ":");
+	_jl_fl_errf(pjlc, fname);
+	_jl_fl_errf(pjlc, "\n:");
+	_jl_fl_errf(pjlc, fstrerr);
+	_jl_fl_errf(pjlc, ":\n:");
+	_jl_fl_errf(pjlc, (void*)jl_me_strt_fnum(width)->data);
+	jl_sg_die(pjlc, "\n");
 }
 
 void _jal5_eogl_buff_bind(jvct_t *pjlc, uint32_t buffer) {
@@ -89,9 +92,9 @@ void jal5_eogl_buff_data(jvct_t *pjlc, uint32_t buffer, void *buffer_data,
 	u08t buffer_size)
 {
 	_jal5_eogl_buff_bind(pjlc, buffer);
-	glBufferData(GL_ARRAY_BUFFER, buffer_size * sizeof(double), buffer_data,
+	glBufferData(GL_ARRAY_BUFFER, buffer_size * sizeof(float), buffer_data,
 		GL_STATIC_DRAW);
-	jal5_eogl_cerr(pjlc, 0,"buffer data");
+	jal5_eogl_cerr(pjlc, buffer,"buffer data");
 }
 
 void _jal5_eogl_buff_make(jvct_t *pjlc, uint32_t *buffer)
@@ -122,10 +125,10 @@ GLuint loadShader(jvct_t *pjlc, GLenum shaderType, const char* pSource) {
 				buf = (char*) malloc(infoLen);
 				if (buf) {
 					glGetShaderInfoLog(shader, infoLen, NULL, buf);
-					jlvm_dies(pjlc, jl_me_strt_merg(
-						Strt("Could not compile shader:\n"),
-						Strt(buf), STRT_TEMP));
+					_jl_fl_errf(pjlc, ":Could not compile shader:\n:");
+					_jl_fl_errf(pjlc, buf);
 					free(buf);
+					jl_sg_die(pjlc, "\n");
 				}
 				glDeleteShader(shader);
 				shader = 0;
@@ -140,12 +143,12 @@ GLuint createProgram(jvct_t *pjlc, const char* pVertexSource,
 {
 	GLuint vertexShader = loadShader(pjlc, GL_VERTEX_SHADER, pVertexSource);
 	if (!vertexShader) {
-		jlvm_dies(pjlc, Strt("couldn't load vertex shader"));
+		jl_sg_die(pjlc, ":couldn't load vertex shader\n");
 	}
 
 	GLuint pixelShader = loadShader(pjlc, GL_FRAGMENT_SHADER, pFragmentSource);
 	if (!pixelShader) {
-		jlvm_dies(pjlc, Strt("couldn't load fragment shader"));
+		jl_sg_die(pjlc, ":couldn't load fragment shader\n");
 	}
 
 	GLuint program = glCreateProgram();
@@ -173,16 +176,16 @@ GLuint createProgram(jvct_t *pjlc, const char* pVertexSource,
 				buf = (char*) malloc(bufLength);
 				if (buf) {
 					glGetProgramInfoLog(program, bufLength, NULL, buf);
-					jlvm_dies(pjlc, jl_me_strt_merg(
-						Strt("Could not link program:\n"),
-						Strt(buf), STRT_TEMP));
+					_jl_fl_errf(pjlc, "Could not link program:\n");
+					_jl_fl_errf(pjlc, buf);
 					free(buf);
+					jl_sg_die(pjlc, "\n");
 				}else{
-					jlvm_dies(pjlc, Strt("failed malloc"));
+					jl_sg_die(pjlc, ":failed malloc\n");
 				}
 			}else{
 				glDeleteProgram(program);
-				jlvm_dies(pjlc, Strt("no info log"));
+				jl_sg_die(pjlc, ":no info log\n");
 			}
 		}
 	}
@@ -194,7 +197,7 @@ void jl_gl_maketexture(jl_t* pusr, uint16_t gid, uint16_t id,
 {
 	jvct_t *pjlc = pusr->pjlc;
 	if (!pixels)
-		jlvm_dies(pjlc, Strt("null pixels"));
+		jl_sg_die(pjlc, "null pixels");
 	if (pjlc->gl.allocatedg < gid + 1) {
 		pjlc->gl.textures =
 			realloc(pjlc->gl.textures, sizeof(GLuint *) * (gid+1));
@@ -249,7 +252,7 @@ void jl_gl_maketexture(jl_t* pusr, uint16_t gid, uint16_t id,
 	if(pjlc->gl.textures[gid][id] == 0) {
 		printf("bad texture:\n");
 		jal5_eogl_cerr(pjlc, 0,"BADT");
-		jlvm_dies(pjlc, Strt("Bad Texture, but no gl error? WHY!?"));
+		jl_sg_die(pjlc, ":Bad Texture, but no gl error? WHY!?\n");
 	}
 }
 
@@ -260,7 +263,7 @@ void _opn_eogl_colr(float r, float g, float b, float a) {
 }
 
 void _opn_eogl_usep(jvct_t *pjlc, GLuint prg) {
-	if(!prg) { jlvm_dies(pjlc, Strt("program ain't a prg!")); } 
+	if(!prg) { jl_sg_die(pjlc, ":program ain't a prg!\n"); } 
 	glUseProgram(prg);
 	jal5_eogl_cerr(pjlc, 0,"glUseProgram");
 }
@@ -277,14 +280,14 @@ void _opn_eogl_bind(jvct_t *pjlc, u16t g, u16t i) {
 //This sets vertex attribute "vertexAttrib" to "pointer".
 //Set xyzw to 2 if 2 dimensional coordinates 3 if 3D. etc.
 void jal5_eogl_setv(jvct_t *pjlc, uint32_t vertexAttrib, uint8_t xyzw) {
-//	_jal5_eogl_buff_bind(0);
+//	_jal5_eogl_buff_bind(pjlc, 0);
 	jal5_eogl_cerr(pjlc, 0,"glBindBuffer");
 	glEnableVertexAttribArray(vertexAttrib);
 	jal5_eogl_cerr(pjlc, vertexAttrib,"glEnableVertexAttribArray");
 	glVertexAttribPointer(
 		vertexAttrib,  	//attribute
 		xyzw,			// x+y+z = 3
-		GL_DOUBLE,		// type
+		GL_FLOAT,		// type
 		GL_FALSE,		// normalized?
 		0,				// stride
 		0				// array buffer offset
@@ -318,7 +321,7 @@ void eogl_vrtx(jvct_t *pjlc, u08t vertices, dect *xyzw) {
 		jal5_eogl_buff_data(pjlc, pjlc->gl.temp_buff_vrtx,
 			pjlc->gl.buff_vert, vertices * 3);
 	}else{
-		GLdouble coord_default[] = {
+		float coord_default[] = {
 			-1.,1.,0.,
 			-1.,-1.,0.,
 			1.,-1.,0.,
@@ -336,7 +339,7 @@ void eogl_txtr(jvct_t *pjlc, u08t map, u08t a, u16t pgid, u16t pi) {
 		int32_t cY = map/16;
 		double CX = (((double)cX)/16.);
 		double CY = 1.-((double)cY)/16.;
-		GLdouble tex1[] =
+		float tex1[] =
 		{
 			CX, CY - (1./16.),
 			CX, CY,
@@ -345,7 +348,7 @@ void eogl_txtr(jvct_t *pjlc, u08t map, u08t a, u16t pgid, u16t pi) {
 		};
 		jal5_eogl_buff_data(pjlc, pjlc->gl.temp_buff_txtr, tex1, 8);
 	}else{
-		GLdouble tex2[] =
+		float tex2[] =
 		{	
 			0. + (2./1024.), 0.,
 			0. + (2./1024.), 1.,
@@ -368,12 +371,11 @@ void eogl_draw(jvct_t *pjlc) {
 int32_t _opn_eogl_getu(jvct_t *pjlc, char *var) {
 	return glGetUniformLocation(pjlc->gl.program, var);
 	int32_t a;
-	if((a = glGetUniformLocation(pjlc->gl.program, var)) == -1)
-		jlvm_dies(pjlc,
-			jl_me_strt_merg(
-				Strt("opengl: bad name; is:"),
-				Strt(var), STRT_TEMP)
-		);
+	if((a = glGetUniformLocation(pjlc->gl.program, var)) == -1) {
+		_jl_fl_errf(pjlc, ":opengl: bad name; is:\n:");
+		_jl_fl_errf(pjlc, var);
+		jl_sg_die(pjlc, "\n");
+	}
 	jal5_eogl_cerr(pjlc, 0,"glGetUniformLocation");
 	return a;
 }
@@ -382,9 +384,8 @@ void jal5_eogl_geta(jvct_t *pjlc, s32t *attrib, const char *title) {
 	if((*attrib
 		= glGetAttribLocation(pjlc->gl.program, title)) == -1)
 	{
-		jlvm_dies(pjlc,
-			Strt("attribute name is either reserved or non-existant"
-			));
+		 jl_sg_die(pjlc,
+		 	"attribute name is either reserved or non-existant");
 	}
 }
 
@@ -404,17 +405,20 @@ static inline void _jl_gl_make_res(jvct_t *pjlc) {
 	printf("creating buffers....\n");
 	_jal5_eogl_buff_make(pjlc, &pjlc->gl.temp_buff_vrtx); 
 	_jal5_eogl_buff_make(pjlc, &pjlc->gl.temp_buff_txtr);
+	if(pjlc->gl.temp_buff_vrtx == 0 || pjlc->gl.temp_buff_txtr == 0) {
+		jl_sg_die(pjlc,	"buffer is made wrongly.");
+	}
 	printf("created buffers.\n");
 
 	printf("making program....\n");
 	pjlc->gl.program = createProgram(pjlc, source_vert_tex, source_frag_tex);
 	if (pjlc->gl.program == 0)
-		jlvm_dies(pjlc, Strt("Failed to load program"));
+		jl_sg_die(pjlc, "Failed to load program");
 	printf("made program.\n");
 
 	printf("setting up shaders....\n");
 	if(pjlc->gl.uniforms.textures == NULL)
-		jlvm_dies(pjlc, Strt("Couldn't create uniforms"));
+		jl_sg_die(pjlc, "Couldn't create uniforms");
 	pjlc->gl.uniforms.textures[0][0] = _opn_eogl_getu(pjlc, "texture");
 	printf("setting up shaders more....\n");
 	jal5_eogl_geta(pjlc, &pjlc->gl.attributes.position, "position");
@@ -424,10 +428,8 @@ static inline void _jl_gl_make_res(jvct_t *pjlc) {
 
 void _jl_gl_init(jvct_t *pjlc) {
 #ifndef JLVM_USEL_GLES
-	#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
 	printf(" [JLVM/GLEW] init\n");
-	#endif
-	if(glewInit()!=GLEW_OK) jlvm_dies(pjlc, Strt("glew fail!(no sticky)"));
+	if(glewInit()!=GLEW_OK) jl_sg_die(pjlc, "glew fail!(no sticky)");
 #endif
 	_jl_gl_make_res(pjlc);
 	_opn_eogl_usep(pjlc, pjlc->gl.program);

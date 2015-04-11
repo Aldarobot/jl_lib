@@ -1,8 +1,7 @@
 TODO:
-	1. Make message screens show up @ startup and available for user.
-	2. Improve Android Port
-	3. Re-Add Menubar.
-	4. Fix wierd printing to terminal.
-	5. Fix Documentation problems.
-	6. Add wi-fi communications
-	7. Make a VM option for running over wi-fi
+	1. Improve Android Port
+	2. Re-Add Menubar.
+	3. Fix wierd printing to terminal.
+	4. Fix Documentation problems.
+	5. Add wi-fi communications
+	6. Make a VM option for running over wi-fi

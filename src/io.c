@@ -14,6 +14,7 @@ static void _jl_io_indt(jl_t* pusr) {
 
 void _jl_io_print_lowc(jl_t* pusr, const char * print) {
 	jvct_t *pjlc = pusr->pjlc;
+#if PLATFORM==0
 	int i;
 	if(pjlc->io.ofs2 > 0) {
 		_jl_io_indt(pusr);
@@ -23,7 +24,7 @@ void _jl_io_print_lowc(jl_t* pusr, const char * print) {
 			i < pjlc->io.offs;
 			i++)
 		{
-			printf( pjlc->io.head[i+1]);
+			printf("%s", pjlc->io.head[i+1]);
 			printf("/");
 		}
 		printf("\b]\n");
@@ -43,7 +44,7 @@ void _jl_io_print_lowc(jl_t* pusr, const char * print) {
 		pjlc->io.ofs2 = 0;
 	}
 	_jl_io_indt(pusr);
-#if PLATFORM==0
+
 	printf("[%s] %s\n",
 		pjlc->io.head[
 			pjlc->io.offs],

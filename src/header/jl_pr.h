@@ -1,8 +1,8 @@
 //Jal5 Standard Libraries
 	#include "jl.h"
 	#if PLATFORM == 0
-		#define JLVM_USEL_COGL
-		//#define JLVM_USEL_GLES
+		//#define JLVM_USEL_COGL
+		#define JLVM_USEL_GLES
 	#elif PLATFORM == 1
 		#define JLVM_USEL_GLES
 	#else
@@ -17,17 +17,21 @@
 			#include "../lib/glew/glew.h"
 		#endif
 		#ifdef JLVM_USEL_GLES
-			#include "../lib/SDL/header/SDL_opengles2.h"
+			#include <SDL2/SDL_opengles2.h>
 		#endif
 	#elif PLATFORM==1 //ANDROID
-		#include "../lib/SDL/header/SDL_test_common.h"
-		#include "../lib/SDL/header/SDL_opengles2.h"
-		#include "../lib/SDL/header/SDL_main.h"
+		#include "../lib/sdl/header/SDL_test_common.h"
+		#include "../lib/sdl/header/SDL_opengles2.h"
+		#include "../lib/sdl/header/SDL_main.h"
 	#endif
 	#include "../lib/SDL_mixer.h"
 //LIBZIP
 	#define ZIP_DISABLE_DEPRECATED //Don't allow the old functions.
-	#include "../../../../obj/lb/zip.h"
+	#if PLATFORM==0 //PC/MAC
+		#include "../../../../obj/lb/zip.h"
+	#elif PLATFORM==1 //ANDROID
+		#include "../lib/libzip-0.11.2/lib/zip.h"
+	#endif
 //OPENGL
 	#ifdef JLVM_USEL_COGL
 		#ifdef APPLE
@@ -179,4 +183,4 @@ float jal5_inpt_ymse(void);
 void _jl_gr_flip_scrn(jvct_t *pjct);
 
 //
-void jlvm_dies(jvct_t* pjct, strt msg);
+void jl_sg_die(jvct_t* pjlc, char * msg);

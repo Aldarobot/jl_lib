@@ -4,8 +4,8 @@ include $(CLEAR_VARS)
 
 LOCAL_MODULE := main
 
-LIB_ZIP := lib/libzip/jni/
-LIB_SDL := lib/SDL/src/
+LIB_ZIP := lib/libzip-0.11.2/lib/
+LIB_SDL := lib/sdl/src/
 LIB_MIX := lib/SDL_mixer/
 
 #load SDL
@@ -70,8 +70,8 @@ LOCAL_SRC_FILES += \
 	$(LIB_SDL)thread/pthread/SDL_syssem.c \
 	$(LIB_SDL)thread/pthread/SDL_systhread.c \
 	$(LIB_SDL)thread/pthread/SDL_systls.c \
-	$(LIB_SDL)timer/*.c \
-	$(LIB_SDL)timer/unix/*.c \
+	$(LIB_SDL)timer/SDL_timer.c \
+	$(LIB_SDL)timer/unix/SDL_systimer.c \
 	$(LIB_SDL)video/SDL_blit.c \
 	$(LIB_SDL)video/SDL_blit_0.c \
 	$(LIB_SDL)video/SDL_blit_1.c \
@@ -102,59 +102,92 @@ LOCAL_SRC_FILES += \
 
 #load libzip
 LOCAL_SRC_FILES += \
+	$(LIB_ZIP)mkstemp.c \
 	$(LIB_ZIP)zip_add.c \
-	$(LIB_ZIP)zip_add_dir.c \
-	$(LIB_ZIP)zip_close.c \
-	$(LIB_ZIP)zip_delete.c \
-	$(LIB_ZIP)zip_dirent.c \
-	$(LIB_ZIP)zip_entry_free.c \
-	$(LIB_ZIP)zip_entry_new.c \
-	$(LIB_ZIP)zip_err_str.c \
-	$(LIB_ZIP)zip_error.c \
-	$(LIB_ZIP)zip_error_clear.c \
-	$(LIB_ZIP)zip_error_get.c \
-	$(LIB_ZIP)zip_error_get_sys_type.c \
-	$(LIB_ZIP)zip_error_strerror.c \
-	$(LIB_ZIP)zip_error_to_str.c \
-	$(LIB_ZIP)zip_fclose.c \
-	$(LIB_ZIP)zip_file_error_clear.c \
-	$(LIB_ZIP)zip_file_error_get.c \
-	$(LIB_ZIP)zip_file_get_offset.c \
-	$(LIB_ZIP)zip_file_strerror.c \
-	$(LIB_ZIP)zip_filerange_crc.c \
-	$(LIB_ZIP)zip_fopen.c \
-	$(LIB_ZIP)zip_fopen_index.c \
-	$(LIB_ZIP)zip_fread.c \
-	$(LIB_ZIP)zip_free.c \
-	$(LIB_ZIP)zip_get_archive_comment.c \
-	$(LIB_ZIP)zip_get_archive_flag.c \
-	$(LIB_ZIP)zip_get_file_comment.c \
-	$(LIB_ZIP)zip_get_num_files.c \
-	$(LIB_ZIP)zip_get_name.c \
-	$(LIB_ZIP)zip_memdup.c \
-	$(LIB_ZIP)zip_name_locate.c \
 	$(LIB_ZIP)zip_new.c \
 	$(LIB_ZIP)zip_open.c \
-	$(LIB_ZIP)zip_rename.c \
-	$(LIB_ZIP)zip_replace.c \
-	$(LIB_ZIP)zip_set_archive_comment.c \
-	$(LIB_ZIP)zip_set_archive_flag.c \
-	$(LIB_ZIP)zip_set_file_comment.c \
-	$(LIB_ZIP)zip_source_buffer.c \
-	$(LIB_ZIP)zip_source_file.c \
-	$(LIB_ZIP)zip_source_filep.c \
-	$(LIB_ZIP)zip_source_free.c \
-	$(LIB_ZIP)zip_source_function.c \
-	$(LIB_ZIP)zip_source_zip.c \
-	$(LIB_ZIP)zip_set_name.c \
 	$(LIB_ZIP)zip_stat.c \
-	$(LIB_ZIP)zip_stat_index.c \
-	$(LIB_ZIP)zip_stat_init.c \
+	$(LIB_ZIP)zip_close.c \
+	$(LIB_ZIP)zip_entry.c \
+	$(LIB_ZIP)zip_error.c \
+	$(LIB_ZIP)zip_fopen.c \
+	$(LIB_ZIP)zip_fread.c \
+	$(LIB_ZIP)zip_utf-8.c \
+	$(LIB_ZIP)zip_delete.c \
+	$(LIB_ZIP)zip_dirent.c \
+	$(LIB_ZIP)zip_fdopen.c \
+	$(LIB_ZIP)zip_fclose.c \
+	$(LIB_ZIP)zip_memdup.c \
+	$(LIB_ZIP)zip_rename.c \
+	$(LIB_ZIP)zip_string.c \
+	$(LIB_ZIP)zip_add_dir.c \
+	$(LIB_ZIP)zip_dir_add.c \
+	$(LIB_ZIP)zip_discard.c \
+	$(LIB_ZIP)zip_err_str.c \
+	$(LIB_ZIP)zip_replace.c \
+	$(LIB_ZIP)zip_file_add.c \
+	$(LIB_ZIP)zip_get_name.c \
+	$(LIB_ZIP)zip_set_name.c \
 	$(LIB_ZIP)zip_strerror.c \
 	$(LIB_ZIP)zip_unchange.c \
+	$(LIB_ZIP)zip_add_entry.c \
+	$(LIB_ZIP)zip_error_get.c \
+	$(LIB_ZIP)zip_stat_init.c \
+	$(LIB_ZIP)zip_source_crc.c \
+	$(LIB_ZIP)zip_source_pop.c \
+	$(LIB_ZIP)zip_source_zip.c \
+	$(LIB_ZIP)zip_stat_index.c \
+	$(LIB_ZIP)zip_error_clear.c \
+	$(LIB_ZIP)zip_extra_field.c \
+	$(LIB_ZIP)zip_file_rename.c \
+	$(LIB_ZIP)zip_fopen_index.c \
+	$(LIB_ZIP)zip_name_locate.c \
+	$(LIB_ZIP)zip_source_file.c \
+	$(LIB_ZIP)zip_source_free.c \
+	$(LIB_ZIP)zip_source_open.c \
+	$(LIB_ZIP)zip_source_read.c \
+	$(LIB_ZIP)zip_source_stat.c \
+	$(LIB_ZIP)zip_error_to_str.c \
+	$(LIB_ZIP)zip_file_replace.c \
+	$(LIB_ZIP)zip_source_close.c \
+	$(LIB_ZIP)zip_source_error.c \
+	$(LIB_ZIP)zip_source_filep.c \
 	$(LIB_ZIP)zip_unchange_all.c \
+	$(LIB_ZIP)zip_filerange_crc.c \
+	$(LIB_ZIP)zip_file_strerror.c \
+	$(LIB_ZIP)zip_get_num_files.c \
+	$(LIB_ZIP)zip_source_buffer.c \
+	$(LIB_ZIP)zip_source_pkware.c \
+	$(LIB_ZIP)zip_source_window.c \
+	$(LIB_ZIP)zip_unchange_data.c \
+	$(LIB_ZIP)zip_error_strerror.c \
+	$(LIB_ZIP)zip_file_error_get.c \
+	$(LIB_ZIP)zip_source_deflate.c \
+	$(LIB_ZIP)zip_source_layered.c \
+	$(LIB_ZIP)zip_source_zip_new.c \
+	$(LIB_ZIP)zip_extra_field_api.c \
+	$(LIB_ZIP)zip_file_get_offset.c \
+	$(LIB_ZIP)zip_fopen_encrypted.c \
+	$(LIB_ZIP)zip_get_num_entries.c \
+	$(LIB_ZIP)zip_source_function.c \
+	$(LIB_ZIP)zip_file_error_clear.c \
+	$(LIB_ZIP)zip_file_get_comment.c \
+	$(LIB_ZIP)zip_file_set_comment.c \
+	$(LIB_ZIP)zip_get_archive_flag.c \
+	$(LIB_ZIP)zip_get_file_comment.c \
+	$(LIB_ZIP)zip_set_archive_flag.c \
+	$(LIB_ZIP)zip_set_file_comment.c \
 	$(LIB_ZIP)zip_unchange_archive.c \
-	$(LIB_ZIP)zip_unchange_data.c
+	$(LIB_ZIP)zip_error_get_sys_type.c \
+	$(LIB_ZIP)zip_get_archive_comment.c \
+	$(LIB_ZIP)zip_set_archive_comment.c \
+	$(LIB_ZIP)zip_set_default_password.c \
+	$(LIB_ZIP)zip_set_file_compression.c \
+	$(LIB_ZIP)zip_fopen_index_encrypted.c \
+	$(LIB_ZIP)zip_file_get_external_attributes.c \
+	$(LIB_ZIP)zip_file_set_external_attributes.c \
+	$(LIB_ZIP)zip_get_encryption_implementation.c \
+	$(LIB_ZIP)zip_get_compression_implementation.c
 
 #load SDL_mixer
 LOCAL_SRC_FILES += \
@@ -205,12 +238,13 @@ LOCAL_SRC_FILES +=\
 
 # Load JLVM
 LOCAL_SRC_FILES +=\
-	amem.c clmp.c siop.c file.c comm.c inpt.c\
-	sgrp.c lsdl.c eogl.c grph.c vide.c audi.c
+	me.c cl.c io.c fl.c cm.c ct.c\
+	sg.c dl.c gl.c gr.c vi.c au.c
 
 # Load The Programmers C files
 LOCAL_SRC_FILES +=\
-	gen/*.c
+	gen/jlvm_hack_main.c\
+	gen/usrc/main.c
 
 LOCAL_CFLAGS += -DGL_GLEXT_PROTOTYPES
 

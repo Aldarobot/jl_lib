@@ -16,7 +16,8 @@
 	//LIB INITIALIZATION fn(Context)
 	void _jal5_comm_init(jvct_t* pjlc);
 	void _jl_au_init(jvct_t* pjlc);
-	void _jl_fl_init(jvct_t* pjlc);
+	void _jl_fl_inita(jvct_t* pjlc);
+	void _jl_fl_initb(jvct_t* pjlc);
 	void _jl_gr_init(jvct_t* pjlc);
 	void _jl_ct_init(jvct_t* pjlc);
 	void _jl_gl_init(jvct_t* pjlc);
@@ -126,7 +127,7 @@ void jl_sg_setlm(jl_t* pusr, uint8_t mode, jl_sg_wm_t loop) {
 
 void _jl_sg_load_jlpx(jvct_t* pjlc,uint8_t *data,void **pixels,int *w,int *h) {
 	if(data == NULL) {
-		jlvm_dies(pjlc, Strt("NULL DATA!"));
+		jl_sg_die(pjlc, ":NULL DATA!\n");
 	}else if(data[pjlc->sg.init_image_location] == 0) {
 		return;
 	}
@@ -149,16 +150,11 @@ void _jl_sg_load_jlpx(jvct_t* pjlc,uint8_t *data,void **pixels,int *w,int *h) {
 	printf("header:%s\n", testing);
 	#endif
 	if(strcmp(testing, JL_IMG_HEADER) != 0) {
-		jlvm_dies(pjlc, jl_me_strt_merg(
-			jl_me_strt_merg(
-				Strt("error: bad file type:\n"),
-				Strt(testing), STRT_TEMP
-			),
-			jl_me_strt_merg(
-				Strt("\n!=\n"),
-				Strt(JL_IMG_HEADER), STRT_TEMP),
-			STRT_TEMP)
-		);
+		_jl_fl_errf(pjlc, ":error: bad file type:\n:");
+		_jl_fl_errf(pjlc, testing);
+		_jl_fl_errf(pjlc, "\n:!=\n:");
+		_jl_fl_errf(pjlc, JL_IMG_HEADER);
+		jl_sg_die(pjlc, "\n");
 	}
 	uint8_t tester = data[pjlc->sg.init_image_location+strlen(JL_IMG_HEADER)];
 	int FSIZE; //The size of the file.
@@ -179,7 +175,7 @@ void _jl_sg_load_jlpx(jvct_t* pjlc,uint8_t *data,void **pixels,int *w,int *h) {
 		#endif
 	}else{
 		printf("bad file type(must be 1,2 or 3) is: %d\n", tester);
-		jlvm_dies(pjlc, Strt("bad file type(must be 1,2 or 3)"));
+		jl_sg_die(pjlc, ":bad file type(must be 1,2 or 3)\n");
 	}
 	uint32_t ki;
 	ki = strlen(JL_IMG_HEADER)+1;
@@ -271,16 +267,16 @@ static inline void _jl_sg_init_images(jvct_t * pjlc, uint8_t *data, uint16_t p){
 static uint32_t jlvm_quit(jvct_t* pjlc, int rc) {
 	jl_gr_draw_msge(pjlc->sg.usrd, "QUITING JLLIB....");
 	#if JLVM_DEBUG >= JLVM_DEBUG_MINIMAL
-	_jl_fl_errf(pjlc, "Quitting...."); //Exited properly
+	_jl_fl_errf(pjlc, ":Quitting....\n"); //Exited properly
 	#endif
 	_jl_dl_kill(pjlc);
 	_jl_me_kill(pjlc);
 	_jl_fl_kill(pjlc);
 	#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
-	_jl_fl_errf(pjlc, "No Error! YAY!"); //Exited properly
+	_jl_fl_errf(pjlc, ":No Error! YAY!\n"); //Exited properly
 	#endif
 	exit(rc);
-	_jl_fl_errf(pjlc, "What The Hell?  This is an impossible error!"); //??
+	_jl_fl_errf(pjlc, ":What The Hell?  This is an impossible error!\n");
 	return 105;
 }
 
@@ -293,11 +289,12 @@ static void jlvm_erqt(jvct_t* pjlc, char *msg) {
 }
 
 //Show Error On Screen
-void jlvm_dies(jvct_t* pjlc, strt msg) {
+void jl_sg_die(jvct_t* pjlc, char * msg) {
 	//TODO: Make Screen With Window Saying Error Message Followed By Prompt.
 	//	Also, don't automatically quit, like it does now!  ERQT can be
 	//	inline at that point.
-	jlvm_erqt(pjlc, (void*) msg->data);
+	_jl_fl_errf(pjlc, ":Quitting On Error...\n");
+	jlvm_erqt(pjlc, msg);
 }
 
 //If, you can't use jlvm_dies(), because the screen hasn't been created, use
@@ -370,22 +367,25 @@ void jl_sg_add_image(jl_t* pusr, char *pzipfile, uint16_t pigid) {
 	jl_io_print_lowc(pusr, "Loaded Images...\n");
 }
 
-void _jl_sg_init(jvct_t * pjlc) {
+static inline void _jl_sg_initb(jvct_t * pjlc) {
+	pjlc->sg.usrd->errf = JL_ERR_NERR; //no error
+	pjlc->sg.usrd->psec = 0.f;
+	pjlc->sg.usrd->mode = 0;
+	pjlc->sg.usrd->mdec = 0;
+	pjlc->sg.mdes = NULL;
+	pjlc->sg.usrd->loop = JL_SG_WM_TERM; //Set Default Window To Terminal
+	pjlc->sg.prev_tick = 0;
+	SDL_GetMouseState(&pjlc->sg.xmse, &pjlc->sg.ymse);
+}
+
+static inline void _jl_sg_inita(jvct_t * pjlc) {
 	jl_io_offset(pjlc->sg.usrd, "SGRP");
 	jl_io_offset(pjlc->sg.usrd, "INIT");
 	//Set Up Variables
 	pjlc->gl.textures = NULL;
 	pjlc->gl.uniforms.textures = NULL;
-	pjlc->sg.usrd->errf = JL_ERR_NERR; //no error
-	pjlc->sg.usrd->psec = 0.f;
-	pjlc->sg.usrd->mode = 0;
-	pjlc->sg.usrd->mdec = 0;
-	pjlc->sg.usrd->loop = JL_SG_WM_TERM; //Set Default Window To Terminal
-	pjlc->sg.image_id= 0; //Reset Image Id
+	pjlc->sg.image_id = 0; //Reset Image Id
 	pjlc->sg.igid = 0; //Reset Image Group Id
-	pjlc->sg.prev_tick = 0;
-	pjlc->sg.mdes = NULL;
-	SDL_GetMouseState(&pjlc->sg.xmse, &pjlc->sg.ymse);
 	//Load Graphics
 	pjlc->gl.allocatedg = 0;
 	pjlc->gl.allocatedi = 0;
@@ -413,61 +413,62 @@ void _jl_sg_loop(jl_t* pusr) {
 
 //NON_USER FUNCTION
 
-static inline void _jl_sg_init_done(jvct_t *jcpt) {
-	jl_gr_draw_msge(jcpt->sg.usrd, "LOADING JLLIB....");
+static inline void _jl_sg_init_done(jvct_t *pjlc) {
+	jl_gr_draw_msge(pjlc->sg.usrd, "LOADING JLLIB....");
 	#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
-	jl_io_print_lowc(jcpt->sg.usrd, "started up display.\n");
+	jl_io_print_lowc(pjlc->sg.usrd, "started up display.\n");
 	#endif
 }
 
 //The Libraries Needed At Very Beginning: The Base Of It All
 static inline jvct_t* _jlvm_init_blib(void) {
 	//MEMORY
-	jvct_t* jcpt = _jl_me_init();
+	jvct_t* pjlc = _jl_me_init();
 	//OTHER
-	_jl_io_init(jcpt);
-	return jcpt;
+	_jl_io_init(pjlc);
+	return pjlc;
 }
 
-static inline void _jlvm_init_libs(jvct_t *jcpt) {
-	_jl_dl_init(jcpt); //create the window.
-	_jl_fl_init(jcpt); //prepare for loading media packages.
-	_jl_sg_init(jcpt); //Load default graphics from package.
-	_jl_gl_init(jcpt); //Drawing Set-up
-	_jl_sg_init_done(jcpt); //Draw "loading jl_lib" on the screen.
-	_jl_au_init(jcpt); //Load audiostuffs from packages
-	_jl_ct_init(jcpt); //Prepare to read input.
-	_jl_gr_init(jcpt); //Set-up sprites & menubar
-
+static inline void _jlvm_init_libs(jvct_t *pjlc) {
+	_jl_dl_init(pjlc); //create the window.
+	_jl_fl_inita(pjlc); //prepare for loading media packages.
+	_jl_sg_inita(pjlc); //Load default graphics from package.
+	_jl_gl_init(pjlc); //Drawing Set-up
+	_jl_sg_init_done(pjlc); //Draw "loading jl_lib" on the screen.
+	_jl_sg_initb(pjlc);
+	_jl_fl_initb(pjlc);
+	_jl_au_init(pjlc); //Load audiostuffs from packages
+	_jl_ct_init(pjlc); //Prepare to read input.
+	_jl_gr_init(pjlc); //Set-up sprites & menubar
 }
 
-static inline void jlvm_ini(jvct_t *jcpt) {
+static inline void jlvm_ini(jvct_t *pjlc) {
 	#if JLVM_DEBUG >= JLVM_DEBUG_MINIMAL
-	jl_io_print_lowc(jcpt->sg.usrd, "Initializing...\n");
+	jl_io_print_lowc(pjlc->sg.usrd, "Initializing...\n");
 	#endif
-	_jlvm_init_libs(jcpt);
-	hack_user_init(jcpt->sg.usrd);
-	jl_io_offset(jcpt->sg.usrd, "JLVM");
+	_jlvm_init_libs(pjlc);
+	hack_user_init(pjlc->sg.usrd);
+	jl_io_offset(pjlc->sg.usrd, "JLVM");
 	#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
-	jl_io_print_lowc(jcpt->sg.usrd, "Init5...\n");
+	jl_io_print_lowc(pjlc->sg.usrd, "Init5...\n");
 	#endif
 //	jlvm_ini_memory_allocate();
 	#if JLVM_DEBUG >= JLVM_DEBUG_MINIMAL
-	jl_io_print_lowc(jcpt->sg.usrd, "Initialized!\n");
+	jl_io_print_lowc(pjlc->sg.usrd, "Initialized!\n");
 	#endif
 }
 
 int32_t main(int argc, char *argv[]) {
-	jvct_t* jcpt = _jlvm_init_blib(); //Set Up Memory And Logging
+	jvct_t* pjlc = _jlvm_init_blib(); //Set Up Memory And Logging
 	#if JLVM_DEBUG >= JLVM_DEBUG_MINIMAL
-	jl_io_print_lowc(jcpt->sg.usrd, "STARTING JLVM V-3.2.0-e0....\n");
+	jl_io_print_lowc(pjlc->sg.usrd, "STARTING JLVM V-3.2.0-e0....\n");
 	#endif
-	jlvm_ini(jcpt);//initialize
-	_jl_fl_errf(jcpt, "going into loop....");
-	if(jcpt->sg.usrd->mdec) {
-		while(1) _jl_sg_loop(jcpt->sg.usrd); //main loop
+	jlvm_ini(pjlc);//initialize
+	_jl_fl_errf(pjlc, ":going into loop....\n");
+	if(pjlc->sg.usrd->mdec) {
+		while(1) _jl_sg_loop(pjlc->sg.usrd); //main loop
 	}
-	jl_sg_kill(jcpt->sg.usrd);//kill the program
+	jl_sg_kill(pjlc->sg.usrd);//kill the program
 	return 126;
 }
 

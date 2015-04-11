@@ -222,7 +222,7 @@ static void _jl_gr_menubar(jl_t* pusr);
 	 */
 	void jl_gr_term_msge(jl_t* pusr, char *message) {
 		jl_gr_draw_msge(pusr, message);
-		jlvm_dies(pusr->pjlc, Strt(message));
+		jl_sg_die(pusr->pjlc, message);
 	}
 	
 	/**

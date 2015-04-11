@@ -19,7 +19,7 @@ uint32_t jl_me_tbiu(void) {
 
 void *_jl_me_hydd_allc(jvct_t* pjlc, void *a, uint32_t size) {
 	if((a = realloc(a, size)) == NULL) {
-		jlvm_dies(pjlc, Strt("realloc() memory error!"));
+		jl_sg_die(pjlc, "realloc() memory error!");
 	}
 	return a;
 }

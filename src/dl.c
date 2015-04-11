@@ -31,15 +31,11 @@ static inline void jlvmpi_ini_sdl(void) {
 }
 
 //Update the SDL_displayMode structure
-static void _jlvm_curd_mode(jvct_t *pjct) {
+static void _jlvm_curd_mode(jvct_t *pjlc) {
 	if(SDL_GetCurrentDisplayMode(0, &current)) {
-		jlvm_dies(pjct,
-			jl_me_strt_merg(
-				Strt("failed to get current display mode! "),
-				Strt((char *)SDL_GetError()),
-				STRT_TEMP
-			)
-		);
+		_jl_fl_errf(pjlc, ":failed to get current display mode:\n:");
+		_jl_fl_errf(pjlc, (char *)SDL_GetError());
+		jl_sg_die(pjlc, "\n");
 	}
 	#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
 	printf("[JLVM/SRES]%d,%d\n", current.w, current.h);
@@ -47,7 +43,7 @@ static void _jlvm_curd_mode(jvct_t *pjct) {
 }
 
 //This is the code that actually creates the window by accessing SDL
-static inline void _jlvm_crea_wind(jvct_t *pjct) {
+static inline void _jlvm_crea_wind(jvct_t *pjlc) {
 	#if defined(__ANDROID__)
 	current.w = 640;
 	current.h = 480;
@@ -64,13 +60,9 @@ static inline void _jlvm_crea_wind(jvct_t *pjct) {
         SDL_WINDOW_OPENGL | SDL_WINDOW_FULLSCREEN_DESKTOP | SDL_WINDOW_RESIZABLE
     )) == NULL)
 	{
-		jlvm_dies(pjct,
-			jl_me_strt_merg(
-				Strt("Failed to create display window"),
-				Strt((char *)SDL_GetError()),
-				STRT_TEMP
-			)
-		);
+		_jl_fl_errf(pjlc, ":Failed to create display window:\n:");
+		_jl_fl_errf(pjlc, (char *)SDL_GetError());
+		jl_sg_die(pjlc, "\n");
 	}
 	glcontext = SDL_GL_CreateContext(displayWindow);	
 }
@@ -82,9 +74,9 @@ static inline void jlvmpi_upd(uint8_t r, uint8_t g, uint8_t b) {
 //NON-STATIC FUNCTIONS
 
 //Function is available to user: set window's resolution
-void jlvm_sres(jvct_t *pjct, uint16_t w, uint16_t h) {
+void jlvm_sres(jvct_t *pjlc, uint16_t w, uint16_t h) {
 	SDL_SetWindowSize(displayWindow,w,h);
-	_jal5_lsdl_glpt_view(pjct, w,h);
+	_jal5_lsdl_glpt_view(pjlc, w,h);
 }
 
 uint16_t _jal5_lsdl_sres_getw(void) {
@@ -103,7 +95,7 @@ void _jl_dl_loop(void) {
 	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 }
 
-void _jal5_lsdl_glpt_view(jvct_t *pjct, uint16_t x, uint16_t y) {
+void _jal5_lsdl_glpt_view(jvct_t *pjlc, uint16_t x, uint16_t y) {
 	glViewport( 0, 0, x, y );
 	if(x > y) { //WIDESCREEN
 		
@@ -124,7 +116,7 @@ void _jal5_lsdl_glpt_view(jvct_t *pjct, uint16_t x, uint16_t y) {
 		glViewport( 0, 0, current.w, current.h );
 	}*/
 	if(glGetError() != GL_NO_ERROR ) {
-		jlvm_dies(pjct, Strt("Couldn't initialize(Reshape)"));
+		jl_sg_die(pjlc, "Couldn't initialize(Reshape)");
 	}
 	_jl_dl_loop();
 }
