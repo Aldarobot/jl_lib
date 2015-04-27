@@ -236,22 +236,22 @@ float jl_ct_gmousex(jl_t *pusr) {
 
 float jl_ct_gmousey(jl_t *pusr) {
 	jvct_t* pjlc = pusr->pjlc;
-	return pjlc->ct.msy;
+	return pjlc->ct.msy + (jl_dl_p(pjlc->sg.usrd) * pjlc->sg.usrd->smde);
 }
 
 static inline void _jal5_jl_ct_hndl(jvct_t *pjlc) {
+	if(pjlc->ct.event.type==SDL_WINDOWEVENT) {
+		if(pjlc->ct.event.window.event ==
+			SDL_WINDOWEVENT_RESIZED)
+		{
+			_jal5_lsdl_glpt_view(pjlc,
+				pjlc->ct.event.window.data1,
+				pjlc->ct.event.window.data2);
+		}
+	}
 	#if PLATFORM == 1 //PHONE
 		pjlc->ct.menu = 0;
-		if(pjlc->ct.event.type==SDL_WINDOWEVENT) {
-			if(pjlc->ct.event.window.event ==
-				SDL_WINDOWEVENT_RESIZED)
-			{
-				_jal5_lsdl_glpt_view(pjlc,
-					pjlc->ct.event.window.data1,
-					pjlc->ct.event.window.data2);
-				_jl_fl_errf(pjlc, ":windoweventresize....\n");
-			}
-		}else if( pjlc->ct.event.type==SDL_FINGERDOWN ) {
+		if( pjlc->ct.event.type==SDL_FINGERDOWN ) {
 			pjlc->ct.msx = pjlc->ct.event.tfinger.x;
 			pjlc->ct.msy = pjlc->ct.event.tfinger.y;
 			pjlc->ct.heldDown = 1;
@@ -322,26 +322,47 @@ void _jl_ct_loop(jvct_t* pjlc) {
 	#if PLATFORM == 0 //PC
 		//Get Whether mouse is down or not and xy coordinates
 		if(
-			SDL_GetMouseState(
-				&pjlc->ct.msxi,&pjlc->ct.msyi)
+			SDL_GetMouseState(&pjlc->ct.msxi,&pjlc->ct.msyi)
 			&SDL_BUTTON(1))
 		{
-			if(pjlc->ct.heldDown) {
+			if(pjlc->ct.heldDown)
 				pjlc->ct.heldDown = 2;
-			}else{
+			else
 				pjlc->ct.heldDown = 1;
-			}
 		}else{
 			pjlc->ct.heldDown = 0;
 		}
+		#if PLATFORM == 0
+		if(pjlc->ct.msxi < pjlc->dl.window.x ||
+			pjlc->ct.msxi > pjlc->dl.window.x + pjlc->dl.window.w ||
+			pjlc->ct.msyi < pjlc->dl.window.y ||
+			pjlc->ct.msyi > pjlc->dl.window.y + pjlc->dl.window.h)
+		{
+			if(!pjlc->ct.sc) {
+				SDL_ShowCursor(SDL_ENABLE);
+				pjlc->ct.sc = 1;
+			}
+		}else{
+			if(pjlc->ct.sc) {
+				SDL_ShowCursor(SDL_DISABLE);
+				pjlc->ct.sc = 0;
+			}
+		}
+		#endif
+		uint32_t mousex = pjlc->ct.msxi - pjlc->dl.window.x;
+		uint32_t mousey = (pjlc->ct.msyi - pjlc->dl.window.y) *
+			(1 + pjlc->sg.usrd->smde);
 		//translate integer into float by clipping [0-1]
 		pjlc->ct.msx =
-			((float)(pjlc->ct.msxi-2)) / _jal5_lsdl_sres_getw();
+			((float)(mousex-2)) / jl_dl_getw(pjlc->sg.usrd);
 		pjlc->ct.msy =
-			((float)pjlc->ct.msyi) / _jal5_lsdl_sres_geth();
+			((float)mousey) /
+			(jl_dl_geth(pjlc->sg.usrd) * (1 + pjlc->sg.usrd->smde));
 		//If Escape key is pressed, then quit the program
 		if(jl_ct_key_pressed(pjlc->sg.usrd, SDL_SCANCODE_ESCAPE) == 1)
 			jl_sg_kill(pjlc->sg.usrd);
+		if(jl_ct_key_pressed(pjlc->sg.usrd, SDL_SCANCODE_F11) == 1)
+			jl_dl_togglefullscreen(pjlc->sg.usrd);
 	#endif
 }
 

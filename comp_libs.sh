@@ -21,28 +21,7 @@ gcc $JLVM_TEMP/hcodec.c -c -o $JLVM_OBJD/hcodec.o
 ar csr $JLVM_LIBO/lib_clump.o $JLVM_OBJD/*
 
 ################################################################################
-printf "[COMP] compiling SDL_image...\n"
 
-JLVM_TEMP=../../bin/install/SDL2/jlvm_SDL_image
-JLVM_OBJD=$JLVM_OUTD/img
-
-gcc $JLVM_TEMP/IMG.c -c -o $JLVM_OBJD/IMG.o
-gcc $JLVM_TEMP/IMG_bmp.c -c -o $JLVM_OBJD/IMG_bmp.o
-gcc $JLVM_TEMP/IMG_gif.c -c -o $JLVM_OBJD/IMG_gif.o
-gcc $JLVM_TEMP/IMG_jpg.c -c -o $JLVM_OBJD/IMG_jpg.o
-gcc $JLVM_TEMP/IMG_lbm.c -c -o $JLVM_OBJD/IMG_lbm.o
-gcc $JLVM_TEMP/IMG_pcx.c -c -o $JLVM_OBJD/IMG_pcx.o
-gcc $JLVM_TEMP/IMG_png.c -c -o $JLVM_OBJD/IMG_png.o
-gcc $JLVM_TEMP/IMG_pnm.c -c -o $JLVM_OBJD/IMG_pnm.o
-gcc $JLVM_TEMP/IMG_tga.c -c -o $JLVM_OBJD/IMG_tga.o
-gcc $JLVM_TEMP/IMG_tif.c -c -o $JLVM_OBJD/IMG_tif.o
-gcc $JLVM_TEMP/IMG_webp.c -c -o $JLVM_OBJD/IMG_webp.o
-gcc $JLVM_TEMP/IMG_xcf.c -c -o $JLVM_OBJD/IMG_xcf.o
-gcc $JLVM_TEMP/IMG_xpm.c -c -o $JLVM_OBJD/IMG_xpm.o
-gcc $JLVM_TEMP/IMG_xv.c -c -o $JLVM_OBJD/IMG_xv.o
-gcc $JLVM_TEMP/IMG_xxx.c -c -o $JLVM_OBJD/IMG_xxx.o
-gcc $JLVM_TEMP/showimage.c -c -o $JLVM_OBJD/showimage.o
-ar csr $JLVM_LIBO/lib_sdl_image.o $JLVM_OBJD/*
 
 ################################################################################
 printf "[COMP] compiling glew...\n"

@@ -35,17 +35,11 @@ static void _jl_fl_save(jl_t* pusr, void *file, const char *name, uint32_t bytes
 		errsv = errno;
 
 		jl_io_tag(pusr, JL_IO_TAG_MINIMAL - JL_IO_TAG_MAX);
-		jl_io_print_lows(pusr,
-			jl_me_strt_merg(
-				jl_me_strt_merg(
-					Strt("jl_fl_save: Failed to open file: "),
-					Strt(name),STRT_TEMP),
-				jl_me_strt_merg(
-					Strt(" Write failed: "),
-					Strt(strerror(errsv)),STRT_TEMP),
-				STRT_TEMP
-			)
-		);
+		jl_io_print_lowc(pusr, "jl_fl_save: Failed to open file: ");
+		jl_io_print_lowc(pusr, name);
+		jl_io_print_lowc(pusr, " Write failed: ");
+		jl_io_print_lowc(pusr, strerror(errsv));
+		jl_io_print_lowc(pusr, "\n");
 		exit(-1);
 	}
 	int at = lseek(fd, 0, SEEK_END);
@@ -304,41 +298,41 @@ uint8_t *jl_fl_media(jl_t* pusr, char *Fname, char *pzipfile,
 */
 strt jl_fl_get_resloc(jl_t* pusr, strt pprg_name, strt pfilename) {
 	int i;
+	char *filebase;
+	strt filebases = jl_me_strt_make(0, STRT_KEEP);
+	strt errfs = jl_me_strt_make(0, STRT_KEEP);
+	
+	jl_io_print_lowc(pusr, "Getting FileBase....\n");
 	
 	#if PLATFORM == 1 //PHONE
-	char *filebase = (void*)jl_me_strt_merg(
-		Strt(JLVM_FILEBASE),
-		jl_me_strt_merg(pprg_name, Strt("/"), STRT_TEMP),
-		STRT_KEEP
-	)->data;
-	errf = jl_me_strt_merg(Strt(JLVM_FILEBASE), Strt("errf.txt"), STRT_KEEP)
-		->data;
+	jl_me_strt_merg(pusr, filebases, Strt(JLVM_FILEBASE));
+	jl_me_strt_merg(pusr, filebases, pprg_name);
+	jl_me_strt_merg(pusr, filebases, "/");
+	filebase = (void *)filebases->data;
+	//Setting errf
+	jl_me_strt_merg(pusr, errfs, Strt(JLVM_FILEBASE));
+	jl_me_strt_merg(pusr, errfs, Strt("errf.txt"));
+
 	#elif PLATFORM == 0 //COMPUTER
-	char *filebase = SDL_GetPrefPath("JLVM",(char *)pprg_name->data);
+	filebase = SDL_GetPrefPath("JLVM",(char *)pprg_name->data);
 	if(filebase == NULL) {
-		filebase = (void*) jl_me_strt_merg(
-			Strt("JLVM/"),pprg_name,STRT_KEEP)->data;
+		jl_me_strt_merg(pusr, filebases, Strt("JLVM/"));
+		jl_me_strt_merg(pusr, filebases, pprg_name);
+		filebase = (void *)filebases->data;
+	}else{
+		filebases = Strt(filebase);
 	}
-	errf = malloc(strlen(filebase)+3);
-	for(i = 0; i < strlen(filebase)-5; i++) {
-		errf[i] = filebase[i];
-	}
-	errf[strlen(filebase)-5] = 'e';
-	errf[strlen(filebase)-4] = 'r';
-	errf[strlen(filebase)-3] = 'r';
-	errf[strlen(filebase)-2] = 'f';
-	errf[strlen(filebase)-1] = '.';
-	errf[strlen(filebase)+0] = 't';
-	errf[strlen(filebase)+1] = 'x';
-	errf[strlen(filebase)+2] = 't';
-	errf[strlen(filebase)+3] = '\0';
-		#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
-		printf("errf:%s\n",errf);
-		#endif
+	jl_io_print_lowc(pusr, "Setting Errf....\n");
+	jl_me_strt_merg(pusr, errfs, filebases);
+	jl_me_strt_trunc(pusr, errfs, filebases->size - 5);
+	jl_me_strt_merg(pusr, errfs, Strt("errf.txt"));
+	jl_io_print_lowc(pusr, "Set Errf....\n");
 	#else //OTHER
 	#endif
 	
+	errf = (void *)errfs->data;
 	#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
+	printf("errf:%s\n",errf);
 	jl_io_offset(pusr, "FLBS");
 	jl_io_print_lowc(pusr, filebase);
 	#endif
@@ -347,18 +341,25 @@ strt jl_fl_get_resloc(jl_t* pusr, strt pprg_name, strt pfilename) {
 	#if PLATFORM == 1
 	jl_fl_mkdir(pusr, Strt(JLVM_FILEBASE));
 	#else
+	jl_io_print_lowc(pusr, "FB2....\n");
 	int fsize = strlen(filebase)+strlen(JLVM_FILEBASE);
 	char *filebase2 = malloc(fsize);
+	jl_io_print_lowc(pusr, "Clear....\n");
 	for(i = 0; i < fsize; i++) {
 		filebase2[i] = 0;
 	}
+	jl_io_print_lowc(pusr, "Add....\n");
 	strcat(filebase2,filebase);
 	strcat(filebase2,JLVM_FILEBASE);
+	jl_io_print_lowc(pusr, "Make....\n");
 	jl_fl_mkdir(pusr, Strt(filebase2));
 	#endif
 	jl_fl_mkdir(pusr, Strt(filebase));
 
-	strt pvar_pkfl = jl_me_strt_merg(Strt(filebase), pfilename, STRT_KEEP);
+	jl_io_print_lowc(pusr, "Merge....\n");
+	strt pvar_pkfl = jl_me_strt_make(0, STRT_KEEP);
+	jl_me_strt_merg(pusr, pvar_pkfl, Strt(filebase));
+	jl_me_strt_merg(pusr, pvar_pkfl, pfilename);
 	#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
 	jl_io_print_lowc(pusr, "filebase: ");
 	jl_io_print_lowc(pusr, filebase);
@@ -560,7 +561,7 @@ void _jl_fl_inita(jvct_t * pjlc) {
 	#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
 	jl_io_print_lowc(pjlc->sg.usrd, "program name:");
 	#endif
-	lsdl_prog_name(Strt("JLVM"));
+	jl_dl_progname(pjlc->sg.usrd, Strt("JLVM"));
 
 	gvar_pkfl =
 		jl_fl_get_resloc(pjlc->sg.usrd, Strt("JLVM"), Strt("jlvm.zip"));

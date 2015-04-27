@@ -29,16 +29,21 @@ typedef enum{
 }jl_err_t;
 
 typedef struct{
+	float x, y, w, h;
+}jl_rect_t;
+
+typedef struct{
 	uint16_t g; //Image group ID
 	uint16_t i; //Image Id in group
-	float x, y, w, h; //Where & how big to draw sprite
-	float cx, cy, cw, ch; //Collision Box
+	jl_rect_t r; //Where & how big to draw sprite
+	jl_rect_t cb; //Collision Box
 	uint8_t c, a; //How to texture the sprite
 	void(* loop)(void * pusr); //Loop function
 	void* ctx; //The sprite's context [ for variables]
 }jl_sprite_t;
 
 typedef struct{
+	uint8_t smde; //Whether 2 or 1 Screens are showing.
 	uint32_t info; //@startup:# images loaded from jlvm.zip.Set by others.
 	jl_err_t errf; //Set if error
 	float psec; //seconds since last loop

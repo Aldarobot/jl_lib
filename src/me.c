@@ -119,23 +119,36 @@ void _jal5_jl_me_vary_make(u32t vari, u08t size) {
 	
 }
 
-//return a string that contains a at beginning followed by b
-strt jl_me_strt_merg(strt a, strt b, u08t type) {
-/*	if(a == NULL) {
-		jlvm_dies("NULL A STRING");
+/**
+ * Add string "b" at the end of string "a"
+ * @param 'pusr': library context
+ * @param 'a': string being modified
+ * @param 'b': string being appended onto "a"
+ */
+void jl_me_strt_merg(jl_t *pusr, strt a, strt b) {
+	if(a == NULL) {
+		jl_sg_die(pusr->pjlc, "NULL A STRING");
 	}else if(b == NULL) {
-		jlvm_dies("NULL B STRING");
-	}*/
-	strt str = jl_me_strt_make(a->size + b->size, type);
+		jl_sg_die(pusr->pjlc, "NULL B STRING");
+	}
+	a->data = _jl_me_hydd_allc(pusr->pjlc, a->data, a->size + b->size + 1);
 	int i;
-	for(i = 0; i < a->size; i++) {
-		str->data[i] = a->data[i];
-	}
 	for(i = 0; i < b->size; i++) {
-		str->data[i+a->size] = b->data[i];
+		a->data[i+a->size] = b->data[i];
 	}
-	str->data[a->size + b->size] = '\0';
-	return str;
+	a->size = a->size + b->size;
+	a->data[a->size] = '\0';
+}
+
+/**
+ * Truncate the string to a specific length.
+ * @param 'pusr': library context
+ * @param 'a': string being modified
+ * @param 'size': size to truncate to.
+ */
+void jl_me_strt_trunc(jl_t *pusr, strt a, uint32_t size) {
+	a->size = size;
+	a->data = _jl_me_hydd_allc(pusr->pjlc, a->data, a->size + 1);
 }
 
 //Print a number out as a string and return it (Type=STRT_TEMP)

@@ -29,7 +29,7 @@
 	void _jl_gr_loop(jl_t* pusr);
 	void _jl_ct_loop(jvct_t* pjlc);
 	void _jl_sg_loop(jl_t* pusr);
-	void _jl_dl_loop(void);
+	void _jl_dl_loop(jvct_t* pjlc);
 	void _jl_au_loop(jvct_t* pjlc);
 
 	//LIB KILLS
@@ -204,7 +204,7 @@ void _jl_sg_load_jlpx(jvct_t* pjlc,uint8_t *data,void **pixels,int *w,int *h) {
 
 	uint8_t *tex_pixels = NULL;
 	//R(1)+G(1)+B(1)+A(1) = 4
-	tex_pixels =_jl_me_hydd_allc(pjlc, tex_pixels, TEXTURE_WH*4);
+	tex_pixels = _jl_me_hydd_allc(pjlc, tex_pixels, TEXTURE_WH*4);
 	for(i = 0; i < TEXTURE_WH; i++) {
 		tex_pixels[(i*4)+0] = image->key[image->tex_pixels[i]].r;
 		tex_pixels[(i*4)+1] = image->key[image->tex_pixels[i]].g;
@@ -399,11 +399,29 @@ void _jl_sg_loop(jl_t* pusr) {
 	jvct_t *pjlc = pusr->pjlc;
 	_jl_ct_loop(pjlc);//Update events
 	pusr->psec = _jal5_sgrp_istm(pjlc);//Check time
+
 	//Run mode specific loop
-	pjlc->sg.mdes[pusr->mode].tclp[pusr->loop](pusr);
+	if(pusr->smde) {
+		pjlc->gl.ytrans = jl_dl_p(pjlc->sg.usrd);
+		jl_gr_draw_rect(pusr, 0., 0., 1., jl_dl_p(pjlc->sg.usrd),
+			0., 127., 0., 255.);
+		if(pusr->loop == JL_SG_WM_UP)
+			pjlc->sg.mdes[pusr->mode].tclp[JL_SG_WM_DN](pusr);
+		else if(pusr->loop == JL_SG_WM_DN)
+			pjlc->sg.mdes[pusr->mode].tclp[JL_SG_WM_UP](pusr);
+		pjlc->gl.ytrans = 0.f;
+		jl_gr_draw_rect(pusr, 0., 0., 1., jl_dl_p(pjlc->sg.usrd),
+			0., 64., 127., 255.);
+		pjlc->sg.mdes[pusr->mode].tclp[pusr->loop](pusr);
+	}else{
+		pjlc->gl.ytrans = 0.f;
+		jl_gr_draw_rect(pusr, 0., 0., 1., jl_dl_p(pjlc->sg.usrd),
+			0., 255., 0., 255.);
+		pjlc->sg.mdes[pusr->mode].tclp[pusr->loop](pusr);
+	}
 	_jl_gr_loop(pusr); //Draw Menu Bar & Mouse
-	_jl_dl_loop();
-	_jl_au_loop(pjlc);
+	_jl_dl_loop(pjlc); //Update Screen
+	_jl_au_loop(pjlc); //Play Audio
 }
 
 /*

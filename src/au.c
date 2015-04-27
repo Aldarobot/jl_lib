@@ -18,17 +18,10 @@ void jl_au_load(jvct_t *pjlc, int IDinStack, void *data, int dataSize,
 {
 	jl_io_offset(pjlc->sg.usrd, "AUDI");
 	#if JLVM_DEBUG >= JLVM_DEBUG_PROGRESS
-	jl_io_print_lows(pjlc->sg.usrd,
-		jl_me_strt_merg(
-			jl_me_strt_merg(Strt("loading music "),
-				jl_me_strt_fnum(IDinStack),
-				STRT_TEMP),
-			jl_me_strt_merg(Strt("/"),
-				jl_me_strt_fnum(pjlc->au.smax),
-				STRT_TEMP),
-			STRT_TEMP
-		)
-	);
+	jl_io_print_lowc(pjlc->sg.usrd, "loading music ");
+	jl_io_print_lows(pjlc->sg.usrd, jl_me_strt_fnum(IDinStack));
+	jl_io_print_lowc(pjlc->sg.usrd, "/");
+	jl_io_print_lows(pjlc->sg.usrd, jl_me_strt_fnum(pjlc->au.smax));
 	#endif
 	pjlc->au.jmus[IDinStack]._MUS =
 		Mix_LoadMUS_RW(SDL_RWFromMem(data, dataSize), 1);
@@ -39,19 +32,10 @@ void jl_au_load(jvct_t *pjlc, int IDinStack, void *data, int dataSize,
 		jl_sg_die(pjlc, "\n");
 	}else{
 		#if JLVM_DEBUG >= JLVM_DEBUG_PROGRESS
-		jl_io_print_lows(pjlc->sg.usrd,
-			jl_me_strt_merg(
-				jl_me_strt_merg(
-					Strt("loaded music "),
-					jl_me_strt_fnum(IDinStack),
-					STRT_TEMP),
-				jl_me_strt_merg(
-					Strt("/"),
-					jl_me_strt_fnum(pjlc->au.smax),
-					STRT_TEMP),
-				STRT_TEMP
-			)
-		);
+		jl_io_print_lowc(pjlc->sg.usrd, "loaded music ");
+		jl_io_print_lows(pjlc->sg.usrd, jl_me_strt_fnum(IDinStack));
+		jl_io_print_lowc(pjlc->sg.usrd, "/");
+		jl_io_print_lows(pjlc->sg.usrd, jl_me_strt_fnum(pjlc->au.smax));
 		#endif
 	}
 }

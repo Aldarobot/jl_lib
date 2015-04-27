@@ -1,3 +1,9 @@
+typedef enum{
+	JL_GL_SLPR_TEX, //Texture Shader
+	JL_GL_SLPR_CLR, //Color Shader
+	JL_GL_SLPR_MAX,
+}jl_gl_slpr;
+
 //Image ID's
 typedef enum{
 	JL_IMGI_TEXT_IMAGE,

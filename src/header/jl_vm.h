@@ -73,6 +73,8 @@
 		uint8_t heldDown;
 		uint8_t keyDown[255];
 		uint32_t sd; //NYI: stylus delete
+		
+		uint8_t sc;
 	}_ct_t;
 
 //AU:
@@ -94,21 +96,32 @@
 	typedef struct {
 		GLuint temp_buff_vrtx, temp_buff_txtr;
 		GLuint **textures;
-		GLuint vertex_shader, fragment_shader, program;
 		
 		uint16_t allocatedg;
 		uint16_t allocatedi;
 		
+		uint8_t whichprg;
+		GLuint prgs[JL_GL_SLPR_MAX];
+
 		struct {
+			//PRG: TEX
 			GLint **textures;
 		} uniforms;
 
+		//attributes
 		struct {
-			GLint position;
-			GLint texpos;
-		} attributes;
+			struct{//PRG: TEX
+				GLint position;
+				GLint texpos;
+			} tex;
+			struct{//PRG: CLR
+				GLint position;
+				GLint acolor;
+			} clr;
+		} attr;
 
 		float buff_vert[255*3];
+		float ytrans;
 	}_gl_t;
 	
 	typedef struct {
@@ -124,6 +137,22 @@
 		jl_simple_fnt menuoverlay;
 	}_gr_t;
 
+	typedef struct {
+		uint8_t fullscreen;
+
+		char windowTitle[2][16];
+
+		//where everything is blitted to
+		SDL_GLContext *glcontext;
+		SDL_DisplayMode current;
+		SDL_Window *displayWindow;
+
+		uint16_t currenty;
+		float multiplyratio;
+		
+		jl_rect_t window;
+	}_dl_t;
+
 //OTHER:
 typedef struct{
 	void (*duu)(void *param);
@@ -138,7 +167,7 @@ typedef struct{
 	_gl_t gl; //Opengl Data
 	_fl_t fl; //File Manager
 	_gr_t gr; //Graphics
-//	_amem_t me; NYI
+	_dl_t dl; //Base SDL
 
 	uint64_t cprg; //current program ID
 	_sg_sprt_t fncs; //Functions that change

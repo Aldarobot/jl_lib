@@ -39,6 +39,7 @@ cp src/header/jl_ct.h ../../bin/jl_lib/jlib/jl_ct.h
 cp src/header/jl_me.h ../../bin/jl_lib/jlib/jl_me.h
 cp src/header/clump.h ../../bin/jl_lib/jlib/clump.h
 cp ../../obj/lb/lib_zip.o ../../bin/jl_lib/jlib/lib_zip.o
+cp ../../obj/lb/lib_SDL_image.o ../../bin/jl_lib/jlib/lib_SDL_image.o
 printf "[COMP] updating andr...\n"
 cp --recursive -u -t ../../bin/jl_lib/android/andk/ANDROID/jni/src/ src/*
 cp --recursive -u -t ../../bin/jl_lib/android/andk/ANDROID/jni/bin/jl_lib/jlib/ \

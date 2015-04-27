@@ -37,9 +37,8 @@
 	#define Strt(x) jl_me_strt_c8ts((const void*)x)
 	
 	strt jl_me_strt_mkfrom_data(uint32_t size, void *data);
-	
-	//Return a string that has the contents of "a" followed by "b"
-	strt jl_me_strt_merg(strt a, strt b, u08t type);
+	void jl_me_strt_merg(jl_t *pusr, strt a, strt b);
+	void jl_me_strt_trunc(jl_t *pusr, strt a, uint32_t size);
 	
 	//Print a number out as a string and return it (Type=STRT_TEMP)
 	strt jl_me_strt_fnum(s32t a);
@@ -63,6 +62,12 @@
 
 // "cl.c"
 	void jl_cl_list_alphabetize(struct cl_list *list);
+// "dl.c"
+	void jl_dl_setfullscreen(jl_t *pusr, uint8_t is);
+	void jl_dl_togglefullscreen(jl_t *pusr);
+	uint16_t jl_dl_getw(jl_t *pusr);
+	uint16_t jl_dl_geth(jl_t *pusr);
+	float jl_dl_p(jl_t *pusr);
 // "gl.c"
 	void jl_gl_maketexture(jl_t* pusr, uint16_t gid, uint16_t id,
 		void *pixels, int width, int height);
@@ -82,12 +87,10 @@
 		LSDL AKA. SDL or Simple Direct Media Layer:  LSDL is a popular library
 		for making games.
 */
-	/*
-	 * Set the program title.  Used as window name, and as resource
-	 * directory.
-	*/
-	void lsdl_prog_name(strt name);
+	void jl_dl_progname(jl_t* pusr, strt name);
 // "gr.c"
+	void jl_gr_draw_rect(jl_t* pusr, float x, float y, float w, float h,
+		uint8_t r, uint8_t g, uint8_t b, uint8_t a);
 	void jl_gr_draw_image(jl_t* pusr, u16t g, u16t i,
 		float x,float y,float w,float h,
 		u08t c, u08t a);

@@ -1,13 +1,35 @@
 #include "header/jl_pr.h"
 
-char *source_frag_tex = 
 #ifdef GL_ES_VERSION_2_0
-	"#version 100\n"
-	"precision mediump float;\n"
+	#define GLSL_HEAD "#version 100\nprecision mediump float;\n"
 #else
-	"#version 120\n"
+	#define GLSL_HEAD "#version 120\n"
 #endif
+
+char *source_frag_clr = 
+	GLSL_HEAD
+	"varying vec4 vcolor;\n"
 	"\n"
+	"void main()\n"
+	"{\n"
+	"	gl_FragColor = vcolor;\n"
+	"}\n\0";
+	
+char *source_vert_clr = 
+	GLSL_HEAD
+	"attribute vec3 position;\n"
+	"attribute vec4 acolor;\n"
+	"\n"
+	"varying vec4 vcolor;\n"
+	"\n"
+	"void main()\n"
+	"{\n"
+	"	gl_Position = vec4(position, 1.0);\n"
+	"	vcolor = acolor;\n"
+	"}\n\0";
+
+char *source_frag_tex = 
+	GLSL_HEAD
 	"uniform sampler2D texture;\n"
 	"\n"
 	"varying vec2 texcoord;\n"
@@ -27,13 +49,7 @@ char *source_frag_tex =
 	"}\n\0";
 
 char *source_vert_tex = 
-#ifdef GL_ES_VERSION_2_0
-	"#version 100\n"
-	"precision mediump float;\n"
-#else
-	"#version 120\n"
-#endif
-	"\n"
+	GLSL_HEAD
 	"attribute vec3 position;\n"
 	"attribute vec2 texpos;\n"
 	"\n"
@@ -59,7 +75,7 @@ static const char source_frag_tex[] =
 	"  gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);\n"
 	"}\n";*/
 
-void jal5_eogl_cerr(jvct_t *pjlc, int width, char *fname) {
+void _jl_gl_cerr(jvct_t *pjlc, int width, char *fname) {
 	GLenum err= glGetError();
 	if(err==0) return;
 	char *fstrerr;
@@ -83,44 +99,45 @@ void jal5_eogl_cerr(jvct_t *pjlc, int width, char *fname) {
 	jl_sg_die(pjlc, "\n");
 }
 
-void _jal5_eogl_buff_bind(jvct_t *pjlc, uint32_t buffer) {
+void __jl_gl_buff_bind(jvct_t *pjlc, uint32_t buffer) {
 	glBindBuffer(GL_ARRAY_BUFFER, buffer);
-	jal5_eogl_cerr(pjlc, 0,"bind buffer");
+	_jl_gl_cerr(pjlc, 0,"bind buffer");
 }
 
-void jal5_eogl_buff_data(jvct_t *pjlc, uint32_t buffer, void *buffer_data,
+void _jl_gl_buff_data(jvct_t *pjlc, uint32_t buffer, void *buffer_data,
 	u08t buffer_size)
 {
-	_jal5_eogl_buff_bind(pjlc, buffer);
+	if(buffer == 0) jl_sg_die(pjlc,	"buffer got deleted!");
+	__jl_gl_buff_bind(pjlc, buffer);
 	glBufferData(GL_ARRAY_BUFFER, buffer_size * sizeof(float), buffer_data,
 		GL_STATIC_DRAW);
-	jal5_eogl_cerr(pjlc, buffer,"buffer data");
+	_jl_gl_cerr(pjlc, buffer,"buffer data");
 }
 
-void _jal5_eogl_buff_make(jvct_t *pjlc, uint32_t *buffer)
+void __jl_gl_buff_make(jvct_t *pjlc, uint32_t *buffer)
 {
 	glGenBuffers(1, buffer);
-	jal5_eogl_cerr(pjlc, 0,"buffer gen");
+	_jl_gl_cerr(pjlc, 0,"buffer gen");
 }
 
 GLuint loadShader(jvct_t *pjlc, GLenum shaderType, const char* pSource) {
 	GLuint shader = glCreateShader(shaderType);
-	jal5_eogl_cerr(pjlc, 0,"couldn't create shader");
+	_jl_gl_cerr(pjlc, 0,"couldn't create shader");
 	if (shader) {
 		GLint compiled = 0;
 
 		glShaderSource(shader, 1, &pSource, NULL);
-		jal5_eogl_cerr(pjlc, 0,"glShaderSource");
+		_jl_gl_cerr(pjlc, 0,"glShaderSource");
 		glCompileShader(shader);
-		jal5_eogl_cerr(pjlc, 0,"glCompileShader");
+		_jl_gl_cerr(pjlc, 0,"glCompileShader");
 		glGetShaderiv(shader, GL_COMPILE_STATUS, &compiled);
-		jal5_eogl_cerr(pjlc, 0,"glGetShaderiv");
+		_jl_gl_cerr(pjlc, 0,"glGetShaderiv");
 		if (!compiled) {
 			GLint infoLen = 0;
 			char* buf;
 
 			glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &infoLen);
-			jal5_eogl_cerr(pjlc, 1,"glGetShaderiv");
+			_jl_gl_cerr(pjlc, 1,"glGetShaderiv");
 			if (infoLen) {
 				buf = (char*) malloc(infoLen);
 				if (buf) {
@@ -152,26 +169,26 @@ GLuint createProgram(jvct_t *pjlc, const char* pVertexSource,
 	}
 
 	GLuint program = glCreateProgram();
-	jal5_eogl_cerr(pjlc, 0,"glCreateProgram");
+	_jl_gl_cerr(pjlc, 0,"glCreateProgram");
 	if (program) {
 		GLint linkStatus = GL_FALSE;
 
 		glAttachShader(program, vertexShader);
-		jal5_eogl_cerr(pjlc, 0,"glAttachShader (vertex)");
+		_jl_gl_cerr(pjlc, 0,"glAttachShader (vertex)");
 		glAttachShader(program, pixelShader);
-		jal5_eogl_cerr(pjlc, 0,"glAttachShader (fragment)");
+		_jl_gl_cerr(pjlc, 0,"glAttachShader (fragment)");
 		glLinkProgram(program);
-		jal5_eogl_cerr(pjlc, 0,"glLinkProgram");
+		_jl_gl_cerr(pjlc, 0,"glLinkProgram");
 		glGetProgramiv(program, GL_LINK_STATUS, &linkStatus);
-		jal5_eogl_cerr(pjlc, 0,"glGetProgramiv");
+		_jl_gl_cerr(pjlc, 0,"glGetProgramiv");
 		glValidateProgram(program);
-		jal5_eogl_cerr(pjlc, 1,"glValidateProgram");
+		_jl_gl_cerr(pjlc, 1,"glValidateProgram");
 		if (linkStatus != GL_TRUE) {
 			GLint bufLength = 0;
 			char* buf;
 
 			glGetProgramiv(program, GL_INFO_LOG_LENGTH, &bufLength);
-			jal5_eogl_cerr(pjlc, 1,"glGetProgramiv");
+			_jl_gl_cerr(pjlc, 1,"glGetProgramiv");
 			if (bufLength) {
 				buf = (char*) malloc(bufLength);
 				if (buf) {
@@ -189,6 +206,7 @@ GLuint createProgram(jvct_t *pjlc, const char* pVertexSource,
 			}
 		}
 	}
+	if (program == 0) jl_sg_die(pjlc, "Failed to load program");
 	return program;
 }
 
@@ -222,21 +240,21 @@ void jl_gl_maketexture(jl_t* pusr, uint16_t gid, uint16_t id,
 	printf("generating texture...");
 	#endif
 	glGenTextures(1, &pjlc->gl.textures[gid][id]);
-	jal5_eogl_cerr(pjlc, 0,"gen textures");
+	_jl_gl_cerr(pjlc, 0,"gen textures");
 	glBindTexture(GL_TEXTURE_2D, pjlc->gl.textures[gid][id]);
-	jal5_eogl_cerr(pjlc, 0,"bind textures");
+	_jl_gl_cerr(pjlc, 0,"bind textures");
 	#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
 	printf("settings pars...");
 	#endif
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	jal5_eogl_cerr(pjlc, 0,"glTexParameteri");
+	_jl_gl_cerr(pjlc, 0,"glTexParameteri");
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	jal5_eogl_cerr(pjlc, 1,"glTexParameteri");
+	_jl_gl_cerr(pjlc, 1,"glTexParameteri");
 	//GL_CLAMP_TO_BORDER GL_REPEAT GL_CLAMP_TO_EDGE
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	jal5_eogl_cerr(pjlc, 2,"glTexParameteri");
+	_jl_gl_cerr(pjlc, 2,"glTexParameteri");
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	jal5_eogl_cerr(pjlc, 3,"glTexParameteri");
+	_jl_gl_cerr(pjlc, 3,"glTexParameteri");
 	#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
 	printf("wh:%d,%d\n", width, height);
 	#endif
@@ -247,43 +265,43 @@ void jl_gl_maketexture(jl_t* pusr, uint16_t gid, uint16_t id,
 		GL_RGBA, GL_UNSIGNED_BYTE,	/* external format, type */
 		pixels				/* pixels */
 	);
-	jal5_eogl_cerr(pjlc, 0,"texture image 2D");
+	_jl_gl_cerr(pjlc, 0,"texture image 2D");
 //	free(pixels);
 	if(pjlc->gl.textures[gid][id] == 0) {
 		printf("bad texture:\n");
-		jal5_eogl_cerr(pjlc, 0,"BADT");
+		_jl_gl_cerr(pjlc, 0,"BADT");
 		jl_sg_die(pjlc, ":Bad Texture, but no gl error? WHY!?\n");
 	}
 }
 
 //Lower Level Stuff
-void _opn_eogl_colr(float r, float g, float b, float a) {
+void _jl_gl_colr(float r, float g, float b, float a) {
 //	glColor4f(r,g,b,a);
-//	jal5_eogl_cerr(pjlc, 0,"glColor4f");
+//	_jl_gl_cerr(pjlc, 0,"glColor4f");
 }
 
-void _opn_eogl_usep(jvct_t *pjlc, GLuint prg) {
+void _jl_gl_usep(jvct_t *pjlc, GLuint prg) {
 	if(!prg) { jl_sg_die(pjlc, ":program ain't a prg!\n"); } 
 	glUseProgram(prg);
-	jal5_eogl_cerr(pjlc, 0,"glUseProgram");
+	_jl_gl_cerr(pjlc, 0,"glUseProgram");
 }
 
-void _opn_eogl_bind(jvct_t *pjlc, u16t g, u16t i) {
+void _jl_gl_bind(jvct_t *pjlc, u16t g, u16t i) {
 	glActiveTexture(GL_TEXTURE0);
-	jal5_eogl_cerr(pjlc, 0,"glActiveTexture");
+	_jl_gl_cerr(pjlc, 0,"glActiveTexture");
 	glBindTexture(GL_TEXTURE_2D, pjlc->gl.textures[g][i]);
-	jal5_eogl_cerr(pjlc, 0,"glBindTexture");
+	_jl_gl_cerr(pjlc, 0,"glBindTexture");
 	glUniform1i(pjlc->gl.uniforms.textures[g][i], i);
-	jal5_eogl_cerr(pjlc, 0,"glUniform1i");
+	_jl_gl_cerr(pjlc, 0,"glUniform1i");
 }
 
 //This sets vertex attribute "vertexAttrib" to "pointer".
 //Set xyzw to 2 if 2 dimensional coordinates 3 if 3D. etc.
-void jal5_eogl_setv(jvct_t *pjlc, uint32_t vertexAttrib, uint8_t xyzw) {
-//	_jal5_eogl_buff_bind(pjlc, 0);
-	jal5_eogl_cerr(pjlc, 0,"glBindBuffer");
+void _jl_gl_setv(jvct_t *pjlc, uint32_t vertexAttrib, uint8_t xyzw) {
+//	__jl_gl_buff_bind(pjlc, 0);
+	_jl_gl_cerr(pjlc, 0,"glBindBuffer");
 	glEnableVertexAttribArray(vertexAttrib);
-	jal5_eogl_cerr(pjlc, vertexAttrib,"glEnableVertexAttribArray");
+	_jl_gl_cerr(pjlc, vertexAttrib,"glEnableVertexAttribArray");
 	glVertexAttribPointer(
 		vertexAttrib,  	//attribute
 		xyzw,			// x+y+z = 3
@@ -292,48 +310,78 @@ void jal5_eogl_setv(jvct_t *pjlc, uint32_t vertexAttrib, uint8_t xyzw) {
 		0,				// stride
 		0				// array buffer offset
 	);
-	jal5_eogl_cerr(pjlc, 0,"glVertexAttribPointer");
+	_jl_gl_cerr(pjlc, 0,"glVertexAttribPointer");
 }
 
-void _opn_eogl_drra(jvct_t *pjlc, uint8_t count) {
+void _jl_gl_drra(jvct_t *pjlc, uint8_t count) {
 	glDrawArrays(GL_TRIANGLE_FAN, 0, count);
-	jal5_eogl_cerr(pjlc, 0,"glDrawArrays");
+	_jl_gl_cerr(pjlc, 0,"glDrawArrays");
+}
+
+void jl_gl_setp(jvct_t *pjlc, jl_gl_slpr id) {
+	if(pjlc->gl.whichprg != id) {
+		pjlc->gl.whichprg = id;
+		_jl_gl_usep(pjlc, pjlc->gl.prgs[id]);
+	}
 }
 
 //HIGHER LEVEL
 
-void eogl_vrtx(jvct_t *pjlc, u08t vertices, dect *xyzw) {
+void jl_gl_vrtx(jvct_t *pjlc, u08t vertices, dect *xyzw) {
 	glEnable( GL_BLEND );
-	jal5_eogl_cerr(pjlc, 0,"glEnable( GL_BLEND )");
+	_jl_gl_cerr(pjlc, 0,"glEnable( GL_BLEND )");
 	glBlendColor(1.f,1.f,1.f,0.f);
-	jal5_eogl_cerr(pjlc, 0,"glBlendColor");
+	_jl_gl_cerr(pjlc, 0,"glBlendColor");
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	jal5_eogl_cerr(pjlc, 0,"glBlendFunc");
-
-//	_opn_eogl_usep(pjlc, pjlc->gl.program);
-	if(xyzw) {
-		u16t i;
-		for(i = 0; i < vertices*3; i+=3) {
-			pjlc->gl.buff_vert[i] = (xyzw[i]*2.)-1.;
-			pjlc->gl.buff_vert[i+1] = -(xyzw[i+1]*2.)+1.;
-			pjlc->gl.buff_vert[i+2] = xyzw[i+2]*2.;
-		}
-		jal5_eogl_buff_data(pjlc, pjlc->gl.temp_buff_vrtx,
-			pjlc->gl.buff_vert, vertices * 3);
-	}else{
-		float coord_default[] = {
-			-1.,1.,0.,
-			-1.,-1.,0.,
-			1.,-1.,0.,
-			1.,1.,0.
+	_jl_gl_cerr(pjlc, 0,"glBlendFunc");
+	if(!xyzw) {
+		const float DEFAULT_VERTEX[] = {
+			0.,jl_dl_p(pjlc->sg.usrd) + pjlc->gl.ytrans,0.,
+			0.,0.,0.,
+			1.,0.,0.,
+			1.,jl_dl_p(pjlc->sg.usrd) + pjlc->gl.ytrans,0.
 		};
-		jal5_eogl_buff_data(pjlc, pjlc->gl.temp_buff_vrtx,
-			coord_default, 12);
+		xyzw = alloca(12 * sizeof(float));
+		memcpy(xyzw, DEFAULT_VERTEX, 12 * sizeof(float));
+		vertices = 4;
 	}
-	jal5_eogl_setv(pjlc, pjlc->gl.attributes.position, 3);
+	u16t i;
+	for(i = 0; i < vertices*3; i+=3) {
+		pjlc->gl.buff_vert[i] = (xyzw[i]*2.)-1.;
+		pjlc->gl.buff_vert[i+1] =
+			(-((xyzw[i+1]+ pjlc->gl.ytrans)*2.*
+				pjlc->dl.multiplyratio)+1.);
+		pjlc->gl.buff_vert[i+2] = xyzw[i+2]*2.;
+	}
+	_jl_gl_buff_data(pjlc, pjlc->gl.temp_buff_vrtx,
+		pjlc->gl.buff_vert, vertices * 3);
+	//
+	if(pjlc->gl.whichprg == JL_GL_SLPR_TEX)
+		_jl_gl_setv(pjlc, pjlc->gl.attr.tex.position, 3);
+	if(pjlc->gl.whichprg == JL_GL_SLPR_CLR)
+		_jl_gl_setv(pjlc, pjlc->gl.attr.clr.position, 3);
 }
 
-void eogl_txtr(jvct_t *pjlc, u08t map, u08t a, u16t pgid, u16t pi) {
+void jl_gl_clrs(jvct_t *pjlc, float *rgba) {
+	jl_gl_setp(pjlc, JL_GL_SLPR_CLR);
+	_jl_gl_buff_data(pjlc, pjlc->gl.temp_buff_txtr, rgba, 16);
+	_jl_gl_setv(pjlc, pjlc->gl.attr.clr.acolor, 4);
+}
+
+void jl_gl_colr(jvct_t *pjlc, float *rgba) {
+	jl_gl_setp(pjlc, JL_GL_SLPR_CLR);
+	float Rgba[] = {
+		rgba[0], rgba[1], rgba[2], rgba[3],
+		rgba[0], rgba[1], rgba[2], rgba[3],
+		rgba[0], rgba[1], rgba[2], rgba[3],
+		rgba[0], rgba[1], rgba[2], rgba[3]
+	};
+	_jl_gl_buff_data(pjlc, pjlc->gl.temp_buff_txtr, Rgba, 16);
+	_jl_gl_setv(pjlc, pjlc->gl.attr.clr.acolor, 4);
+}
+
+void jl_gl_txtr(jvct_t *pjlc, u08t map, u08t a, u16t pgid, u16t pi) {
+	jl_gl_setp(pjlc, JL_GL_SLPR_TEX);
 	if(map) {
 		int32_t cX = map%16;
 		int32_t cY = map/16;
@@ -346,7 +394,7 @@ void eogl_txtr(jvct_t *pjlc, u08t map, u08t a, u16t pgid, u16t pi) {
 			(1./16.)+CX, CY,
 			(1./16.)+CX, CY - (1./16.)
 		};
-		jal5_eogl_buff_data(pjlc, pjlc->gl.temp_buff_txtr, tex1, 8);
+		_jl_gl_buff_data(pjlc, pjlc->gl.temp_buff_txtr, tex1, 8);
 	}else{
 		float tex2[] =
 		{	
@@ -355,34 +403,34 @@ void eogl_txtr(jvct_t *pjlc, u08t map, u08t a, u16t pgid, u16t pi) {
 			1., 1.,
 			1., 0.
 		};
-		jal5_eogl_buff_data(pjlc, pjlc->gl.temp_buff_txtr, tex2, 8);
+		_jl_gl_buff_data(pjlc, pjlc->gl.temp_buff_txtr, tex2, 8);
 	}
-	jal5_eogl_setv(pjlc, pjlc->gl.attributes.texpos, 2);
+	_jl_gl_setv(pjlc, pjlc->gl.attr.tex.texpos, 2);
 	glBindTexture(GL_TEXTURE_2D, pjlc->gl.textures[pgid][pi]);
 }
 
 //Draw object with "vertices" vertices.  The vertex data is in "x","y" and "z".
 //"map" refers to the charecter map.  0 means don't zoom in to one charecter.
 //Otherwise it will zoom in x16 to a single charecter
-void eogl_draw(jvct_t *pjlc) {
-	_opn_eogl_drra(pjlc, 4);
+void jl_gl_draw(jvct_t *pjlc) {
+	_jl_gl_drra(pjlc, 4);
 }
 
-int32_t _opn_eogl_getu(jvct_t *pjlc, char *var) {
-	return glGetUniformLocation(pjlc->gl.program, var);
+int32_t _jl_gl_getu(jvct_t *pjlc, GLuint prg, char *var) {
+	return glGetUniformLocation(prg, var);
 	int32_t a;
-	if((a = glGetUniformLocation(pjlc->gl.program, var)) == -1) {
+	if((a = glGetUniformLocation(pjlc->gl.prgs[JL_GL_SLPR_TEX], var)) == -1) {
 		_jl_fl_errf(pjlc, ":opengl: bad name; is:\n:");
 		_jl_fl_errf(pjlc, var);
 		jl_sg_die(pjlc, "\n");
 	}
-	jal5_eogl_cerr(pjlc, 0,"glGetUniformLocation");
+	_jl_gl_cerr(pjlc, 0,"glGetUniformLocation");
 	return a;
 }
 
-void jal5_eogl_geta(jvct_t *pjlc, s32t *attrib, const char *title) {
+void _jl_gl_geta(jvct_t *pjlc, GLuint prg, s32t *attrib, const char *title) {
 	if((*attrib
-		= glGetAttribLocation(pjlc->gl.program, title)) == -1)
+		= glGetAttribLocation(prg, title)) == -1)
 	{
 		 jl_sg_die(pjlc,
 		 	"attribute name is either reserved or non-existant");
@@ -395,34 +443,41 @@ static inline void _jl_gl_make_res(jvct_t *pjlc) {
 	//TODO:Later, Add Implementation with this enabled
 	printf("setting properties...\n");
 	glDisable( GL_DEPTH_TEST);
-	jal5_eogl_cerr(pjlc, 0, "glDisable(GL_DEPTH_TEST)");
+	_jl_gl_cerr(pjlc, 0, "glDisable(GL_DEPTH_TEST)");
 	glDisable( GL_DITHER );
-	jal5_eogl_cerr(pjlc, 0, "glDisable(GL_DITHER)");
+	_jl_gl_cerr(pjlc, 0, "glDisable(GL_DITHER)");
 	glEnable( GL_BLEND );
-	jal5_eogl_cerr(pjlc, 0, "glEnable(GL_BLEND)");
+	_jl_gl_cerr(pjlc, 0, "glEnable(GL_BLEND)");
 	printf("set glproperties.\n");
 	//Create the temporary buffers.
 	printf("creating buffers....\n");
-	_jal5_eogl_buff_make(pjlc, &pjlc->gl.temp_buff_vrtx); 
-	_jal5_eogl_buff_make(pjlc, &pjlc->gl.temp_buff_txtr);
+	__jl_gl_buff_make(pjlc, &pjlc->gl.temp_buff_vrtx); 
+	__jl_gl_buff_make(pjlc, &pjlc->gl.temp_buff_txtr);
 	if(pjlc->gl.temp_buff_vrtx == 0 || pjlc->gl.temp_buff_txtr == 0) {
 		jl_sg_die(pjlc,	"buffer is made wrongly.");
 	}
 	printf("created buffers.\n");
 
-	printf("making program....\n");
-	pjlc->gl.program = createProgram(pjlc, source_vert_tex, source_frag_tex);
-	if (pjlc->gl.program == 0)
-		jl_sg_die(pjlc, "Failed to load program");
-	printf("made program.\n");
+	printf("making GLSL programs....\n");
+	pjlc->gl.prgs[JL_GL_SLPR_TEX] = createProgram(pjlc, source_vert_tex, source_frag_tex);
+	pjlc->gl.prgs[JL_GL_SLPR_CLR] = createProgram(pjlc, source_vert_clr, source_frag_clr);
+	printf("made programs.\n");
 
 	printf("setting up shaders....\n");
 	if(pjlc->gl.uniforms.textures == NULL)
 		jl_sg_die(pjlc, "Couldn't create uniforms");
-	pjlc->gl.uniforms.textures[0][0] = _opn_eogl_getu(pjlc, "texture");
-	printf("setting up shaders more....\n");
-	jal5_eogl_geta(pjlc, &pjlc->gl.attributes.position, "position");
-	jal5_eogl_geta(pjlc, &pjlc->gl.attributes.texpos, "texpos");
+	pjlc->gl.uniforms.textures[0][0] =
+		_jl_gl_getu(pjlc, pjlc->gl.prgs[JL_GL_SLPR_TEX], "texture");
+	printf("setting up tex shader attrib's....\n");
+	_jl_gl_geta(pjlc, pjlc->gl.prgs[JL_GL_SLPR_TEX],
+		&pjlc->gl.attr.tex.position, "position");
+	_jl_gl_geta(pjlc, pjlc->gl.prgs[JL_GL_SLPR_TEX],
+		&pjlc->gl.attr.tex.texpos, "texpos");
+	printf("setting up clr shader attrib's....\n");
+	_jl_gl_geta(pjlc, pjlc->gl.prgs[JL_GL_SLPR_CLR],
+		&pjlc->gl.attr.clr.position, "position");
+	_jl_gl_geta(pjlc, pjlc->gl.prgs[JL_GL_SLPR_CLR],
+		&pjlc->gl.attr.clr.acolor, "acolor");
 	printf("set up shaders.\n");
 }
 
@@ -432,5 +487,7 @@ void _jl_gl_init(jvct_t *pjlc) {
 	if(glewInit()!=GLEW_OK) jl_sg_die(pjlc, "glew fail!(no sticky)");
 #endif
 	_jl_gl_make_res(pjlc);
-	_opn_eogl_usep(pjlc, pjlc->gl.program);
+	//Textures on by default
+	pjlc->gl.whichprg = JL_GL_SLPR_TEX;
+	_jl_gl_usep(pjlc, pjlc->gl.prgs[JL_GL_SLPR_TEX]);
 }

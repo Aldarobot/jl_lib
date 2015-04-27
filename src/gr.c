@@ -20,11 +20,28 @@ char *GMessage[2] = {
 
 /*_jal5_jl_gr_t* g_grph;*/
 
-void _jl_dl_loop(void);
+void _jl_dl_loop(jvct_t* pjlc);
 static void _jl_gr_menubar(jl_t* pusr);
 
 /*EXPORTED FUNCTIONS*/
 
+	void jl_gr_draw_rect(jl_t* pusr, float x, float y, float w, float h,
+		uint8_t r, uint8_t g, uint8_t b, uint8_t a)
+	{
+		dect Oone[] = {
+			x,	h+y,	0.f,
+			x,	y,	0.f,
+			w+x,	y,	0.f,
+			w+x,	h+y,	0.f };
+		dect Otwo[] = {
+			((double)r) / 255.,
+			((double)g) / 255.,
+			((double)b) / 255., 
+			((double)a) / 255.};
+		jl_gl_colr(pusr->pjlc, Otwo);
+		jl_gl_vrtx(pusr->pjlc, 4, Oone);
+		jl_gl_draw(pusr->pjlc);
+	}
 	/**
 	 * Draw An Image.
 	 *
@@ -49,10 +66,9 @@ static void _jl_gr_menubar(jl_t* pusr);
 			x,	y,	0.f,
 			w+x,	y,	0.f,
 			w+x,	h+y,	0.f };
-
-		eogl_vrtx(pusr->pjlc, 4, Oone);
-		eogl_txtr(pusr->pjlc, c, a, g, i);
-		eogl_draw(pusr->pjlc);
+		jl_gl_txtr(pusr->pjlc, c, a, g, i);
+		jl_gl_vrtx(pusr->pjlc, 4, Oone);
+		jl_gl_draw(pusr->pjlc);
 	}
 	
 	/**
@@ -63,7 +79,7 @@ static void _jl_gr_menubar(jl_t* pusr);
 	**/
 	void jl_gr_sprite_draw(jl_t* pusr, jl_sprite_t *psprite) {
 		jl_gr_draw_image(pusr, psprite->g, psprite->i,
-			psprite->x, psprite->y, psprite->w, psprite->h,
+			psprite->r.x, psprite->r.y, psprite->r.w, psprite->r.h,
 			psprite->c, psprite->a);
 	}
 	
@@ -96,10 +112,10 @@ static void _jl_gr_menubar(jl_t* pusr);
 		rtn->i = i;
 		rtn->c = c;
 		rtn->a = a;
-		rtn->x = x; rtn->cx = x;
-		rtn->y = y; rtn->cy = y;
-		rtn->w = w; rtn->cw = w;
-		rtn->h = h; rtn->ch = h;
+		rtn->r.x = x; rtn->cb.x = x;
+		rtn->r.y = y; rtn->cb.y = y;
+		rtn->r.w = w; rtn->cb.w = w;
+		rtn->r.h = h; rtn->cb.h = h;
 		rtn->loop = (void*)loop;
 		if(ctxs) rtn->ctx = malloc(ctxs);
 		return rtn;
@@ -118,10 +134,10 @@ static void _jl_gr_menubar(jl_t* pusr);
 		jl_sprite_t *sprite1, jl_sprite_t *sprite2)
 	{
 		if (
-			(sprite1->cy >= (sprite2->cy+sprite2->ch)) ||
-			(sprite1->cx >= (sprite2->cx+sprite2->cw)) ||
-			(sprite2->cy >= (sprite1->cy+sprite1->ch)) ||
-			(sprite2->cx >= (sprite1->cx+sprite1->cw)) )
+			(sprite1->cb.y >= (sprite2->cb.y+sprite2->cb.h)) ||
+			(sprite1->cb.x >= (sprite2->cb.x+sprite2->cb.w)) ||
+			(sprite2->cb.y >= (sprite1->cb.y+sprite1->cb.h)) ||
+			(sprite2->cb.x >= (sprite1->cb.x+sprite1->cb.w)) )
 		{
 			return 0;
 		}else{
@@ -177,10 +193,10 @@ static void _jl_gr_menubar(jl_t* pusr);
 	 * @param 'txt': the text to draw
 	**/
 	void jl_gr_draw_text_area(jl_t* pusr, jl_sprite_t * psprite, char *txt){
-		float fontsize = (psprite->w - .1) / strlen(txt);
+		float fontsize = (psprite->r.w - .1) / strlen(txt);
 		jl_gr_draw_text(pusr, txt,
-			psprite->x + .05,
-			psprite->y + (.5 * (psprite->h - fontsize)),
+			psprite->r.x + .05,
+			psprite->r.y + (.5 * (psprite->r.h - fontsize)),
 			fontsize, 255);
 	}
 
@@ -212,7 +228,7 @@ static void _jl_gr_menubar(jl_t* pusr);
 	 */
 	void jl_gr_draw_msge(jl_t* pusr, char * message) {
 		jl_gr_draw_ctxt(pusr, message, (9./16.)/2);
-		_jl_dl_loop(); //Update Screen
+		_jl_dl_loop(pusr->pjlc); //Update Screen
 	}
 
 	/**
@@ -239,10 +255,10 @@ static void _jl_gr_menubar(jl_t* pusr);
 		float slidex, jl_ct_onevent_fnt prun)
 	{
 		jl_gr_draw_text_sprite(pusr, psprite, txt);
-		psprite->x = defaultx;
+		psprite->r.x = defaultx;
 		if(jl_gr_sprite_collide(pusr, pusr->mouse, psprite)) {
 			jl_ct_run_event(pusr, JL_CT_PRESS, prun, jl_ct_dont);
-			psprite->x = defaultx + slidex;
+			psprite->r.x = defaultx + slidex;
 		}
 	}
 	
@@ -301,7 +317,9 @@ static void _jl_gr_menubar(jl_t* pusr);
 			jgr_draw_centered_text(GMessage[GScreenDisplayed],0);
 			timeTilMessageVanish--;
 		}*/
-		jl_gr_draw_image(pusr, 0, 1, .9, 0., .1, .1, 2, 255);
+		jl_gr_draw_image(pusr, 0, 1, .9,
+			pusr->smde * jl_dl_p(pusr),
+			.1, .1, 2, 255);
 		
 		jvct_t *pjlc = pusr->pjlc;
 		if( (pjlc->ct.msx > .9) && (pjlc->ct.msy < .1) &&
@@ -316,10 +334,10 @@ static void _jl_gr_menubar(jl_t* pusr);
 	static void _jl_gr_mouse_loop(jl_t* pusr) {
 		jvct_t *pjlc = pusr->pjlc;
 	//Update Mouse
-		pusr->mouse->x = jl_ct_gmousex(pusr);
-		pusr->mouse->y = jl_ct_gmousey(pusr);
-		pusr->mouse->cx = pusr->mouse->x;
-		pusr->mouse->cy = pusr->mouse->y;
+		pusr->mouse->r.x = jl_ct_gmousex(pusr);
+		pusr->mouse->r.y = jl_ct_gmousey(pusr);
+		pusr->mouse->cb.x = pusr->mouse->r.x;
+		pusr->mouse->cb.y = pusr->mouse->r.y;
 	//if computer, draw mouse
 	#if PLATFORM == 0
 		jl_gr_sprite_draw(pusr, pjlc->sg.usrd->mouse);
@@ -340,8 +358,8 @@ static void _jl_gr_menubar(jl_t* pusr);
 			pjlc->sg.usrd, 0, 0, 254, 255, //G,I,C,A
 			0.f, 0.f, .075f, .075f, //XYWH
 			_jl_gr_mouse_loop, 0);
-		pjlc->sg.usrd->mouse->cw = 0.f;
-		pjlc->sg.usrd->mouse->ch = 0.f;
+		pjlc->sg.usrd->mouse->cb.w = 0.f;
+		pjlc->sg.usrd->mouse->cb.h = 0.f;
 		//Taskbar
 		#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
 		printf("[JLVM/LIM] loading taskbar...\n");
