@@ -148,7 +148,10 @@
 		SDL_Window *displayWindow;
 
 		uint16_t currenty;
-		float multiplyratio;
+		float multiplyy;
+		float multiplyx;
+		float shifty;
+		float shiftx;
 		
 		jl_rect_t window;
 	}_dl_t;

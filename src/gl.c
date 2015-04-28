@@ -347,10 +347,10 @@ void jl_gl_vrtx(jvct_t *pjlc, u08t vertices, dect *xyzw) {
 	}
 	u16t i;
 	for(i = 0; i < vertices*3; i+=3) {
-		pjlc->gl.buff_vert[i] = (xyzw[i]*2.)-1.;
+		pjlc->gl.buff_vert[i] = (xyzw[i]*pjlc->dl.multiplyx)+pjlc->dl.shiftx;
 		pjlc->gl.buff_vert[i+1] =
-			(-((xyzw[i+1]+ pjlc->gl.ytrans)*2.*
-				pjlc->dl.multiplyratio)+1.);
+			(-((xyzw[i+1]+ pjlc->gl.ytrans)*pjlc->dl.multiplyy)
+			+pjlc->dl.shifty);
 		pjlc->gl.buff_vert[i+2] = xyzw[i+2]*2.;
 	}
 	_jl_gl_buff_data(pjlc, pjlc->gl.temp_buff_vrtx,

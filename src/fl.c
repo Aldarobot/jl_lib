@@ -307,7 +307,7 @@ strt jl_fl_get_resloc(jl_t* pusr, strt pprg_name, strt pfilename) {
 	#if PLATFORM == 1 //PHONE
 	jl_me_strt_merg(pusr, filebases, Strt(JLVM_FILEBASE));
 	jl_me_strt_merg(pusr, filebases, pprg_name);
-	jl_me_strt_merg(pusr, filebases, "/");
+	jl_me_strt_merg(pusr, filebases, Strt("/"));
 	filebase = (void *)filebases->data;
 	//Setting errf
 	jl_me_strt_merg(pusr, errfs, Strt(JLVM_FILEBASE));
@@ -499,7 +499,7 @@ void jl_fl_user_select_loop(jl_t* pusr) {
 
 	iterator = cl_list_iterator_create(pjlc->fl.filelist);
 
-	jl_gr_draw_image(pusr, 0, 1, 0., 0., 1., 1., 1, 127);
+	jl_gr_draw_image(pusr, 0, 1, 0., 0., 1., jl_dl_p(pusr), 1, 127);
 	jl_gr_draw_text(pusr, "Select File", .02, .02, .04,255);
 
 	jl_ct_run_event(pusr,JL_CT_MAINUP, _jl_fl_user_select_up, jl_ct_dont);

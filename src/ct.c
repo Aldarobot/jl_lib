@@ -240,6 +240,9 @@ float jl_ct_gmousey(jl_t *pusr) {
 }
 
 static inline void _jal5_jl_ct_hndl(jvct_t *pjlc) {
+	#if PLATFORM == 1 //PHONE
+		pjlc->ct.menu = 0;
+	#endif
 	if(pjlc->ct.event.type==SDL_WINDOWEVENT) {
 		if(pjlc->ct.event.window.event ==
 			SDL_WINDOWEVENT_RESIZED)
@@ -248,13 +251,15 @@ static inline void _jal5_jl_ct_hndl(jvct_t *pjlc) {
 				pjlc->ct.event.window.data1,
 				pjlc->ct.event.window.data2);
 		}
-	}
 	#if PLATFORM == 1 //PHONE
-		pjlc->ct.menu = 0;
-		if( pjlc->ct.event.type==SDL_FINGERDOWN ) {
+		}else if( pjlc->ct.event.type==SDL_FINGERDOWN ) {
 			pjlc->ct.msx = pjlc->ct.event.tfinger.x;
 			pjlc->ct.msy = pjlc->ct.event.tfinger.y;
 			pjlc->ct.heldDown = 1;
+			if(pjlc->sg.usrd->smde) {
+				pjlc->ct.msy -= .5;
+				if(pjlc->ct.msy < 0.) pjlc->ct.heldDown = 0;
+			}
 		}else if( pjlc->ct.event.type==SDL_FINGERUP ) {
 			pjlc->ct.heldDown = 0;
 		}else if( pjlc->ct.event.type==SDL_KEYDOWN ) {
@@ -270,7 +275,7 @@ static inline void _jal5_jl_ct_hndl(jvct_t *pjlc) {
 			}
 		}
 	#elif PLATFORM == 0 //PC
-		if ( pjlc->ct.event.wheel.y > 0 &&
+		}else if( pjlc->ct.event.wheel.y > 0 &&
 			 pjlc->ct.event.wheel.type == SDL_MOUSEWHEEL)
 		{
 			//Grscrup = JL_PP;
@@ -332,7 +337,6 @@ void _jl_ct_loop(jvct_t* pjlc) {
 		}else{
 			pjlc->ct.heldDown = 0;
 		}
-		#if PLATFORM == 0
 		if(pjlc->ct.msxi < pjlc->dl.window.x ||
 			pjlc->ct.msxi > pjlc->dl.window.x + pjlc->dl.window.w ||
 			pjlc->ct.msyi < pjlc->dl.window.y ||
@@ -348,7 +352,6 @@ void _jl_ct_loop(jvct_t* pjlc) {
 				pjlc->ct.sc = 0;
 			}
 		}
-		#endif
 		uint32_t mousex = pjlc->ct.msxi - pjlc->dl.window.x;
 		uint32_t mousey = (pjlc->ct.msyi - pjlc->dl.window.y) *
 			(1 + pjlc->sg.usrd->smde);

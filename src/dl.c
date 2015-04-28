@@ -121,13 +121,19 @@ void _jl_dl_loop(jvct_t* pjlc) {
 void _jal5_lsdl_glpt_view(jvct_t *pjlc, uint16_t x, uint16_t y) {
 	uint16_t offx = 0;
 	uint16_t offy = 0;
+	glViewport( 0, 0, x, y);
+	pjlc->dl.multiplyy = 2.*((float)x)/((float)y);
+	pjlc->dl.multiplyx = 2.;
+	pjlc->dl.shiftx = -1.;
+	pjlc->dl.shifty = 1.;
 	if(y < x * .5625) {
 		offx = x;
 		x = y * 16./9.; //Widesceen
+		pjlc->dl.multiplyy = 2.*((float)x)/((float)y);
+		pjlc->dl.multiplyx = 2.*((float)x)/((float)offx);
+		pjlc->dl.shiftx += ((float)offx - (float)x)/((float)offx);
 		offx = (offx - x) / 2;
-		glViewport( offx, offy - (x - y), x, x );
 		pjlc->sg.usrd->smde = 0;
-		pjlc->dl.multiplyratio = 1.f;
 		pjlc->dl.window.x = offx;
 		pjlc->dl.window.y = 0.;
 		pjlc->dl.window.w = x;
@@ -136,8 +142,7 @@ void _jal5_lsdl_glpt_view(jvct_t *pjlc, uint16_t x, uint16_t y) {
 		if(y > x * 1.5) {
 			offy = y;
 			y = x * 1.5; //Standard
-			glViewport( 0, (offy - y) / 2, x, y );
-			pjlc->dl.multiplyratio = (x)/((float)y);
+			pjlc->dl.shifty -= ((float)offy-(float)y)/((float)offy);
 			pjlc->dl.window.x = 0.;
 			pjlc->dl.window.y = (offy) / 2.;
 			pjlc->dl.window.w = x;
@@ -145,30 +150,24 @@ void _jal5_lsdl_glpt_view(jvct_t *pjlc, uint16_t x, uint16_t y) {
 		}else{
 			offy = y;
 			offy = (offy - y) / 2;
-			glViewport( 0, 0, x, y );
-			pjlc->dl.multiplyratio = (x)/((float)y);
 			pjlc->dl.window.x = 0.;
 			pjlc->dl.window.y = y / 2.;
 			pjlc->dl.window.w = x;
 			pjlc->dl.window.h = y / 2.;
-//			y -= (x - y) / 2.;
 		}
 		pjlc->sg.usrd->smde = 1;
 	}else if(y > x * .75) {
 		offy = y;
 		y = x * .75; //Standard
+		pjlc->dl.shifty -= ((float)offy-(float)y)/((float)offy);
 		offy = (offy - y) / 2;
-		glViewport( 0, offy, x, y );
 		pjlc->sg.usrd->smde = 0;
-		pjlc->dl.multiplyratio = 4./3.;
 		pjlc->dl.window.x = 0.;
 		pjlc->dl.window.y = offy;
 		pjlc->dl.window.w = x;
 		pjlc->dl.window.h = y;
 	}else{
-		glViewport( 0, 0 - (x - y), x, x );
 		pjlc->sg.usrd->smde = 0;
-		pjlc->dl.multiplyratio = 1.f;
 		pjlc->dl.window.x = 0.;
 		pjlc->dl.window.y = 0.;
 		pjlc->dl.window.w = x;

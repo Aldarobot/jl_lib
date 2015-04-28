@@ -404,19 +404,19 @@ void _jl_sg_loop(jl_t* pusr) {
 	if(pusr->smde) {
 		pjlc->gl.ytrans = jl_dl_p(pjlc->sg.usrd);
 		jl_gr_draw_rect(pusr, 0., 0., 1., jl_dl_p(pjlc->sg.usrd),
-			0., 127., 0., 255.);
+			0, 64, 127, 255);
+		pjlc->sg.mdes[pusr->mode].tclp[pusr->loop](pusr);
+		pjlc->gl.ytrans = 0.f;
+		jl_gr_draw_rect(pusr, 0., 0., 1., jl_dl_p(pjlc->sg.usrd),
+			0, 127, 0, 255);
 		if(pusr->loop == JL_SG_WM_UP)
 			pjlc->sg.mdes[pusr->mode].tclp[JL_SG_WM_DN](pusr);
 		else if(pusr->loop == JL_SG_WM_DN)
 			pjlc->sg.mdes[pusr->mode].tclp[JL_SG_WM_UP](pusr);
-		pjlc->gl.ytrans = 0.f;
-		jl_gr_draw_rect(pusr, 0., 0., 1., jl_dl_p(pjlc->sg.usrd),
-			0., 64., 127., 255.);
-		pjlc->sg.mdes[pusr->mode].tclp[pusr->loop](pusr);
 	}else{
 		pjlc->gl.ytrans = 0.f;
 		jl_gr_draw_rect(pusr, 0., 0., 1., jl_dl_p(pjlc->sg.usrd),
-			0., 255., 0., 255.);
+			0, 255, 0, 255);
 		pjlc->sg.mdes[pusr->mode].tclp[pusr->loop](pusr);
 	}
 	_jl_gr_loop(pusr); //Draw Menu Bar & Mouse
