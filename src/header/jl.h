@@ -107,7 +107,7 @@
 		uint8_t a);
 	void jl_gr_draw_text_area(jl_t* pusr, jl_sprite_t * psprite, char *txt);
 	void jl_gr_draw_text_sprite(jl_t* pusr,jl_sprite_t * psprite,char *txt);
-	void jl_gr_draw_ctxt(jl_t* pusr, char *str, dect p_y);
+	void jl_gr_draw_ctxt(jl_t* pusr, char *str, dect p_y, uint8_t p_a);
 	void jl_gr_draw_msge(jl_t* pusr, char* message);
 	void jl_gr_term_msge(jl_t* pusr, char* message);
 	void jl_gr_draw_slide_button(

@@ -106,6 +106,7 @@
 		struct {
 			//PRG: TEX
 			GLint **textures;
+			GLfloat multiply_alpha;
 		} uniforms;
 
 		//attributes
@@ -135,6 +136,9 @@
 	
 	typedef struct {
 		jl_simple_fnt menuoverlay;
+		uint16_t menubar_gai[10]; //G & I
+		uint8_t menubar_chr[10];
+		jl_simple_fnt menubarfunc[10];
 	}_gr_t;
 
 	typedef struct {

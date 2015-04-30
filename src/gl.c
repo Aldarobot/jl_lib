@@ -31,6 +31,7 @@ char *source_vert_clr =
 char *source_frag_tex = 
 	GLSL_HEAD
 	"uniform sampler2D texture;\n"
+	"uniform float multiply_alpha;\n"
 	"\n"
 	"varying vec2 texcoord;\n"
 	"\n"
@@ -44,6 +45,7 @@ char *source_frag_tex =
 //	"	gl_FragColor = texture2D(texture, vec2(texcoord.x, texcoord.y));"
 	"	gl_FragColor = texture2D(texture,"
 	"		vec2(texcoord.x - .0039, texcoord.y + .001));"
+	"	gl_FragColor.a = gl_FragColor.a * multiply_alpha;"
 //	"	gl_FragColor = vec4(texcoord.x, texcoord.y, 0.0, 1.0);"
 //	"	gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);"
 	"}\n\0";
@@ -295,6 +297,11 @@ void _jl_gl_bind(jvct_t *pjlc, u16t g, u16t i) {
 	_jl_gl_cerr(pjlc, 0,"glUniform1i");
 }
 
+void _jl_gl_setalpha(jvct_t *pjlc, float a) {
+	glUniform1f(pjlc->gl.uniforms.multiply_alpha, a);
+	_jl_gl_cerr(pjlc, 0,"glUniform1i");
+}
+
 //This sets vertex attribute "vertexAttrib" to "pointer".
 //Set xyzw to 2 if 2 dimensional coordinates 3 if 3D. etc.
 void _jl_gl_setv(jvct_t *pjlc, uint32_t vertexAttrib, uint8_t xyzw) {
@@ -407,6 +414,7 @@ void jl_gl_txtr(jvct_t *pjlc, u08t map, u08t a, u16t pgid, u16t pi) {
 	}
 	_jl_gl_setv(pjlc, pjlc->gl.attr.tex.texpos, 2);
 	glBindTexture(GL_TEXTURE_2D, pjlc->gl.textures[pgid][pi]);
+	_jl_gl_setalpha(pjlc, ((float)a) / 255.f); 
 }
 
 //Draw object with "vertices" vertices.  The vertex data is in "x","y" and "z".
@@ -468,6 +476,8 @@ static inline void _jl_gl_make_res(jvct_t *pjlc) {
 		jl_sg_die(pjlc, "Couldn't create uniforms");
 	pjlc->gl.uniforms.textures[0][0] =
 		_jl_gl_getu(pjlc, pjlc->gl.prgs[JL_GL_SLPR_TEX], "texture");
+	pjlc->gl.uniforms.multiply_alpha =
+		_jl_gl_getu(pjlc, pjlc->gl.prgs[JL_GL_SLPR_TEX], "multiply_alpha");
 	printf("setting up tex shader attrib's....\n");
 	_jl_gl_geta(pjlc, pjlc->gl.prgs[JL_GL_SLPR_TEX],
 		&pjlc->gl.attr.tex.position, "position");

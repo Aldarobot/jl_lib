@@ -216,10 +216,11 @@ static void _jl_gr_menubar(jl_t* pusr);
   	 * @param 'pusr': library context.
 	 * @param 'str': the text to draw
 	 * @param 'p_y': y coordinate to draw it at
+	 * @param 'p_a': 255 = opaque, 0 = invisible
 	 */
-	void jl_gr_draw_ctxt(jl_t* pusr, char *str, dect p_y) {
+	void jl_gr_draw_ctxt(jl_t* pusr, char *str, dect p_y, uint8_t p_a) {
 		jl_gr_draw_text(pusr, str, 0, p_y,
-			1. / ((float)(strlen(str))), 255);
+			1. / ((float)(strlen(str))), p_a);
 	}
 
 	/**
@@ -227,7 +228,7 @@ static void _jl_gr_menubar(jl_t* pusr);
 	 * @param 'message': the message 
 	 */
 	void jl_gr_draw_msge(jl_t* pusr, char * message) {
-		jl_gr_draw_ctxt(pusr, message, (9./16.)/2);
+		jl_gr_draw_ctxt(pusr, message, (9./16.)/2, 255);
 		_jl_dl_loop(pusr->pjlc); //Update Screen
 	}
 
@@ -292,42 +293,37 @@ static void _jl_gr_menubar(jl_t* pusr);
 	}
 	
 	static void _jl_gr_menubar(jl_t* pusr) {
-	/*	flip->x = 255;
-		flip->w = 20;
-		for(i = 0; i < 5; i++) {
-			flip->x-=20;
-			if((taskbar[i] == GOOD_IMAGE_ID) && (slow)) {
+		jvct_t *pjlc = pusr->pjlc;
+
+		int i;
+		for(i = 10; i >= 0; i--) {
+/*			if((taskbar[i] == GOOD_IMAGE_ID) && (slow)) {
 				flip->g->w = SLOW_IMAGE_ID;
 				sprintf(windowTitle[1], "%d/%d", processingTimeMillis,
 					TimeProcessingAllowed);
 			}else{
 				flip->g->w = taskbar[i];
-			}
-	//		jgr_upd_sprite_pos(flip);
-	//		jgr_draw_sprite(flip);
+			}*/
+			
 		}
-		flip->w = 155;
-		flip->x = 0;
-		flip->g->w = UNKNOWN_ID;
-	//	jgr_upd_sprite_pos(flip);
-	//	jgr_draw_sprite(flip);
-		jgr_draw_text(windowTitle[0], 0, 0, 10);
-		jgr_draw_text(windowTitle[1], 0, 10, 10);
-		if(timeTilMessageVanish) {
-			jgr_draw_centered_text(GMessage[GScreenDisplayed],0);
-			timeTilMessageVanish--;
-		}*/
+//		jgr_draw_text(windowTitle[0], 0, 0, 10);
+//		jgr_draw_text(windowTitle[1], 0, 10, 10);
+
 		jl_gr_draw_image(pusr, 0, 1, .9,
 			pusr->smde * jl_dl_p(pusr),
 			.1, .1, 2, 255);
-		
-		jvct_t *pjlc = pusr->pjlc;
+
 		if( (pjlc->ct.msx > .9) && (pjlc->ct.msy < .1) &&
 			(pjlc->ct.heldDown == 1))
 		{
 			_jl_gr_flip_scrn(pjlc);
 			pjlc->ct.heldDown = 2;
 			return;
+		}
+		if(timeTilMessageVanish) {
+			jl_gr_draw_ctxt(pusr, GMessage[pusr->loop == JL_SG_WM_DN],
+				0, timeTilMessageVanish);
+			timeTilMessageVanish--;
 		}
 	}
 	
