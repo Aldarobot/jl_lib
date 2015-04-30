@@ -352,8 +352,8 @@ void _jl_ct_loop(jvct_t* pjlc) {
 				pjlc->ct.sc = 0;
 			}
 		}
-		uint32_t mousex = pjlc->ct.msxi - pjlc->dl.window.x;
-		uint32_t mousey = (pjlc->ct.msyi - pjlc->dl.window.y) *
+		int32_t mousex = pjlc->ct.msxi - pjlc->dl.window.x;
+		int32_t mousey = (pjlc->ct.msyi - pjlc->dl.window.y) *
 			(1 + pjlc->sg.usrd->smde);
 		//translate integer into float by clipping [0-1]
 		pjlc->ct.msx =
