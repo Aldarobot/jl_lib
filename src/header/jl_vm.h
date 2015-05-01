@@ -7,10 +7,11 @@
 	typedef struct{
 		uint8_t offs;
 		int8_t ofs2;
+		uint8_t newline;
 		char head[16][5];
 		jl_io_print_fnt *printfn;
 		uint16_t maxtag;
-		int16_t tag;
+		int16_t tag[16];
 	}_io_t;
 
 	typedef struct{

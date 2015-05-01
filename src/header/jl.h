@@ -4,6 +4,7 @@
 */
 
 #include <stdint.h>
+#include <stdlib.h>
 #include "jl_sg.h"
 #include "jl_me.h"
 #include "jl_ct.h"
@@ -134,10 +135,10 @@
 */
 
 	//Change offset header to "this"
-	void jl_io_offset(jl_t* pusr, char * this);
+	void jl_io_offset(jl_t* pusr, char * this, int16_t tag);
+	void jl_io_close_block(jl_t* pusr);
 	void jl_io_tag_set(jl_t* pusr,
-		uint16_t tag, uint8_t shouldprint, jl_io_print_fnt tagfn);
-	void jl_io_tag(jl_t* pusr, int16_t tag);
+		int16_t tag, uint8_t shouldprint, jl_io_print_fnt tagfn);
 
 	// Print "pstr" to the lowest level terminal [the one not drawn with
 	// SDL/OpenGL]

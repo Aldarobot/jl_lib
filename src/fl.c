@@ -24,9 +24,9 @@ static void _jl_fl_save(jl_t* pusr, void *file, const char *name, uint32_t bytes
 		return;
 	}
 
-	jl_io_tag(pusr, JL_IO_TAG_SIMPLE - JL_IO_TAG_MAX);
+	jl_io_offset(pusr, "FLSV", JL_IO_TAG_SIMPLE-JL_IO_TAG_MAX);
 	jl_io_print_lowc(pusr, "SAVING....");
-	jl_io_tag(pusr, JL_IO_TAG_INTENSE - JL_IO_TAG_MAX);
+	jl_io_offset(pusr, "FLSV", JL_IO_TAG_INTENSE-JL_IO_TAG_MAX);
 	jl_io_print_lows(pusr, jl_me_strt_fnum(bytes));
 
 	fd = open(name, O_RDWR | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
@@ -34,7 +34,7 @@ static void _jl_fl_save(jl_t* pusr, void *file, const char *name, uint32_t bytes
 	if(fd <= 0) {
 		errsv = errno;
 
-		jl_io_tag(pusr, JL_IO_TAG_MINIMAL - JL_IO_TAG_MAX);
+		jl_io_offset(pusr, "FLSV", JL_IO_TAG_MINIMAL-JL_IO_TAG_MAX);
 		jl_io_print_lowc(pusr, "jl_fl_save: Failed to open file: ");
 		jl_io_print_lowc(pusr, name);
 		jl_io_print_lowc(pusr, " Write failed: ");
@@ -43,7 +43,7 @@ static void _jl_fl_save(jl_t* pusr, void *file, const char *name, uint32_t bytes
 		exit(-1);
 	}
 	int at = lseek(fd, 0, SEEK_END);
-	jl_io_tag(pusr, JL_IO_TAG_SIMPLE - JL_IO_TAG_MAX);
+	jl_io_offset(pusr, "FLSV", JL_IO_TAG_SIMPLE-JL_IO_TAG_MAX);
 	jl_io_print_lowc(pusr, "Writing....");
 	n_bytes = write(fd, file, bytes);
 	if(n_bytes <= 0) {
@@ -64,6 +64,8 @@ static void _jl_fl_save(jl_t* pusr, void *file, const char *name, uint32_t bytes
 	);*/
 	jl_io_print_lowc(pusr, "Wrote....");
 	close(fd);
+	
+	jl_io_close_block(pjlc->sg.usrd); //Close Block "FLSV"
 	return;
 }
 
@@ -73,11 +75,13 @@ void jl_fl_save(jl_t* pusr, void *file, const char *name, uint32_t bytes) {
 }
 
 void _jl_fl_errf(jvct_t * pjlc, char *msg) {
-	jl_io_tag(pjlc->sg.usrd, JL_IO_TAG_SIMPLE - JL_IO_TAG_MAX);
+	jl_io_offset(pjlc->sg.usrd, "ERRF", JL_IO_TAG_SIMPLE-JL_IO_TAG_MAX);
 	jl_io_print_lowc(pjlc->sg.usrd, "[JLVM] saving to errf: ");
 	jl_io_print_lowc(pjlc->sg.usrd, errf);
 	jl_io_print_lowc(pjlc->sg.usrd, msg);
+	jl_io_print_lowc(pjlc->sg.usrd, "\n");
 	_jl_fl_save(pjlc->sg.usrd, msg,errf,strlen(msg));
+	jl_io_close_block(pjlc->sg.usrd); //Close Block "ERRF"
 }
 
 static inline void _jl_fl_reset_cursor(char *file_name) {
@@ -91,21 +95,28 @@ strt jl_fl_load(jl_t* pusr, char *file_name) {
 	u32t i;
 	unsigned char *file = malloc(MAXFILELEN);
 	int fd = open(file_name, O_RDWR);
+	
+	//Open Block FLLD
+	jl_io_offset(pusr, "FLLD", JL_IO_TAG_SIMPLE-JL_IO_TAG_MAX);
+	
 	if(fd <= 0) {
-		printf("failed to open %s\n", file_name);
+		jl_io_print_lowc(pusr, "failed to open: \"");
+		jl_io_print_lowc(pusr, file_name);
+		jl_io_print_lowc(pusr, "\"\n");
 		jl_sg_die(pusr->pjlc, "file_file_load: Failed to open file");
 	}
 	int Read = read(fd, file, MAXFILELEN + 1);
 	pusr->info = Read;
-	#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
+
 	printf("[JLVM/FILE/FILE/LOAD] read %d bytes\n", pusr->info);
-	#endif
 	close(fd);
 	strt frtn = jl_me_strt_make(pusr->info, STRT_KEEP);
 	for( i = 0; i < pusr->info; i++) {
 		frtn->data[i] = file[i];
 	}
 	frtn->data = file;
+	
+	jl_io_close_block(pusr); //Close Block "FLLD"
 	return frtn;
 }
 
@@ -151,8 +162,8 @@ char jl_fl_pk_save(jl_t* pusr, char *packageFileName, char *fileName,
 uint8_t *jl_fl_pk_load(jl_t* pusr, const char *packageFileName,
 	const char *filename)
 {
-	jl_io_offset(pusr, "FILE");
-	jl_io_offset(pusr, "LOAD");
+	//Open Block PKLD
+	jl_io_offset(pusr, "PKLD", JL_IO_TAG_SIMPLE-JL_IO_TAG_MAX);
 	int zerror = 0;
 	#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
 	jl_io_print_lowc(pusr, "loading package:\"");
@@ -214,7 +225,7 @@ uint8_t *jl_fl_pk_load(jl_t* pusr, const char *packageFileName,
 	jl_io_print_lowc(pusr, "done.\n");
 	#endif
 	pusr->errf = JL_ERR_NERR;
-	jl_io_offset(pusr, "JLVM");
+	jl_io_close_block(pusr); //Close Block "PKLD"
 	return fileToLoad;
 }
 
@@ -251,19 +262,18 @@ void jl_fl_mkdir(jl_t* pusr, strt pfilebase) {
  * @return x: the data contents of the file.
 */
 uint8_t * jl_fl_mkfile(jl_t* pusr, char *pfilebase, char *contents, uint32_t size){
+
 //	if(!pfilebase) { return; }
 	uint8_t *freturn;
-	#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
+
+	//Create Block "MKFL"
+	jl_io_offset(pusr, "MKFL", JL_IO_TAG_SIMPLE-JL_IO_TAG_MAX);
+
 	jl_io_print_lowc(pusr, "Creating File...\n");
-	#endif
 	jl_fl_save(pusr, contents, (void *)gvar_pkfl->data, size);
-	#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
 	jl_io_print_lowc(pusr, "Attempt Complete!\n");
-	#endif
 	SDL_Delay(1000); //give file system time to update
-	#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
 	jl_io_print_lowc(pusr, "Try loading....\n");
-	#endif
 	if(
 		((freturn =
 			jl_fl_pk_load(pusr,(void *)gvar_pkfl->data,pfilebase))
@@ -272,9 +282,9 @@ uint8_t * jl_fl_mkfile(jl_t* pusr, char *pfilebase, char *contents, uint32_t siz
 	{
 		jl_sg_die(pusr->pjlc, ":Failed To Create file\n");
 	}
-	#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
 	jl_io_print_lowc(pusr, "Good loading!\n");
-	#endif
+	//Close Block "MKFL"
+	jl_io_close_block(pusr);
 	return freturn;
 }
 
@@ -301,6 +311,9 @@ strt jl_fl_get_resloc(jl_t* pusr, strt pprg_name, strt pfilename) {
 	char *filebase;
 	strt filebases = jl_me_strt_make(0, STRT_KEEP);
 	strt errfs = jl_me_strt_make(0, STRT_KEEP);
+	
+	//Open Block "FLBS"
+	jl_io_offset(pusr, "FLBS", JL_IO_TAG_SIMPLE-JL_IO_TAG_MAX);
 	
 	jl_io_print_lowc(pusr, "Getting FileBase....\n");
 	
@@ -331,11 +344,9 @@ strt jl_fl_get_resloc(jl_t* pusr, strt pprg_name, strt pfilename) {
 	#endif
 	
 	errf = (void *)errfs->data;
-	#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
 	printf("errf:%s\n",errf);
-	jl_io_offset(pusr, "FLBS");
+
 	jl_io_print_lowc(pusr, filebase);
-	#endif
 	
 	//filebase maker
 	#if JL_PLAT == JL_PLAT_PHONE
@@ -360,16 +371,12 @@ strt jl_fl_get_resloc(jl_t* pusr, strt pprg_name, strt pfilename) {
 	strt pvar_pkfl = jl_me_strt_make(0, STRT_KEEP);
 	jl_me_strt_merg(pusr, pvar_pkfl, Strt(filebase));
 	jl_me_strt_merg(pusr, pvar_pkfl, pfilename);
-	#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
+
 	jl_io_print_lowc(pusr, "filebase: ");
 	jl_io_print_lowc(pusr, filebase);
 	jl_io_print_lows(pusr, pvar_pkfl);
-
-	jl_io_offset(pusr, "INIT");
-	jl_io_offset(pusr, "PKFL");
-
-	jl_io_print_lows(pusr, pvar_pkfl);
-	#endif
+	
+	jl_io_close_block(pusr); //Close Block "FLBS"
 	return pvar_pkfl;
 }
 
@@ -555,12 +562,10 @@ void _jl_fl_initb(jvct_t * pjlc) {
 }
 
 void _jl_fl_inita(jvct_t * pjlc) {
-	jl_io_offset(pjlc->sg.usrd, "FILE");
-	jl_io_offset(pjlc->sg.usrd, "INIT");
+	jl_io_offset(pjlc->sg.usrd, "FILE", JL_IO_TAG_SIMPLE-JL_IO_TAG_MAX);
+	jl_io_offset(pjlc->sg.usrd, "INIT", JL_IO_TAG_SIMPLE-JL_IO_TAG_MAX);
 
-	#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
 	jl_io_print_lowc(pjlc->sg.usrd, "program name:");
-	#endif
 	jl_dl_progname(pjlc->sg.usrd, Strt("JLVM"));
 
 	gvar_pkfl =
@@ -569,5 +574,6 @@ void _jl_fl_inita(jvct_t * pjlc) {
 
 	truncate(errf, 0);
 	_jl_fl_errf(pjlc, ":Starting...\n");
-	jl_io_offset(pjlc->sg.usrd, "JLVM");
+	jl_io_close_block(pjlc->sg.usrd); //Close Block "INIT"
+	jl_io_close_block(pjlc->sg.usrd); //Close Block "FILE"
 }

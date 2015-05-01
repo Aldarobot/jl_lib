@@ -16,13 +16,15 @@
 void jl_au_load(jvct_t *pjlc, int IDinStack, void *data, int dataSize,
 	char volumeChange)
 {
-	jl_io_offset(pjlc->sg.usrd, "AUDI");
-	#if JLVM_DEBUG >= JLVM_DEBUG_PROGRESS
+	//Open Block "AUDI/LOAD"
+	jl_io_offset(pjlc->sg.usrd, "AUDI", JL_IO_TAG_PROGRESS-JL_IO_TAG_MAX);
+	jl_io_offset(pjlc->sg.usrd, "LOAD", JL_IO_TAG_PROGRESS-JL_IO_TAG_MAX);
+
+	jl_io_print_lowc(pjlc->sg.usrd, "loading music....\n");
 	jl_io_print_lowc(pjlc->sg.usrd, "loading music ");
 	jl_io_print_lows(pjlc->sg.usrd, jl_me_strt_fnum(IDinStack));
 	jl_io_print_lowc(pjlc->sg.usrd, "/");
 	jl_io_print_lows(pjlc->sg.usrd, jl_me_strt_fnum(pjlc->au.smax));
-	#endif
 	pjlc->au.jmus[IDinStack]._MUS =
 		Mix_LoadMUS_RW(SDL_RWFromMem(data, dataSize), 1);
 	pjlc->au.jmus[IDinStack]._VOL = volumeChange;
@@ -31,13 +33,14 @@ void jl_au_load(jvct_t *pjlc, int IDinStack, void *data, int dataSize,
 		_jl_fl_errf(pjlc, (char *)SDL_GetError());
 		jl_sg_die(pjlc, "\n");
 	}else{
-		#if JLVM_DEBUG >= JLVM_DEBUG_PROGRESS
 		jl_io_print_lowc(pjlc->sg.usrd, "loaded music ");
 		jl_io_print_lows(pjlc->sg.usrd, jl_me_strt_fnum(IDinStack));
 		jl_io_print_lowc(pjlc->sg.usrd, "/");
 		jl_io_print_lows(pjlc->sg.usrd, jl_me_strt_fnum(pjlc->au.smax));
-		#endif
 	}
+	
+	jl_io_close_block(pjlc->sg.usrd); //Close Block "LOAD"
+	jl_io_close_block(pjlc->sg.usrd); //Close Block "AUDI"
 }
 
 uint8_t audi_musi_spli(void) {
@@ -109,59 +112,54 @@ void _jl_au_loop(jvct_t* pjlc) {
 /** @endcond **/
 
 static inline void jlvm_ini_sounds(jvct_t *pjlc, u08t *data) {
-	jl_io_offset(pjlc->sg.usrd, "LOAD");
 	int i;
+	uint32_t fil = 0;
+	uint32_t fid = 0;
+
+	jl_io_offset(pjlc->sg.usrd, "AUDI", JL_IO_TAG_SIMPLE-JL_IO_TAG_MAX);
+	jl_io_offset(pjlc->sg.usrd, "LOAD", JL_IO_TAG_SIMPLE-JL_IO_TAG_MAX);
+
 //	uint32_t cursor = 0;
 	jls_ini(pjlc, 1000000);
-	#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
 	jl_io_print_lowc(pjlc->sg.usrd, "meanwhile....\n");
-	#endif
-	u32t fil = 0;
-	u32t fid = 0;
+
 	while(1) {
 		u32t *bytes = (void *)data;
 		uint8_t *fdat = malloc(bytes[0]);
-		#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
+
 		jl_io_print_lows(pjlc->sg.usrd, jl_me_strt_fnum(bytes[0]));
-		#endif
-		#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
 		jl_io_print_lowc(pjlc->sg.usrd,"getting data....\n");
-		#endif
 		for(i = 0; i < bytes[0]; i++) {
 			fdat[i] = data[fil+i+sizeof(uint32_t)];
 		}
-
-		#if JLVM_DEBUG >= JLVM_DEBUG_PROGRESS
-		jl_io_print_lowc(pjlc->sg.usrd, "loading music....\n");
-		#endif
 		jl_au_load(pjlc,fid,fdat,bytes[0],255);
-
 		fil += bytes[0]+4; //move init next location
 		fid++; //increase to the next music id
 		//if(data[fil] == 0)
 			break;
 	}
-	#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
 	jl_io_print_lowc(pjlc->sg.usrd, "loaded music!\n");
-	#endif
+	
+	jl_io_close_block(pjlc->sg.usrd); //Close Block "LOAD"
+	jl_io_close_block(pjlc->sg.usrd); //Close Block "AUDI"
 }
 
 /** @cond **/
+static void _jl_au_print_openblock(jl_t* pusr) {
+	jl_io_offset(pusr, "AUDI", JL_IO_TAG_SIMPLE-JL_IO_TAG_MAX);
+}
+
 void _jl_au_init(jvct_t *pjlc) {
-	jl_io_offset(pjlc->sg.usrd, "AUDI");
-	jl_io_offset(pjlc->sg.usrd, "INIT");
+	//Open Block AUDI
+	_jl_au_print_openblock(pjlc->sg.usrd);
 	// Open the audio device
-	#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
 	jl_io_print_lowc(pjlc->sg.usrd, "initailizing audio...\n");
-	#endif
 	if ( Mix_OpenAudio(11025, AUDIO_S16, 1, 2048) < 0 ) {
 		_jl_fl_errf(pjlc, ":Couldn't set 11025 Hz 16-bit audio because:");
 		_jl_fl_errf(pjlc, (char *)SDL_GetError());
 		jl_sg_die(pjlc, "\n");
 	}else{
-		#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
 		jl_io_print_lowc(pjlc->sg.usrd, "audio has been set.\n");
-		#endif
 	}
 	//Load Sound Effects & Music
 	uint8_t *aud = NULL;
@@ -169,33 +167,30 @@ void _jl_au_init(jvct_t *pjlc) {
 		jl_fl_get_resloc(pjlc->sg.usrd, Strt("JLVM"), Strt("jlvm.zip"))
 			->data,
 		jal5_head_jlvm(), jal5_head_size());
-	#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
 	jl_io_print_lowc(pjlc->sg.usrd, "Loading audiostuffs...\n");
-	#endif
 	if(aud != NULL) {
 		jlvm_ini_sounds(pjlc,aud);
 	}
 	pjlc->au.idis = UINT32_MAX; //audio by default is disabled
-	#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
 	jl_io_print_lowc(pjlc->sg.usrd, "Loaded audiostuffs!\n");
-	#endif
-	jl_io_offset(pjlc->sg.usrd, "JLVM");
+	//Close Block AUDI
+	jl_io_close_block(pjlc->sg.usrd);
 }
 
 void _jal5_audi_kill(jvct_t *pjlc) {
-	jl_io_offset(pjlc->sg.usrd, "AUDI");
-	#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
+	//Open Block AUDI
+	_jl_au_print_openblock(pjlc->sg.usrd);
 	jl_io_print_lowc(pjlc->sg.usrd, "Quiting....\n");
-	#endif
+	//Free Everything
 	Mix_CloseAudio();
 	u32t i;
 	for(i = 0; i < pjlc->au.smax; i++) {
 		Mix_FreeMusic(pjlc->au.jmus[i]._MUS);
 	}
 	free(pjlc->au.jmus);
-	#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
+
 	jl_io_print_lowc(pjlc->sg.usrd, "Quit Successfully!\n");
-	#endif
-	jl_io_offset(pjlc->sg.usrd, "JLVM");
+	//Close Block AUDI
+	jl_io_close_block(pjlc->sg.usrd);
 }
 /** @endcond **/

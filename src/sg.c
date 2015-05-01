@@ -278,10 +278,11 @@ static uint32_t jlvm_quit(jvct_t* pjlc, int rc) {
 
 //Quit, And Return -1 to show there was an error, also save message in errf.text
 static void jlvm_erqt(jvct_t* pjlc, char *msg) {
-	jl_io_offset(pjlc->sg.usrd, "ERQT");
+	jl_io_offset(pjlc->sg.usrd, "ERQT", JL_IO_TAG_INTENSE-JL_IO_TAG_MAX);
 	jl_io_print_lowc(pjlc->sg.usrd, msg);
 	_jl_fl_errf(pjlc, msg);
 	jlvm_quit(pjlc, -1);
+	jl_io_close_block(pjlc->sg.usrd); //Close Block "ERQT"
 }
 
 //Show Error On Screen
@@ -350,18 +351,18 @@ static inline float _jal5_sgrp_istm(jvct_t* pjlc) {
  * @param pigid: which image group to load the images into.
 */
 void jl_sg_add_image(jl_t* pusr, char *pzipfile, uint16_t pigid) {
+	jl_io_offset(pusr, "LIMG", JL_IO_TAG_PROGRESS-JL_IO_TAG_MAX);
 	//Load Graphics
-	uint8_t *img;
-	img = jl_fl_media(pusr, "jlex/2/_img", pzipfile,
+	uint8_t *img = jl_fl_media(pusr, "jlex/2/_img", pzipfile,
 		jal5_head_jlvm(), jal5_head_size());
-	#if JLVM_DEBUG >= JLVM_DEBUG_PROGRESS
+
 	jl_io_print_lowc(pusr, "Loading Images...\n");
-	#endif
 	if(img != NULL)
 		_jl_sg_init_images(pusr->pjlc, img, pigid);
 	else
-		printf("[JLVM/LIMG/JLPX] loaded 0 images!\n");
+		jl_io_print_lowc(pusr, "Loaded 0 images!\n");
 	jl_io_print_lowc(pusr, "Loaded Images...\n");
+	jl_io_close_block(pusr); //Close Block "LIMG"
 }
 
 static inline void _jl_sg_initb(jvct_t * pjlc) {
@@ -376,8 +377,6 @@ static inline void _jl_sg_initb(jvct_t * pjlc) {
 }
 
 static inline void _jl_sg_inita(jvct_t * pjlc) {
-	jl_io_offset(pjlc->sg.usrd, "SGRP");
-	jl_io_offset(pjlc->sg.usrd, "INIT");
 	//Set Up Variables
 	pjlc->gl.textures = NULL;
 	pjlc->gl.uniforms.textures = NULL;
@@ -458,19 +457,20 @@ static inline void _jlvm_init_libs(jvct_t *pjlc) {
 }
 
 static inline void jlvm_ini(jvct_t *pjlc) {
-	#if JLVM_DEBUG >= JLVM_DEBUG_MINIMAL
+	//Open Block "JLVM" (Minimal)
+	jl_io_offset(pjlc->sg.usrd, "JLVM", JL_IO_TAG_MINIMAL-JL_IO_TAG_MAX);
 	jl_io_print_lowc(pjlc->sg.usrd, "Initializing...\n");
-	#endif
 	_jlvm_init_libs(pjlc);
 	hack_user_init(pjlc->sg.usrd);
-	jl_io_offset(pjlc->sg.usrd, "JLVM");
-	#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
+
+	//Change Block "JLVM" to SIMPLE
+	jl_io_offset(pjlc->sg.usrd, "JLVM", JL_IO_TAG_SIMPLE-JL_IO_TAG_MAX);
 	jl_io_print_lowc(pjlc->sg.usrd, "Init5...\n");
-	#endif
 //	jlvm_ini_memory_allocate();
-	#if JLVM_DEBUG >= JLVM_DEBUG_MINIMAL
+
+	//Change Block "JLVM" Back to MINIMAL
+	jl_io_offset(pjlc->sg.usrd, "JLVM", JL_IO_TAG_MINIMAL-JL_IO_TAG_MAX);
 	jl_io_print_lowc(pjlc->sg.usrd, "Initialized!\n");
-	#endif
 }
 
 int32_t main(int argc, char *argv[]) {
