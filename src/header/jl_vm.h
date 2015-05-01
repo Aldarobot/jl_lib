@@ -136,9 +136,14 @@
 	
 	typedef struct {
 		jl_simple_fnt menuoverlay;
-		uint16_t menubar_gai[10]; //G & I
-		uint8_t menubar_chr[10];
-		jl_simple_fnt menubarfunc[10];
+		struct{
+			uint16_t grp[10];
+			uint16_t iid[10];
+			uint8_t chr[10];
+			jl_simple_fnt func[2][10];
+			uint8_t cursor;
+			float iconx;
+		}menubar;
 	}_gr_t;
 
 	typedef struct {

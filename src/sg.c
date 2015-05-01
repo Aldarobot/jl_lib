@@ -40,10 +40,6 @@
 // Constants
 
 	#define TEXTURE_WH 1024*1024
-	//screen frames per second
-	#define JAL5_SGRP_MAIN_SFPS 30
-	//Allowed Processing Time
-	#define JAL5_SGRP_MAIN_SAPT 1000/JAL5_SGRP_MAIN_SFPS 
 
 	#define JAL5_SGRP_LSDL_RMSE SDL_BUTTON_RIGHT
 	#define JAL5_SGRP_LSDL_LMSE SDL_BUTTON_LEFT
@@ -329,17 +325,17 @@ static void _sg_time_reset(jvct_t* pjlc) {
 static inline float _jal5_sgrp_istm(jvct_t* pjlc) {
 	pjlc->sg.processingTimeMillis=
 		(pjlc->sg.this_tick=SDL_GetTicks())-pjlc->sg.prev_tick;
-	if(pjlc->sg.processingTimeMillis <= JAL5_SGRP_MAIN_SAPT) {
-		SDL_Delay(JAL5_SGRP_MAIN_SAPT-pjlc->sg.processingTimeMillis);
+	if(pjlc->sg.processingTimeMillis <= JL_MAIN_SAPT) {
+		SDL_Delay(JL_MAIN_SAPT-pjlc->sg.processingTimeMillis);
 //		printf("[TIMING] fast: 1\n");
 		_sg_time_reset(pjlc);
 		return 1.f;
 	}else{
 		float frames =
 			(float)pjlc->sg.processingTimeMillis/
-			(float)JAL5_SGRP_MAIN_SAPT;
+			(float)JL_MAIN_SAPT;
 //		printf("[TIMING] slow: %d, %d, %f\n", processingTimeMillis,
-//			JAL5_SGRP_MAIN_SAPT, frames);
+//			JL_MAIN_SAPT, frames);
 		_sg_time_reset(pjlc);
 		return frames;
 	}

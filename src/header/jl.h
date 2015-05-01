@@ -114,6 +114,11 @@
 		jl_t* pusr, jl_sprite_t * psprite, char *txt, float defaultx,
 		float slidex, jl_ct_onevent_fnt prun);
 	void jl_gr_togglemenubar(jl_t* pusr);
+	void jl_gr_addicon(jl_t* pusr, uint16_t grp, uint8_t iid,
+		uint8_t chr, jl_simple_fnt fno, jl_simple_fnt fnc);
+	void jl_gr_addicon_flip(jl_t* pusr);
+	void jl_gr_addicon_slow(jl_t* pusr);
+	void jl_gr_addicon_name(jl_t* pusr);
 
 /*
 	JAL5_INPT

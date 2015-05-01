@@ -106,18 +106,6 @@
 	GLfloat *GColor;
 	uint32_t *GTex;
 
-	//Messages
-	#define MSG_ONN 0
-	#define MSG_OFF 1
-	#define MSG_MAX 2
-
-	//TaskButton Image ID's
-	#define UNKNOWN_ID 1
-	#define FLIP_IMAGE_ID 2
-	#define SLOW_IMAGE_ID 3
-	#define GOOD_IMAGE_ID 4
-	#define TASK_MAX 4//how many taskbuttons
-
 #endif
 #ifdef VIRTUAL_MACH_DAT
 //VIRTUAL MACHINE DATA
@@ -146,6 +134,11 @@
 #endif
 
 #define STRT_NULL "(NULL)"
+
+//screen frames per second
+#define JL_MAIN_SFPS 30
+//Allowed Processing Time
+#define JL_MAIN_SAPT 1000/JL_MAIN_SFPS
 
 typedef struct{
 	

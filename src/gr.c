@@ -9,6 +9,15 @@
  */
 #include "header/jl_pr.h"
 
+typedef enum{
+	JLGR_ID_NULL,
+	JLGR_ID_UNKNOWN,
+	JLGR_ID_FLIP_IMAGE,
+	JLGR_ID_SLOW_IMAGE,
+	JLGR_ID_GOOD_IMAGE,
+	JLGR_ID_TASK_MAX //how many taskbuttons
+}jlgr_id_t;
+
 /*screen being displayed ( on two screens which one on bottom, if keyboard is
 	being displayed on bottom screen then this will be displayed on top )*/
 uint8_t timeTilMessageVanish = 0;
@@ -22,6 +31,10 @@ char *GMessage[2] = {
 
 void _jl_dl_loop(jvct_t* pjlc);
 static void _jl_gr_menubar(jl_t* pusr);
+static void _jl_gr_flipscreen(jl_t* pusr);
+static void _jl_gr_menubar_slow(jl_t* pusr);
+static void _jl_gr_menubar_name(jl_t* pusr);
+static void _jl_gr_draw_icon(jl_t* pusr);
 
 /*EXPORTED FUNCTIONS*/
 
@@ -264,25 +277,94 @@ static void _jl_gr_menubar(jl_t* pusr);
 	}
 	
 	/**
-	 * toggle whether or not to show the menu bar.
+	 * Toggle whether or not to show the menu bar.
 	 *
 	 * @param pusr: the libary context
 	**/
 	void jl_gr_togglemenubar(jl_t* pusr) {
 		jvct_t *pjlc = pusr->pjlc;
+
 		if(pjlc->gr.menuoverlay == jl_dont)
 			pjlc->gr.menuoverlay = _jl_gr_menubar;
 		else
 			pjlc->gr.menuoverlay = jl_dont;
 	}
+	
+	/**
+	 * Add an icon to the menubar
+	 *
+	 * @param pusr: the libary context
+	 * @param grp: the image group of the image to display
+	 * @param iid: the id of the image in the image group
+	 * @param chr: the character of the image to display.  0 means stop.
+	 * @param fno: the function to run when the icon isn't pressed.
+	 * @param fnc: the function to run when the icon is pressed.
+	**/
+	void jl_gr_addicon(jl_t* pusr, uint16_t grp, uint8_t iid,
+		uint8_t chr, jl_simple_fnt fno, jl_simple_fnt fnc)
+	{
+		jvct_t *pjlc = pusr->pjlc;
+		uint8_t i;
+
+		for(i = 0; i < 10; i++) {
+			if(!pjlc->gr.menubar.chr[i]) break;
+		}
+		pjlc->gr.menubar.grp[i] = grp;
+		pjlc->gr.menubar.iid[i] = iid;
+		pjlc->gr.menubar.chr[i] = chr;
+		pjlc->gr.menubar.func[0][i] = fno;
+		pjlc->gr.menubar.func[1][i] = fnc;
+	}
+
+	/**
+	 * Add the flip screen icon to the menubar.
+	 * @param pusr: the libary context
+	**/
+	void jl_gr_addicon_flip(jl_t* pusr) {
+		jl_gr_addicon(pusr, 0, 1, JLGR_ID_FLIP_IMAGE,
+			_jl_gr_draw_icon, _jl_gr_flipscreen);	
+	}
+	
+	/**
+	 * Add slowness detector to the menubar.
+	 * @param pusr: the libary context
+	**/
+	void jl_gr_addicon_slow(jl_t* pusr) {
+		jl_gr_addicon(pusr, 0, 1, JLGR_ID_GOOD_IMAGE,
+			_jl_gr_menubar_slow, _jl_gr_draw_icon);
+	}
+	
+	/**
+	 * Add program title to the menubar.
+	 * @param pusr: the libary context
+	**/
+	void jl_gr_addicon_name(jl_t* pusr) {
+		int i;
+		for(i = 0; i < 4; i++) {
+			jl_gr_addicon(pusr, 0, 1, JLGR_ID_UNKNOWN,
+				_jl_gr_draw_icon, _jl_gr_draw_icon);
+		}
+		jl_gr_addicon(pusr, 0, 1, JLGR_ID_UNKNOWN,
+			_jl_gr_menubar_name, _jl_gr_draw_icon);
+	}
 
 /** @cond **/
 /*BACKGROUND FUNCTIONS*/
 
+	static void _jl_gr_draw_icon(jl_t* pusr) {
+		jvct_t *pjlc = pusr->pjlc;
+
+		jl_gr_draw_rect(pusr, pjlc->gr.menubar.iconx - .01,
+			pusr->smde * jl_dl_p(pusr) + .01,
+			.1, .1, 0., 0., 0., 64);
+		jl_gr_draw_image(pusr, 0, 1, pjlc->gr.menubar.iconx,
+			pusr->smde * jl_dl_p(pusr),
+			.1, .1,
+			pjlc->gr.menubar.chr[pjlc->gr.menubar.cursor],
+			255);
+	}
+
 	void _jl_gr_flip_scrn(jvct_t *pjlc) {
-		#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
-		printf("flipping!!%d\n", pjlc->sg.usrd->loop);
-		#endif
 		if(pjlc->sg.usrd->loop == JL_SG_WM_UP) {
 			pjlc->sg.usrd->loop = JL_SG_WM_DN;
 			timeTilMessageVanish = 255;
@@ -292,38 +374,56 @@ static void _jl_gr_menubar(jl_t* pusr);
 		}
 	}
 	
+	static void _jl_gr_flipscreen(jl_t* pusr) {
+		jvct_t *pjlc = pusr->pjlc;
+		_jl_gr_flip_scrn(pjlc);
+		_jl_gr_draw_icon(pusr);
+	}
+	
+	static void _jl_gr_menubar_name(jl_t* pusr) {
+		jvct_t *pjlc = pusr->pjlc;
+
+		_jl_gr_draw_icon(pusr);
+		jl_gr_draw_text(pusr, pjlc->dl.windowTitle[0],
+			pjlc->gr.menubar.iconx, 0., .05, 255);
+		jl_gr_draw_text(pusr, pjlc->dl.windowTitle[1],
+			pjlc->gr.menubar.iconx, .05, .05, 255);
+	}
+	
+	static void _jl_gr_menubar_slow(jl_t* pusr) {
+		jvct_t *pjlc = pusr->pjlc;
+		if(pjlc->sg.processingTimeMillis > JL_MAIN_SAPT) {
+			pjlc->gr.menubar.chr[pjlc->gr.menubar.cursor] =
+				JLGR_ID_SLOW_IMAGE;
+			sprintf(pjlc->dl.windowTitle[1], "%d/%d",
+				pjlc->sg.processingTimeMillis, JL_MAIN_SAPT);
+		}else{
+			pjlc->gr.menubar.chr[pjlc->gr.menubar.cursor] =
+				JLGR_ID_GOOD_IMAGE;
+		}
+		_jl_gr_draw_icon(pusr);
+	}
+	
 	static void _jl_gr_menubar(jl_t* pusr) {
 		jvct_t *pjlc = pusr->pjlc;
 
-		int i;
-		for(i = 10; i >= 0; i--) {
-/*			if((taskbar[i] == GOOD_IMAGE_ID) && (slow)) {
-				flip->g->w = SLOW_IMAGE_ID;
-				sprintf(windowTitle[1], "%d/%d", processingTimeMillis,
-					TimeProcessingAllowed);
-			}else{
-				flip->g->w = taskbar[i];
-			}*/
-			
-		}
-//		jgr_draw_text(windowTitle[0], 0, 0, 10);
-//		jgr_draw_text(windowTitle[1], 0, 10, 10);
-
-		jl_gr_draw_image(pusr, 0, 1, .9,
-			pusr->smde * jl_dl_p(pusr),
-			.1, .1, 2, 255);
-
-		if( (pjlc->ct.msx > .9) && (pjlc->ct.msy < .1) &&
-			(pjlc->ct.heldDown == 1))
+		for(pjlc->gr.menubar.cursor = 0; pjlc->gr.menubar.cursor < 10;
+			pjlc->gr.menubar.cursor++)
 		{
-			_jl_gr_flip_scrn(pjlc);
-			pjlc->ct.heldDown = 2;
-			return;
-		}
-		if(timeTilMessageVanish) {
-			jl_gr_draw_ctxt(pusr, GMessage[pusr->loop == JL_SG_WM_DN],
-				0, timeTilMessageVanish);
-			timeTilMessageVanish--;
+			if(!pjlc->gr.menubar.chr[pjlc->gr.menubar.cursor])break;
+			pjlc->gr.menubar.iconx =.9-(.1*pjlc->gr.menubar.cursor);
+
+			if( (pjlc->ct.msx > pjlc->gr.menubar.iconx) &&
+				(pjlc->ct.msy < .1) &&
+				(pjlc->ct.heldDown == 1))
+			{
+				pjlc->gr.menubar.func
+					[1][pjlc->gr.menubar.cursor](pusr);
+				pjlc->ct.heldDown = 2;
+			}else{
+				pjlc->gr.menubar.func
+					[0][pjlc->gr.menubar.cursor](pusr);
+			}
 		}
 	}
 	
@@ -344,6 +444,18 @@ static void _jl_gr_menubar(jl_t* pusr);
 	//Menu Bar
 		jvct_t *pjlc = pusr->pjlc;
 		pjlc->gr.menuoverlay(pusr);
+	//Message Display
+		if(timeTilMessageVanish) {
+			if(timeTilMessageVanish > 127)
+				jl_gr_draw_ctxt(pusr,
+					GMessage[pusr->loop == JL_SG_WM_DN],
+					0, 255);
+			else
+				jl_gr_draw_ctxt(pusr,
+					GMessage[pusr->loop == JL_SG_WM_DN],
+					0, timeTilMessageVanish * 2);	
+			timeTilMessageVanish--;
+		}
 	//Update mouse
 		pusr->mouse->loop((void*)pusr);
 	}
@@ -360,17 +472,11 @@ static void _jl_gr_menubar(jl_t* pusr);
 		#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
 		printf("[JLVM/LIM] loading taskbar...\n");
 		#endif
-
-	/*	taskbar[0] = FLIP_IMAGE_ID;
-		taskbar[1] = GOOD_IMAGE_ID;
-		taskbar[2] = UNKNOWN_ID;
-		taskbar[3] = UNKNOWN_ID;
-		taskbar[4] = UNKNOWN_ID;
-	//	jgr_load_image(IMGID_TASK_BUTTON, taskbar_items, sizeof(taskbar_items));
-		jgr_grp_t *flipg = jgr_make_graphic(IMGID_TASK_BUTTON,255,0);
-
-		flip = jgr_make_sprite(235,0,20,20,flipg);
-		mouse = jgr_make_sprite(0,0,10,10,textg);*/
+		
+		int i;
+		for(i = 0; i < 10; i++) {
+			pjlc->gr.menubar.chr[i] = JLGR_ID_NULL;
+		}
 		printf("[JLVM/LIM] loaded taskbar!\n");
 	}
 /** @endcond **/
