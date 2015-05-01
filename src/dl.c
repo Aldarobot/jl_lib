@@ -50,7 +50,7 @@ static inline void jlvmpi_ini_sdl(void) {
 	#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
 	printf("[JLVM] input...\n");
 	#endif
-	#if PLATFORM == 0
+	#if JL_PLAT == JL_PLAT_COMPUTER
 	SDL_ShowCursor(SDL_DISABLE);
 	SDL_EventState(SDL_KEYDOWN, SDL_IGNORE);
 	SDL_EventState(SDL_KEYUP, SDL_IGNORE);
@@ -193,7 +193,7 @@ void jl_dl_progname(jl_t* pusr, strt name) {
 		if(name->data[ii] == '\0') { break; }
 	}
 	pjlc->dl.windowTitle[0][15] = '\0';
-#if PLATFORM == 0
+#if JL_PLAT == JL_PLAT_COMPUTER
 	if(pjlc->dl.displayWindow)
 	 SDL_SetWindowTitle(pjlc->dl.displayWindow, pjlc->dl.windowTitle[0]);
 #endif
@@ -203,7 +203,7 @@ void _jl_dl_init(jvct_t* pjlc) {
 	jlvmpi_ini_sdl();
 	_jlvm_curd_mode(pjlc); //Get Information On How Big To Make Window
 	_jlvm_crea_wind(pjlc); //Create Window With SDL
-	#if PLATFORM == 1 //If Phone (For Reorientation)
+	#if JL_PLAT == JL_PLAT_PHONE //If Phone (For Reorientation)
 	_jlvm_curd_mode(pjlc);
 	#endif
 	//Update viewport to fix any rendering glitches

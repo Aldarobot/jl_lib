@@ -64,9 +64,9 @@
 
 		SDL_Event event;
 		
-		#if PLATFORM == 1 //PHONE
+		#if JL_PLAT == JL_PLAT_PHONE
 		uint8_t menu;
-		#elif PLATFORM == 0
+		#elif JL_PLAT == JL_PLAT_COMPUTER
 		const Uint8 *keys;
 		#endif
 		

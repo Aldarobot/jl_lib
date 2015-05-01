@@ -177,9 +177,9 @@
 	#define JL_CT_ANDR_MENU 63 //Menu Key
 	#define JL_CT_ANDR_MAXX 64
 
-#if PLATFORM == 0 //COMPUTER
+#if JL_PLAT == JL_PLAT_COMPUTER
 	#define JL_CT_ALLP(nintendo, computer, android) computer
-#elif PLATFORM == 1 //PHONE
+#elif JL_PLAT == JL_PLAT_PHONE
 	#define JL_CT_ALLP(nintendo, computer, android) android
 #else //3DS/WiiU
 	#define JL_CT_ALLP(nintendo, computer, android) nintendo

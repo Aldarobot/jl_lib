@@ -1,15 +1,15 @@
 //Jal5 Standard Libraries
 	#include "jl.h"
-	#if PLATFORM == 0
+	#if JL_PLAT == JL_PLAT_COMPUTER
 		//#define JLVM_USEL_COGL
 		#define JLVM_USEL_GLES
-	#elif PLATFORM == 1
+	#elif JL_PLAT == JL_PLAT_PHONE
 		#define JLVM_USEL_GLES
 	#else
 	#endif
 	
 //SDL
-	#if PLATFORM==0 //PC/MAC
+	#if JL_PLAT == JL_PLAT_COMPUTER
 //		#include "../lib/SDL/header/SDL.h"
 		#include <SDL2/SDL.h>
 		#ifdef JLVM_USEL_COGL
@@ -19,7 +19,7 @@
 		#ifdef JLVM_USEL_GLES
 			#include <SDL2/SDL_opengles2.h>
 		#endif
-	#elif PLATFORM==1 //ANDROID
+	#elif JL_PLAT == JL_PLAT_PHONE
 		#include "../lib/sdl/header/SDL_test_common.h"
 		#include "../lib/sdl/header/SDL_opengles2.h"
 		#include "../lib/sdl/header/SDL_main.h"
@@ -27,16 +27,16 @@
 	#include "../lib/SDL_mixer.h"
 //LIBZIP
 	#define ZIP_DISABLE_DEPRECATED //Don't allow the old functions.
-	#if PLATFORM==0 //PC/MAC
+	#if JL_PLAT == JL_PLAT_COMPUTER
 		#include "../../../../obj/lb/zip.h"
-	#elif PLATFORM==1 //ANDROID
+	#elif JL_PLAT == JL_PLAT_PHONE
 		#include "../lib/libzip-0.11.2/lib/zip.h"
 	#endif
 //OPENGL
 	#ifdef JLVM_USEL_COGL
 		#ifdef APPLE
 			#include <OpenGL/glext.h>
-		#elif PLATFORM == 0
+		#elif JL_PLAT == JL_PLAT_COMPUTER
 //			#include <GL/glext.h>
 			#include "../lib/glext.h"
 		#else
@@ -83,9 +83,9 @@
 #define VAR_TEXTUREI 2
 
 //Files
-#if PLATFORM == 0
+#if JL_PLAT == JL_PLAT_COMPUTER
 	#define JLVM_FILEBASE "../"
-#elif PLATFORM == 1
+#elif JL_PLAT == JL_PLAT_PHONE
 	#define JLVM_FILEBASE "/storage/sdcard0/JLVM/"
 #endif
 #define JLVM_INIT SDL_INIT_AUDIO|SDL_INIT_VIDEO

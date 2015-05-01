@@ -7,7 +7,7 @@
 
 #include "header/jl_pr.h"
 
-#if PLATFORM == 0
+#if JL_PLAT == JL_PLAT_COMPUTER
 	void jl_ct_key(jl_t *pusr, jl_ct_onevent_fnt prun,
 		jl_ct_onevent_fnt pno, uint8_t key)
 	{
@@ -89,7 +89,7 @@
 //	void mous_over(jl_ct_onevent_fnt prun) {
 //		prun(255, 0);
 //	}
-#elif PLATFORM == 1 //if Android
+#elif JL_PLAT == JL_PLAT_PHONE //if Android
 	void tuch_cntr(jl_t *pusr, jl_ct_onevent_fnt prun,
 		jl_ct_onevent_fnt pno)
 	{ //touch center
@@ -210,9 +210,9 @@
 void jl_ct_key_menu(jl_t *pusr, jl_ct_onevent_fnt prun,
 	jl_ct_onevent_fnt pno)
 {
-	#if PLATFORM == 0 //COMPUTER
+	#if JL_PLAT == JL_PLAT_COMPUTER
 	jl_ct_key(pusr, prun, pno, SDL_SCANCODE_APPLICATION);
-	#elif PLATFORM == 1 //PHONE
+	#elif JL_PLAT == JL_PLAT_PHONE
 	jvct_t* pjlc = pusr->pjlc;
 	if(pjlc->ct.menu)
 		prun(pusr, 255, pjlc->ct.menu);
@@ -240,7 +240,7 @@ float jl_ct_gmousey(jl_t *pusr) {
 }
 
 static inline void _jal5_jl_ct_hndl(jvct_t *pjlc) {
-	#if PLATFORM == 1 //PHONE
+	#if JL_PLAT == JL_PLAT_PHONE
 		pjlc->ct.menu = 0;
 	#endif
 	if(pjlc->ct.event.type==SDL_WINDOWEVENT) {
@@ -251,7 +251,7 @@ static inline void _jal5_jl_ct_hndl(jvct_t *pjlc) {
 				pjlc->ct.event.window.data1,
 				pjlc->ct.event.window.data2);
 		}
-	#if PLATFORM == 1 //PHONE
+	#if JL_PLAT == JL_PLAT_PHONE
 		}else if( pjlc->ct.event.type==SDL_FINGERDOWN ) {
 			pjlc->ct.msx = pjlc->ct.event.tfinger.x;
 			pjlc->ct.msy = pjlc->ct.event.tfinger.y;
@@ -274,7 +274,7 @@ static inline void _jal5_jl_ct_hndl(jvct_t *pjlc) {
 				pjlc->ct.menu = 1;
 			}
 		}
-	#elif PLATFORM == 0 //PC
+	#elif JL_PLAT == JL_PLAT_COMPUTER
 		}else if( pjlc->ct.event.wheel.y > 0 &&
 			 pjlc->ct.event.wheel.type == SDL_MOUSEWHEEL)
 		{
@@ -312,19 +312,19 @@ void jl_ct_run_event(jl_t *pusr, uint8_t pevent,
 
 static inline void _jal5_jl_ct_evnt_updt(jvct_t * pjlc) {
 	while(SDL_PollEvent(&pjlc->ct.event)) _jal5_jl_ct_hndl(pjlc);
-	#if PLATFORM == 0 //PC
+	#if JL_PLAT == JL_PLAT_COMPUTER
 		pjlc->ct.keys = SDL_GetKeyboardState(NULL);
 	#endif
 }
 
 //Main Input Loop
 void _jl_ct_loop(jvct_t* pjlc) {
-	#if PLATFORM == 1 //PHONE
+	#if JL_PLAT == JL_PLAT_PHONE
 	if(pjlc->ct.heldDown) pjlc->ct.heldDown = 2;
 	if(pjlc->ct.menu) pjlc->ct.menu = 2;
 	#endif
 	_jal5_jl_ct_evnt_updt(pjlc); //Get the information on current events
-	#if PLATFORM == 0 //PC
+	#if JL_PLAT == JL_PLAT_COMPUTER
 		//Get Whether mouse is down or not and xy coordinates
 		if(
 			SDL_GetMouseState(&pjlc->ct.msxi,&pjlc->ct.msyi)
@@ -370,7 +370,7 @@ void _jl_ct_loop(jvct_t* pjlc) {
 }
 
 static inline void _jl_ct_fn_init(jvct_t* pjlc) {
-#if PLATFORM == 0
+#if JL_PLAT == JL_PLAT_COMPUTER
 	pjlc->ct.getEvents[JL_CT_COMP_RETN] = jl_ct_key_retn;
 	pjlc->ct.getEvents[JL_CT_COMP_KEYW] = jl_ct_key_keyw;
 	pjlc->ct.getEvents[JL_CT_COMP_KEYA] = jl_ct_key_keya;
@@ -383,7 +383,7 @@ static inline void _jl_ct_fn_init(jvct_t* pjlc) {
 //	pjlc->ct.getEvents[JL_CT_COMP_MSXY] = mous_over;
 	pjlc->ct.getEvents[JL_CT_COMP_CLLT] = jl_ct_left_click;
 	pjlc->ct.getEvents[JL_CT_COMP_MENU] = jl_ct_key_menu;
-#elif PLATFORM == 1
+#elif JL_PLAT == JL_PLAT_PHONE
 	pjlc->ct.getEvents[JL_CT_ANDR_TCCR] = tuch_cntr;
 	pjlc->ct.getEvents[JL_CT_ANDR_TFUP] = tuch_frup;
 	pjlc->ct.getEvents[JL_CT_ANDR_TFDN] = tuch_frdn;
@@ -428,7 +428,7 @@ uint8_t jlvmpi_key(void) {
 	}
 }
 */
-#if PLATFORM == 0
+#if JL_PLAT == JL_PLAT_COMPUTER
 uint8_t jl_ct_key_pressed(jl_t *pusr, uint8_t key) {
 	jvct_t* pjlc = pusr->pjlc;
 	if(pjlc->ct.keyDown[key] == 0) {

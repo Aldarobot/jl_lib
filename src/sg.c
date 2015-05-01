@@ -329,15 +329,16 @@ static inline float _jal5_sgrp_istm(jvct_t* pjlc) {
 		SDL_Delay(JL_MAIN_SAPT-pjlc->sg.processingTimeMillis);
 //		printf("[TIMING] fast: 1\n");
 		_sg_time_reset(pjlc);
-		return 1.f;
+		return 1.f / ((float)JL_MAIN_SFPS);
 	}else{
 		float frames =
-			(float)pjlc->sg.processingTimeMillis/
-			(float)JL_MAIN_SAPT;
-//		printf("[TIMING] slow: %d, %d, %f\n", processingTimeMillis,
-//			JL_MAIN_SAPT, frames);
+			((float)pjlc->sg.processingTimeMillis)/
+			((float)JL_MAIN_SAPT);
+/*		printf("[TIMING] slow: %f, %f, %f\n",
+			(float)pjlc->sg.processingTimeMillis,
+			(float)JL_MAIN_SAPT, frames);*/
 		_sg_time_reset(pjlc);
-		return frames;
+		return frames / ((float)JL_MAIN_SFPS);
 	}
 }
 

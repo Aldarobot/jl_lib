@@ -14,7 +14,7 @@ static void _jl_io_indt(jl_t* pusr) {
 
 void _jl_io_print_lowc(jl_t* pusr, const char * print) {
 	jvct_t *pjlc = pusr->pjlc;
-#if PLATFORM==0
+#if JL_PLAT == JL_PLAT_COMPUTER
 	int i;
 	if(pjlc->io.ofs2 > 0) {
 		_jl_io_indt(pusr);
@@ -138,7 +138,7 @@ void jl_io_print_lows(jl_t* pusr, strt print) {
 }
 
 void _jl_io_init(jvct_t * pjlc) {
-	#if PLATFORM == 1
+	#if JL_PLAT == JL_PLAT_PHONE
 	// Enable standard application logging
 	SDL_LogSetPriority(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_INFO);
 	#endif

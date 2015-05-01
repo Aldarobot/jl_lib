@@ -304,7 +304,7 @@ strt jl_fl_get_resloc(jl_t* pusr, strt pprg_name, strt pfilename) {
 	
 	jl_io_print_lowc(pusr, "Getting FileBase....\n");
 	
-	#if PLATFORM == 1 //PHONE
+	#if JL_PLAT == JL_PLAT_PHONE
 	jl_me_strt_merg(pusr, filebases, Strt(JLVM_FILEBASE));
 	jl_me_strt_merg(pusr, filebases, pprg_name);
 	jl_me_strt_merg(pusr, filebases, Strt("/"));
@@ -313,7 +313,7 @@ strt jl_fl_get_resloc(jl_t* pusr, strt pprg_name, strt pfilename) {
 	jl_me_strt_merg(pusr, errfs, Strt(JLVM_FILEBASE));
 	jl_me_strt_merg(pusr, errfs, Strt("errf.txt"));
 
-	#elif PLATFORM == 0 //COMPUTER
+	#elif JL_PLAT == JL_PLAT_COMPUTER
 	filebase = SDL_GetPrefPath("JLVM",(char *)pprg_name->data);
 	if(filebase == NULL) {
 		jl_me_strt_merg(pusr, filebases, Strt("JLVM/"));
@@ -338,7 +338,7 @@ strt jl_fl_get_resloc(jl_t* pusr, strt pprg_name, strt pfilename) {
 	#endif
 	
 	//filebase maker
-	#if PLATFORM == 1
+	#if JL_PLAT == JL_PLAT_PHONE
 	jl_fl_mkdir(pusr, Strt(JLVM_FILEBASE));
 	#else
 	jl_io_print_lowc(pusr, "FB2....\n");

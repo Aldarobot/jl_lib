@@ -20,7 +20,7 @@ typedef enum{
 
 /*screen being displayed ( on two screens which one on bottom, if keyboard is
 	being displayed on bottom screen then this will be displayed on top )*/
-uint8_t timeTilMessageVanish = 0;
+float timeTilMessageVanish = 0.f;
 
 char *GMessage[2] = {
 	"SWITCH SCREEN: UPPER",
@@ -367,10 +367,10 @@ static void _jl_gr_draw_icon(jl_t* pusr);
 	void _jl_gr_flip_scrn(jvct_t *pjlc) {
 		if(pjlc->sg.usrd->loop == JL_SG_WM_UP) {
 			pjlc->sg.usrd->loop = JL_SG_WM_DN;
-			timeTilMessageVanish = 255;
+			timeTilMessageVanish = 8.5f;
 		}else{
 			pjlc->sg.usrd->loop = JL_SG_WM_UP;
-			timeTilMessageVanish = 255;
+			timeTilMessageVanish = 8.5f;
 		}
 	}
 	
@@ -385,9 +385,9 @@ static void _jl_gr_draw_icon(jl_t* pusr);
 
 		_jl_gr_draw_icon(pusr);
 		jl_gr_draw_text(pusr, pjlc->dl.windowTitle[0],
-			pjlc->gr.menubar.iconx, 0., .05, 255);
+			pjlc->gr.menubar.iconx, pusr->smde * jl_dl_p(pusr), .05, 255);
 		jl_gr_draw_text(pusr, pjlc->dl.windowTitle[1],
-			pjlc->gr.menubar.iconx, .05, .05, 255);
+			pjlc->gr.menubar.iconx, (pusr->smde * jl_dl_p(pusr)) + .05, .05, 255);
 	}
 	
 	static void _jl_gr_menubar_slow(jl_t* pusr) {
@@ -395,8 +395,9 @@ static void _jl_gr_draw_icon(jl_t* pusr);
 		if(pjlc->sg.processingTimeMillis > JL_MAIN_SAPT) {
 			pjlc->gr.menubar.chr[pjlc->gr.menubar.cursor] =
 				JLGR_ID_SLOW_IMAGE;
-			sprintf(pjlc->dl.windowTitle[1], "%d/%d",
-				pjlc->sg.processingTimeMillis, JL_MAIN_SAPT);
+/*			sprintf(pjlc->dl.windowTitle[1], "%d/%d",
+				pjlc->sg.processingTimeMillis, JL_MAIN_SAPT);*/
+			sprintf(pjlc->dl.windowTitle[1], "%f", pusr->psec);
 		}else{
 			pjlc->gr.menubar.chr[pjlc->gr.menubar.cursor] =
 				JLGR_ID_GOOD_IMAGE;
@@ -435,7 +436,7 @@ static void _jl_gr_draw_icon(jl_t* pusr);
 		pusr->mouse->cb.x = pusr->mouse->r.x;
 		pusr->mouse->cb.y = pusr->mouse->r.y;
 	//if computer, draw mouse
-	#if PLATFORM == 0
+	#if JL_PLAT == JL_PLAT_COMPUTER
 		jl_gr_sprite_draw(pusr, pjlc->sg.usrd->mouse);
 	#endif
 	}
@@ -445,16 +446,17 @@ static void _jl_gr_draw_icon(jl_t* pusr);
 		jvct_t *pjlc = pusr->pjlc;
 		pjlc->gr.menuoverlay(pusr);
 	//Message Display
-		if(timeTilMessageVanish) {
-			if(timeTilMessageVanish > 127)
+		if(timeTilMessageVanish > 0.f) {
+			if(timeTilMessageVanish > 4.25)
 				jl_gr_draw_ctxt(pusr,
 					GMessage[pusr->loop == JL_SG_WM_DN],
 					0, 255);
 			else
 				jl_gr_draw_ctxt(pusr,
 					GMessage[pusr->loop == JL_SG_WM_DN],
-					0, timeTilMessageVanish * 2);	
-			timeTilMessageVanish--;
+					0, (uint8_t)
+					(timeTilMessageVanish * 255.f / 4.25));	
+			timeTilMessageVanish-=pusr->psec;
 		}
 	//Update mouse
 		pusr->mouse->loop((void*)pusr);

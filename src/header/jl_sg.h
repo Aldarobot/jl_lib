@@ -4,10 +4,12 @@
 */
 
 //Platform Declarations
+#define JL_PLAT_COMPUTER 0 //PC/MAC
+#define JL_PLAT_PHONE 1 //ANDROID/IPHONE
 #if defined(__IPHONEOS__) || defined(__ANDROID__)
-        #define PLATFORM 1 //ANDROID/IPHONE
+        #define JL_PLAT JL_PLAT_PHONE
 #else
-        #define PLATFORM 0 //PC/MAC
+        #define JL_PLAT JL_PLAT_COMPUTER
 #endif
 
 
