@@ -45,11 +45,11 @@ static void _jl_dl_fscreen(jvct_t* pjlc, uint8_t a) {
 static inline void jlvmpi_ini_sdl(jvct_t* pjlc) {
 	
 	#if JLVM_DEBUG >= JLVM_DEBUG_MINIMAL
-	jl_io_print_lowc(pjlc->sg.usrd, "Starting up...\n");
+	jl_io_printc(pjlc->sg.usrd, "Starting up...\n");
 	#endif
 	SDL_Init(JLVM_INIT);
 	#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
-	jl_io_print_lowc(pjlc->sg.usrd, "[JLVM] input...\n");
+	jl_io_printc(pjlc->sg.usrd, "[JLVM] input...\n");
 	#endif
 	#if JL_PLAT == JL_PLAT_COMPUTER
 	SDL_ShowCursor(SDL_DISABLE);
@@ -66,11 +66,12 @@ static void _jlvm_curd_mode(jvct_t *pjlc) {
 		jl_sg_die(pjlc, "\n");
 	}
 	#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
-	jl_io_print_lowc(pjlc->sg.usrd, "[JLVM/SRES]");
-	jl_io_print_lows(pjlc->sg.usrd, jl_me_strt_fnum(pjlc->dl.current.w));
-	jl_io_print_lowc(pjlc->sg.usrd, ",");
-	jl_io_print_lows(pjlc->sg.usrd, jl_me_strt_fnum(pjlc->dl.current.h));
-	jl_io_print_lowc(pjlc->sg.usrd, "\n");
+	jl_io_printc(pjlc->sg.usrd,
+		jl_me_string_fnum(pjlc->sg.usrd, pjlc->dl.current.w));
+	jl_io_printc(pjlc->sg.usrd, ",");
+	jl_io_printc(pjlc->sg.usrd,
+		jl_me_string_fnum(pjlc->sg.usrd, pjlc->dl.current.h));
+	jl_io_printc(pjlc->sg.usrd, "\n");
 	#endif
 }
 
@@ -217,7 +218,9 @@ void _jl_dl_init(jvct_t* pjlc) {
 }
 
 void _jl_dl_kill(jvct_t* pjlc) {
+	jl_io_printc(pjlc->sg.usrd, "killing SDL...\n");
 	if (pjlc->dl.glcontext != NULL) {
 		SDL_free(pjlc->dl.glcontext);
 	}
+	jl_io_printc(pjlc->sg.usrd, "killed SDL!\n");
 }

@@ -151,6 +151,17 @@ void jl_me_strt_trunc(jl_t *pusr, strt a, uint32_t size) {
 	a->data = _jl_me_hydd_allc(pusr->pjlc, a->data, a->size + 1);
 }
 
+char* jl_me_string_fnum(jl_t* pusr, int32_t a) {
+	char *string = malloc(30);
+	int i;
+	for(i = 0; i < 30; i++) {
+		string[i] = 0;
+	}
+	sprintf(string, "%d", a);
+//	string = _jl_me_hydd_allc(pusr->pjlc, string, strlen(string + 1));
+	return string;
+}
+
 //Print a number out as a string and return it (Type=STRT_TEMP)
 strt jl_me_strt_fnum(s32t a) {
 	strt new = jl_me_strt_make(30, STRT_TEMP);
@@ -202,11 +213,10 @@ jvct_t* _jl_me_init(void) {
 	//Prepare user data structure
 	jprg->sg.usrd = malloc(sizeof(jl_t));
 	jprg->sg.usrd->pjlc = jprg;
-	#if JLVM_DEBUG >= JLVM_DEBUG_INTENSE
-	printf("u %p, %p, c %p,%p\n",
+
+/*	printf("u %p, %p, c %p,%p\n",
 		jprg->sg.usrd, ((jvct_t *)(jprg->sg.usrd->pjlc))->sg.usrd,
-		jprg, jprg->sg.usrd->pjlc);
-	#endif
+		jprg, jprg->sg.usrd->pjlc);*/
 //	g_vmap_list = cl_list_create();
 	return jprg;
 }

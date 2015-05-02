@@ -42,6 +42,7 @@
 	void jl_me_strt_trunc(jl_t *pusr, strt a, uint32_t size);
 	
 	//Print a number out as a string and return it (Type=STRT_TEMP)
+	char* jl_me_string_fnum(jl_t* pusr, int32_t a);
 	strt jl_me_strt_fnum(s32t a);
 	
 	//Returns the byte at the cursor
@@ -139,14 +140,10 @@
 	void jl_io_close_block(jl_t* pusr);
 	void jl_io_tag_set(jl_t* pusr,
 		int16_t tag, uint8_t shouldprint, jl_io_print_fnt tagfn);
-
-	// Print "pstr" to the lowest level terminal [the one not drawn with
-	// SDL/OpenGL]
-	void jl_io_print_lows(jl_t* pusr, strt print);
-
-	// Print "pstr" to the lowest level terminal [the one not drawn with
-	// SDL/OpenGL]
-	void jl_io_print_lowc(jl_t* pusr, const char * print);
+	void jl_io_printc(jl_t* pusr, const char * print);
+	void jl_io_printt(jl_t *pusr, uint8_t a, const char *print);
+	void jl_io_printi(jl_t *pusr, int print);
+	void jl_io_printd(jl_t *pusr, double print);
 
 //FL
 	// Save A File To The File System.  Save Data of "bytes" bytes in "file" to

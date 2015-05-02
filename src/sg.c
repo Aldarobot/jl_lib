@@ -36,6 +36,7 @@
 	void _jl_dl_kill(jvct_t* pjlc);
 	void _jl_me_kill(jvct_t* jprg);
 	void _jl_fl_kill(jvct_t* pjlc);
+	void _jl_io_kill(jl_t* pusr);
 
 // Constants
 
@@ -130,10 +131,16 @@ void _jl_sg_load_jlpx(jvct_t* pjlc,uint8_t *data,void **pixels,int *w,int *h) {
 	jgr_img_t *image = NULL;
 	image = _jl_me_hydd_allc(pjlc, image, sizeof(jgr_img_t));
 	
+	jl_io_offset(pjlc->sg.usrd, "LOAD", JL_IO_TAG_PROGRESS-JL_IO_TAG_MAX);
+	jl_io_offset(pjlc->sg.usrd, "JLPX", JL_IO_TAG_PROGRESS-JL_IO_TAG_MAX);
+	
 	//Check If File Is Of Correct Format
-	printf("[SG/LOAD/JLPX] loading image - header@%d:%8s\n",
-		pjlc->sg.init_image_location,
-		data + pjlc->sg.init_image_location);
+	jl_io_printc(pjlc->sg.usrd, "loading image - header@");
+	jl_io_printi(pjlc->sg.usrd, pjlc->sg.init_image_location);
+	jl_io_printc(pjlc->sg.usrd,":");
+	jl_io_printt(pjlc->sg.usrd, 8, (char *)data
+		+pjlc->sg.init_image_location);
+	jl_io_printc(pjlc->sg.usrd,"\n");
 
 	char *testing = malloc(strlen(JL_IMG_HEADER)+1);
 	uint32_t i;
@@ -141,10 +148,12 @@ void _jl_sg_load_jlpx(jvct_t* pjlc,uint8_t *data,void **pixels,int *w,int *h) {
 	for(i = 0; i < strlen(JL_IMG_HEADER); i++) {
 		testing[i] = data[pjlc->sg.init_image_location+i];
 	}
-	testing[strlen(JL_IMG_HEADER)] = '\0';        
-	#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
-	printf("header:%s\n", testing);
-	#endif
+	testing[strlen(JL_IMG_HEADER)] = '\0';
+	jl_io_offset(pjlc->sg.usrd, "JLPX", JL_IO_TAG_SIMPLE-JL_IO_TAG_MAX);
+	jl_io_printc(pjlc->sg.usrd, "header:");
+	jl_io_printc(pjlc->sg.usrd, testing);
+	jl_io_printc(pjlc->sg.usrd, "\n");
+
 	if(strcmp(testing, JL_IMG_HEADER) != 0) {
 		_jl_fl_errf(pjlc, ":error: bad file type:\n:");
 		_jl_fl_errf(pjlc, testing);
@@ -156,21 +165,18 @@ void _jl_sg_load_jlpx(jvct_t* pjlc,uint8_t *data,void **pixels,int *w,int *h) {
 	int FSIZE; //The size of the file.
 	if(tester == 1) { //Normal Quality[Lowy]
 		FSIZE = IMG_SIZE_LOW;
-		#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
-		printf("normal quality\n");
-		#endif
+		jl_io_printc(pjlc->sg.usrd, "normal quality\n");
 	}else if(tester == 2) { //High Quality[Norm]
 		FSIZE = IMG_FORMAT_MED;
-		#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
-		printf("high quality\n");
-		#endif
+		jl_io_printc(pjlc->sg.usrd, "high quality\n");
 	}else if(tester == 3) { //Picture[High]
 		FSIZE = IMG_FORMAT_PIC;
-		#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
-		printf("pic quality\n");
-		#endif
+		jl_io_printc(pjlc->sg.usrd, "pic quality\n");
 	}else{
-		printf("bad file type(must be 1,2 or 3) is: %d\n", tester);
+		jl_io_offset(pjlc->sg.usrd, "JLPX", JL_IO_TAG_MINIMAL-JL_IO_TAG_MAX);
+		jl_io_printc(pjlc->sg.usrd, "bad file type(must be 1,2 or 3) is: ");
+		jl_io_printi(pjlc->sg.usrd, tester);
+		jl_io_printc(pjlc->sg.usrd, "\n");
 		jl_sg_die(pjlc, ":bad file type(must be 1,2 or 3)\n");
 	}
 	uint32_t ki;
@@ -185,18 +191,24 @@ void _jl_sg_load_jlpx(jvct_t* pjlc,uint8_t *data,void **pixels,int *w,int *h) {
 		image->key[i].a = data[pjlc->sg.init_image_location+ki];
 		ki++;
 	}
-	#if JLVM_DEBUG >= JLVM_DEBUG_INTENSE
-	printf("[JLVM/KEYYYY] %d,%d,%d,%d\n", image->key[0].r, image->key[0].g, image->key[0].b, image->key[0].a);
-	#endif
+	jl_io_offset(pjlc->sg.usrd, "JLPX", JL_IO_TAG_INTENSE-JL_IO_TAG_MAX);
+	jl_io_printc(pjlc->sg.usrd, "Key: ");
+	jl_io_printi(pjlc->sg.usrd, image->key[0].r);
+	jl_io_printc(pjlc->sg.usrd, ", ");
+	jl_io_printi(pjlc->sg.usrd, image->key[0].g);
+	jl_io_printc(pjlc->sg.usrd, ", ");
+	jl_io_printi(pjlc->sg.usrd, image->key[0].b);
+	jl_io_printc(pjlc->sg.usrd, ", ");
+	jl_io_printi(pjlc->sg.usrd, image->key[0].a);
+	jl_io_printc(pjlc->sg.usrd, "\n");
 	for(i = 0; i < TEXTURE_WH; i++) {
 		image->tex_pixels[i] = data[pjlc->sg.init_image_location+ki];
 		ki++;
 	}
 	// Don't comment out this line!!!! it will cause an endless freeze!
 	pjlc->sg.init_image_location+=FSIZE+1;
-	#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
-	printf("[JLVM/LIMG/JLPX] creating texture...\n");
-	#endif
+	jl_io_offset(pjlc->sg.usrd, "JLPX", JL_IO_TAG_SIMPLE-JL_IO_TAG_MAX);
+	jl_io_printc(pjlc->sg.usrd, "creating texture...\n");
 
 	uint8_t *tex_pixels = NULL;
 	//R(1)+G(1)+B(1)+A(1) = 4
@@ -217,6 +229,9 @@ void _jl_sg_load_jlpx(jvct_t* pjlc,uint8_t *data,void **pixels,int *w,int *h) {
 	h[0] = a[1];
 	//Cleanup
 	free(image);
+	
+	jl_io_close_block(pjlc->sg.usrd); //Close Block "JLPX"
+	jl_io_close_block(pjlc->sg.usrd); //Close Block "LOAD"
 }
 
 //loads next image in the currently loaded file.
@@ -224,53 +239,64 @@ static inline uint8_t _jl_sg_load_next_img(jvct_t * pjlc) {
 	void *fpixels = NULL;
 	int fw;
 	int fh;
+	jl_io_offset(pjlc->sg.usrd, "IMGS", JL_IO_TAG_PROGRESS-JL_IO_TAG_MAX);
 	_jl_sg_load_jlpx(pjlc, pjlc->sg.image_data, &fpixels, &fw, &fh);
+	jl_io_printc(pjlc->sg.usrd, "{IMGS}\n");
 	if(fpixels == NULL) {
-//		#if JLVM_DEBUG >= JLVM_DEBUG_PROGRESS
-		printf("[JLVM/LIMG/JLPX] loaded %d images!\n",
-			pjlc->sg.image_id);
-//		#endif
+		jl_io_printc(pjlc->sg.usrd, "loaded ");
+		jl_io_printi(pjlc->sg.usrd, pjlc->sg.image_id);
+		jl_io_printc(pjlc->sg.usrd, "images!\n");
 		pjlc->sg.usrd->info = pjlc->sg.image_id;
+		jl_io_close_block(pjlc->sg.usrd); //Close Block "IMGS"
+		jl_io_printc(pjlc->sg.usrd, "IL\n");
 		return 0;
 	}else{
 		jl_gl_maketexture(pjlc->sg.usrd, pjlc->sg.igid,
 			pjlc->sg.image_id, fpixels, 1024, 1024);
-//		#if JLVM_DEBUG >= JLVM_DEBUG_PROGRESS
-		printf("[JLVM/LIMG/JLPX] created image #%d:%d!\n",
-			pjlc->sg.igid, pjlc->sg.image_id);
+		jl_io_printc(pjlc->sg.usrd, "created image #");
+		jl_io_printi(pjlc->sg.usrd, pjlc->sg.igid);
+		jl_io_printc(pjlc->sg.usrd, ":");
+		jl_io_printi(pjlc->sg.usrd, pjlc->sg.image_id);
+		jl_io_printc(pjlc->sg.usrd, "!\n");
 //		#endif
 		pjlc->sg.image_id++;
+		jl_io_close_block(pjlc->sg.usrd); //Close Block "IMGS"
+		jl_io_printc(pjlc->sg.usrd, "IL____\n");
 		return 1;
 	}
 }
 
 //Load the images in the image file
 static inline void _jl_sg_init_images(jvct_t * pjlc, uint8_t *data, uint16_t p){
+	char *stringlength;
+
 	pjlc->sg.init_image_location = 0;
 	pjlc->sg.image_id= 0; //Reset Image Id
 	pjlc->sg.igid = p;
 	pjlc->sg.image_data = data;
-//	#if JLVM_DEBUG >= JLVM_DEBUG_PROGRESS
-	//jl_io_offset(pjlc->sg.usrd, "INIM");
-	printf("[JLVM/LIM] loading images...\n");
-	printf("lne %d\n", (int)strlen((void *)data));
-//	#endif
+
+	jl_io_offset(pjlc->sg.usrd, "INIM", JL_IO_TAG_PROGRESS-JL_IO_TAG_MAX);
+	jl_io_printc(pjlc->sg.usrd, "loading images...\n");
+	jl_io_offset(pjlc->sg.usrd, "INIM", JL_IO_TAG_SIMPLE-JL_IO_TAG_MAX);
+	stringlength = jl_me_string_fnum(pjlc->sg.usrd, (int)strlen((void *)data));
+	jl_io_printc(pjlc->sg.usrd, "lne ");
+	jl_io_printc(pjlc->sg.usrd, stringlength);
+	jl_io_printc(pjlc->sg.usrd, "\n");
+	free(stringlength);
+	jl_io_close_block(pjlc->sg.usrd); //Close Block "INIM"
 //load textures
-//	_jl_sg_load_next_img(pjlc);
 	while(_jl_sg_load_next_img(pjlc));
 }
 
 static uint32_t jlvm_quit(jvct_t* pjlc, int rc) {
 	jl_gr_draw_msge(pjlc->sg.usrd, "QUITING JLLIB....");
-	#if JLVM_DEBUG >= JLVM_DEBUG_MINIMAL
 	_jl_fl_errf(pjlc, ":Quitting....\n"); //Exited properly
-	#endif
+	jl_io_offset(pjlc->sg.usrd, "KILL", JL_IO_TAG_SIMPLE-JL_IO_TAG_MAX);
 	_jl_dl_kill(pjlc);
-	_jl_me_kill(pjlc);
 	_jl_fl_kill(pjlc);
-	#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
 	_jl_fl_errf(pjlc, ":No Error! YAY!\n"); //Exited properly
-	#endif
+	_jl_io_kill(pjlc->sg.usrd);
+	_jl_me_kill(pjlc);
 	exit(rc);
 	_jl_fl_errf(pjlc, ":What The Hell?  This is an impossible error!\n");
 	return 105;
@@ -279,7 +305,7 @@ static uint32_t jlvm_quit(jvct_t* pjlc, int rc) {
 //Quit, And Return -1 to show there was an error, also save message in errf.text
 static void jlvm_erqt(jvct_t* pjlc, char *msg) {
 	jl_io_offset(pjlc->sg.usrd, "ERQT", JL_IO_TAG_INTENSE-JL_IO_TAG_MAX);
-	jl_io_print_lowc(pjlc->sg.usrd, msg);
+	jl_io_printc(pjlc->sg.usrd, msg);
 	_jl_fl_errf(pjlc, msg);
 	jlvm_quit(pjlc, -1);
 	jl_io_close_block(pjlc->sg.usrd); //Close Block "ERQT"
@@ -356,12 +382,13 @@ void jl_sg_add_image(jl_t* pusr, char *pzipfile, uint16_t pigid) {
 	uint8_t *img = jl_fl_media(pusr, "jlex/2/_img", pzipfile,
 		jal5_head_jlvm(), jal5_head_size());
 
-	jl_io_print_lowc(pusr, "Loading Images...\n");
+	jl_io_printc(pusr, "Loading Images...\n");
 	if(img != NULL)
 		_jl_sg_init_images(pusr->pjlc, img, pigid);
 	else
-		jl_io_print_lowc(pusr, "Loaded 0 images!\n");
-	jl_io_print_lowc(pusr, "Loaded Images...\n");
+		jl_io_printc(pusr, "Loaded 0 images!\n");
+	jl_io_offset(pusr, "LIMG", JL_IO_TAG_PROGRESS-JL_IO_TAG_MAX);
+	jl_io_printc(pusr, "Loaded Images...\n");
 	jl_io_close_block(pusr); //Close Block "LIMG"
 }
 
@@ -429,9 +456,7 @@ void _jl_sg_loop(jl_t* pusr) {
 
 static inline void _jl_sg_init_done(jvct_t *pjlc) {
 	jl_gr_draw_msge(pjlc->sg.usrd, "LOADING JLLIB....");
-	#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
-	jl_io_print_lowc(pjlc->sg.usrd, "started up display.\n");
-	#endif
+	jl_io_printc(pjlc->sg.usrd, "started up display.\n");
 }
 
 //The Libraries Needed At Very Beginning: The Base Of It All
@@ -459,24 +484,24 @@ static inline void _jlvm_init_libs(jvct_t *pjlc) {
 static inline void jlvm_ini(jvct_t *pjlc) {
 	//Open Block "JLVM" (Minimal)
 	jl_io_offset(pjlc->sg.usrd, "JLVM", JL_IO_TAG_MINIMAL-JL_IO_TAG_MAX);
-	jl_io_print_lowc(pjlc->sg.usrd, "Initializing...\n");
+	jl_io_printc(pjlc->sg.usrd, "Initializing...\n");
 	_jlvm_init_libs(pjlc);
 	hack_user_init(pjlc->sg.usrd);
 
 	//Change Block "JLVM" to SIMPLE
 	jl_io_offset(pjlc->sg.usrd, "JLVM", JL_IO_TAG_SIMPLE-JL_IO_TAG_MAX);
-	jl_io_print_lowc(pjlc->sg.usrd, "Init5...\n");
+	jl_io_printc(pjlc->sg.usrd, "Init5...\n");
 //	jlvm_ini_memory_allocate();
 
 	//Change Block "JLVM" Back to MINIMAL
 	jl_io_offset(pjlc->sg.usrd, "JLVM", JL_IO_TAG_MINIMAL-JL_IO_TAG_MAX);
-	jl_io_print_lowc(pjlc->sg.usrd, "Initialized!\n");
+	jl_io_printc(pjlc->sg.usrd, "Initialized!\n");
 }
 
 int32_t main(int argc, char *argv[]) {
 	jvct_t* pjlc = _jlvm_init_blib(); //Set Up Memory And Logging
 	#if JLVM_DEBUG >= JLVM_DEBUG_MINIMAL
-	jl_io_print_lowc(pjlc->sg.usrd, "STARTING JLVM V-3.2.0-e0....\n");
+	jl_io_printc(pjlc->sg.usrd, "STARTING JLVM V-3.2.0-e0....\n");
 	#endif
 	jlvm_ini(pjlc);//initialize
 	_jl_fl_errf(pjlc, ":going into loop....\n");

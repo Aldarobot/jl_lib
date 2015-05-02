@@ -216,6 +216,10 @@ void jl_gl_maketexture(jl_t* pusr, uint16_t gid, uint16_t id,
 	void *pixels, int width, int height)
 {
 	jvct_t *pjlc = pusr->pjlc;
+	char *hstr;
+	char *wstr;
+	
+	jl_io_offset(pjlc->sg.usrd, "MKTX", JL_IO_TAG_SIMPLE-JL_IO_TAG_MAX);
 	if (!pixels)
 		jl_sg_die(pjlc, "null pixels");
 	if (pjlc->gl.allocatedg < gid + 1) {
@@ -238,16 +242,12 @@ void jl_gl_maketexture(jl_t* pusr, uint16_t gid, uint16_t id,
 				sizeof(GLint) * (id+1));
 		pjlc->gl.allocatedi = id + 1;
 	}
-	#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
-	printf("generating texture...");
-	#endif
+	jl_io_printc(pjlc->sg.usrd, "generating texture...");
 	glGenTextures(1, &pjlc->gl.textures[gid][id]);
 	_jl_gl_cerr(pjlc, 0,"gen textures");
 	glBindTexture(GL_TEXTURE_2D, pjlc->gl.textures[gid][id]);
 	_jl_gl_cerr(pjlc, 0,"bind textures");
-	#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
-	printf("settings pars...");
-	#endif
+	jl_io_printc(pjlc->sg.usrd, "settings pars...");
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	_jl_gl_cerr(pjlc, 0,"glTexParameteri");
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -257,9 +257,17 @@ void jl_gl_maketexture(jl_t* pusr, uint16_t gid, uint16_t id,
 	_jl_gl_cerr(pjlc, 2,"glTexParameteri");
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	_jl_gl_cerr(pjlc, 3,"glTexParameteri");
-	#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
-	printf("wh:%d,%d\n", width, height);
-	#endif
+
+	hstr = jl_me_string_fnum(pjlc->sg.usrd, height);
+	wstr = jl_me_string_fnum(pjlc->sg.usrd, width);
+	jl_io_printc(pjlc->sg.usrd, "wh:");
+	jl_io_printc(pjlc->sg.usrd, wstr);
+	jl_io_printc(pjlc->sg.usrd, ",");
+	jl_io_printc(pjlc->sg.usrd, hstr);
+	jl_io_printc(pjlc->sg.usrd, "\n");
+	free(hstr);
+	free(wstr);
+
 	glTexImage2D(
 		GL_TEXTURE_2D, 0,		/* target, level */
 		GL_RGBA,			/* internal format */
@@ -274,6 +282,7 @@ void jl_gl_maketexture(jl_t* pusr, uint16_t gid, uint16_t id,
 		_jl_gl_cerr(pjlc, 0,"BADT");
 		jl_sg_die(pjlc, ":Bad Texture, but no gl error? WHY!?\n");
 	}
+	jl_io_close_block(pjlc->sg.usrd); //Close Block "MKTX"
 }
 
 //Lower Level Stuff
@@ -447,48 +456,50 @@ void _jl_gl_geta(jvct_t *pjlc, GLuint prg, s32t *attrib, const char *title) {
 
 //Load and create all resources
 static inline void _jl_gl_make_res(jvct_t *pjlc) {
+	jl_io_offset(pjlc->sg.usrd, "GLIN", JL_IO_TAG_SIMPLE-JL_IO_TAG_MAX);
 	//set up opengl
 	//TODO:Later, Add Implementation with this enabled
-	printf("setting properties...\n");
+	jl_io_printc(pjlc->sg.usrd, "setting properties...\n");
 	glDisable( GL_DEPTH_TEST);
 	_jl_gl_cerr(pjlc, 0, "glDisable(GL_DEPTH_TEST)");
 	glDisable( GL_DITHER );
 	_jl_gl_cerr(pjlc, 0, "glDisable(GL_DITHER)");
 	glEnable( GL_BLEND );
 	_jl_gl_cerr(pjlc, 0, "glEnable(GL_BLEND)");
-	printf("set glproperties.\n");
+	jl_io_printc(pjlc->sg.usrd, "set glproperties.\n");
 	//Create the temporary buffers.
-	printf("creating buffers....\n");
+	jl_io_printc(pjlc->sg.usrd, "creating buffers....\n");
 	__jl_gl_buff_make(pjlc, &pjlc->gl.temp_buff_vrtx); 
 	__jl_gl_buff_make(pjlc, &pjlc->gl.temp_buff_txtr);
 	if(pjlc->gl.temp_buff_vrtx == 0 || pjlc->gl.temp_buff_txtr == 0) {
 		jl_sg_die(pjlc,	"buffer is made wrongly.");
 	}
-	printf("created buffers.\n");
+	jl_io_printc(pjlc->sg.usrd, "created buffers.\n");
 
-	printf("making GLSL programs....\n");
+	jl_io_printc(pjlc->sg.usrd, "making GLSL programs....\n");
 	pjlc->gl.prgs[JL_GL_SLPR_TEX] = createProgram(pjlc, source_vert_tex, source_frag_tex);
 	pjlc->gl.prgs[JL_GL_SLPR_CLR] = createProgram(pjlc, source_vert_clr, source_frag_clr);
-	printf("made programs.\n");
+	jl_io_printc(pjlc->sg.usrd, "made programs.\n");
 
-	printf("setting up shaders....\n");
+	jl_io_printc(pjlc->sg.usrd, "setting up shaders....\n");
 	if(pjlc->gl.uniforms.textures == NULL)
 		jl_sg_die(pjlc, "Couldn't create uniforms");
 	pjlc->gl.uniforms.textures[0][0] =
 		_jl_gl_getu(pjlc, pjlc->gl.prgs[JL_GL_SLPR_TEX], "texture");
 	pjlc->gl.uniforms.multiply_alpha =
 		_jl_gl_getu(pjlc, pjlc->gl.prgs[JL_GL_SLPR_TEX], "multiply_alpha");
-	printf("setting up tex shader attrib's....\n");
+	jl_io_printc(pjlc->sg.usrd, "setting up tex shader attrib's....\n");
 	_jl_gl_geta(pjlc, pjlc->gl.prgs[JL_GL_SLPR_TEX],
 		&pjlc->gl.attr.tex.position, "position");
 	_jl_gl_geta(pjlc, pjlc->gl.prgs[JL_GL_SLPR_TEX],
 		&pjlc->gl.attr.tex.texpos, "texpos");
-	printf("setting up clr shader attrib's....\n");
+	jl_io_printc(pjlc->sg.usrd, "setting up clr shader attrib's....\n");
 	_jl_gl_geta(pjlc, pjlc->gl.prgs[JL_GL_SLPR_CLR],
 		&pjlc->gl.attr.clr.position, "position");
 	_jl_gl_geta(pjlc, pjlc->gl.prgs[JL_GL_SLPR_CLR],
 		&pjlc->gl.attr.clr.acolor, "acolor");
-	printf("set up shaders.\n");
+	jl_io_printc(pjlc->sg.usrd, "set up shaders.\n");
+	jl_io_close_block(pjlc->sg.usrd); //Close Block "GLIN"
 }
 
 void _jl_gl_init(jvct_t *pjlc) {

@@ -6,18 +6,18 @@
 
 printf "[COMP] compiling separate jl_lib object files....\n"
 #BLIBS
-gcc src/me.c -c -o ../../obj/jl_lib/me.o $(sdl2-config --cflags) -Wall #1
-gcc src/cl.c -c -o ../../obj/jl_lib/cl.o $(sdl2-config --cflags) -Wall #2
-gcc src/io.c -c -o ../../obj/jl_lib/io.o $(sdl2-config --cflags) -Wall #3
-gcc src/fl.c -c -o ../../obj/jl_lib/fl.o $(sdl2-config --cflags) -Wall #4
-gcc src/cm.c -c -o ../../obj/jl_lib/cm.o $(sdl2-config --cflags) -Wall #5
-gcc src/ct.c -c -o ../../obj/jl_lib/ct.o $(sdl2-config --cflags) -Wall #6
-gcc src/sg.c -c -o ../../obj/jl_lib/sg.o $(sdl2-config --cflags) -Wall #7
-gcc src/dl.c -c -o ../../obj/jl_lib/dl.o $(sdl2-config --cflags) -Wall #8
-gcc src/gl.c -c -o ../../obj/jl_lib/gl.o $(sdl2-config --cflags) -Wall #9
-gcc src/gr.c -c -o ../../obj/jl_lib/gr.o $(sdl2-config --cflags) -Wall #10
-gcc src/vi.c -c -o ../../obj/jl_lib/vi.o $(sdl2-config --cflags) -Wall #11
-gcc src/au.c -c -o ../../obj/jl_lib/au.o $(sdl2-config --cflags) -Wall #12
+gcc src/me.c -c -o ../../obj/jl_lib/me.o $(sdl2-config --cflags) -Wall -g #1
+gcc src/cl.c -c -o ../../obj/jl_lib/cl.o $(sdl2-config --cflags) -Wall -g #2
+gcc src/io.c -c -o ../../obj/jl_lib/io.o $(sdl2-config --cflags) -Wall -g #3
+gcc src/fl.c -c -o ../../obj/jl_lib/fl.o $(sdl2-config --cflags) -Wall -g #4
+gcc src/cm.c -c -o ../../obj/jl_lib/cm.o $(sdl2-config --cflags) -Wall -g #5
+gcc src/ct.c -c -o ../../obj/jl_lib/ct.o $(sdl2-config --cflags) -Wall -g #6
+gcc src/sg.c -c -o ../../obj/jl_lib/sg.o $(sdl2-config --cflags) -Wall -g #7
+gcc src/dl.c -c -o ../../obj/jl_lib/dl.o $(sdl2-config --cflags) -Wall -g #8
+gcc src/gl.c -c -o ../../obj/jl_lib/gl.o $(sdl2-config --cflags) -Wall -g #9
+gcc src/gr.c -c -o ../../obj/jl_lib/gr.o $(sdl2-config --cflags) -Wall -g #10
+gcc src/vi.c -c -o ../../obj/jl_lib/vi.o $(sdl2-config --cflags) -Wall -g #11
+gcc src/au.c -c -o ../../obj/jl_lib/au.o $(sdl2-config --cflags) -Wall -g #12
 #####
 
 printf "[COMP] compiling singular jl_lib object file....\n"

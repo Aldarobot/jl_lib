@@ -463,6 +463,7 @@ static void _jl_gr_draw_icon(jl_t* pusr);
 	}
 
 	void _jl_gr_init(jvct_t *pjlc) {
+		jl_io_offset(pjlc->sg.usrd, "GRIN", JL_IO_TAG_SIMPLE-JL_IO_TAG_MAX);
 		pjlc->gr.menuoverlay = _jl_gr_menubar;
 		pjlc->sg.usrd->mouse = jl_gr_sprite_make(
 			pjlc->sg.usrd, 0, 0, 254, 255, //G,I,C,A
@@ -471,14 +472,12 @@ static void _jl_gr_draw_icon(jl_t* pusr);
 		pjlc->sg.usrd->mouse->cb.w = 0.f;
 		pjlc->sg.usrd->mouse->cb.h = 0.f;
 		//Taskbar
-		#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
-		printf("[JLVM/LIM] loading taskbar...\n");
-		#endif
-		
+		jl_io_printc(pjlc->sg.usrd, "loading taskbar...\n");
 		int i;
 		for(i = 0; i < 10; i++) {
 			pjlc->gr.menubar.chr[i] = JLGR_ID_NULL;
 		}
-		printf("[JLVM/LIM] loaded taskbar!\n");
+		jl_io_printc(pjlc->sg.usrd, "loaded taskbar!\n");
+		jl_io_close_block(pjlc->sg.usrd); //Close Block "GRIN"
 	}
 /** @endcond **/
