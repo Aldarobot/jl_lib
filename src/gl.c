@@ -359,16 +359,66 @@ void _jl_gl_drra(jvct_t *pjlc, uint8_t count) {
 	_jl_gl_cerr(pjlc, 0,"glDrawArrays");
 }
 
+static void _jl_gl_vrtx_updatevectors(jvct_t *pjlc, uint8_t *update,
+	GLint* transform, GLint* cliprange, GLint* position)
+{
+	_jl_gl_setv(pjlc, *position, 3);
+	if(*update == 1) {
+		glUniform4f(*transform,
+			pjlc->gl.transform.x, pjlc->gl.transform.y,
+			pjlc->gl.transform.w, pjlc->gl.transform.h);
+		glUniform4f(*cliprange,
+			pjlc->gl.cliprange.x, pjlc->gl.cliprange.y,
+			pjlc->gl.cliprange.w, pjlc->gl.cliprange.h);
+		*update = 0;
+	}
+}
+
+static void _jl_gl_updatetex(jvct_t *pjlc) {
+//	jl_gl_setp(pjlc, JL_GL_SLPR_TEX);
+	_jl_gl_vrtx_updatevectors(pjlc, &pjlc->gl.update,
+		&pjlc->gl.uniforms.transform,
+		&pjlc->gl.uniforms.cliprange,
+		&pjlc->gl.attr.tex.position);
+}
+
+static void _jl_gl_updateclr(jvct_t *pjlc) {
+//	jl_gl_setp(pjlc, JL_GL_SLPR_CLR);
+	_jl_gl_vrtx_updatevectors(pjlc, &pjlc->gl.update2,
+		&pjlc->gl.uniforms.transformclr,
+		&pjlc->gl.uniforms.cliprangeclr,
+		&pjlc->gl.attr.clr.position);	
+}
+
+static void _jl_gl_updatevectors(jvct_t *pjlc) {
+	if(pjlc->gl.whichprg == JL_GL_SLPR_TEX) {
+		_jl_gl_updatetex(pjlc);
+	}else if(pjlc->gl.whichprg == JL_GL_SLPR_CLR){
+		_jl_gl_updateclr(pjlc);
+	}
+}
+
 void jl_gl_setp(jvct_t *pjlc, jl_gl_slpr id) {
 	if(pjlc->gl.whichprg != id) {
 		pjlc->gl.whichprg = id;
 		_jl_gl_usep(pjlc, pjlc->gl.prgs[id]);
 	}
+	_jl_gl_updatevectors(pjlc);
 }
 
 void _jl_gl_setmatrix(jvct_t *pjlc) {
 	pjlc->gl.update = 1;
 	pjlc->gl.update2 = 1;
+	pjlc->gl.cliprange.x = 0.+(pjlc->dl.shiftx/pjlc->dl.multiplyx);
+	pjlc->gl.cliprange.y = 1.+(pjlc->dl.shiftx/pjlc->dl.multiplyx);
+	pjlc->gl.cliprange.w = 0.+(pjlc->dl.shifty/pjlc->dl.multiplyy);
+	pjlc->gl.cliprange.h = (-(jl_dl_p(pjlc->sg.usrd) *
+			(pjlc->sg.usrd->smde + 1)))+
+		(pjlc->dl.shifty/pjlc->dl.multiplyy);
+	pjlc->gl.transform.x = pjlc->dl.multiplyx;
+	pjlc->gl.transform.y = pjlc->dl.multiplyy;
+	pjlc->gl.transform.w = 2.;
+	pjlc->gl.transform.h = 1.;
 }
 
 //HIGHER LEVEL
@@ -402,33 +452,7 @@ void jl_gl_vrtx(jvct_t *pjlc, u08t vertices, dect *xyzw) {
 	_jl_gl_buff_data(pjlc, pjlc->gl.temp_buff_vrtx,
 		pjlc->gl.buff_vert, vertices * 3);
 	//
-	if(pjlc->gl.whichprg == JL_GL_SLPR_TEX) {
-		_jl_gl_setv(pjlc, pjlc->gl.attr.tex.position, 3);
-		if(pjlc->gl.update == 1) {
-			pjlc->gl.update = 0;
-			glUniform4f(pjlc->gl.uniforms.transform, pjlc->dl.multiplyx,
-				pjlc->dl.multiplyy, 2., 1.);
-			glUniform4f(pjlc->gl.uniforms.cliprange,
-				0.+(pjlc->dl.shiftx/pjlc->dl.multiplyx),
-				1.+(pjlc->dl.shiftx/pjlc->dl.multiplyx),
-				0.+(pjlc->dl.shifty/pjlc->dl.multiplyy),
-				(-jl_dl_p(pjlc->sg.usrd) - pjlc->gl.ytrans)+
-					(pjlc->dl.shifty/pjlc->dl.multiplyy));
-		}
-	}else if(pjlc->gl.whichprg == JL_GL_SLPR_CLR){
-		_jl_gl_setv(pjlc, pjlc->gl.attr.clr.position, 3);
-		if(pjlc->gl.update2 == 1) {
-			glUniform4f(pjlc->gl.uniforms.transformclr, pjlc->dl.multiplyx,
-				pjlc->dl.multiplyy, 2., 1.);
-			glUniform4f(pjlc->gl.uniforms.cliprangeclr,
-				0.+(pjlc->dl.shiftx/pjlc->dl.multiplyx),
-				1.+(pjlc->dl.shiftx/pjlc->dl.multiplyx),
-				0.+(pjlc->dl.shifty/pjlc->dl.multiplyy),
-				(-jl_dl_p(pjlc->sg.usrd) - pjlc->gl.ytrans)+
-					(pjlc->dl.shifty/pjlc->dl.multiplyy));
-			pjlc->gl.update2 = 0;
-		}
-	}
+	_jl_gl_updatevectors(pjlc);
 }
 
 void jl_gl_clrs(jvct_t *pjlc, float *rgba) {
@@ -528,7 +552,7 @@ static inline void _jl_gl_make_res(jvct_t *pjlc) {
 	if(pjlc->gl.temp_buff_vrtx == 0 || pjlc->gl.temp_buff_txtr == 0) {
 		jl_sg_die(pjlc,	"buffer is made wrongly.");
 	}
-	pjlc->gl.update = 1;
+
 	jl_io_printc(pjlc->sg.usrd, "created buffers.\n");
 
 	jl_io_printc(pjlc->sg.usrd, "making GLSL programs....\n");
@@ -547,7 +571,6 @@ static inline void _jl_gl_make_res(jvct_t *pjlc) {
 		_jl_gl_getu(pjlc, pjlc->gl.prgs[JL_GL_SLPR_TEX], "transform");
 	pjlc->gl.uniforms.transformclr =
 		_jl_gl_getu(pjlc, pjlc->gl.prgs[JL_GL_SLPR_CLR], "transform");
-		
 	pjlc->gl.uniforms.cliprange =
 		_jl_gl_getu(pjlc, pjlc->gl.prgs[JL_GL_SLPR_TEX], "cliprange");
 	pjlc->gl.uniforms.cliprangeclr =
@@ -564,6 +587,7 @@ static inline void _jl_gl_make_res(jvct_t *pjlc) {
 	_jl_gl_geta(pjlc, pjlc->gl.prgs[JL_GL_SLPR_CLR],
 		&pjlc->gl.attr.clr.acolor, "acolor");
 	jl_io_printc(pjlc->sg.usrd, "set up shaders.\n");
+//	_jl_gl_setmatrix(pjlc);
 	jl_io_close_block(pjlc->sg.usrd); //Close Block "GLIN"
 }
 

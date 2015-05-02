@@ -266,9 +266,7 @@ static inline void _jal5_jl_ct_hndl(jvct_t *pjlc) {
 			if( pjlc->ct.event.key.keysym.scancode ==
 				SDL_SCANCODE_AC_BACK)
 			{ //Back Key
-				#if JLVM_DEBUG >= JLVM_DEBUG_MINIMAL
-				jl_io_print_lowc(pjlc->sg.usrd,"JLVM sêȳ'ēŋ: \"a'kwyt'ēŋ\"");
-				#endif
+				jl_io_printc(pjlc->sg.usrd,"JLVM sêȳ'ēŋ: \"a'kwyt'ēŋ\"");
 				exit(0);
 			}else{ //Menu Key
 				pjlc->ct.menu = 1;

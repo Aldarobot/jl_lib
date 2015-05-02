@@ -208,13 +208,16 @@ void jl_dl_progname(jl_t* pusr, strt name) {
 #endif
 }
 
-void _jl_dl_init(jvct_t* pjlc) {
+void _jl_dl_inita(jvct_t* pjlc) {
 	jlvmpi_ini_sdl(pjlc);
 	_jlvm_curd_mode(pjlc); //Get Information On How Big To Make Window
 	_jlvm_crea_wind(pjlc); //Create Window With SDL
 	#if JL_PLAT == JL_PLAT_PHONE //If Phone (For Reorientation)
 	_jlvm_curd_mode(pjlc);
 	#endif
+}
+
+void _jl_dl_initb(jvct_t* pjlc) {
 	//Update viewport to fix any rendering glitches
 	_jal5_lsdl_glpt_view(pjlc, pjlc->dl.current.w, pjlc->dl.current.h);
 	_jl_dl_loop(pjlc);

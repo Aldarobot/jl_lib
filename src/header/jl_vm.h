@@ -32,8 +32,6 @@
 	typedef struct{
 		jl_t * usrd;
 		__sg_mode_t *mdes; //Array Sizof Number Of Modes
-		int32_t xmse;
-		int32_t ymse;
 		
 		uint32_t taskbar[5];
 		uint32_t init_image_location;
@@ -130,6 +128,9 @@
 
 		float buff_vert[255*3];
 		float ytrans;
+		
+		jl_rect_t cliprange;
+		jl_rect_t transform;
 	}_gl_t;
 	
 	typedef struct {

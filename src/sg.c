@@ -22,7 +22,8 @@
 	void _jl_ct_init(jvct_t* pjlc);
 	void _jl_gl_init(jvct_t* pjlc);
 	void _jl_io_init(jvct_t* pjlc);
-	void _jl_dl_init(jvct_t* pjlc);
+	void _jl_dl_inita(jvct_t* pjlc);
+	void _jl_dl_initb(jvct_t* pjlc);
 	jvct_t* _jl_me_init(void);
 
 	//LIB LOOPS: parameter is context
@@ -400,7 +401,6 @@ static inline void _jl_sg_initb(jvct_t * pjlc) {
 	pjlc->sg.mdes = NULL;
 	pjlc->sg.usrd->loop = JL_SG_WM_TERM; //Set Default Window To Terminal
 	pjlc->sg.prev_tick = 0;
-	SDL_GetMouseState(&pjlc->sg.xmse, &pjlc->sg.ymse);
 }
 
 static inline void _jl_sg_inita(jvct_t * pjlc) {
@@ -469,15 +469,16 @@ static inline jvct_t* _jlvm_init_blib(void) {
 }
 
 static inline void _jlvm_init_libs(jvct_t *pjlc) {
-	_jl_dl_init(pjlc); //create the window.
+	_jl_dl_inita(pjlc); //create the window.
 	_jl_fl_inita(pjlc); //prepare for loading media packages.
 	_jl_sg_inita(pjlc); //Load default graphics from package.
 	_jl_gl_init(pjlc); //Drawing Set-up
+	_jl_dl_initb(pjlc); //update viewport.
 	_jl_sg_init_done(pjlc); //Draw "loading jl_lib" on the screen.
+	_jl_ct_init(pjlc); //Prepare to read input.
 	_jl_sg_initb(pjlc);
 	_jl_fl_initb(pjlc);
 	_jl_au_init(pjlc); //Load audiostuffs from packages
-	_jl_ct_init(pjlc); //Prepare to read input.
 	_jl_gr_init(pjlc); //Set-up sprites & menubar
 }
 
