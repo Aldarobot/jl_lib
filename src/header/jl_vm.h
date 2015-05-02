@@ -140,6 +140,7 @@
 		char *dirname;
 		char *selecteditem;
 		uint8_t returnit;
+		uint8_t drawupto;
 	}_fl_t;
 	
 	typedef struct {

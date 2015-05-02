@@ -441,7 +441,7 @@ static void _jl_fl_user_select_up(jl_t* pusr, float x, float y) {
 static void _jl_fl_user_select_dn(jl_t* pusr, float x, float y) {
 	if((int)y == 1) {
 		jvct_t * pjlc = pusr->pjlc;
-		if(pjlc->fl.cursor + (pjlc->fl.cpage * 21) <
+		if(pjlc->fl.cursor + (pjlc->fl.cpage * (pjlc->fl.drawupto+1)) <
 			cl_list_count(pjlc->fl.filelist) - 1)
 		{
 			pjlc->fl.cursor++;
@@ -512,6 +512,7 @@ void jl_fl_user_select_loop(jl_t* pusr) {
 	struct cl_list_iterator *iterator;
 	int i;
 	char *stringtoprint;
+	pjlc->fl.drawupto = ((int)(20.f * jl_dl_p(pusr))) - 1;
 
 	iterator = cl_list_iterator_create(pjlc->fl.filelist);
 
@@ -522,7 +523,7 @@ void jl_fl_user_select_loop(jl_t* pusr) {
 	jl_ct_run_event(pusr,JL_CT_MAINDN, _jl_fl_user_select_dn, jl_ct_dont);
 	jl_ct_run_event(pusr,JL_CT_MAINRT, _jl_fl_user_select_rt, jl_ct_dont);
 	jl_ct_run_event(pusr,JL_CT_MAINLT, _jl_fl_user_select_lt, jl_ct_dont);
-	//Draw up to 20
+	//Draw files
 	for(i = 0; i < cl_list_count(pjlc->fl.filelist); i++) {
 		stringtoprint = cl_list_iterator_next(iterator);
 		if(strcmp(stringtoprint, "..") == 0) {
@@ -530,21 +531,24 @@ void jl_fl_user_select_loop(jl_t* pusr) {
 		}else if(strcmp(stringtoprint, ".") == 0) {
 			stringtoprint = "//this folder//";
 		}
-		if(i - (pjlc->fl.cpage * 21) >= 0)
+		if(i - (pjlc->fl.cpage * (pjlc->fl.drawupto+1)) >= 0)
 			jl_gr_draw_text(pusr, stringtoprint,
-				.06, .08 + (.04 * (i - (pjlc->fl.cpage * 21))),
+				.06, .08 + (.04 *
+				(i - (pjlc->fl.cpage * (pjlc->fl.drawupto+1)))),
 				.04,255);
-		if(i - (pjlc->fl.cpage * 21) > 19) {
+		if(i - (pjlc->fl.cpage * (pjlc->fl.drawupto+1)) >
+			pjlc->fl.drawupto - 1)
+		{
 			break;
 		 	cl_list_iterator_destroy(iterator);
 	 	}
 	}
-	if(pjlc->fl.cursor > 20) {
+	if(pjlc->fl.cursor > pjlc->fl.drawupto) {
 		pjlc->fl.cursor = 0;
 		pjlc->fl.cpage++;
 	}
 	if(pjlc->fl.cursor < 0) {
-		pjlc->fl.cursor = 20;
+		pjlc->fl.cursor = pjlc->fl.drawupto;
 		pjlc->fl.cpage--;
 	}
 	jl_gr_draw_text(pusr, ">", .02, .08 + (.04 * pjlc->fl.cursor), .04,255);

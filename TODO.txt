@@ -1,7 +1,5 @@
 TODO:
-	1. Add clipping pane options
-	2. Fix File Viewer
-	3. Fix Documentation problems.
-	4. Add wi-fi communications
-	5. Make a VM option for running over wi-fi
-	6. Add 3D support
+	1. Fix Documentation problems.
+	2. Add wi-fi communications
+	3. Make a VM option for running over wi-fi
+	4. Add 3D support
