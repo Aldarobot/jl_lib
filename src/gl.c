@@ -8,59 +8,84 @@
 
 char *source_frag_clr = 
 	GLSL_HEAD
+	"uniform vec4 cliprange;\n"
 	"varying vec4 vcolor;\n"
+	"varying vec3 poscoord;\n"
 	"\n"
 	"void main()\n"
 	"{\n"
-	"	gl_FragColor = vcolor;\n"
+	"	if((poscoord.x > cliprange.y) || (poscoord.y > cliprange.z) ||"
+	"		(poscoord.x < cliprange.x) || (poscoord.y < cliprange.w))"
+	"	{"
+	"		discard;"
+	"	}else{"
+	"		gl_FragColor = vcolor;\n"
+	"	}"
 	"}\n\0";
 	
 char *source_vert_clr = 
 	GLSL_HEAD
+	"uniform vec4 transform;\n"
+	"\n"
 	"attribute vec3 position;\n"
 	"attribute vec4 acolor;\n"
 	"\n"
 	"varying vec4 vcolor;\n"
+	"varying vec3 poscoord;\n"
 	"\n"
 	"void main()\n"
 	"{\n"
-	"	gl_Position = vec4(position, 1.0);\n"
+	"	gl_Position = vec4(position, 1.0) * transform;\n"
 	"	vcolor = acolor;\n"
+	"	poscoord = position;\n"
 	"}\n\0";
 
 char *source_frag_tex = 
 	GLSL_HEAD
 	"uniform sampler2D texture;\n"
 	"uniform float multiply_alpha;\n"
+	"uniform vec4 cliprange;\n"
 	"\n"
 	"varying vec2 texcoord;\n"
+	"varying vec3 poscoord;\n"
 	"\n"
 	"void main()\n"
 	"{\n"
+	"	if((poscoord.x > cliprange.y) || (poscoord.y > cliprange.z) ||"
+	"		(poscoord.x < cliprange.x) || (poscoord.y < cliprange.w))"
+	"	{"
+	"		discard;"
+	"	}else{"
+	"		gl_FragColor = texture2D(texture,"
+	"		vec2(texcoord.x - .0039, texcoord.y + .001));"
+	"		gl_FragColor.a = gl_FragColor.a * multiply_alpha;"
+	"	}"
 //	"	gl_FragColor = mix(\n"
 //	"		texture2D(textures[0], texcoord),\n"
 //	"		texture2D(textures[1], texcoord),\n"
 //	"		fade_factor\n"
 //	"	);\n"
 //	"	gl_FragColor = texture2D(texture, vec2(texcoord.x, texcoord.y));"
-	"	gl_FragColor = texture2D(texture,"
-	"		vec2(texcoord.x - .0039, texcoord.y + .001));"
-	"	gl_FragColor.a = gl_FragColor.a * multiply_alpha;"
+
 //	"	gl_FragColor = vec4(texcoord.x, texcoord.y, 0.0, 1.0);"
 //	"	gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);"
 	"}\n\0";
 
 char *source_vert_tex = 
 	GLSL_HEAD
+	"uniform vec4 transform;\n"
+	"\n"
 	"attribute vec3 position;\n"
 	"attribute vec2 texpos;\n"
 	"\n"
 	"varying vec2 texcoord;\n"
+	"varying vec3 poscoord;\n"
 	"\n"
 	"void main()\n"
 	"{\n"
-	"	gl_Position = vec4(position, 1.0);\n"
+	"	gl_Position = vec4(position, 1.0) * transform;\n"
 	"	texcoord = texpos;\n"
+	"	poscoord = position;\n"
 	"}\n\0";
 
 /*static const char source_vert_tex[] = 
@@ -341,6 +366,11 @@ void jl_gl_setp(jvct_t *pjlc, jl_gl_slpr id) {
 	}
 }
 
+void _jl_gl_setmatrix(jvct_t *pjlc) {
+	pjlc->gl.update = 1;
+	pjlc->gl.update2 = 1;
+}
+
 //HIGHER LEVEL
 
 void jl_gl_vrtx(jvct_t *pjlc, u08t vertices, dect *xyzw) {
@@ -363,19 +393,42 @@ void jl_gl_vrtx(jvct_t *pjlc, u08t vertices, dect *xyzw) {
 	}
 	u16t i;
 	for(i = 0; i < vertices*3; i+=3) {
-		pjlc->gl.buff_vert[i] = (xyzw[i]*pjlc->dl.multiplyx)+pjlc->dl.shiftx;
+		pjlc->gl.buff_vert[i] = xyzw[i]+(pjlc->dl.shiftx/pjlc->dl.multiplyx);
 		pjlc->gl.buff_vert[i+1] =
-			(-((xyzw[i+1]+ pjlc->gl.ytrans)*pjlc->dl.multiplyy)
-			+pjlc->dl.shifty);
-		pjlc->gl.buff_vert[i+2] = xyzw[i+2]*2.;
+			(-((xyzw[i+1]+ pjlc->gl.ytrans))
+			+(pjlc->dl.shifty/pjlc->dl.multiplyy));
+		pjlc->gl.buff_vert[i+2] = xyzw[i+2];
 	}
 	_jl_gl_buff_data(pjlc, pjlc->gl.temp_buff_vrtx,
 		pjlc->gl.buff_vert, vertices * 3);
 	//
-	if(pjlc->gl.whichprg == JL_GL_SLPR_TEX)
+	if(pjlc->gl.whichprg == JL_GL_SLPR_TEX) {
 		_jl_gl_setv(pjlc, pjlc->gl.attr.tex.position, 3);
-	if(pjlc->gl.whichprg == JL_GL_SLPR_CLR)
+		if(pjlc->gl.update == 1) {
+			pjlc->gl.update = 0;
+			glUniform4f(pjlc->gl.uniforms.transform, pjlc->dl.multiplyx,
+				pjlc->dl.multiplyy, 2., 1.);
+			glUniform4f(pjlc->gl.uniforms.cliprange,
+				0.+(pjlc->dl.shiftx/pjlc->dl.multiplyx),
+				1.+(pjlc->dl.shiftx/pjlc->dl.multiplyx),
+				0.+(pjlc->dl.shifty/pjlc->dl.multiplyy),
+				(-jl_dl_p(pjlc->sg.usrd) - pjlc->gl.ytrans)+
+					(pjlc->dl.shifty/pjlc->dl.multiplyy));
+		}
+	}else if(pjlc->gl.whichprg == JL_GL_SLPR_CLR){
 		_jl_gl_setv(pjlc, pjlc->gl.attr.clr.position, 3);
+		if(pjlc->gl.update2 == 1) {
+			glUniform4f(pjlc->gl.uniforms.transformclr, pjlc->dl.multiplyx,
+				pjlc->dl.multiplyy, 2., 1.);
+			glUniform4f(pjlc->gl.uniforms.cliprangeclr,
+				0.+(pjlc->dl.shiftx/pjlc->dl.multiplyx),
+				1.+(pjlc->dl.shiftx/pjlc->dl.multiplyx),
+				0.+(pjlc->dl.shifty/pjlc->dl.multiplyy),
+				(-jl_dl_p(pjlc->sg.usrd) - pjlc->gl.ytrans)+
+					(pjlc->dl.shifty/pjlc->dl.multiplyy));
+			pjlc->gl.update2 = 0;
+		}
+	}
 }
 
 void jl_gl_clrs(jvct_t *pjlc, float *rgba) {
@@ -423,7 +476,7 @@ void jl_gl_txtr(jvct_t *pjlc, u08t map, u08t a, u16t pgid, u16t pi) {
 	}
 	_jl_gl_setv(pjlc, pjlc->gl.attr.tex.texpos, 2);
 	glBindTexture(GL_TEXTURE_2D, pjlc->gl.textures[pgid][pi]);
-	_jl_gl_setalpha(pjlc, ((float)a) / 255.f); 
+	_jl_gl_setalpha(pjlc, ((float)a) / 255.f);
 }
 
 //Draw object with "vertices" vertices.  The vertex data is in "x","y" and "z".
@@ -461,6 +514,7 @@ static inline void _jl_gl_make_res(jvct_t *pjlc) {
 	//TODO:Later, Add Implementation with this enabled
 	jl_io_printc(pjlc->sg.usrd, "setting properties...\n");
 	glDisable( GL_DEPTH_TEST);
+	
 	_jl_gl_cerr(pjlc, 0, "glDisable(GL_DEPTH_TEST)");
 	glDisable( GL_DITHER );
 	_jl_gl_cerr(pjlc, 0, "glDisable(GL_DITHER)");
@@ -474,6 +528,7 @@ static inline void _jl_gl_make_res(jvct_t *pjlc) {
 	if(pjlc->gl.temp_buff_vrtx == 0 || pjlc->gl.temp_buff_txtr == 0) {
 		jl_sg_die(pjlc,	"buffer is made wrongly.");
 	}
+	pjlc->gl.update = 1;
 	jl_io_printc(pjlc->sg.usrd, "created buffers.\n");
 
 	jl_io_printc(pjlc->sg.usrd, "making GLSL programs....\n");
@@ -488,6 +543,16 @@ static inline void _jl_gl_make_res(jvct_t *pjlc) {
 		_jl_gl_getu(pjlc, pjlc->gl.prgs[JL_GL_SLPR_TEX], "texture");
 	pjlc->gl.uniforms.multiply_alpha =
 		_jl_gl_getu(pjlc, pjlc->gl.prgs[JL_GL_SLPR_TEX], "multiply_alpha");
+	pjlc->gl.uniforms.transform =
+		_jl_gl_getu(pjlc, pjlc->gl.prgs[JL_GL_SLPR_TEX], "transform");
+	pjlc->gl.uniforms.transformclr =
+		_jl_gl_getu(pjlc, pjlc->gl.prgs[JL_GL_SLPR_CLR], "transform");
+		
+	pjlc->gl.uniforms.cliprange =
+		_jl_gl_getu(pjlc, pjlc->gl.prgs[JL_GL_SLPR_TEX], "cliprange");
+	pjlc->gl.uniforms.cliprangeclr =
+		_jl_gl_getu(pjlc, pjlc->gl.prgs[JL_GL_SLPR_CLR], "cliprange");
+		
 	jl_io_printc(pjlc->sg.usrd, "setting up tex shader attrib's....\n");
 	_jl_gl_geta(pjlc, pjlc->gl.prgs[JL_GL_SLPR_TEX],
 		&pjlc->gl.attr.tex.position, "position");

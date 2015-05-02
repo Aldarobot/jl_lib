@@ -102,12 +102,18 @@
 		uint16_t allocatedi;
 		
 		uint8_t whichprg;
+		uint8_t update;
+		uint8_t update2;
 		GLuint prgs[JL_GL_SLPR_MAX];
 
 		struct {
 			//PRG: TEX
 			GLint **textures;
-			GLfloat multiply_alpha;
+			GLint multiply_alpha;
+			GLint transform;
+			GLint transformclr;
+			GLint cliprange;
+			GLint cliprangeclr;
 		} uniforms;
 
 		//attributes

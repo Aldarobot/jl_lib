@@ -5,6 +5,8 @@
 #include "header/jl_pr.h"
 
 //PROTOTYPES
+void _jl_gl_setmatrix(jvct_t *pjlc);
+
 static void _jl_dl_fscreen(jvct_t* pjlc, uint8_t a);
 static void _jlvm_curd_mode(jvct_t *pjlc);
 
@@ -185,6 +187,7 @@ void _jal5_lsdl_glpt_view(jvct_t *pjlc, uint16_t x, uint16_t y) {
 	pjlc->dl.current.w = x;
 	pjlc->dl.current.h = y + (x - y);
 	pjlc->dl.currenty = y;
+	_jl_gl_setmatrix(pjlc);
 }
 
 /*

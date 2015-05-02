@@ -361,6 +361,10 @@ void _jl_ct_loop(jvct_t* pjlc) {
 		pjlc->ct.msy =
 			((float)mousey) /
 			(jl_dl_geth(pjlc->sg.usrd) * (1 + pjlc->sg.usrd->smde));
+		if(pjlc->sg.usrd->smde && pjlc->ct.msy < 0.) {
+			pjlc->ct.msy = 0.;
+			pjlc->ct.heldDown = 0;
+		}
 		//If Escape key is pressed, then quit the program
 		if(jl_ct_key_pressed(pjlc->sg.usrd, SDL_SCANCODE_ESCAPE) == 1)
 			jl_sg_kill(pjlc->sg.usrd);

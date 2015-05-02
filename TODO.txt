@@ -1,8 +1,7 @@
 TODO:
-	1. Fix wierd printing to terminal.
-	2. Add clipping pane options
-	3. Fix File Viewer
-	4. Fix Documentation problems.
-	5. Add wi-fi communications
-	6. Make a VM option for running over wi-fi
-	7. Add 3D support
+	1. Add clipping pane options
+	2. Fix File Viewer
+	3. Fix Documentation problems.
+	4. Add wi-fi communications
+	5. Make a VM option for running over wi-fi
+	6. Add 3D support
