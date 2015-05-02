@@ -30,6 +30,7 @@ char *GMessage[2] = {
 /*_jal5_jl_gr_t* g_grph;*/
 
 void _jl_dl_loop(jvct_t* pjlc);
+
 static void _jl_gr_menubar(jl_t* pusr);
 static void _jl_gr_flipscreen(jl_t* pusr);
 static void _jl_gr_menubar_slow(jl_t* pusr);
@@ -38,6 +39,44 @@ static void _jl_gr_draw_icon(jl_t* pusr);
 
 /*EXPORTED FUNCTIONS*/
 
+	/**
+	 * Set the clipping pane for the screen.
+	 * @param pusr: the library context.
+  	 * @param xmin: anything drawn left of this line is disregarded.
+  	 * @param xmax: anything drawn right of this line is disregarded.
+	 * @param ymin: if something is drawn below this line it is disregarded.
+ 	 * @param ymax: if something is drawn above this line it is disregarded.
+	**/
+	void jl_gr_set_clippane(jl_t* pusr, float xmin, float xmax,
+		float ymin, float ymax)
+	{
+		jvct_t *pjlc = pusr->pjlc;
+		jl_gl_set_clippane(pusr->pjlc, xmin, xmax,
+			ymin + pjlc->gl.ytrans, ymax + pjlc->gl.ytrans);
+	}
+	
+	/**
+	 * Reset the clipping pane for the screen.
+ 	 * @param pusr: the library context.
+	**/
+	void jl_gr_default_clippane(jl_t* pusr) {
+		jl_gl_default_clippane(pusr->pjlc);
+	}
+
+	/**
+	 * Draw a solid rectangle.
+	 *
+	 * @param 'pusr': library context
+ 	 * @param 'x': the x location of the sprite
+ 	 * @param 'y': the y location of the sprite
+ 	 * @param 'w': how wide to draw the sprite
+ 	 * @param 'h': how tall to draw the sprite.
+	 * @param 'r': the red value of the color of the rectangle.
+ 	 * @param 'g': the green value of the color of the rectangle.
+ 	 * @param 'b': the blue value of the color of the rectangle.
+	 * @param 'a': the transparency each pixel is multiplied by; 255 is
+	 *	solid and 0 is totally invisble.
+	**/
 	void jl_gr_draw_rect(jl_t* pusr, float x, float y, float w, float h,
 		uint8_t r, uint8_t g, uint8_t b, uint8_t a)
 	{
@@ -355,10 +394,10 @@ static void _jl_gr_draw_icon(jl_t* pusr);
 		jvct_t *pjlc = pusr->pjlc;
 
 		jl_gr_draw_rect(pusr, pjlc->gr.menubar.iconx - .01,
-			pusr->smde * jl_dl_p(pusr) + .01,
+			.01,
 			.1, .1, 0., 0., 0., 64);
 		jl_gr_draw_image(pusr, 0, 1, pjlc->gr.menubar.iconx,
-			pusr->smde * jl_dl_p(pusr),
+			0.,
 			.1, .1,
 			pjlc->gr.menubar.chr[pjlc->gr.menubar.cursor],
 			255);
@@ -385,9 +424,9 @@ static void _jl_gr_draw_icon(jl_t* pusr);
 
 		_jl_gr_draw_icon(pusr);
 		jl_gr_draw_text(pusr, pjlc->dl.windowTitle[0],
-			pjlc->gr.menubar.iconx, pusr->smde * jl_dl_p(pusr), .05, 255);
+			pjlc->gr.menubar.iconx, 0., .05, 255);
 		jl_gr_draw_text(pusr, pjlc->dl.windowTitle[1],
-			pjlc->gr.menubar.iconx, (pusr->smde * jl_dl_p(pusr)) + .05, .05, 255);
+			pjlc->gr.menubar.iconx, .05, .05, 255);
 	}
 	
 	static void _jl_gr_menubar_slow(jl_t* pusr) {

@@ -426,10 +426,13 @@ void _jl_sg_loop(jl_t* pusr) {
 	//Run mode specific loop
 	if(pusr->smde) {
 		pjlc->gl.ytrans = jl_dl_p(pjlc->sg.usrd);
+		jl_gl_default_clippane(pjlc);
 		jl_gr_draw_rect(pusr, 0., 0., 1., jl_dl_p(pjlc->sg.usrd),
 			0, 64, 127, 255);
 		pjlc->sg.mdes[pusr->mode].tclp[pusr->loop](pusr);
+		_jl_gr_loop(pusr); //Draw Menu Bar & Mouse
 		pjlc->gl.ytrans = 0.f;
+		jl_gl_default_clippane(pjlc);
 		jl_gr_draw_rect(pusr, 0., 0., 1., jl_dl_p(pjlc->sg.usrd),
 			0, 127, 0, 255);
 		if(pusr->loop == JL_SG_WM_UP)
@@ -438,11 +441,12 @@ void _jl_sg_loop(jl_t* pusr) {
 			pjlc->sg.mdes[pusr->mode].tclp[JL_SG_WM_UP](pusr);
 	}else{
 		pjlc->gl.ytrans = 0.f;
+		jl_gl_default_clippane(pjlc);
 		jl_gr_draw_rect(pusr, 0., 0., 1., jl_dl_p(pjlc->sg.usrd),
 			0, 255, 0, 255);
 		pjlc->sg.mdes[pusr->mode].tclp[pusr->loop](pusr);
+		_jl_gr_loop(pusr); //Draw Menu Bar & Mouse
 	}
-	_jl_gr_loop(pusr); //Draw Menu Bar & Mouse
 	_jl_dl_loop(pjlc); //Update Screen
 	_jl_au_loop(pjlc); //Play Audio
 }

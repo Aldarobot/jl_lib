@@ -236,7 +236,7 @@ float jl_ct_gmousex(jl_t *pusr) {
 
 float jl_ct_gmousey(jl_t *pusr) {
 	jvct_t* pjlc = pusr->pjlc;
-	return pjlc->ct.msy + (jl_dl_p(pjlc->sg.usrd) * pjlc->sg.usrd->smde);
+	return pjlc->ct.msy;
 }
 
 static inline void _jal5_jl_ct_hndl(jvct_t *pjlc) {

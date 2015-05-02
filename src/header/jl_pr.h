@@ -163,6 +163,8 @@ void jl_gl_clrs(jvct_t *pjlc, float *rgba);
 void jl_gl_colr(jvct_t *pjlc, float *rgba);
 void jl_gl_txtr(jvct_t *pjct, u08t map, u08t a, u16t pgid, u16t pi);
 void jl_gl_draw(jvct_t *pjct);
+void jl_gl_set_clippane(jvct_t *pjlc, float xmin, float xmax, float ymin, float ymax);
+void jl_gl_default_clippane(jvct_t *pjlc);
 
 //Change Mem's Size To "size" and return new pointer if changed.
 void *_jl_me_hydd_allc(jvct_t* pjct, void *mem, uint32_t size);

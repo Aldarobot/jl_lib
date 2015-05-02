@@ -406,15 +406,23 @@ void jl_gl_setp(jvct_t *pjlc, jl_gl_slpr id) {
 	_jl_gl_updatevectors(pjlc);
 }
 
-void _jl_gl_setmatrix(jvct_t *pjlc) {
+void jl_gl_set_clippane(jvct_t *pjlc, float xmin, float xmax, float ymin, float ymax) {
 	pjlc->gl.update = 1;
 	pjlc->gl.update2 = 1;
-	pjlc->gl.cliprange.x = 0.+(pjlc->dl.shiftx/pjlc->dl.multiplyx);
-	pjlc->gl.cliprange.y = 1.+(pjlc->dl.shiftx/pjlc->dl.multiplyx);
-	pjlc->gl.cliprange.w = 0.+(pjlc->dl.shifty/pjlc->dl.multiplyy);
-	pjlc->gl.cliprange.h = (-(jl_dl_p(pjlc->sg.usrd) *
-			(pjlc->sg.usrd->smde + 1)))+
-		(pjlc->dl.shifty/pjlc->dl.multiplyy);
+	pjlc->gl.cliprange.x = xmin+(pjlc->dl.shiftx/pjlc->dl.multiplyx);
+	pjlc->gl.cliprange.y = xmax+(pjlc->dl.shiftx/pjlc->dl.multiplyx);
+	pjlc->gl.cliprange.w = ymin+(pjlc->dl.shifty/pjlc->dl.multiplyy);
+	pjlc->gl.cliprange.h = (-(ymax))+
+		(pjlc->dl.shifty/pjlc->dl.multiplyy);	
+}
+
+void jl_gl_default_clippane(jvct_t *pjlc) {
+	jl_gl_set_clippane(pjlc, 0., 1., pjlc->gl.ytrans,
+		jl_dl_p(pjlc->sg.usrd) + pjlc->gl.ytrans);
+}
+
+void _jl_gl_setmatrix(jvct_t *pjlc) {
+	jl_gl_default_clippane(pjlc);
 	pjlc->gl.transform.x = pjlc->dl.multiplyx;
 	pjlc->gl.transform.y = pjlc->dl.multiplyy;
 	pjlc->gl.transform.w = 2.;

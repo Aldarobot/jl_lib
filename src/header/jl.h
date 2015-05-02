@@ -91,6 +91,9 @@
 */
 	void jl_dl_progname(jl_t* pusr, strt name);
 // "gr.c"
+	void jl_gr_set_clippane(jl_t* pusr, float xmin, float xmax,
+		float ymin, float ymax);
+	void jl_gr_default_clippane(jl_t* pusr);
 	void jl_gr_draw_rect(jl_t* pusr, float x, float y, float w, float h,
 		uint8_t r, uint8_t g, uint8_t b, uint8_t a);
 	void jl_gr_draw_image(jl_t* pusr, u16t g, u16t i,
