@@ -165,7 +165,7 @@ void _jl_au_init(jvct_t *pjlc) {
 	//Load Sound Effects & Music
 	uint8_t *aud = NULL;
 	aud = jl_fl_media(pjlc->sg.usrd, "jlex/2/_aud", (void *)
-		jl_fl_get_resloc(pjlc->sg.usrd, Strt("JLVM"), Strt("jlvm.zip"))
+		jl_fl_get_resloc(pjlc->sg.usrd, Strt("JLLB"), Strt("media.zip"))
 			->data,
 		jal5_head_jlvm(), jal5_head_size());
 	jl_io_printc(pjlc->sg.usrd, "Loading audiostuffs...\n");

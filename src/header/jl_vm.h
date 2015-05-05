@@ -74,6 +74,8 @@
 		uint32_t sd; //NYI: stylus delete
 		
 		uint8_t sc;
+		uint8_t text_input[32];
+		uint8_t read_cursor;
 	}_ct_t;
 
 //AU:
@@ -141,6 +143,12 @@
 		char *selecteditem;
 		uint8_t returnit;
 		uint8_t drawupto;
+		uint8_t inloop;
+		jl_sprite_t * btns[2];
+		void *newfiledata;
+		uint64_t newfilesize;
+		uint8_t prompt;
+		strt promptstring;
 	}_fl_t;
 	
 	typedef struct {
@@ -153,6 +161,7 @@
 			uint8_t cursor;
 			float iconx;
 		}menubar;
+		strt textbox_string;
 	}_gr_t;
 
 	typedef struct {

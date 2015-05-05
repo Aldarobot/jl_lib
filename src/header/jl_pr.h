@@ -84,9 +84,9 @@
 
 //Files
 #if JL_PLAT == JL_PLAT_COMPUTER
-	#define JLVM_FILEBASE "../"
+	#define JLVM_FILEBASE "../\0"
 #elif JL_PLAT == JL_PLAT_PHONE
-	#define JLVM_FILEBASE "/storage/sdcard0/JLVM/"
+	#define JLVM_FILEBASE "/storage/sdcard0/JLVM/\0"
 #endif
 #define JLVM_INIT SDL_INIT_AUDIO|SDL_INIT_VIDEO
 

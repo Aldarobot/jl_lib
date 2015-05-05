@@ -59,6 +59,7 @@ strt jl_me_strt_make(u32t size, u08t type) {
 	a->data = malloc(size+1);
 	a->size = size;
 	a->type = type;
+	a->curs = 0;
 	jl_me_strt_clear(a);
 	return a;
 }
@@ -69,12 +70,8 @@ void jl_me_strt_free(strt pstr) {
 }
 
 strt jl_me_strt_c8ts(const char *string) {
-	u32t size = strlen(string);
-	strt a = malloc(sizeof(strt_t));
-	a->data = malloc(size + 1);
-	a->size = size;
-	a->curs = 0;
-	a->type = STRT_TEMP;
+	uint32_t size = strlen(string);
+	strt a = jl_me_strt_make(size, STRT_TEMP);
 	int i;
 	for( i = 0; i < size; i++) {
 		a->data[i] = string[i];
@@ -113,6 +110,45 @@ void jl_me_strt_add_byte(strt pstr, u08t pvalue) {
 	pstr->data[pstr->curs] = pvalue;
 	pstr->curs++;
 	_jl_me_truncate_curs(pstr);
+}
+
+/**
+ * Delete byte at cursor in string.
+*/
+void jl_me_strt_delete_byte(jl_t *pusr, strt pstr) {
+	int i;
+	
+	if(pstr->size == 0) return;
+	for(i = pstr->curs; i < pstr->size - 1; i++)
+		pstr->data[i] = pstr->data[i+1];
+	pstr->size--;
+	pstr->data[pstr->size] = '\0';
+	pstr->data =
+		_jl_me_hydd_allc(pusr->pjlc, pstr->data, pstr->size+1);
+	_jl_me_truncate_curs(pstr);
+}
+
+/**
+ * Inserts a byte at cursor in string pstr.  If not enough size is available,
+ * the new memory will be allocated. Value 0 is treated as null byte - dont use.
+*/
+void jl_me_strt_insert_byte(jl_t *pusr, strt pstr, uint8_t pvalue) {
+	if(strlen((char*)pstr->data) == pstr->size) {
+		pstr->size++;
+		pstr->data =
+			_jl_me_hydd_allc(pusr->pjlc, pstr->data, pstr->size+1);
+	}
+	if(jl_me_strt_byte(pstr) == '\0') {
+		jl_me_strt_add_byte(pstr, pvalue);
+		jl_me_strt_add_byte(pstr, '\0');
+	}else{
+		int i;
+		uint32_t pstr_len = pstr->size;
+		pstr->data[pstr_len] = '\0';
+		for(i = pstr_len - 1; i > pstr->curs; i--)
+			pstr->data[i] = pstr->data[i-1];
+		jl_me_strt_add_byte(pstr, pvalue);
+	}
 }
 
 void _jal5_jl_me_vary_make(u32t vari, u08t size) {

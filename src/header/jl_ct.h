@@ -277,10 +277,5 @@ void jl_ct_adda(void);
 float jl_ct_gmousex(jl_t *pusr);
 float jl_ct_gmousey(jl_t *pusr);
 
-/**
- * Returns 0 if key isn't pressed
- * Returns 1 if key is just pressed
- * Returns 2 if key is held down
- * Returns 3 if key is released
-*/
-uint8_t jl_ct_key_pressed(jl_t *pusr, uint8_t key);
+uint8_t jl_ct_typing_get(jl_t *pusr);
+void jl_ct_typing_disable(jl_t *pusr);

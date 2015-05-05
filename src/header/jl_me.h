@@ -45,10 +45,10 @@ typedef void(*jl_io_print_fnt)(jl_t* pusr, const char * print);
 
 //5 bytes of information about the string are included
 typedef struct{
-	u08t* data; //Actual String
-	u32t size; //Allocated Space In String
-	u32t curs; //Cursor In String
-	u08t type;
+	uint8_t* data; //Actual String
+	uint32_t size; //Allocated Space In String
+	uint32_t curs; //Cursor In String
+	uint8_t type;
 }strt_t;
 
 //strt_t.Type:

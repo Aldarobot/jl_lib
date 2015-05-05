@@ -46,7 +46,7 @@ typedef struct{
 
 typedef struct{
 	uint8_t smde; //Whether 2 or 1 Screens are showing.
-	uint32_t info; //@startup:# images loaded from jlvm.zip.Set by others.
+	uint32_t info; //@startup:# images loaded from media.zip.Set by others.
 	jl_err_t errf; //Set if error
 	float psec; //seconds since last loop
 	uint8_t mdec; //Number of Modes

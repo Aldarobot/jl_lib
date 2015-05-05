@@ -289,7 +289,7 @@ static inline void _jl_sg_init_images(jvct_t * pjlc, uint8_t *data, uint16_t p){
 	while(_jl_sg_load_next_img(pjlc));
 }
 
-static uint32_t jlvm_quit(jvct_t* pjlc, int rc) {
+static uint32_t _jl_sg_quit(jvct_t* pjlc, int rc) {
 	jl_gr_draw_msge(pjlc->sg.usrd, "QUITING JLLIB....");
 	_jl_fl_errf(pjlc, ":Quitting....\n"); //Exited properly
 	jl_io_offset(pjlc->sg.usrd, "KILL", JL_IO_TAG_SIMPLE-JL_IO_TAG_MAX);
@@ -304,11 +304,11 @@ static uint32_t jlvm_quit(jvct_t* pjlc, int rc) {
 }
 
 //Quit, And Return -1 to show there was an error, also save message in errf.text
-static void jlvm_erqt(jvct_t* pjlc, char *msg) {
+static void _jl_sg_erqt(jvct_t* pjlc, char *msg) {
 	jl_io_offset(pjlc->sg.usrd, "ERQT", JL_IO_TAG_INTENSE-JL_IO_TAG_MAX);
 	jl_io_printc(pjlc->sg.usrd, msg);
 	_jl_fl_errf(pjlc, msg);
-	jlvm_quit(pjlc, -1);
+	_jl_sg_quit(pjlc, -1);
 	jl_io_close_block(pjlc->sg.usrd); //Close Block "ERQT"
 }
 
@@ -318,14 +318,14 @@ void jl_sg_die(jvct_t* pjlc, char * msg) {
 	//	Also, don't automatically quit, like it does now!  ERQT can be
 	//	inline at that point.
 	_jl_fl_errf(pjlc, ":Quitting On Error...\n");
-	jlvm_erqt(pjlc, msg);
+	_jl_sg_erqt(pjlc, msg);
 }
 
-//If, you can't use jlvm_dies(), because the screen hasn't been created, use
+//If, you can't use _jl_sg_dies(), because the screen hasn't been created, use
 //This function.  Otherwise, DON'T! It makes it hard to debug.  The error message
-//Will Be saved to a file, like in jlvm_dies().
-void jlvm_kill(jvct_t* pjlc, char *msg) {
-	jlvm_erqt(pjlc, msg);
+//Will Be saved to a file, like in _jl_sg_dies().
+void _jl_sg_kill(jvct_t* pjlc, char *msg) {
+	_jl_sg_erqt(pjlc, msg);
 }
 
 /**
@@ -333,7 +333,7 @@ void jlvm_kill(jvct_t* pjlc, char *msg) {
  */
 void jl_sg_kill(jl_t* pusr) {
 	if(pusr->loop == JL_SG_WM_EXIT)
-		jlvm_quit(pusr->pjlc, 0);
+		_jl_sg_quit(pusr->pjlc, 0);
 	else
 		pusr->loop = JL_SG_WM_EXIT;
 }
@@ -414,7 +414,7 @@ static inline void _jl_sg_inita(jvct_t * pjlc) {
 	pjlc->gl.allocatedi = 0;
 	jl_sg_add_image(pjlc->sg.usrd,
 		(void*)((jl_fl_get_resloc(pjlc->sg.usrd,
-			Strt("JLVM"), Strt("jlvm.zip"))->data)),
+			Strt("JLLB"), Strt("media.zip"))->data)),
 		0);
 }
 
@@ -464,7 +464,7 @@ static inline void _jl_sg_init_done(jvct_t *pjlc) {
 }
 
 //The Libraries Needed At Very Beginning: The Base Of It All
-static inline jvct_t* _jlvm_init_blib(void) {
+static inline jvct_t* _jl_sg_init_blib(void) {
 	//MEMORY
 	jvct_t* pjlc = _jl_me_init();
 	//OTHER
@@ -472,7 +472,7 @@ static inline jvct_t* _jlvm_init_blib(void) {
 	return pjlc;
 }
 
-static inline void _jlvm_init_libs(jvct_t *pjlc) {
+static inline void _jl_sg_init_libs(jvct_t *pjlc) {
 	_jl_dl_inita(pjlc); //create the window.
 	_jl_fl_inita(pjlc); //prepare for loading media packages.
 	_jl_sg_inita(pjlc); //Load default graphics from package.
@@ -486,29 +486,29 @@ static inline void _jlvm_init_libs(jvct_t *pjlc) {
 	_jl_gr_init(pjlc); //Set-up sprites & menubar
 }
 
-static inline void jlvm_ini(jvct_t *pjlc) {
-	//Open Block "JLVM" (Minimal)
-	jl_io_offset(pjlc->sg.usrd, "JLVM", JL_IO_TAG_MINIMAL-JL_IO_TAG_MAX);
+static inline void _jl_ini(jvct_t *pjlc) {
+	//Open Block "JLLB" (Minimal)
+	jl_io_offset(pjlc->sg.usrd, "JLLB", JL_IO_TAG_MINIMAL-JL_IO_TAG_MAX);
 	jl_io_printc(pjlc->sg.usrd, "Initializing...\n");
-	_jlvm_init_libs(pjlc);
+	_jl_sg_init_libs(pjlc);
 	hack_user_init(pjlc->sg.usrd);
 
-	//Change Block "JLVM" to SIMPLE
-	jl_io_offset(pjlc->sg.usrd, "JLVM", JL_IO_TAG_SIMPLE-JL_IO_TAG_MAX);
+	//Change Block "JLLB" to SIMPLE
+	jl_io_offset(pjlc->sg.usrd, "JLLB", JL_IO_TAG_SIMPLE-JL_IO_TAG_MAX);
 	jl_io_printc(pjlc->sg.usrd, "Init5...\n");
-//	jlvm_ini_memory_allocate();
+//	_jl_sg_ini_memory_allocate();
 
-	//Change Block "JLVM" Back to MINIMAL
-	jl_io_offset(pjlc->sg.usrd, "JLVM", JL_IO_TAG_MINIMAL-JL_IO_TAG_MAX);
+	//Change Block "JLLB" Back to MINIMAL
+	jl_io_offset(pjlc->sg.usrd, "JLLB", JL_IO_TAG_MINIMAL-JL_IO_TAG_MAX);
 	jl_io_printc(pjlc->sg.usrd, "Initialized!\n");
 }
 
 int32_t main(int argc, char *argv[]) {
-	jvct_t* pjlc = _jlvm_init_blib(); //Set Up Memory And Logging
-	#if JLVM_DEBUG >= JLVM_DEBUG_MINIMAL
-	jl_io_printc(pjlc->sg.usrd, "STARTING JLVM V-3.2.0-e0....\n");
+	jvct_t* pjlc = _jl_sg_init_blib(); //Set Up Memory And Logging
+	#if _jl_sg_DEBUG >= _jl_sg_DEBUG_MINIMAL
+	jl_io_printc(pjlc->sg.usrd, "STARTING JL_lib V-3.4.0-e0....\n");
 	#endif
-	jlvm_ini(pjlc);//initialize
+	_jl_ini(pjlc);//initialize
 	_jl_fl_errf(pjlc, ":going into loop....\n");
 	if(pjlc->sg.usrd->mdec) {
 		while(1) _jl_sg_loop(pjlc->sg.usrd); //main loop

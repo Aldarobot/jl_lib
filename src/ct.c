@@ -8,6 +8,8 @@
 #include "header/jl_pr.h"
 
 #if JL_PLAT == JL_PLAT_COMPUTER
+	uint8_t jl_ct_key_pressed(jl_t *pusr, uint8_t key);
+
 	void jl_ct_key(jl_t *pusr, jl_ct_onevent_fnt prun,
 		jl_ct_onevent_fnt pno, uint8_t key)
 	{
@@ -243,7 +245,13 @@ static inline void _jal5_jl_ct_hndl(jvct_t *pjlc) {
 	#if JL_PLAT == JL_PLAT_PHONE
 		pjlc->ct.menu = 0;
 	#endif
-	if(pjlc->ct.event.type==SDL_WINDOWEVENT) {
+	if ( pjlc->ct.event.type == SDL_TEXTINPUT) {
+		printf("%1s\n", &(pjlc->ct.event.text.text[0]));
+		int i;
+		for(i = 0; i < 32; i++)
+			pjlc->ct.text_input[i] = pjlc->ct.event.text.text[i];
+		pjlc->ct.read_cursor = 0;
+	}else if(pjlc->ct.event.type==SDL_WINDOWEVENT) {
 		if(pjlc->ct.event.window.event ==
 			SDL_WINDOWEVENT_RESIZED)
 		{
@@ -404,6 +412,10 @@ static inline void _jl_ct_var_init(jvct_t* pjlc) {
 	int i;
 	for(i = 0; i < 255; i++)
 		pjlc->ct.keyDown[i] = 0;
+	pjlc->ct.read_cursor = 0;
+	for(i = 0; i < 32; i++)
+		pjlc->ct.text_input[i] = 0;
+	pjlc->ct.sc = 0;
 }
 
 void _jl_ct_init(jvct_t* pjlc) {
@@ -411,24 +423,35 @@ void _jl_ct_init(jvct_t* pjlc) {
 	_jl_ct_var_init(pjlc);
 }
 
-/*
-//Keyboard functions
+/**
+ * Get any keys that are currently being typed.  Output in Aski.
+ * If phone, pops up keyboard if not already up.  If nothing is being typed,
+ * returns 0.
+*/
+uint8_t jl_ct_typing_get(jl_t *pusr) {
+	jvct_t* pjlc = pusr->pjlc;
 
-uint8_t jlvmpi_key(void) {
-	uint8_t j;
-	uint8_t k = 1;
-	for(j = ' '; j <= '~'; j++) {
-		if(1/\*pjlc->ct.keys[j]*\/) {
-			k=0;
-			break;
-		}
-	}
-	if(k) {
-		return 0;
-	}else{
-		return j;
-	}
+	if(!SDL_IsTextInputActive()) SDL_StartTextInput();
+	uint8_t rtn = pjlc->ct.text_input[pjlc->ct.read_cursor];
+	if(jl_ct_key_pressed(pusr, SDL_SCANCODE_BACKSPACE) == 1) return '\b';
+	if(jl_ct_key_pressed(pusr, SDL_SCANCODE_DELETE) == 1) return '\02';
+	if(!rtn) return 0;
+	pjlc->ct.read_cursor++;
+	return rtn;
 }
+
+/**
+ * If phone, hides keyboard.
+*/
+void jl_ct_typing_disable(jl_t *pusr) {
+	SDL_StopTextInput();
+}
+
+/**
+ * Returns 0 if key isn't pressed
+ * Returns 1 if key is just pressed
+ * Returns 2 if key is held down
+ * Returns 3 if key is released
 */
 #if JL_PLAT == JL_PLAT_COMPUTER
 uint8_t jl_ct_key_pressed(jl_t *pusr, uint8_t key) {

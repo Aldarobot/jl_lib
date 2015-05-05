@@ -51,6 +51,8 @@
 	//Add a byte ( "pvalue" ) at the cursor in "pstr", then increment the
 	// cursor value [ truncated to the string size ]
 	void jl_me_strt_add_byte(strt pstr, u08t pvalue);
+	void jl_me_strt_delete_byte(jl_t *pusr, strt pstr);
+	void jl_me_strt_insert_byte(jl_t *pusr, strt pstr, uint8_t pvalue);
 	
 	//Returns a random integer from 0 to "a"
 	u32t jl_me_random_int(u32t a);
@@ -118,6 +120,10 @@
 	void jl_gr_draw_slide_button(
 		jl_t* pusr, jl_sprite_t * psprite, char *txt, float defaultx,
 		float slidex, jl_ct_onevent_fnt prun);
+	void jl_gr_draw_glow_button(jl_t* pusr, jl_sprite_t * psprite,
+		char *txt, jl_ct_onevent_fnt prun);
+	void jl_gr_draw_textbox(jl_t*pusr, float x, float y, float w,
+		float h, strt *string);
 	void jl_gr_togglemenubar(jl_t* pusr);
 	void jl_gr_addicon(jl_t* pusr, uint16_t grp, uint8_t iid,
 		uint8_t chr, jl_simple_fnt fno, jl_simple_fnt fnc);
@@ -182,10 +188,8 @@
 	 * "pprg_name"
 	*/
 	strt jl_fl_get_resloc(jl_t* pusr, strt pprg_name, strt pfilename);
-	/**
-	 * Open directory for file viewer.
-	**/
-	void jl_fl_user_select_init(jl_t* pusr, char *program_name);
+	void jl_fl_user_select_init(jl_t* pusr, char *program_name, void *newfiledata,
+		uint64_t newfilesize);
 	/**
 	 * Run the file viewer.
 	**/

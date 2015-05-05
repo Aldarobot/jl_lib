@@ -36,6 +36,8 @@ static void _jl_gr_flipscreen(jl_t* pusr);
 static void _jl_gr_menubar_slow(jl_t* pusr);
 static void _jl_gr_menubar_name(jl_t* pusr);
 static void _jl_gr_draw_icon(jl_t* pusr);
+static void _jl_gr_textbox_rt(jl_t* pusr, float x, float y);
+static void _jl_gr_textbox_lt(jl_t* pusr, float x, float y);
 
 /*EXPORTED FUNCTIONS*/
 
@@ -280,6 +282,7 @@ static void _jl_gr_draw_icon(jl_t* pusr);
 	 * @param 'message': the message 
 	 */
 	void jl_gr_draw_msge(jl_t* pusr, char * message) {
+		jl_gr_draw_image(pusr, 0, 1, 0., 0., 1., jl_dl_p(pusr), 1, 127);
 		jl_gr_draw_ctxt(pusr, message, (9./16.)/2, 255);
 		_jl_dl_loop(pusr->pjlc); //Update Screen
 	}
@@ -313,6 +316,57 @@ static void _jl_gr_draw_icon(jl_t* pusr);
 			jl_ct_run_event(pusr, JL_CT_PRESS, prun, jl_ct_dont);
 			psprite->r.x = defaultx + slidex;
 		}
+	}
+	
+	/**
+	 * Draw a glow button, and activate if it is pressed.
+	 * @param 'pusr': the libary context
+ 	 * @param 'psprite': the sprite to draw
+ 	 * @param 'txt': the text to draw on the button.
+ 	 * @param 'prun': the function to run when pressed.
+	**/
+	void jl_gr_draw_glow_button(jl_t* pusr, jl_sprite_t * psprite,
+		char *txt, jl_ct_onevent_fnt prun)
+	{
+		jl_gr_sprite_draw(pusr, psprite);
+		if(jl_gr_sprite_collide(pusr, pusr->mouse, psprite)) {
+			jl_ct_run_event(pusr, JL_CT_PRESS, prun, jl_ct_dont);
+			jl_gr_draw_rect(pusr, psprite->r.x, psprite->r.y,
+				psprite->r.w, psprite->r.h,
+				1., 1., 1., 64); 
+			jl_gr_draw_text(pusr, txt, 0, jl_dl_p(pusr) - .0625,
+				.05, 255);
+		}
+	}
+	
+	void jl_gr_draw_textbox(jl_t*pusr, float x, float y, float w,
+		float h, strt *string)
+	{
+		jvct_t *pjlc = pusr->pjlc;
+		uint8_t bytetoinsert = 0;
+
+		if(*string == NULL) {
+			*string = jl_me_strt_make(1, STRT_KEEP);
+		}
+		pjlc->gr.textbox_string = *string;
+		if((bytetoinsert = jl_ct_typing_get(pusr))) {
+			if(bytetoinsert == '\b') {
+				if((*string)->curs == 0) return;
+				(*string)->curs--;
+				jl_me_strt_delete_byte(pusr, *string);
+			}else if(bytetoinsert == '\02') {
+				jl_me_strt_delete_byte(pusr, *string);
+			}else{
+				jl_me_strt_insert_byte(pusr, *string, bytetoinsert);
+			}
+//			printf("inserting %1s\n", &bytetoinsert);
+		}
+		jl_ct_run_event(pusr,JL_CT_MAINLT,_jl_gr_textbox_lt,jl_ct_dont);
+		jl_ct_run_event(pusr,JL_CT_MAINRT,_jl_gr_textbox_rt,jl_ct_dont);
+		jl_gr_draw_image(pusr, 0, 0, x, y, w, h, ' ', 255);
+		jl_gr_draw_text(pusr, (char*)((*string)->data), x, y, h, 255);
+		jl_gr_draw_image(pusr, 0, 0,
+			x + (h*((float)(*string)->curs-.5)), y, h, h, 252, 255);
 	}
 	
 	/**
@@ -389,6 +443,24 @@ static void _jl_gr_draw_icon(jl_t* pusr);
 
 /** @cond **/
 /*BACKGROUND FUNCTIONS*/
+
+	static void _jl_gr_textbox_lt(jl_t* pusr, float x, float y) {
+//		if((int)y != 1) return;
+		jvct_t *pjlc = pusr->pjlc;
+		
+		jl_ct_typing_disable(pusr);
+		if(pjlc->gr.textbox_string->curs)
+			pjlc->gr.textbox_string->curs--;
+	}
+	
+	static void _jl_gr_textbox_rt(jl_t* pusr, float x, float y) {
+//		if((int)y != 1) return;
+		jvct_t *pjlc = pusr->pjlc;
+
+		jl_ct_typing_disable(pusr);
+		if(pjlc->gr.textbox_string->curs < pjlc->gr.textbox_string->size)
+			pjlc->gr.textbox_string->curs++;
+	}
 
 	static void _jl_gr_draw_icon(jl_t* pusr) {
 		jvct_t *pjlc = pusr->pjlc;
@@ -483,7 +555,7 @@ static void _jl_gr_draw_icon(jl_t* pusr);
 	void _jl_gr_loop(jl_t* pusr) {
 	//Menu Bar
 		jvct_t *pjlc = pusr->pjlc;
-		pjlc->gr.menuoverlay(pusr);
+		if(!pjlc->fl.inloop) pjlc->gr.menuoverlay(pusr);
 	//Message Display
 		if(timeTilMessageVanish > 0.f) {
 			if(timeTilMessageVanish > 4.25)

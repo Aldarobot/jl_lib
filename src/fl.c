@@ -258,14 +258,17 @@ void jl_fl_mkdir(jl_t* pusr, strt pfilebase) {
 }
 
 /**
- * Create a file & load it.
+ * Create the media package file & load a file from it.
  * @param pusr: library context
- * @param pfile: name of file to create
+ * @param pfilebase: name of file to load from package
+ * @param pzipfile: the name of the zipfile to create.
  * @param contents: the contents to put in the file
  * @param size: the size (in bytes) of the contents.
  * @return x: the data contents of the file.
 */
-uint8_t * jl_fl_mkfile(jl_t* pusr, char *pfilebase, char *contents, uint32_t size){
+uint8_t * jl_fl_mkfile(jl_t* pusr, char *pzipfile, char *pfilebase,
+	char *contents, uint32_t size)
+{
 
 //	if(!pfilebase) { return; }
 	uint8_t *freturn;
@@ -274,14 +277,12 @@ uint8_t * jl_fl_mkfile(jl_t* pusr, char *pfilebase, char *contents, uint32_t siz
 	jl_io_offset(pusr, "MKFL", JL_IO_TAG_SIMPLE-JL_IO_TAG_MAX);
 
 	jl_io_printc(pusr, "Creating File...\n");
-	jl_fl_save(pusr, contents, (void *)gvar_pkfl->data, size);
+	jl_fl_save(pusr, contents, pzipfile, size);
 	jl_io_printc(pusr, "Attempt Complete!\n");
 	SDL_Delay(1000); //give file system time to update
 	jl_io_printc(pusr, "Try loading....\n");
 	if(
-		((freturn =
-			jl_fl_pk_load(pusr,(void *)gvar_pkfl->data,pfilebase))
-		== NULL) &&
+		((freturn = jl_fl_pk_load(pusr, pzipfile, pfilebase))== NULL) &&
 		(pusr->errf == JL_ERR_FIND) )//Package still doesn't exist!!
 	{
 		jl_sg_die(pusr->pjlc, ":Failed To Create file\n");
@@ -303,7 +304,7 @@ uint8_t *jl_fl_media(jl_t* pusr, char *Fname, char *pzipfile,
 	jl_io_printc(pusr, "JL_FL_MEDIA Returning\n");
 	//If Package doesn't exist!! - create
 	if( (freturn == NULL) && (pusr->errf == JL_ERR_FIND) )
-		return jl_fl_mkfile(pusr, Fname, pdata, psize);
+		return jl_fl_mkfile(pusr, pzipfile, Fname, pdata, psize);
 	else
 		return freturn;
 }
@@ -361,15 +362,15 @@ strt jl_fl_get_resloc(jl_t* pusr, strt pprg_name, strt pfilename) {
 	jl_fl_mkdir(pusr, Strt(JLVM_FILEBASE));
 	#else
 	jl_io_printc(pusr, "FB2....\n");
-	int fsize = strlen(filebase)+strlen(JLVM_FILEBASE);
+	int fsize = strlen(filebase)+strlen(JLVM_FILEBASE) + 1;
 	char *filebase2 = malloc(fsize);
 	jl_io_printc(pusr, "Clear....\n");
 	for(i = 0; i < fsize; i++) {
-		filebase2[i] = 0;
+		filebase2[i] = '\0';
 	}
 	jl_io_printc(pusr, "Add....\n");
-	strcat(filebase2,filebase);
-	strcat(filebase2,JLVM_FILEBASE);
+	strncat(filebase2,filebase,strlen(filebase));
+	strncat(filebase2,JLVM_FILEBASE,strlen(JLVM_FILEBASE));
 	jl_io_printc(pusr, "Make....\n");
 	jl_fl_mkdir(pusr, Strt(filebase2));
 	#endif
@@ -419,15 +420,26 @@ static void _jl_fl_user_select_open_dir(jl_t* pusr, char *dirname) {
 		if(errsv == ENOTDIR) { //Not a directory - is a file
 			pjlc->fl.returnit = 1;
 			pjlc->fl.dirname[strlen(dirname)-1] = '\0';
+			pjlc->fl.inloop = 0;
 			pusr->loop = JL_SG_WM_EXIT; //Go into exit loop
 		}
 	}
 }
 
-void jl_fl_user_select_init(jl_t* pusr, char *program_name) {
+/**
+ * Open directory for file viewer.
+**/
+void jl_fl_user_select_init(jl_t* pusr, char *program_name, void *newfiledata,
+	uint64_t newfilesize)
+{
 	jvct_t * pjlc = pusr->pjlc;
 	pusr->loop = JL_SG_WM_DN;
 	pjlc->fl.returnit = 0;
+	pjlc->fl.inloop = 1;
+	pjlc->fl.newfiledata = newfiledata;
+	pjlc->fl.newfilesize = newfilesize;
+	pjlc->fl.prompt = 0;
+	pjlc->fl.promptstring = NULL;
 	_jl_fl_user_select_open_dir(pusr, SDL_GetPrefPath("JLVM",program_name));
 }
 
@@ -486,6 +498,7 @@ static void _jl_fl_user_select_do(jl_t* pusr, float x, float y) {
 			}
 			_jl_fl_user_select_open_dir(pusr,pjlc->fl.dirname);
 		}else if(strcmp(pjlc->fl.selecteditem, ".") == 0) {
+			pjlc->fl.inloop = 0;
 			pusr->loop = JL_SG_WM_EXIT; //Go into exit loop
 		}else{
 			char *newdir = malloc(
@@ -518,6 +531,8 @@ void jl_fl_user_select_loop(jl_t* pusr) {
 
 	jl_gr_draw_image(pusr, 0, 1, 0., 0., 1., jl_dl_p(pusr), 1, 127);
 	jl_gr_draw_text(pusr, "Select File", .02, .02, .04,255);
+	pjlc->fl.btns[0]->loop(pusr);
+	pjlc->fl.btns[1]->loop(pusr);
 
 	jl_ct_run_event(pusr,JL_CT_MAINUP, _jl_fl_user_select_up, jl_ct_dont);
 	jl_ct_run_event(pusr,JL_CT_MAINDN, _jl_fl_user_select_dn, jl_ct_dont);
@@ -551,9 +566,16 @@ void jl_fl_user_select_loop(jl_t* pusr) {
 		pjlc->fl.cursor = pjlc->fl.drawupto;
 		pjlc->fl.cpage--;
 	}
-	jl_gr_draw_text(pusr, ">", .02, .08 + (.04 * pjlc->fl.cursor), .04,255);
-	jl_gr_draw_text(pusr, pjlc->fl.dirname, .02, .94, .02, 255);
-	jl_ct_run_event(pusr, JL_CT_SELECT, _jl_fl_user_select_do, jl_ct_dont);
+	if(pjlc->fl.prompt) {
+		jl_gr_draw_textbox(pusr, .02, jl_dl_p(pusr) - .06, .94, .02,
+			&pjlc->fl.promptstring);
+	}else{
+		jl_gr_draw_text(pusr, ">", .02, .08 + (.04 * pjlc->fl.cursor),
+			.04,255);
+		jl_gr_draw_text(pusr, pjlc->fl.dirname, .02, .94, .02, 255);
+		jl_ct_run_event(pusr, JL_CT_SELECT, _jl_fl_user_select_do,
+			jl_ct_dont);
+	}
 }
 
 char *jl_fl_user_select_get(jl_t* pusr) {
@@ -565,6 +587,24 @@ char *jl_fl_user_select_get(jl_t* pusr) {
 		return NULL;
 }
 
+static void _jl_fl_btn_makefile_action(jl_t* pusr, float x, float y) {
+	jvct_t *pjlc = pusr->pjlc;
+	pjlc->fl.prompt = 1;
+}
+
+static void _jl_fl_btn_makefile(jl_t* pusr) {
+	jvct_t *pjlc = pusr->pjlc;
+	if(pjlc->fl.newfiledata == NULL) return;
+	jl_gr_draw_glow_button(pusr, pjlc->fl.btns[0], "+ New File",
+		_jl_fl_btn_makefile_action);
+}
+
+static void _jl_fl_btn_makefolder(jl_t* pusr) {
+	jvct_t *pjlc = pusr->pjlc;
+	jl_gr_draw_glow_button(pusr, pjlc->fl.btns[1], "+ New Folder",
+		_jl_fl_btn_makefile_action);
+}
+
 void _jl_fl_kill(jvct_t * pjlc) {
 	jl_io_printc(pjlc->sg.usrd, "killing fl...\n");
 	cl_list_destroy(pjlc->fl.filelist);
@@ -573,7 +613,12 @@ void _jl_fl_kill(jvct_t * pjlc) {
 
 void _jl_fl_initb(jvct_t * pjlc) {
 	//Create the variables
-	pjlc->fl.filelist = cl_list_create();	
+	pjlc->fl.filelist = cl_list_create();
+	pjlc->fl.inloop = 0;
+	pjlc->fl.btns[0] = jl_gr_sprite_make(pjlc->sg.usrd, 0, 1, 1, 255,
+		.8, 0., .1, .1, _jl_fl_btn_makefile, 0);
+	pjlc->fl.btns[1] = jl_gr_sprite_make(pjlc->sg.usrd, 0, 1, 2, 255,
+		.9, 0., .1, .1, _jl_fl_btn_makefolder, 0);
 }
 
 void _jl_fl_inita(jvct_t * pjlc) {
@@ -584,7 +629,7 @@ void _jl_fl_inita(jvct_t * pjlc) {
 	jl_dl_progname(pjlc->sg.usrd, Strt("JLVM"));
 
 	gvar_pkfl =
-		jl_fl_get_resloc(pjlc->sg.usrd, Strt("JLVM"), Strt("jlvm.zip"));
+		jl_fl_get_resloc(pjlc->sg.usrd, Strt("JLLB"),Strt("media.zip"));
 	remove((void*)gvar_pkfl->data);
 
 	truncate(errf, 0);
