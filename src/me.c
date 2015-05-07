@@ -156,24 +156,36 @@ void _jal5_jl_me_vary_make(u32t vari, u08t size) {
 }
 
 /**
+ * Replace "bytes" bytes of string "b" at the point "p" of string "a" 
+ * @param 'pusr': library context
+ * @param 'a': string being modified
+ * @param 'b': string being appended onto "a"
+ * @param 'p': the place in a to start copying b
+ * @param 'bytes': the number of bytes to copy over
+ */
+void jl_me_strt_strt(jl_t *pusr, strt a, strt b, uint64_t p, uint64_t bytes) {
+	if(a == NULL) {
+		jl_sg_die(pusr->pjlc, "NULL A STRING");
+	}else if(b == NULL) {
+		jl_sg_die(pusr->pjlc, "NULL B STRING");
+	}
+	a->data = _jl_me_hydd_allc(pusr->pjlc, a->data, p + bytes + 1);
+	int i;
+	for(i = 0; i < bytes; i++) {
+		a->data[i+p] = b->data[i];
+	}
+	a->size = p + bytes;
+	a->data[a->size] = '\0';
+}
+
+/**
  * Add string "b" at the end of string "a"
  * @param 'pusr': library context
  * @param 'a': string being modified
  * @param 'b': string being appended onto "a"
  */
 void jl_me_strt_merg(jl_t *pusr, strt a, strt b) {
-	if(a == NULL) {
-		jl_sg_die(pusr->pjlc, "NULL A STRING");
-	}else if(b == NULL) {
-		jl_sg_die(pusr->pjlc, "NULL B STRING");
-	}
-	a->data = _jl_me_hydd_allc(pusr->pjlc, a->data, a->size + b->size + 1);
-	int i;
-	for(i = 0; i < b->size; i++) {
-		a->data[i+a->size] = b->data[i];
-	}
-	a->size = a->size + b->size;
-	a->data[a->size] = '\0';
+	jl_me_strt_strt(pusr, a, b, a->size, b->size);
 }
 
 /**

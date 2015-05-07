@@ -90,10 +90,13 @@ void _jl_fl_errf(jvct_t * pjlc, char *msg) {
 	jl_io_offset(pjlc->sg.usrd, "ERRF", JL_IO_TAG_SIMPLE-JL_IO_TAG_MAX);
 	jl_io_printc(pjlc->sg.usrd, "saving to errf: ");
 	jl_io_printc(pjlc->sg.usrd, errf);
+	jl_io_offset(pjlc->sg.usrd, "ERRF", JL_IO_TAG_MINIMAL-JL_IO_TAG_MAX);
 	jl_io_printc(pjlc->sg.usrd, msg);
 	jl_io_printc(pjlc->sg.usrd, "\n");
+	jl_io_offset(pjlc->sg.usrd, "ERRF", JL_IO_TAG_SIMPLE-JL_IO_TAG_MAX);
 	_jl_fl_save(pjlc->sg.usrd, msg,errf,strlen(msg));
 	jl_io_printc(pjlc->sg.usrd, "saved to errf!\n");
+	
 	jl_io_close_block(pjlc->sg.usrd); //Close Block "ERRF"
 }
 
@@ -475,6 +478,33 @@ static void _jl_fl_user_select_lt(jl_t* pusr, float x, float y) {
 	}
 }
 
+static char* _jl_fl_full_fname(jl_t* pusr,char *selecteddir,char *selecteditem){
+	jvct_t * pjlc = pusr->pjlc;
+
+	char *newdir = malloc(
+		strlen(pjlc->fl.dirname) +
+		strlen(selecteditem) + 2);
+	memcpy(newdir, pjlc->fl.dirname,
+		strlen(pjlc->fl.dirname));
+	memcpy(newdir + strlen(pjlc->fl.dirname),
+		selecteditem,
+		strlen(selecteditem));
+	newdir[strlen(pjlc->fl.dirname) +
+		strlen(selecteditem)] = '/';
+	newdir[strlen(pjlc->fl.dirname) +
+		strlen(selecteditem) + 1] = '\0';
+	return newdir;
+}
+
+static void _jl_fl_open_file(jl_t*pusr, char *selecteditem) {
+	jvct_t * pjlc = pusr->pjlc;
+	char *newdir = _jl_fl_full_fname(pusr, pjlc->fl.dirname, selecteditem);
+
+	free(pjlc->fl.dirname);
+	pjlc->fl.dirname = NULL;
+	_jl_fl_user_select_open_dir(pusr,newdir);
+}
+
 static void _jl_fl_user_select_do(jl_t* pusr, float x, float y) {
 	if((int)y == 1) {
 		jvct_t * pjlc = pusr->pjlc;
@@ -501,21 +531,7 @@ static void _jl_fl_user_select_do(jl_t* pusr, float x, float y) {
 			pjlc->fl.inloop = 0;
 			pusr->loop = JL_SG_WM_EXIT; //Go into exit loop
 		}else{
-			char *newdir = malloc(
-				strlen(pjlc->fl.dirname) +
-				strlen(pjlc->fl.selecteditem) + 2);
-			memcpy(newdir, pjlc->fl.dirname,
-				strlen(pjlc->fl.dirname));
-			memcpy(newdir + strlen(pjlc->fl.dirname),
-				pjlc->fl.selecteditem,
-				strlen(pjlc->fl.selecteditem));
-			newdir[strlen(pjlc->fl.dirname) +
-				strlen(pjlc->fl.selecteditem)] = '/';
-			newdir[strlen(pjlc->fl.dirname) +
-				strlen(pjlc->fl.selecteditem) + 1] = '\0';
-			free(pjlc->fl.dirname);
-			pjlc->fl.dirname = NULL;
-			_jl_fl_user_select_open_dir(pusr,newdir);
+			_jl_fl_open_file(pusr, pjlc->fl.selecteditem);
 		}
 	}
 }
@@ -567,8 +583,19 @@ void jl_fl_user_select_loop(jl_t* pusr) {
 		pjlc->fl.cpage--;
 	}
 	if(pjlc->fl.prompt) {
-		jl_gr_draw_textbox(pusr, .02, jl_dl_p(pusr) - .06, .94, .02,
-			&pjlc->fl.promptstring);
+		if(jl_gr_draw_textbox(pusr, .02, jl_dl_p(pusr) - .06, .94, .02,
+			&pjlc->fl.promptstring))
+		{
+			printf("NAME\n");
+			char *name = _jl_fl_full_fname(pusr,
+				pjlc->fl.dirname,
+				(char*)pjlc->fl.promptstring->data);
+			name[strlen(name) - 1] = '\0';
+			jl_fl_save(pusr, pjlc->fl.newfiledata,
+				name, pjlc->fl.newfilesize);
+			_jl_fl_user_select_open_dir(pusr, pjlc->fl.dirname);
+			pjlc->fl.prompt = 0;
+		}
 	}else{
 		jl_gr_draw_text(pusr, ">", .02, .08 + (.04 * pjlc->fl.cursor),
 			.04,255);

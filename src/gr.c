@@ -339,7 +339,12 @@ static void _jl_gr_textbox_lt(jl_t* pusr, float x, float y);
 		}
 	}
 	
-	void jl_gr_draw_textbox(jl_t*pusr, float x, float y, float w,
+	/**
+	 * Draw A Textbox.
+	 * @return 1 if return/enter is pressed.
+	 * @return 0 if not.
+	*/
+	uint8_t jl_gr_draw_textbox(jl_t*pusr, float x, float y, float w,
 		float h, strt *string)
 	{
 		jvct_t *pjlc = pusr->pjlc;
@@ -351,11 +356,13 @@ static void _jl_gr_textbox_lt(jl_t* pusr, float x, float y);
 		pjlc->gr.textbox_string = *string;
 		if((bytetoinsert = jl_ct_typing_get(pusr))) {
 			if(bytetoinsert == '\b') {
-				if((*string)->curs == 0) return;
+				if((*string)->curs == 0) return 0;
 				(*string)->curs--;
 				jl_me_strt_delete_byte(pusr, *string);
 			}else if(bytetoinsert == '\02') {
 				jl_me_strt_delete_byte(pusr, *string);
+			}else if(bytetoinsert == '\n') {
+				return 1;
 			}else{
 				jl_me_strt_insert_byte(pusr, *string, bytetoinsert);
 			}
@@ -367,6 +374,7 @@ static void _jl_gr_textbox_lt(jl_t* pusr, float x, float y);
 		jl_gr_draw_text(pusr, (char*)((*string)->data), x, y, h, 255);
 		jl_gr_draw_image(pusr, 0, 0,
 			x + (h*((float)(*string)->curs-.5)), y, h, h, 252, 255);
+		return 0;
 	}
 	
 	/**

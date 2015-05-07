@@ -38,6 +38,7 @@
 	#define Strt(x) jl_me_strt_c8ts((const void*)x)
 	
 	strt jl_me_strt_mkfrom_data(uint32_t size, void *data);
+	void jl_me_strt_strt(jl_t *pusr, strt a, strt b, uint64_t p, uint64_t bytes);
 	void jl_me_strt_merg(jl_t *pusr, strt a, strt b);
 	void jl_me_strt_trunc(jl_t *pusr, strt a, uint32_t size);
 	
@@ -122,7 +123,7 @@
 		float slidex, jl_ct_onevent_fnt prun);
 	void jl_gr_draw_glow_button(jl_t* pusr, jl_sprite_t * psprite,
 		char *txt, jl_ct_onevent_fnt prun);
-	void jl_gr_draw_textbox(jl_t*pusr, float x, float y, float w,
+	uint8_t jl_gr_draw_textbox(jl_t*pusr, float x, float y, float w,
 		float h, strt *string);
 	void jl_gr_togglemenubar(jl_t* pusr);
 	void jl_gr_addicon(jl_t* pusr, uint16_t grp, uint8_t iid,
@@ -221,7 +222,7 @@
 	// fade out any previously playing music (If there is any) for
 	// "p_secondsOfFadeOut" seconds, then fade in music with ID "p_IDinStack"
 	// for "p_secondsOfFadeIn" seconds
-	void audi_musi_play(jl_t* pusr, u32t p_IDinStack,
+	void jl_au_mus_play(jl_t* pusr, u32t p_IDinStack,
 		u08t p_secondsOfFadeOut, u08t p_secondsOfFadeIn);
 
 	// fade out any previously playing music (if there is any) for
@@ -236,6 +237,7 @@
 
 	// sets where music is comming from to center ( resets where music comes from )
 	void audi_sdir_setd(void);
+	void jl_au_add_audio(jl_t* pusr, char *pzipfile, uint16_t pigid);
 
 /*
 	This a Jeron Lau project. JL_lib (c) 2014 

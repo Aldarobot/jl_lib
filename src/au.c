@@ -89,7 +89,7 @@ void audi_musi_halt(u08t p_secondsOfFadeOut) {
 	Mix_FadeOutMusic(p_secondsOfFadeOut * 1000);
 }
 
-void audi_musi_play(jl_t* pusr, u32t p_IDinStack,
+void jl_au_mus_play(jl_t* pusr, u32t p_IDinStack,
 	u08t p_secondsOfFadeOut, u08t p_secondsOfFadeIn)
 {
 	jvct_t *pjlc = pusr->pjlc;
@@ -125,24 +125,45 @@ static inline void jlvm_ini_sounds(jvct_t *pjlc, u08t *data) {
 	jl_io_printc(pjlc->sg.usrd, "meanwhile....\n");
 
 	while(1) {
+		if(data[fil] == 0)
+			break;
+	
 		u32t *bytes = (void *)data;
 		uint8_t *fdat = malloc(bytes[0]);
 
 		jl_io_printi(pjlc->sg.usrd, bytes[0]);
 		jl_io_printc(pjlc->sg.usrd,"getting data....\n");
+		fil += sizeof(uint32_t); //move init next location
+		printf("we are at %d\n", fil);
 		for(i = 0; i < bytes[0]; i++) {
-			fdat[i] = data[fil+i+sizeof(uint32_t)];
+			fdat[i] = data[fil+i];
 		}
 		jl_au_load(pjlc,fid,fdat,bytes[0],255);
-		fil += bytes[0]+4; //move init next location
+		fil += bytes[0]; //move init next location
 		fid++; //increase to the next music id
-		//if(data[fil] == 0)
-			break;
 	}
+	pjlc->sg.usrd->info = fid;
 	jl_io_printc(pjlc->sg.usrd, "loaded music!\n");
 	
 	jl_io_close_block(pjlc->sg.usrd); //Close Block "LOAD"
 	jl_io_close_block(pjlc->sg.usrd); //Close Block "AUDI"
+}
+
+/**
+ * Load all audiotracks from a zipfile and give them ID's.
+ * info: info is set to number of images loaded.
+ * @param pusr: library context
+ * @param pzipfile: full file name of a zip file.
+ * @param pigid: which audio group to load the soundtracks into.
+*/
+void jl_au_add_audio(jl_t* pusr, char *pzipfile, uint16_t pigid) {
+	uint8_t *aud = jl_fl_media(pusr, "jlex/2/_aud", pzipfile,
+		jal5_head_jlvm(), jal5_head_size());
+	jl_io_printc(pusr, "Loading audiostuffs...\n");
+	if(aud != NULL) {
+		jlvm_ini_sounds(pusr->pjlc,aud);
+	}
+	jl_io_printc(pusr, "Loaded audiostuffs!\n");
 }
 
 /** @cond **/
@@ -163,15 +184,9 @@ void _jl_au_init(jvct_t *pjlc) {
 		jl_io_printc(pjlc->sg.usrd, "audio has been set.\n");
 	}
 	//Load Sound Effects & Music
-	uint8_t *aud = NULL;
-	aud = jl_fl_media(pjlc->sg.usrd, "jlex/2/_aud", (void *)
+	jl_au_add_audio(pjlc->sg.usrd, (void *)
 		jl_fl_get_resloc(pjlc->sg.usrd, Strt("JLLB"), Strt("media.zip"))
-			->data,
-		jal5_head_jlvm(), jal5_head_size());
-	jl_io_printc(pjlc->sg.usrd, "Loading audiostuffs...\n");
-	if(aud != NULL) {
-		jlvm_ini_sounds(pjlc,aud);
-	}
+		->data, 0);
 	pjlc->au.idis = UINT32_MAX; //audio by default is disabled
 	jl_io_printc(pjlc->sg.usrd, "Loaded audiostuffs!\n");
 	//Close Block AUDI

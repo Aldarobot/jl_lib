@@ -435,6 +435,7 @@ uint8_t jl_ct_typing_get(jl_t *pusr) {
 	uint8_t rtn = pjlc->ct.text_input[pjlc->ct.read_cursor];
 	if(jl_ct_key_pressed(pusr, SDL_SCANCODE_BACKSPACE) == 1) return '\b';
 	if(jl_ct_key_pressed(pusr, SDL_SCANCODE_DELETE) == 1) return '\02';
+	if(jl_ct_key_pressed(pusr, SDL_SCANCODE_RETURN) == 1) return '\n';
 	if(!rtn) return 0;
 	pjlc->ct.read_cursor++;
 	return rtn;
