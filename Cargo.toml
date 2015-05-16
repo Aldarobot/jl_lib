@@ -1,0 +1,4 @@
+[package]
+name = "jl_lib"
+version = "0.1.0"
+authors = ["jeron <snowtop105@gmail.com>"]

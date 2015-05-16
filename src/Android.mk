@@ -244,7 +244,8 @@ LOCAL_SRC_FILES +=\
 # Load The Programmers C files
 LOCAL_SRC_FILES +=\
 	gen/jlvm_hack_main.c\
-	gen/src/main.c
+	gen/src/main.c\
+	gen/med/main.c
 
 LOCAL_CFLAGS += -DGL_GLEXT_PROTOTYPES
 

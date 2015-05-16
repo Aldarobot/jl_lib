@@ -7,8 +7,9 @@
 
 #include "header/jl_pr.h"
 
+uint8_t jl_ct_key_pressed(jl_t *pusr, uint8_t key);
+
 #if JL_PLAT == JL_PLAT_COMPUTER
-	uint8_t jl_ct_key_pressed(jl_t *pusr, uint8_t key);
 
 	void jl_ct_key(jl_t *pusr, jl_ct_onevent_fnt prun,
 		jl_ct_onevent_fnt pno, uint8_t key)
@@ -96,12 +97,13 @@
 		jl_ct_onevent_fnt pno)
 	{ //touch center
 		jvct_t* pjlc = pusr->pjlc;
-		if(((pjlc->ct.msy>.4f) && (pjlc->ct.msy<6.f)) &&
-			((pjlc->ct.msx>.4f) && (pjlc->ct.msx<6.f)))
+		if(((pjlc->ct.msy>.4f * jl_dl_p(pusr)) &&
+			(pjlc->ct.msy<.6f * jl_dl_p(pusr))) &&
+			((pjlc->ct.msx>.4f) && (pjlc->ct.msx<.6f)))
 		{
-			prun(pusr, 255, 0);
+			prun(pusr, 255, (float)pjlc->ct.heldDown + .25);
 		}else{
-			pno(pusr, 255, 0);
+			pno(pusr, 255, (float)pjlc->ct.heldDown + .25);
 		}
 	}
 	//
@@ -110,11 +112,12 @@
 	{ //near right
 		jvct_t* pjlc = pusr->pjlc;
 		if(((pjlc->ct.msx>.6f) && (pjlc->ct.msx<.8f)) &&
-			((pjlc->ct.msy>.2f) && (pjlc->ct.msy<8.f)))
+			((pjlc->ct.msy * jl_dl_p(pusr)>.2f) &&
+			(pjlc->ct.msy * jl_dl_p(pusr)<.8f)))
 		{
-			prun(pusr, 255, 0);
+			prun(pusr, 255, (float)pjlc->ct.heldDown + .25);
 		}else{
-			pno(pusr, 255, 0);
+			pno(pusr, 255, (float)pjlc->ct.heldDown + .25);
 		}
 	}
 
@@ -123,11 +126,12 @@
 	{ //near left
 		jvct_t* pjlc = pusr->pjlc;
 		if(((pjlc->ct.msx<.4f) && (pjlc->ct.msx>.2f)) &&
-			((pjlc->ct.msy>.2f) && (pjlc->ct.msy<8.f)))
+			((pjlc->ct.msy>.2f * jl_dl_p(pusr)) &&
+			(pjlc->ct.msy<.8f * jl_dl_p(pusr))))
 		{
-			prun(pusr, 255, 0);
+			prun(pusr, 255, (float)pjlc->ct.heldDown + .25);
 		}else{
-			pno(pusr, 255, 0);
+			pno(pusr, 255, (float)pjlc->ct.heldDown + .25);
 		}
 	}
 
@@ -135,12 +139,13 @@
 		jl_ct_onevent_fnt pno)
 	{ //near up
 		jvct_t* pjlc = pusr->pjlc;
-		if(((pjlc->ct.msy<.4f) && (pjlc->ct.msy>.2f)) &&
-			((pjlc->ct.msx>.2f) && (pjlc->ct.msx<8.f)))
+		if(((pjlc->ct.msy<.4f * jl_dl_p(pusr)) &&
+			(pjlc->ct.msy>.2f * jl_dl_p(pusr))) &&
+			((pjlc->ct.msx>.2f) && (pjlc->ct.msx<.8f)))
 		{
-			prun(pusr, 255, 0);
+			prun(pusr, 255, (float)pjlc->ct.heldDown + .25);
 		}else{
-			pno(pusr, 255, 0);
+			pno(pusr, 255, (float)pjlc->ct.heldDown + .25);
 		}
 	}
 
@@ -148,12 +153,13 @@
 		jl_ct_onevent_fnt pno)
 	{ //near down
 		jvct_t* pjlc = pusr->pjlc;
-		if(((pjlc->ct.msy>.6f) && (pjlc->ct.msy<.8f)) &&
-			((pjlc->ct.msx>.2f) && (pjlc->ct.msx<8.f)))
+		if(((pjlc->ct.msy>.6f * jl_dl_p(pusr)) &&
+			(pjlc->ct.msy<.8f * jl_dl_p(pusr))) &&
+			((pjlc->ct.msx>.2f) && (pjlc->ct.msx<.8f)))
 		{
-			prun(pusr, 255, 0);
+			prun(pusr, 255, (float)pjlc->ct.heldDown + .25);
 		}else{
-			pno(pusr, 255, 0);
+			pno(pusr, 255, (float)pjlc->ct.heldDown + .25);
 		}
 	}
 	//
@@ -163,9 +169,9 @@
 	{//far right
 		jvct_t* pjlc = pusr->pjlc;
 		if(pjlc->ct.msx>.8f) {
-			prun(pusr, 255, 0);
+			prun(pusr, 255, (float)pjlc->ct.heldDown + .25);
 		}else{
-			pno(pusr, 255, 0);
+			pno(pusr, 255, (float)pjlc->ct.heldDown + .25);
 		}
 	}
 
@@ -174,9 +180,9 @@
 	{//far left
 		jvct_t* pjlc = pusr->pjlc;
 		if(pjlc->ct.msx<.2f) {
-			prun(pusr, 255, 0);
+			prun(pusr, 255, (float)pjlc->ct.heldDown + .25);
 		}else{
-			pno(pusr, 255, 0);
+			pno(pusr, 255, (float)pjlc->ct.heldDown + .25);
 		}
 	}
 
@@ -184,10 +190,10 @@
 		jl_ct_onevent_fnt pno)
 	{//far up
 		jvct_t* pjlc = pusr->pjlc;
-		if(pjlc->ct.msy<.2f) {
-			prun(pusr, 255, 0);
+		if(pjlc->ct.msy<.2f * jl_dl_p(pusr)) {
+			prun(pusr, 255, (float)pjlc->ct.heldDown + .25);
 		}else{
-			pno(pusr, 255, 0);
+			pno(pusr, 255, (float)pjlc->ct.heldDown + .25);
 		}
 	}
 
@@ -195,17 +201,21 @@
 		jl_ct_onevent_fnt pno)
 	{//far down
 		jvct_t* pjlc = pusr->pjlc;
-		if(pjlc->ct.msy>.8f) {
-			prun(pusr, 255, 0);
+		if(pjlc->ct.msy>.8f * jl_dl_p(pusr)) {
+			prun(pusr, 255, (float)pjlc->ct.heldDown + .25);
 		}else{
-			pno(pusr, 255, 0);
+			pno(pusr, 255, (float)pjlc->ct.heldDown + .25);
 		}
 	}
 
 	void tuch(jl_t *pusr, jl_ct_onevent_fnt prun,
 		jl_ct_onevent_fnt pno)
 	{//Any touch
-		prun(pusr,jl_ct_gmousex(pusr), jl_ct_gmousey(pusr));
+		jvct_t* pjlc = pusr->pjlc;
+		if(pjlc->ct.heldDown)
+			prun(pusr,jl_ct_gmousex(pusr), jl_ct_gmousey(pusr));
+		else
+			pno(pusr, jl_ct_gmousex(pusr), jl_ct_gmousey(pusr));
 	}
 #endif
 
@@ -259,15 +269,19 @@ static inline void _jal5_jl_ct_hndl(jvct_t *pjlc) {
 				pjlc->ct.event.window.data1,
 				pjlc->ct.event.window.data2);
 		}
+	}
 	#if JL_PLAT == JL_PLAT_PHONE
-		}else if( pjlc->ct.event.type==SDL_FINGERDOWN ) {
+		if( pjlc->ct.event.type==SDL_FINGERDOWN ) {
 			pjlc->ct.msx = pjlc->ct.event.tfinger.x;
-			pjlc->ct.msy = pjlc->ct.event.tfinger.y;
+
 			pjlc->ct.heldDown = 1;
+			pjlc->ct.msy = pjlc->ct.event.tfinger.y * jl_dl_p(pjlc->sg.usrd);
 			if(pjlc->sg.usrd->smde) {
-				pjlc->ct.msy -= .5;
+				pjlc->ct.msy = pjlc->ct.msy * 2.;
+				pjlc->ct.msy -= jl_dl_p(pjlc->sg.usrd);
 				if(pjlc->ct.msy < 0.) pjlc->ct.heldDown = 0;
 			}
+
 		}else if( pjlc->ct.event.type==SDL_FINGERUP ) {
 			pjlc->ct.heldDown = 0;
 		}else if( pjlc->ct.event.type==SDL_KEYDOWN ) {
@@ -281,7 +295,7 @@ static inline void _jal5_jl_ct_hndl(jvct_t *pjlc) {
 			}
 		}
 	#elif JL_PLAT == JL_PLAT_COMPUTER
-		}else if( pjlc->ct.event.wheel.y > 0 &&
+		if( pjlc->ct.event.wheel.y > 0 &&
 			 pjlc->ct.event.wheel.type == SDL_MOUSEWHEEL)
 		{
 			//Grscrup = JL_PP;
@@ -454,8 +468,9 @@ void jl_ct_typing_disable(jl_t *pusr) {
  * Returns 2 if key is held down
  * Returns 3 if key is released
 */
-#if JL_PLAT == JL_PLAT_COMPUTER
+
 uint8_t jl_ct_key_pressed(jl_t *pusr, uint8_t key) {
+#if JL_PLAT == JL_PLAT_COMPUTER
 	jvct_t* pjlc = pusr->pjlc;
 	if(pjlc->ct.keyDown[key] == 0) {
 		pjlc->ct.keyDown[key] = pjlc->ct.keys[key];
@@ -468,5 +483,7 @@ uint8_t jl_ct_key_pressed(jl_t *pusr, uint8_t key) {
 		pjlc->ct.keyDown[key] = 2; //2: Held Down
 		return 2;
 	}
-}
+#else
+	return 0; //Unimplemented
 #endif
+}

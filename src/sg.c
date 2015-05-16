@@ -106,6 +106,7 @@ void _jl_sg_mode_add(jvct_t* pjlc) {
 void jl_sg_smode_fncs(jl_t* pusr, uint8_t mode, jl_simple_fnt exit,
 	jl_simple_fnt wups, jl_simple_fnt wdns, jl_simple_fnt term)
 {
+	jl_gr_draw_msge(pusr, "Switching Mode...");
 	jvct_t* pjlc = pusr->pjlc;
 	
 	if(mode > pjlc->sg.usrd->mdec - 1) _jl_sg_mode_add(pjlc);
@@ -113,6 +114,9 @@ void jl_sg_smode_fncs(jl_t* pusr, uint8_t mode, jl_simple_fnt exit,
 	pjlc->sg.mdes[mode].tclp[JL_SG_WM_UP] = wups;
 	pjlc->sg.mdes[mode].tclp[JL_SG_WM_DN] = wdns;
 	pjlc->sg.mdes[mode].tclp[JL_SG_WM_TERM] = term;
+	
+	pjlc->ct.heldDown = 0;
+	jl_gr_draw_msge(pusr, "Switched Mode!");
 }
 
 /*
