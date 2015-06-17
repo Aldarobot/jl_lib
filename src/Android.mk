@@ -251,7 +251,7 @@ LOCAL_CFLAGS += -DGL_GLEXT_PROTOTYPES
 
 LOCAL_STATIC_LIBRARIES := 
 
-LOCAL_LDLIBS := -Wl -lz -ldl -lGLESv2 -llog -landroid
+LOCAL_LDLIBS := -lz -ldl -lGLESv2 -llog -landroid
 
 include $(BUILD_SHARED_LIBRARY)
 #$(call import-module,SDL)LOCAL_PATH := $(call my-dir)
