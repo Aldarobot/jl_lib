@@ -515,7 +515,10 @@ static void _jl_fl_user_select_do(jl_t* pusr, float x, float y) {
 		iterator = cl_list_iterator_create(pjlc->fl.filelist);
 		for(i = 0; i < cl_list_count(pjlc->fl.filelist); i++) {
 			stringtoprint = cl_list_iterator_next(iterator);
-			if(i == pjlc->fl.cursor) {
+			if(i ==
+				pjlc->fl.cursor + //ON PAGE
+				(pjlc->fl.cpage * (pjlc->fl.drawupto+1))) //PAGE
+			{
 				pjlc->fl.selecteditem = stringtoprint;
 				cl_list_iterator_destroy(iterator);
 				break;
@@ -586,7 +589,6 @@ void jl_fl_user_select_loop(jl_t* pusr) {
 		if(jl_gr_draw_textbox(pusr, .02, jl_dl_p(pusr) - .06, .94, .02,
 			&pjlc->fl.promptstring))
 		{
-			printf("NAME\n");
 			char *name = _jl_fl_full_fname(pusr,
 				pjlc->fl.dirname,
 				(char*)pjlc->fl.promptstring->data);
@@ -599,7 +601,8 @@ void jl_fl_user_select_loop(jl_t* pusr) {
 	}else{
 		jl_gr_draw_text(pusr, ">", .02, .08 + (.04 * pjlc->fl.cursor),
 			.04,255);
-		jl_gr_draw_text(pusr, pjlc->fl.dirname, .02, .94, .02, 255);
+		printf("dirname=%s\n", pjlc->fl.dirname);
+		jl_gr_draw_text(pusr, pjlc->fl.dirname, .02, jl_dl_p(pusr) - .02, .02, 255);
 		jl_ct_run_event(pusr, JL_CT_SELECT, _jl_fl_user_select_do,
 			jl_ct_dont);
 	}

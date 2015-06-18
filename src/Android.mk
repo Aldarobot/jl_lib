@@ -8,6 +8,14 @@ LIB_ZIP := lib/libzip-0.11.2/lib/
 LIB_SDL := lib/sdl/src/
 LIB_MIX := lib/SDL_mixer/
 
+# Load The Programmers C files
+LOCAL_SRC_FILES += $(subst $(LOCAL_PATH)/,, \
+	$(wildcard $(LOCAL_PATH)/gen/med/*.c) \
+)
+
+LOCAL_SRC_FILES += gen/jlvm_hack_main.c \
+	gen/src/main.c
+
 #load SDL
 LOCAL_SRC_FILES += \
 	$(LIB_SDL)SDL.c\
@@ -240,12 +248,6 @@ LOCAL_SRC_FILES +=\
 LOCAL_SRC_FILES +=\
 	me.c cl.c io.c fl.c cm.c ct.c\
 	sg.c dl.c gl.c gr.c vi.c au.c
-
-# Load The Programmers C files
-LOCAL_SRC_FILES +=\
-	gen/jlvm_hack_main.c\
-	gen/src/main.c\
-	gen/med/main.c
 
 LOCAL_CFLAGS += -DGL_GLEXT_PROTOTYPES
 
