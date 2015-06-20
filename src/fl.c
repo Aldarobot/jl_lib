@@ -10,9 +10,8 @@
 
 #define PKFMAX 10000000
 
-strt gvar_pkfl;
-char *errf;
-
+/** @cond **/
+//Static Functions 
 static void _jl_fl_save(jl_t* pusr, void *file, const char *name, uint32_t bytes) {
 	jvct_t * pjlc = pusr->pjlc;
 	int errsv;
@@ -22,7 +21,10 @@ static void _jl_fl_save(jl_t* pusr, void *file, const char *name, uint32_t bytes
 	char * atplace;
 	
 	if(name == NULL) {
-		jl_io_printc(pusr, "No good name");
+		jl_sg_kill(pusr, "Save: Name is Null");
+		return;
+	}else if(strlen(name) == 0) {
+		jl_sg_kill(pusr, "Save: Name is Empty String");
 		return;
 	}
 
@@ -39,9 +41,9 @@ static void _jl_fl_save(jl_t* pusr, void *file, const char *name, uint32_t bytes
 		errsv = errno;
 
 		jl_io_offset(pusr, "FLSV", JL_IO_TAG_MINIMAL-JL_IO_TAG_MAX);
-		jl_io_printc(pusr, "jl_fl_save: Failed to open file: ");
+		jl_io_printc(pusr, "jl_fl_save: Failed to open file: \"");
 		jl_io_printc(pusr, name);
-		jl_io_printc(pusr, " Write failed: ");
+		jl_io_printc(pusr, "\" Write failed: ");
 		jl_io_printc(pusr, strerror(errsv));
 		jl_io_printc(pusr, "\n");
 		exit(-1);
@@ -55,7 +57,7 @@ static void _jl_fl_save(jl_t* pusr, void *file, const char *name, uint32_t bytes
 		close(fd);
 		_jl_fl_errf(pjlc, ":Write failed: ");
 		_jl_fl_errf(pjlc, strerror(errsv));
-		jl_sg_die(pjlc, "\n");
+		jl_sg_kill(pusr, "\n");
 	}
 	bytecount = jl_me_string_fnum(pusr, (int)n_bytes);
 	atplace = jl_me_string_fnum(pusr, at);
@@ -81,31 +83,49 @@ static void _jl_fl_save(jl_t* pusr, void *file, const char *name, uint32_t bytes
 	return;
 }
 
-void jl_fl_save(jl_t* pusr, void *file, const char *name, uint32_t bytes) {
-	truncate(name, 0);
-	_jl_fl_save(pusr, file, name, bytes);
-}
-
-void _jl_fl_errf(jvct_t * pjlc, char *msg) {
-	jl_io_offset(pjlc->sg.usrd, "ERRF", JL_IO_TAG_SIMPLE-JL_IO_TAG_MAX);
-	jl_io_printc(pjlc->sg.usrd, "saving to errf: ");
-	jl_io_printc(pjlc->sg.usrd, errf);
-	jl_io_offset(pjlc->sg.usrd, "ERRF", JL_IO_TAG_MINIMAL-JL_IO_TAG_MAX);
-	jl_io_printc(pjlc->sg.usrd, msg);
-	jl_io_printc(pjlc->sg.usrd, "\n");
-	jl_io_offset(pjlc->sg.usrd, "ERRF", JL_IO_TAG_SIMPLE-JL_IO_TAG_MAX);
-	_jl_fl_save(pjlc->sg.usrd, msg,errf,strlen(msg));
-	jl_io_printc(pjlc->sg.usrd, "saved to errf!\n");
-	
-	jl_io_close_block(pjlc->sg.usrd); //Close Block "ERRF"
-}
-
 static inline void _jl_fl_reset_cursor(char *file_name) {
 	int fd = open(file_name, O_RDWR);
 	lseek(fd, 0, SEEK_SET);
 	close(fd);
 }
 
+//NON-STATIC Library Dependent Functions
+void _jl_fl_errf(jvct_t * pjlc, char *msg) {
+	jl_io_offset(pjlc->sg.usrd, "ERRF", JL_IO_TAG_SIMPLE-JL_IO_TAG_MAX);
+	jl_io_printc(pjlc->sg.usrd, "saving to errf: ");
+	jl_io_printc(pjlc->sg.usrd, pjlc->fl.errf_filename);
+	jl_io_offset(pjlc->sg.usrd, "ERRF", JL_IO_TAG_MINIMAL-JL_IO_TAG_MAX);
+	jl_io_printc(pjlc->sg.usrd, msg);
+	jl_io_printc(pjlc->sg.usrd, "\n");
+	jl_io_offset(pjlc->sg.usrd, "ERRF", JL_IO_TAG_SIMPLE-JL_IO_TAG_MAX);
+	//Write to the errf file
+	_jl_fl_save(pjlc->sg.usrd, msg, pjlc->fl.errf_filename, strlen(msg));
+	jl_io_printc(pjlc->sg.usrd, "saved to errf!\n");
+	
+	jl_io_close_block(pjlc->sg.usrd); //Close Block "ERRF"
+}
+
+/** @endcond **/
+
+/**
+ * Save A File To The File System.  Save Data of "bytes" bytes in "file" to
+ * file "name"
+ * @param pusr: Library Context
+ * @param file: Data To Save To File
+ * @param name: The Name Of The File to save to
+ * @param bytes: Size of "File"
+ */
+void jl_fl_save(jl_t* pusr, void *file, const char *name, uint32_t bytes) {
+	truncate(name, 0);
+	_jl_fl_save(pusr, file, name, bytes);
+}
+
+/**
+ * Load a File from the file system.  Returns bytes loaded from "file_name"
+ * @param pusr: Library Context
+ * @param file_name: file to load
+ * @returns A readable "strt" containing the bytes from the file.
+ */
 strt jl_fl_load(jl_t* pusr, char *file_name) {
 	_jl_fl_reset_cursor(file_name);
 	u32t i;
@@ -119,7 +139,7 @@ strt jl_fl_load(jl_t* pusr, char *file_name) {
 		jl_io_printc(pusr, "failed to open: \"");
 		jl_io_printc(pusr, file_name);
 		jl_io_printc(pusr, "\"\n");
-		jl_sg_die(pusr->pjlc, "file_file_load: Failed to open file");
+		jl_sg_kill(pusr, "file_file_load: Failed to open file");
 	}
 	int Read = read(fd, file, MAXFILELEN + 1);
 	pusr->info = Read;
@@ -136,6 +156,17 @@ strt jl_fl_load(jl_t* pusr, char *file_name) {
 	return frtn;
 }
 
+/**
+ * Save file "filename" with contents "data" of size "dataSize" to package
+ * "packageFileName"
+ * @param pusr: Library Context
+ * @param packageFileName: Name of package to Save to
+ * @param fileName: the file to Save to within the package.
+ * @param data: the data to save to the file
+ * @param dataSize: the # of bytes to save from the data to the file.
+ * @returns 0: On success
+ * @returns 1: If File is unable to be made.
+ */
 char jl_fl_pk_save(jl_t* pusr, char *packageFileName, char *fileName,
 	void *data, uint64_t dataSize)
 {
@@ -158,7 +189,7 @@ char jl_fl_pk_save(jl_t* pusr, char *packageFileName, char *fileName,
 		zip_source_free(s);
 		_jl_fl_errf(pusr->pjlc, "[JLVM/FILE/PKDJ/SAVE] src null error[replace]: ");
 		_jl_fl_errf(pusr->pjlc, (char *)zip_strerror(archive));
-		jl_sg_die(pusr->pjlc, "\n");
+		jl_sg_kill(pusr, "\n");
 	}
 //	printf("%d,%d,%d\n",archive,sb.index,s);
 	if(zip_file_add(archive, fileName, s, ZIP_FL_OVERWRITE)) {
@@ -179,6 +210,16 @@ static void _jl_fl_pk_load_quit(jl_t* pusr) {
 	jl_io_close_block(pusr); //Close Block "PKLD"
 }
 
+/**
+ * Load file "filename" in package "packageFileName" & Return contents
+ * -ERRF:
+ *	-ERRF_NONE:	can't find filename in packageFileName
+ *	-ERRF_FIND:	can't find packageFileName
+ * @param pusr: Library Context
+ * @param packageFileName: Package to load file from
+ * @param filename: file within package to load
+ * @returns: contents of file ( "filename" ) in package ( "packageFileName" )
+*/
 uint8_t *jl_fl_pk_load(jl_t* pusr, const char *packageFileName,
 	const char *filename)
 {
@@ -199,7 +240,7 @@ uint8_t *jl_fl_pk_load(jl_t* pusr, const char *packageFileName,
 	}
 	jl_io_printc(pusr, "error check 3.\n");
 	if(zipfile == NULL) {
-		jl_sg_die(pusr->pjlc, ":couldn't load pckg!\n");
+		jl_sg_kill(pusr, ":couldn't load pckg!\n");
 	}
 	jl_io_printc(pusr, "error check 4.\n");
 	jl_io_printc(pusr, (char *)zip_strerror(zipfile));
@@ -223,7 +264,7 @@ uint8_t *jl_fl_pk_load(jl_t* pusr, const char *packageFileName,
 	jl_io_printc(pusr, "opened file in package\n");
 	jl_io_printc(pusr, "reading opened file....\n");
 	if((pusr->info = zip_fread(file, fileToLoad, PKFMAX)) == -1) {
-		jl_sg_die(pusr->pjlc, "file reading failed");
+		jl_sg_kill(pusr, "file reading failed");
 	}
 	jl_io_printc(pusr, "read ");
 	jl_io_printi(pusr, pusr->info);
@@ -251,7 +292,7 @@ void jl_fl_mkdir(jl_t* pusr, strt pfilebase) {
 		}else{
 			_jl_fl_errf(pusr->pjlc, ":Directory: Uh oh...:\n:");
 			_jl_fl_errf(pusr->pjlc, strerror(errsv));
-			jl_sg_die(pusr->pjlc, "\n");
+			jl_sg_kill(pusr, "\n");
 		}
 	}else{
 		#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
@@ -288,7 +329,7 @@ uint8_t * jl_fl_mkfile(jl_t* pusr, char *pzipfile, char *pfilebase,
 		((freturn = jl_fl_pk_load(pusr, pzipfile, pfilebase))== NULL) &&
 		(pusr->errf == JL_ERR_FIND) )//Package still doesn't exist!!
 	{
-		jl_sg_die(pusr->pjlc, ":Failed To Create file\n");
+		jl_sg_kill(pusr, ":Failed To Create file\n");
 	}
 	jl_io_printc(pusr, "Good loading!\n");
 	//Close Block "MKFL"
@@ -297,8 +338,13 @@ uint8_t * jl_fl_mkfile(jl_t* pusr, char *pzipfile, char *pfilebase,
 	return freturn;
 }
 
-/*
+/**
  * Load media package, create it if it doesn't exist.
+ * @param pusr: Library Context
+ * @param Fname: File in Media Package to load.
+ * @param pzipfile: Where to make the package.
+ * @param pdata: Media Package Data to save if it doesn't exist.
+ * @param psize: Size of "pdata" 
 */
 uint8_t *jl_fl_media(jl_t* pusr, char *Fname, char *pzipfile,
 	void *pdata, uint64_t psize)
@@ -312,13 +358,18 @@ uint8_t *jl_fl_media(jl_t* pusr, char *Fname, char *pzipfile,
 		return freturn;
 }
 
-/*
- * Return the location of the resource pack for program with name
- * "pprg_name"
+/**
+ * Get the designated location for a resource pack. Resloc = Resource Location
+ * @param pusr: Library Context.
+ * @param pprg_name: Program Name
+ * @param pfilename: Name Of Resource Pack
+ * @returns: The designated location for a resouce pack
 */
-strt jl_fl_get_resloc(jl_t* pusr, strt pprg_name, strt pfilename) {
+char * jl_fl_get_resloc(jl_t* pusr, char* pprg_name, char* pfilename) {
+	jvct_t * pjlc = pusr->pjlc;
 	int i;
 	char *filebase;
+	char *location;
 	strt filebases = jl_me_strt_make(0, STRT_KEEP);
 	strt errfs = jl_me_strt_make(0, STRT_KEEP);
 	
@@ -329,7 +380,7 @@ strt jl_fl_get_resloc(jl_t* pusr, strt pprg_name, strt pfilename) {
 	
 	#if JL_PLAT == JL_PLAT_PHONE
 	jl_me_strt_merg(pusr, filebases, Strt(JLVM_FILEBASE));
-	jl_me_strt_merg(pusr, filebases, pprg_name);
+	jl_me_strt_merg(pusr, filebases, Strt(pprg_name));
 	jl_me_strt_merg(pusr, filebases, Strt("/"));
 	filebase = (void *)filebases->data;
 	//Setting errf
@@ -337,10 +388,10 @@ strt jl_fl_get_resloc(jl_t* pusr, strt pprg_name, strt pfilename) {
 	jl_me_strt_merg(pusr, errfs, Strt("errf.txt"));
 
 	#elif JL_PLAT == JL_PLAT_COMPUTER
-	filebase = SDL_GetPrefPath("JLVM",(char *)pprg_name->data);
+	filebase = SDL_GetPrefPath("JLVM", pprg_name);
 	if(filebase == NULL) {
 		jl_me_strt_merg(pusr, filebases, Strt("JLVM/"));
-		jl_me_strt_merg(pusr, filebases, pprg_name);
+		jl_me_strt_merg(pusr, filebases, Strt(pprg_name));
 		filebase = (void *)filebases->data;
 	}else{
 		filebases = Strt(filebase);
@@ -353,9 +404,9 @@ strt jl_fl_get_resloc(jl_t* pusr, strt pprg_name, strt pfilename) {
 	#else //OTHER
 	#endif
 	
-	errf = (void *)errfs->data;
-	jl_io_printc(pusr, "errf:");
-	jl_io_printc(pusr, errf);
+	pjlc->fl.errf_filename = (void *)errfs->data;
+	jl_io_printc(pusr, "errf_filename:");
+	jl_io_printc(pusr, pjlc->fl.errf_filename);
 	jl_io_printc(pusr, "\n");
 
 	jl_io_printc(pusr, filebase);
@@ -382,15 +433,19 @@ strt jl_fl_get_resloc(jl_t* pusr, strt pprg_name, strt pfilename) {
 	jl_io_printc(pusr, "Merge....\n");
 	strt pvar_pkfl = jl_me_strt_make(0, STRT_KEEP);
 	jl_me_strt_merg(pusr, pvar_pkfl, Strt(filebase));
-	jl_me_strt_merg(pusr, pvar_pkfl, pfilename);
+	jl_me_strt_merg(pusr, pvar_pkfl, Strt(pfilename));
+
+	location = jl_me_string_fstrt(pusr, pvar_pkfl);
 
 	jl_io_printc(pusr, "filebase: ");
 	jl_io_printc(pusr, filebase);
-	jl_io_printc(pusr, (char*)(pvar_pkfl->data));
+	jl_io_printc(pusr, location);
 	
 	jl_io_close_block(pusr); //Close Block "FLBS"
-	jl_io_printc(pusr, "finished resloc!\n");
-	return pvar_pkfl;
+	jl_io_printc(pusr, "finished resloc w/ \"");
+	jl_io_printc(pusr, location);
+	jl_io_printc(pusr, "\"\n");
+	return location;
 }
 
 static void _jl_fl_user_select_open_dir(jl_t* pusr, char *dirname) {
@@ -446,15 +501,15 @@ void jl_fl_user_select_init(jl_t* pusr, char *program_name, void *newfiledata,
 	_jl_fl_user_select_open_dir(pusr, SDL_GetPrefPath("JLVM",program_name));
 }
 
-static void _jl_fl_user_select_up(jl_t* pusr, float x, float y) {
-	if((int)y == 1) {
+static void _jl_fl_user_select_up(jl_t* pusr) {
+	if(pusr->ctrl.h == 1) {
 		jvct_t * pjlc = pusr->pjlc;
 		if((pjlc->fl.cursor > 0) || pjlc->fl.cpage) pjlc->fl.cursor--;
 	}
 }
 
-static void _jl_fl_user_select_dn(jl_t* pusr, float x, float y) {
-	if((int)y == 1) {
+static void _jl_fl_user_select_dn(jl_t* pusr) {
+	if(pusr->ctrl.h == 1) {
 		jvct_t * pjlc = pusr->pjlc;
 		if(pjlc->fl.cursor + (pjlc->fl.cpage * (pjlc->fl.drawupto+1)) <
 			cl_list_count(pjlc->fl.filelist) - 1)
@@ -464,17 +519,17 @@ static void _jl_fl_user_select_dn(jl_t* pusr, float x, float y) {
 	}
 }
 
-static void _jl_fl_user_select_rt(jl_t* pusr, float x, float y) {
+static void _jl_fl_user_select_rt(jl_t* pusr) {
 	int i;
 	for(i = 0; i < 5; i++) {
-		_jl_fl_user_select_dn(pusr, x, y);
+		_jl_fl_user_select_dn(pusr);
 	}
 }
 
-static void _jl_fl_user_select_lt(jl_t* pusr, float x, float y) {
+static void _jl_fl_user_select_lt(jl_t* pusr) {
 	int i;
 	for(i = 0; i < 5; i++) {
-		_jl_fl_user_select_up(pusr, x, y);
+		_jl_fl_user_select_up(pusr);
 	}
 }
 
@@ -505,8 +560,8 @@ static void _jl_fl_open_file(jl_t*pusr, char *selecteditem) {
 	_jl_fl_user_select_open_dir(pusr,newdir);
 }
 
-static void _jl_fl_user_select_do(jl_t* pusr, float x, float y) {
-	if((int)y == 1) {
+static void _jl_fl_user_select_do(jl_t* pusr) {
+	if(pusr->ctrl.h == 1) {
 		jvct_t * pjlc = pusr->pjlc;
 		struct cl_list_iterator *iterator;
 		int i;
@@ -539,6 +594,10 @@ static void _jl_fl_user_select_do(jl_t* pusr, float x, float y) {
 	}
 }
 
+/**
+ * Run the file viewer.
+ * @param pusr: Library Context.
+**/
 void jl_fl_user_select_loop(jl_t* pusr) {
 	jvct_t * pjlc = pusr->pjlc;
 	struct cl_list_iterator *iterator;
@@ -553,10 +612,10 @@ void jl_fl_user_select_loop(jl_t* pusr) {
 	pjlc->fl.btns[0]->loop(pusr);
 	pjlc->fl.btns[1]->loop(pusr);
 
-	jl_ct_run_event(pusr,JL_CT_MAINUP, _jl_fl_user_select_up, jl_ct_dont);
-	jl_ct_run_event(pusr,JL_CT_MAINDN, _jl_fl_user_select_dn, jl_ct_dont);
-	jl_ct_run_event(pusr,JL_CT_MAINRT, _jl_fl_user_select_rt, jl_ct_dont);
-	jl_ct_run_event(pusr,JL_CT_MAINLT, _jl_fl_user_select_lt, jl_ct_dont);
+	jl_ct_run_event(pusr,JL_CT_MAINUP, _jl_fl_user_select_up, jl_dont);
+	jl_ct_run_event(pusr,JL_CT_MAINDN, _jl_fl_user_select_dn, jl_dont);
+	jl_ct_run_event(pusr,JL_CT_MAINRT, _jl_fl_user_select_rt, jl_dont);
+	jl_ct_run_event(pusr,JL_CT_MAINLT, _jl_fl_user_select_lt, jl_dont);
 	//Draw files
 	for(i = 0; i < cl_list_count(pjlc->fl.filelist); i++) {
 		stringtoprint = cl_list_iterator_next(iterator);
@@ -604,10 +663,15 @@ void jl_fl_user_select_loop(jl_t* pusr) {
 		printf("dirname=%s\n", pjlc->fl.dirname);
 		jl_gr_draw_text(pusr, pjlc->fl.dirname, .02, jl_dl_p(pusr) - .02, .02, 255);
 		jl_ct_run_event(pusr, JL_CT_SELECT, _jl_fl_user_select_do,
-			jl_ct_dont);
+			jl_dont);
 	}
 }
 
+/**
+ * Get the results from the file viewer.
+ * @param pusr: Library Context.
+ * @returns: If done, name of selected file.  If not done, NULL is returned.
+**/
 char *jl_fl_user_select_get(jl_t* pusr) {
 	jvct_t * pjlc = pusr->pjlc;
 	
@@ -617,7 +681,7 @@ char *jl_fl_user_select_get(jl_t* pusr) {
 		return NULL;
 }
 
-static void _jl_fl_btn_makefile_action(jl_t* pusr, float x, float y) {
+static void _jl_fl_btn_makefile_action(jl_t* pusr) {
 	jvct_t *pjlc = pusr->pjlc;
 	pjlc->fl.prompt = 1;
 }
@@ -636,9 +700,11 @@ static void _jl_fl_btn_makefolder(jl_t* pusr) {
 }
 
 void _jl_fl_kill(jvct_t * pjlc) {
-	jl_io_printc(pjlc->sg.usrd, "killing fl...\n");
-	cl_list_destroy(pjlc->fl.filelist);
-	jl_io_printc(pjlc->sg.usrd, "killed fl!\n");
+	if(pjlc->has.fileviewer) {
+		jl_io_printc(pjlc->sg.usrd, "killing fl...\n");
+		cl_list_destroy(pjlc->fl.filelist);
+		jl_io_printc(pjlc->sg.usrd, "killed fl!\n");
+	}
 }
 
 void _jl_fl_initb(jvct_t * pjlc) {
@@ -649,6 +715,7 @@ void _jl_fl_initb(jvct_t * pjlc) {
 		.8, 0., .1, .1, _jl_fl_btn_makefile, 0);
 	pjlc->fl.btns[1] = jl_gr_sprite_make(pjlc->sg.usrd, 0, 1, 2, 255,
 		.9, 0., .1, .1, _jl_fl_btn_makefolder, 0);
+	pjlc->has.fileviewer = 1;
 }
 
 void _jl_fl_inita(jvct_t * pjlc) {
@@ -658,11 +725,11 @@ void _jl_fl_inita(jvct_t * pjlc) {
 	jl_io_printc(pjlc->sg.usrd, "program name:");
 	jl_dl_progname(pjlc->sg.usrd, Strt("JLVM"));
 
-	gvar_pkfl =
-		jl_fl_get_resloc(pjlc->sg.usrd, Strt("JLLB"),Strt("media.zip"));
-	remove((void*)gvar_pkfl->data);
+	char * pkfl =
+		jl_fl_get_resloc(pjlc->sg.usrd, "JLLB", "media.zip");
+	remove(pkfl);
 
-	truncate(errf, 0);
+	truncate(pjlc->fl.errf_filename, 0);
 	_jl_fl_errf(pjlc, ":Starting...\n");
 	jl_io_close_block(pjlc->sg.usrd); //Close Block "INIT"
 	jl_io_close_block(pjlc->sg.usrd); //Close Block "FILE"

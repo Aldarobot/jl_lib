@@ -1,5 +1,7 @@
 /*
  * dl: upper level SDL2
+ *	LSDL AKA. SDL or Simple Direct Media Layer:  SDL is a popular library
+ *	for making games.
 */
 
 #include "header/jl_pr.h"
@@ -65,7 +67,7 @@ static void _jlvm_curd_mode(jvct_t *pjlc) {
 	if(SDL_GetCurrentDisplayMode(0, &pjlc->dl.current)) {
 		_jl_fl_errf(pjlc, ":failed to get current display mode:\n:");
 		_jl_fl_errf(pjlc, (char *)SDL_GetError());
-		jl_sg_die(pjlc, "\n");
+		jl_sg_kill(pjlc->sg.usrd, "\n");
 	}
 	#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
 	jl_io_printc(pjlc->sg.usrd,
@@ -100,7 +102,7 @@ static inline void _jlvm_crea_wind(jvct_t *pjlc) {
 	{
 		_jl_fl_errf(pjlc, ":Failed to create display window:\n:");
 		_jl_fl_errf(pjlc, (char *)SDL_GetError());
-		jl_sg_die(pjlc, "\n");
+		jl_sg_kill(pjlc->sg.usrd, "\n");
 	}
 	pjlc->dl.glcontext = SDL_GL_CreateContext(pjlc->dl.displayWindow);
 	pjlc->dl.fullscreen = 1;
@@ -182,7 +184,7 @@ void _jal5_lsdl_glpt_view(jvct_t *pjlc, uint16_t x, uint16_t y) {
 		pjlc->dl.window.h = y;
 	}
 	if(glGetError() != GL_NO_ERROR ) {
-		jl_sg_die(pjlc, "Couldn't initialize(Reshape)");
+		jl_sg_kill(pjlc->sg.usrd, "Couldn't initialize(Reshape)");
 	}
 	pjlc->dl.current.w = x;
 	pjlc->dl.current.h = y + (x - y);

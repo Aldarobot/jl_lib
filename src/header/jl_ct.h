@@ -198,12 +198,11 @@
 #define JL_CT_MAINLT JL_CT_ALLP(JL_CT_GAME_CPLT,JL_CT_COMP_ARLT,JL_CT_ANDR_TFLT)
 #define JL_CT_SELECT JL_CT_ALLP(JL_CT_GAME_BTNA,JL_CT_COMP_RETN,JL_CT_ANDR_TCCR)
 
-void jl_ct_dont(jl_t* pusr, float x, float y);
 /**
  * Run prun if event pevent is active.
 */
 void jl_ct_run_event(jl_t *pusr, uint8_t pevent,
-	jl_ct_onevent_fnt prun, jl_ct_onevent_fnt pno);
+	jl_simple_fnt prun, jl_simple_fnt pno);
 
 /**
  * Allocate space for how many controls you want.
@@ -257,7 +256,7 @@ void jl_ct_updm(uint8_t mode);
  *			JL_CT_ANDR_TFUP), //Returns event for platform
  *		USR_DEFINED_EVENT1, onEvent);
 */
-//void jl_ct_mode_addi(jl_t *pusr, uint8_t libevent, jl_ct_onevent_fnt fn);
+//void jl_ct_mode_addi(jl_t *pusr, uint8_t libevent, jl_simple_fnt fn);
 /**
  * This adds a directional button (A Joystick/Arrow Keys/WASD etc.)
  * This function has 4 directions: UP/DOWN/LEFT/RIGHT

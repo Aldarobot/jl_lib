@@ -119,7 +119,7 @@ void jl_sg_smode_fncs(jl_t* pusr, uint8_t mode, jl_simple_fnt exit,
 	jl_gr_draw_msge(pusr, "Switched Mode!");
 }
 
-/*
+/**
  *Set the current mode & the current mode loop.
  */
 void jl_sg_setlm(jl_t* pusr, uint8_t mode, jl_sg_wm_t loop) {
@@ -129,12 +129,12 @@ void jl_sg_setlm(jl_t* pusr, uint8_t mode, jl_sg_wm_t loop) {
 
 void _jl_sg_load_jlpx(jvct_t* pjlc,uint8_t *data,void **pixels,int *w,int *h) {
 	if(data == NULL) {
-		jl_sg_die(pjlc, ":NULL DATA!\n");
+		jl_sg_kill(pjlc->sg.usrd, ":NULL DATA!\n");
 	}else if(data[pjlc->sg.init_image_location] == 0) {
 		return;
 	}
 	jgr_img_t *image = NULL;
-	image = _jl_me_hydd_allc(pjlc, image, sizeof(jgr_img_t));
+	jl_me_alloc(pjlc->sg.usrd, (void**)&image, sizeof(jgr_img_t), 0);
 	
 	jl_io_offset(pjlc->sg.usrd, "LOAD", JL_IO_TAG_PROGRESS-JL_IO_TAG_MAX);
 	jl_io_offset(pjlc->sg.usrd, "JLPX", JL_IO_TAG_PROGRESS-JL_IO_TAG_MAX);
@@ -164,7 +164,7 @@ void _jl_sg_load_jlpx(jvct_t* pjlc,uint8_t *data,void **pixels,int *w,int *h) {
 		_jl_fl_errf(pjlc, testing);
 		_jl_fl_errf(pjlc, "\n:!=\n:");
 		_jl_fl_errf(pjlc, JL_IMG_HEADER);
-		jl_sg_die(pjlc, "\n");
+		jl_sg_kill(pjlc->sg.usrd, "\n");
 	}
 	uint8_t tester = data[pjlc->sg.init_image_location+strlen(JL_IMG_HEADER)];
 	int FSIZE; //The size of the file.
@@ -182,7 +182,7 @@ void _jl_sg_load_jlpx(jvct_t* pjlc,uint8_t *data,void **pixels,int *w,int *h) {
 		jl_io_printc(pjlc->sg.usrd, "bad file type(must be 1,2 or 3) is: ");
 		jl_io_printi(pjlc->sg.usrd, tester);
 		jl_io_printc(pjlc->sg.usrd, "\n");
-		jl_sg_die(pjlc, ":bad file type(must be 1,2 or 3)\n");
+		jl_sg_kill(pjlc->sg.usrd, ":bad file type(must be 1,2 or 3)\n");
 	}
 	uint32_t ki;
 	ki = strlen(JL_IMG_HEADER)+1;
@@ -217,7 +217,7 @@ void _jl_sg_load_jlpx(jvct_t* pjlc,uint8_t *data,void **pixels,int *w,int *h) {
 
 	uint8_t *tex_pixels = NULL;
 	//R(1)+G(1)+B(1)+A(1) = 4
-	tex_pixels = _jl_me_hydd_allc(pjlc, tex_pixels, TEXTURE_WH*4);
+	jl_me_alloc(pjlc->sg.usrd, (void**)&tex_pixels, TEXTURE_WH*4, 0);
 	for(i = 0; i < TEXTURE_WH; i++) {
 		tex_pixels[(i*4)+0] = image->key[image->tex_pixels[i]].r;
 		tex_pixels[(i*4)+1] = image->key[image->tex_pixels[i]].g;
@@ -225,7 +225,7 @@ void _jl_sg_load_jlpx(jvct_t* pjlc,uint8_t *data,void **pixels,int *w,int *h) {
 		tex_pixels[(i*4)+3] = image->key[image->tex_pixels[i]].a;
 	}
 	int *a = NULL;
-	a = _jl_me_hydd_allc(pjlc, a, 2*sizeof(int));
+	jl_me_alloc(pjlc->sg.usrd, (void**)&a, 2*sizeof(int), 0);
 	a[0] = 1024;
 	a[1] = 1024;
 	//Set Return values
@@ -294,7 +294,8 @@ static inline void _jl_sg_init_images(jvct_t * pjlc, uint8_t *data, uint16_t p){
 }
 
 static uint32_t _jl_sg_quit(jvct_t* pjlc, int rc) {
-	jl_gr_draw_msge(pjlc->sg.usrd, "QUITING JLLIB....");
+	if(pjlc->has.graphics)
+		jl_gr_draw_msge(pjlc->sg.usrd, "QUITING JLLIB....");
 	_jl_fl_errf(pjlc, ":Quitting....\n"); //Exited properly
 	jl_io_offset(pjlc->sg.usrd, "KILL", JL_IO_TAG_SIMPLE-JL_IO_TAG_MAX);
 	_jl_dl_kill(pjlc);
@@ -302,40 +303,32 @@ static uint32_t _jl_sg_quit(jvct_t* pjlc, int rc) {
 	_jl_fl_errf(pjlc, ":No Error! YAY!\n"); //Exited properly
 	_jl_io_kill(pjlc->sg.usrd);
 	_jl_me_kill(pjlc);
+	printf("exiting with return value %d\n", rc);
 	exit(rc);
 	_jl_fl_errf(pjlc, ":What The Hell?  This is an impossible error!\n");
 	return 105;
 }
 
-//Quit, And Return -1 to show there was an error, also save message in errf.text
-static void _jl_sg_erqt(jvct_t* pjlc, char *msg) {
-	jl_io_offset(pjlc->sg.usrd, "ERQT", JL_IO_TAG_INTENSE-JL_IO_TAG_MAX);
-	jl_io_printc(pjlc->sg.usrd, msg);
-	_jl_fl_errf(pjlc, msg);
-	_jl_sg_quit(pjlc, -1);
-	jl_io_close_block(pjlc->sg.usrd); //Close Block "ERQT"
-}
-
-//Show Error On Screen
-void jl_sg_die(jvct_t* pjlc, char * msg) {
+/**
+ * Show Error On Screen if screen is available.  Also store error in errf.txt.
+ * Quit, And Return -1 to show there was an error.
+*/
+void jl_sg_kill(jl_t* pusr, char * msg) {
 	//TODO: Make Screen With Window Saying Error Message Followed By Prompt.
 	//	Also, don't automatically quit, like it does now!  ERQT can be
 	//	inline at that point.
-	_jl_fl_errf(pjlc, ":Quitting On Error...\n");
-	_jl_sg_erqt(pjlc, msg);
-}
-
-//If, you can't use _jl_sg_dies(), because the screen hasn't been created, use
-//This function.  Otherwise, DON'T! It makes it hard to debug.  The error message
-//Will Be saved to a file, like in _jl_sg_dies().
-void _jl_sg_kill(jvct_t* pjlc, char *msg) {
-	_jl_sg_erqt(pjlc, msg);
+	_jl_fl_errf(pusr->pjlc, ":Quitting On Error...\n");
+	jl_io_offset(pusr, "ERQT", JL_IO_TAG_INTENSE-JL_IO_TAG_MAX);
+	jl_io_printc(pusr, msg);
+	_jl_fl_errf(pusr->pjlc, msg);
+	_jl_sg_quit(pusr->pjlc, -1);
+	jl_io_close_block(pusr); //Close Block "ERQT"
 }
 
 /**
- * Stop the program.
+ * Go to exit mode or exit if in exit mode.
  */
-void jl_sg_kill(jl_t* pusr) {
+void jl_sg_exit(jl_t* pusr) {
 	if(pusr->loop == JL_SG_WM_EXIT)
 		_jl_sg_quit(pusr->pjlc, 0);
 	else
@@ -417,9 +410,7 @@ static inline void _jl_sg_inita(jvct_t * pjlc) {
 	pjlc->gl.allocatedg = 0;
 	pjlc->gl.allocatedi = 0;
 	jl_sg_add_image(pjlc->sg.usrd,
-		(void*)((jl_fl_get_resloc(pjlc->sg.usrd,
-			Strt("JLLB"), Strt("media.zip"))->data)),
-		0);
+		(void*)jl_fl_get_resloc(pjlc->sg.usrd, "JLLB", "media.zip"), 0);
 }
 
 void _jl_sg_loop(jl_t* pusr) {
@@ -463,16 +454,17 @@ void _jl_sg_loop(jl_t* pusr) {
 //NON_USER FUNCTION
 
 static inline void _jl_sg_init_done(jvct_t *pjlc) {
+	pjlc->has.graphics = 1; //Graphics Now Available For Use
 	jl_gr_draw_msge(pjlc->sg.usrd, "LOADING JLLIB....");
 	jl_io_printc(pjlc->sg.usrd, "started up display.\n");
 }
 
-//The Libraries Needed At Very Beginning: The Base Of It All
+//Initialize The Libraries Needed At Very Beginning: The Base Of It All
 static inline jvct_t* _jl_sg_init_blib(void) {
-	//MEMORY
-	jvct_t* pjlc = _jl_me_init();
-	//OTHER
-	_jl_io_init(pjlc);
+	// Memory
+	jvct_t* pjlc = _jl_me_init(); // Create The Library Context
+	// Other
+	_jl_io_init(pjlc); // Allow Printing
 	return pjlc;
 }
 
@@ -517,7 +509,7 @@ int32_t main(int argc, char *argv[]) {
 	if(pjlc->sg.usrd->mdec) {
 		while(1) _jl_sg_loop(pjlc->sg.usrd); //main loop
 	}
-	jl_sg_kill(pjlc->sg.usrd);//kill the program
+	_jl_sg_quit(pjlc, 105);//kill the program
 	return 126;
 }
 

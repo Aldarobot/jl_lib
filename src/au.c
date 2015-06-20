@@ -5,6 +5,7 @@
 /** \file
  * au.c
  *	JLVM BaseLibrary: Audio
+ * 		This library can play and record / music or sound effects.
 */
 #include "header/jl_pr.h"
 
@@ -31,7 +32,7 @@ void jl_au_load(jvct_t *pjlc, int IDinStack, void *data, int dataSize,
 	if(pjlc->au.jmus[IDinStack]._MUS == NULL) {
 		_jl_fl_errf(pjlc, ":Couldn't load music because:");
 		_jl_fl_errf(pjlc, (char *)SDL_GetError());
-		jl_sg_die(pjlc, "\n");
+		jl_sg_kill(pjlc->sg.usrd, "\n");
 	}else{
 		jl_io_printc(pjlc->sg.usrd, "loaded music ");
 		jl_io_printi(pjlc->sg.usrd, IDinStack);
@@ -43,7 +44,12 @@ void jl_au_load(jvct_t *pjlc, int IDinStack, void *data, int dataSize,
 	jl_io_close_block(pjlc->sg.usrd); //Close Block "AUDI"
 }
 
-uint8_t audi_musi_spli(void) {
+/**
+ * Test if music is playing. 
+ * @returns 1: if music is playing
+ * @returns 0: otherwise
+*/
+uint8_t jl_au_mus_playing(void) {
 	return Mix_PlayingMusic();
 }
 
@@ -62,7 +68,13 @@ static inline void jls_ini(jvct_t *pjlc, int PMusMax) {
 	jl_io_close_block(pjlc->sg.usrd); //Close Block "AUDI"
 }
 
-void audi_sdir_setm(uint8_t left, uint8_t toCenter) {
+/**
+ * set where the music is coming from.  
+ * @param left: How much to the left compared to the right.
+ *	255 is left 0 is right
+ * @param toCenter: Overall volume
+*/
+void jl_au_panning(uint8_t left, uint8_t toCenter) {
 	uint8_t right = 255 - left;
 	if(toCenter) {
 		if(right > left) {
@@ -74,7 +86,10 @@ void audi_sdir_setm(uint8_t left, uint8_t toCenter) {
 	Mix_SetPanning(MIX_CHANNEL_POST, left, right);
 }
 
-void audi_sdir_setd(void) {
+/**
+ * sets where music is comming from to center ( resets panning )
+*/
+void jl_au_panning_default(void) {
 	Mix_SetPanning(MIX_CHANNEL_POST,255,255);
 }
 
@@ -85,19 +100,29 @@ void _jal5_audi_play(jvct_t *pjlc) {
 }
 /** @endcond **/
 
-void audi_musi_halt(u08t p_secondsOfFadeOut) {
+/**
+ * fade out any previously playing music (if there is any) for
+ * "p_secondsOfFadeOut" seconds
+ * @param p_secondsOfFadeOut: How many seconds to fade music.
+*/
+void jl_au_mus_halt(u08t p_secondsOfFadeOut) {
 	Mix_FadeOutMusic(p_secondsOfFadeOut * 1000);
 }
 
-void jl_au_mus_play(jl_t* pusr, u32t p_IDinStack,
-	u08t p_secondsOfFadeOut, u08t p_secondsOfFadeIn)
+/** 
+ * fade out any previously playing music (If there is any) for
+ * "p_secondsOfFadeOut" seconds, then fade in music with ID "p_IDinStack"
+ * for "p_secondsOfFadeIn" seconds
+*/
+void jl_au_mus_play(jl_t* pusr, uint32_t p_IDinStack,
+	uint8_t p_secondsOfFadeOut, uint8_t p_secondsOfFadeIn)
 {
 	jvct_t *pjlc = pusr->pjlc;
 	pjlc->au.idis = p_IDinStack;
 	pjlc->au.sofi = p_secondsOfFadeIn;
 	pjlc->au.sofo = p_secondsOfFadeOut;
 	if ( Mix_PlayingMusic() ) { //If Music Playing Already
-		audi_musi_halt(pjlc->au.sofo);
+		jl_au_mus_halt(pjlc->au.sofo);
 	}else{ //If Music Not Playing
 		_jal5_audi_play(pjlc);
 	}
@@ -179,14 +204,13 @@ void _jl_au_init(jvct_t *pjlc) {
 	if ( Mix_OpenAudio(11025, AUDIO_S16, 1, 2048) < 0 ) {
 		_jl_fl_errf(pjlc, ":Couldn't set 11025 Hz 16-bit audio because:");
 		_jl_fl_errf(pjlc, (char *)SDL_GetError());
-		jl_sg_die(pjlc, "\n");
+		jl_sg_kill(pjlc->sg.usrd, "\n");
 	}else{
 		jl_io_printc(pjlc->sg.usrd, "audio has been set.\n");
 	}
 	//Load Sound Effects & Music
 	jl_au_add_audio(pjlc->sg.usrd, (void *)
-		jl_fl_get_resloc(pjlc->sg.usrd, Strt("JLLB"), Strt("media.zip"))
-		->data, 0);
+		jl_fl_get_resloc(pjlc->sg.usrd, "JLLB", "media.zip"), 0);
 	pjlc->au.idis = UINT32_MAX; //audio by default is disabled
 	jl_io_printc(pjlc->sg.usrd, "Loaded audiostuffs!\n");
 	//Close Block AUDI

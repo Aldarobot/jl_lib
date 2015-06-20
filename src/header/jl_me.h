@@ -21,9 +21,8 @@ typedef enum{
 }jl_io_tag_t;
 
 typedef void(*jl_simple_fnt)(jl_t*pusr);
-typedef void(*jl_ct_onevent_fnt)(jl_t *pusr, float x, float y);
-typedef void(*jl_ct_event_fnt)(jl_t* pusr, jl_ct_onevent_fnt prun,
-	jl_ct_onevent_fnt pno);
+typedef void(*jl_ct_event_fnt)(jl_t* pusr, jl_simple_fnt prun,
+	jl_simple_fnt pno);
 typedef void(*jl_io_print_fnt)(jl_t* pusr, const char * print);
 
 //Variable Types

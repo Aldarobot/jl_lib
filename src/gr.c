@@ -36,8 +36,8 @@ static void _jl_gr_flipscreen(jl_t* pusr);
 static void _jl_gr_menubar_slow(jl_t* pusr);
 static void _jl_gr_menubar_name(jl_t* pusr);
 static void _jl_gr_draw_icon(jl_t* pusr);
-static void _jl_gr_textbox_rt(jl_t* pusr, float x, float y);
-static void _jl_gr_textbox_lt(jl_t* pusr, float x, float y);
+static void _jl_gr_textbox_rt(jl_t* pusr);
+static void _jl_gr_textbox_lt(jl_t* pusr);
 
 /*EXPORTED FUNCTIONS*/
 
@@ -279,6 +279,7 @@ static void _jl_gr_textbox_lt(jl_t* pusr, float x, float y);
 
 	/**
 	 * Print message on the screen.
+   	 * @param 'pusr': library context.
 	 * @param 'message': the message 
 	 */
 	void jl_gr_draw_msge(jl_t* pusr, char * message) {
@@ -294,7 +295,7 @@ static void _jl_gr_textbox_lt(jl_t* pusr, float x, float y);
 	 */
 	void jl_gr_term_msge(jl_t* pusr, char *message) {
 		jl_gr_draw_msge(pusr, message);
-		jl_sg_die(pusr->pjlc, message);
+		jl_sg_kill(pusr, message);
 	}
 	
 	/**
@@ -308,12 +309,12 @@ static void _jl_gr_textbox_lt(jl_t* pusr, float x, float y);
 	**/
 	void jl_gr_draw_slide_button(
 		jl_t* pusr, jl_sprite_t * psprite, char *txt, float defaultx,
-		float slidex, jl_ct_onevent_fnt prun)
+		float slidex, jl_simple_fnt prun)
 	{
 		jl_gr_draw_text_sprite(pusr, psprite, txt);
 		psprite->r.x = defaultx;
 		if(jl_gr_sprite_collide(pusr, pusr->mouse, psprite)) {
-			jl_ct_run_event(pusr, JL_CT_PRESS, prun, jl_ct_dont);
+			jl_ct_run_event(pusr, JL_CT_PRESS, prun, jl_dont);
 			psprite->r.x = defaultx + slidex;
 		}
 	}
@@ -326,11 +327,11 @@ static void _jl_gr_textbox_lt(jl_t* pusr, float x, float y);
  	 * @param 'prun': the function to run when pressed.
 	**/
 	void jl_gr_draw_glow_button(jl_t* pusr, jl_sprite_t * psprite,
-		char *txt, jl_ct_onevent_fnt prun)
+		char *txt, jl_simple_fnt prun)
 	{
 		jl_gr_sprite_draw(pusr, psprite);
 		if(jl_gr_sprite_collide(pusr, pusr->mouse, psprite)) {
-			jl_ct_run_event(pusr, JL_CT_PRESS, prun, jl_ct_dont);
+			jl_ct_run_event(pusr, JL_CT_PRESS, prun, jl_dont);
 			jl_gr_draw_rect(pusr, psprite->r.x, psprite->r.y,
 				psprite->r.w, psprite->r.h,
 				1., 1., 1., 64); 
@@ -368,8 +369,8 @@ static void _jl_gr_textbox_lt(jl_t* pusr, float x, float y);
 			}
 //			printf("inserting %1s\n", &bytetoinsert);
 		}
-		jl_ct_run_event(pusr,JL_CT_MAINLT,_jl_gr_textbox_lt,jl_ct_dont);
-		jl_ct_run_event(pusr,JL_CT_MAINRT,_jl_gr_textbox_rt,jl_ct_dont);
+		jl_ct_run_event(pusr,JL_CT_MAINLT,_jl_gr_textbox_lt,jl_dont);
+		jl_ct_run_event(pusr,JL_CT_MAINRT,_jl_gr_textbox_rt,jl_dont);
 		jl_gr_draw_image(pusr, 0, 0, x, y, w, h, ' ', 255);
 		jl_gr_draw_text(pusr, (char*)((*string)->data), x, y, h, 255);
 		jl_gr_draw_image(pusr, 0, 0,
@@ -452,7 +453,7 @@ static void _jl_gr_textbox_lt(jl_t* pusr, float x, float y);
 /** @cond **/
 /*BACKGROUND FUNCTIONS*/
 
-	static void _jl_gr_textbox_lt(jl_t* pusr, float x, float y) {
+	static void _jl_gr_textbox_lt(jl_t* pusr) {
 //		if((int)y != 1) return;
 		jvct_t *pjlc = pusr->pjlc;
 		
@@ -461,7 +462,7 @@ static void _jl_gr_textbox_lt(jl_t* pusr, float x, float y);
 			pjlc->gr.textbox_string->curs--;
 	}
 	
-	static void _jl_gr_textbox_rt(jl_t* pusr, float x, float y) {
+	static void _jl_gr_textbox_rt(jl_t* pusr) {
 //		if((int)y != 1) return;
 		jvct_t *pjlc = pusr->pjlc;
 

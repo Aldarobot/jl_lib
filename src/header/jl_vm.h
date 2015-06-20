@@ -47,16 +47,7 @@
 
 //INPT:
 	typedef struct{
-		uint16_t CtrC; //Control Count: how many events to check for
-		jl_ct_onevent_fnt *function; //1 function for each event
-		uint8_t *type; //1 event type for each event
-	}_ct_user_events;
-
-	typedef struct{
 		jl_ct_event_fnt getEvents[JL_CT_MAXX];
-
-		//User Events For Each Mode & Window
-		_ct_user_events *userevents[JL_SG_WM_MAX];
 
 		float msx, msy;
 		int msxi, msyi;
@@ -149,6 +140,7 @@
 		uint64_t newfilesize;
 		uint8_t prompt;
 		strt promptstring;
+		char *errf_filename;
 	}_fl_t;
 	
 	typedef struct {
@@ -198,6 +190,12 @@ typedef struct{
 	_fl_t fl; //File Manager
 	_gr_t gr; //Graphics
 	_dl_t dl; //Base SDL
+
+	//in: What's Available
+	struct{
+		uint8_t graphics; //graphics are enabled
+		uint8_t fileviewer; //Fileviewer is enabled
+	}has;
 
 	uint64_t cprg; //current program ID
 	_sg_sprt_t fncs; //Functions that change

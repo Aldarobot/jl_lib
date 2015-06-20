@@ -166,8 +166,6 @@ void jl_gl_draw(jvct_t *pjct);
 void jl_gl_set_clippane(jvct_t *pjlc, float xmin, float xmax, float ymin, float ymax);
 void jl_gl_default_clippane(jvct_t *pjlc);
 
-//Change Mem's Size To "size" and return new pointer if changed.
-void *_jl_me_hydd_allc(jvct_t* pjct, void *mem, uint32_t size);
 //void jal5_eogl_draw(uint8_t vertices, uint8_t map, float *xyz);
 
 void _jal5_lsdl_glpt_view(jvct_t *pjct, u16t x, u16t y);
@@ -176,6 +174,3 @@ float jal5_inpt_xmse(void);
 float jal5_inpt_ymse(void);
 
 void _jl_gr_flip_scrn(jvct_t *pjct);
-
-//
-void jl_sg_die(jvct_t* pjlc, char * msg);

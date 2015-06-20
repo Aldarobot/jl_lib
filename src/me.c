@@ -1,5 +1,9 @@
 /*
  * me: memory manager
+ * 
+ * A simple memory library.  Includes creating variables, setting and
+ * getting variables, and doing simple and complicated math functions on
+ * the variables.  Has a specialized string type.
 */
 
 #include "header/jl_pr.h"
@@ -17,9 +21,9 @@ uint32_t jl_me_tbiu(void) {
 	return mi.uordblks;
 }
 
-void *_jl_me_hydd_allc(jvct_t* pjlc, void *a, uint32_t size) {
+static void *_jl_me_hydd_allc(jvct_t* pjlc, void *a, uint32_t size) {
 	if((a = realloc(a, size)) == NULL) {
-		jl_sg_die(pjlc, "realloc() memory error!");
+		jl_sg_kill(pjlc->sg.usrd, "realloc() memory error!");
 	}
 	return a;
 }
@@ -37,23 +41,81 @@ static inline void _jlvm_jl_me_resz(jvct_t* pjlc, uint32_t kb) {
 	malloc_trim(0); //Remove Free Memory
 }
 
-void * jl_me_alloc(u32t size) {
-	u08t * a = malloc(size);
-	u32t i;
+/**
+ * Clear memory pointed to by "mem" of size "size"
+ * @param pmem: memory to clear
+ * @param size: size of "mem"
+*/
+void jl_me_clr(void *pmem, uint64_t size) {
+	uint8_t *fmem = pmem;
+	uint64_t i;
 	for(i = 0; i < size; i++) {
-		a[i] = 0;
+		fmem[i] = 0;
 	}
-	return a;
 }
 
+static void _jl_me_alloc_malloc(jl_t* pusr, void **a, uint32_t size) {
+	if(size == 0)
+		jl_sg_kill(pusr, "Double Free or free on NULL pointer");
+	*a = malloc(size);
+	if(*a == NULL)
+		jl_sg_kill(pusr, "jl_me_alloc: Out Of Memory!");
+	jl_me_clr(*a, size);
+}
+
+/**
+ * Copy "size" bytes of "src" to "dst"
+ * @param pusr: The library context.
+ * @param src: source buffer
+ * @param size: # of bytes of "src" to copy to "dst"
+ * @returns: a new pointer to 
+*/
+void * jl_me_copy(jl_t* pusr, const void *src, size_t size) {
+	void *dest = NULL; _jl_me_alloc_malloc(pusr, &dest, size);
+	void *rtn = memcpy(dest, src, size);
+	return rtn;
+}
+
+/**
+ * If "a" points to a null pointer, then allocate space of "size" bytes unless
+ * 	"size" is 0.  Anything allocated will be initialized to 0.
+ * Else If "size" is zero, then free the pointer pointed to by "a"
+ * Else, replace pointer pointed to by "a" with new pointer with "size" bytes,
+ *	with same contents of pointer pointed to by "a" upto "oldsize" bytes.
+ *	Any bytes not set from the old pointer will be initialized to "0"
+ * @param pusr: The library context.
+ * @param a: Pointer to the memory to change.
+ * @param size: How many bytes to allocate.
+ * @param oldsize: How many bytes where allocated before [ 0 is default ].
+*/
+void jl_me_alloc(jl_t* pusr, void **a, uint32_t size, uint32_t oldsize) {
+	if(*a == NULL) {
+		_jl_me_alloc_malloc(pusr, a, size);
+	}else if(size == 0) {
+		free(*a);
+		*a = NULL;
+	}else{
+		void *old = *a;
+		void *new = jl_me_copy(pusr, old, size);
+		*a = new;
+	}
+}
+
+/**
+ * Clears an already existing string and resets it's cursor value.
+ * @param pa: string to clear.
+*/
 void jl_me_strt_clear(strt pa) {
 	pa->curs = 0;
-	int i;
-	for( i = 0; i < pa->size + 1; i++) {
-		pa->data[i] = '\0';
-	}
+	jl_me_clr(pa->data, pa->size + 1);
 }
 
+/**
+ * Allocates a "strt" of size "size" and returns it.
+ * @param size: How many bytes/characters to allocate.
+ * @param type: whether automatic freeing should be allowed or not.
+ * @returns: A new initialized "strt".
+*/
 strt jl_me_strt_make(u32t size, u08t type) {
 	strt a = malloc(sizeof(strt_t));
 	a->data = malloc(size+1);
@@ -64,11 +126,20 @@ strt jl_me_strt_make(u32t size, u08t type) {
 	return a;
 }
 
+/**
+ * frees a "strt".
+ * @param pstr: the "strt" to free
+*/
 void jl_me_strt_free(strt pstr) {
 	free(pstr->data);
 	free(pstr);
 }
 
+/**
+ * convert "string" into a (temporary) strt and return it.
+ * @param string: String to convert
+ * @returns: new "strt" with same contents as "string".
+*/
 strt jl_me_strt_c8ts(const char *string) {
 	uint32_t size = strlen(string);
 	strt a = jl_me_strt_make(size, STRT_TEMP);
@@ -80,16 +151,15 @@ strt jl_me_strt_c8ts(const char *string) {
 	return a;
 }
 
-strt jl_me_strt_mkfrom_data(uint32_t size, void *data) {
+/**
+ *
+*/
+strt jl_me_strt_mkfrom_data(jl_t* pusr, uint32_t size, void *data) {
 	strt a = malloc(sizeof(strt_t));
-	a->data = malloc(size + 1);
+	a->data = jl_me_copy(pusr, data, size);
 	a->size = size;
 	a->curs = 0;
 	a->type = STRT_KEEP;
-	int i;
-	for( i = 0; i < size; i++) {
-		a->data[i] = ((uint8_t *)data)[i];
-	}
 	a->data[size] = '\0';
 	return a;
 }
@@ -100,11 +170,22 @@ void _jl_me_truncate_curs(strt pstr) {
 	}
 }
 
+/**
+ * Returns the byte at the cursor of a "strt".
+ * @param pstr: the string to read.
+ * @returns: byte at the cursor of "pstr"
+*/
 u08t jl_me_strt_byte(strt pstr) {
 	_jl_me_truncate_curs(pstr);
 	return pstr->data[pstr->curs];
 }
 
+/**
+ * Add a byte ( "pvalue" ) at the cursor in a string ( "pstr" ), then increment
+ * the cursor value [ truncated to the string size ]
+ * @param pstr: The string to add a byte to.
+ * @param pvalue: the byte to add to "pstr".
+*/
 void jl_me_strt_add_byte(strt pstr, u08t pvalue) {
 	_jl_me_truncate_curs(pstr);
 	pstr->data[pstr->curs] = pvalue;
@@ -165,9 +246,9 @@ void _jal5_jl_me_vary_make(u32t vari, u08t size) {
  */
 void jl_me_strt_strt(jl_t *pusr, strt a, strt b, uint64_t p, uint64_t bytes) {
 	if(a == NULL) {
-		jl_sg_die(pusr->pjlc, "NULL A STRING");
+		jl_sg_kill(pusr, "NULL A STRING");
 	}else if(b == NULL) {
-		jl_sg_die(pusr->pjlc, "NULL B STRING");
+		jl_sg_kill(pusr, "NULL B STRING");
 	}
 	a->data = _jl_me_hydd_allc(pusr->pjlc, a->data, p + bytes + 1);
 	int i;
@@ -199,32 +280,49 @@ void jl_me_strt_trunc(jl_t *pusr, strt a, uint32_t size) {
 	a->data = _jl_me_hydd_allc(pusr->pjlc, a->data, a->size + 1);
 }
 
+//Print a number out as a string and return it (Type=STRT_TEMP)
+strt jl_me_strt_fnum(s32t a) {
+	strt new = jl_me_strt_make(30, STRT_TEMP);
+	sprintf((void*)new->data, "%d", a);
+	return new;
+}
+
 char* jl_me_string_fnum(jl_t* pusr, int32_t a) {
 	char *string = malloc(30);
-	int i;
-	for(i = 0; i < 30; i++) {
-		string[i] = 0;
-	}
+	jl_me_clr(string, 30);
 	sprintf(string, "%d", a);
 //	string = _jl_me_hydd_allc(pusr->pjlc, string, strlen(string + 1));
 	return string;
 }
 
-//Print a number out as a string and return it (Type=STRT_TEMP)
-strt jl_me_strt_fnum(s32t a) {
-	strt new = jl_me_strt_make(30, STRT_TEMP);
-	int i;
-	for(i = 0; i < 30; i++) {
-		new->data[i] = 0;
-	}
-	sprintf((void*)new->data, "%d", a);
-	return new;
+/**
+ * Get a string ( char * ) from a 'strt'.  Then, free the 'strt'.
+ * @param pusr: The library context.
+ * @param a: the 'strt' to convert to a string ( char * )
+ * @returns: a new string (char *) with the same contents as "a"
+*/
+char* jl_me_string_fstrt(jl_t* pusr, strt a) {
+	char *rtn = jl_me_copy(pusr, (char*)(a->data), a->size + 1);
+	jl_me_strt_free(a);
+	return rtn;
 }
 
+/**
+ * Generate a random integer from 0 to "a"
+ * @param a: 1 more than the maximum # to return
+ * @returns: a random integer from 0 to "a"
+*/
 u32t jl_me_random_int(u32t a) {
 	return rand()%a;
 }
 
+/**
+ * Tests if the next thing in array script is equivalent to particle.
+ * @param script: The array script.
+ * @param particle: The phrase to look for.
+ * @return 1: If particle is at the cursor.
+ * @return 0: If particle is not at the cursor.
+*/
 u08t jl_me_test_next(strt script, strt particle) {
 	char * point = (void*)script->data + script->curs;//the cursor
 	char * place = strstr(point, (void*)particle->data);//search for partical
@@ -236,12 +334,16 @@ u08t jl_me_test_next(strt script, strt particle) {
 	}
 }
 
+/*
+ * Returns string "script" truncated to "psize" or to the byte "end" in
+ * "script".  It is dependant on which happens first. (Type=STRT_KEEP)
+ * @param script: The array script.
+ * @param end: byte to end at if found.
+ * @param psize: maximum size of truncated "script" to return.
+ * @returns: a "strt" that is a truncated array script.
+*/
 strt jl_me_read_upto(strt script, u08t end, u32t psize) {
-	int i;
 	strt compiled = jl_me_strt_make(psize, STRT_KEEP);
-	for(i = 0; i < psize; i++) {
-		compiled->data[i] = '\0';
-	}
 	while((jl_me_strt_byte(script) != end) && (jl_me_strt_byte(script) != 0)) {
 		strncat((void*)compiled->data,
 			(void*)script->data + script->curs, 1);
@@ -255,21 +357,24 @@ strt jl_me_read_upto(strt script, u08t end, u32t psize) {
 
 jvct_t* _jl_me_init(void) {
 	//Create a context for the currently loaded program
-	jvct_t* jprg = malloc(sizeof(jvct_t));
+	jvct_t* pjlc = malloc(sizeof(jvct_t));
 	//Set the current program ID to 0[RESERVED DEFAULT]
-	jprg->cprg = 0;
+	pjlc->cprg = 0;
 	//Prepare user data structure
-	jprg->sg.usrd = malloc(sizeof(jl_t));
-	jprg->sg.usrd->pjlc = jprg;
+	pjlc->sg.usrd = malloc(sizeof(jl_t));
+	pjlc->sg.usrd->pjlc = pjlc;
+	//Make sure that non-initialized things aren't used
+	pjlc->has.graphics = 0;
+	pjlc->has.fileviewer = 0;
 
 /*	printf("u %p, %p, c %p,%p\n",
-		jprg->sg.usrd, ((jvct_t *)(jprg->sg.usrd->pjlc))->sg.usrd,
-		jprg, jprg->sg.usrd->pjlc);*/
+		pjlc->sg.usrd, ((jvct_t *)(pjlc->sg.usrd->pjlc))->sg.usrd,
+		pjlc, pjlc->sg.usrd->pjlc);*/
 //	g_vmap_list = cl_list_create();
-	return jprg;
+	return pjlc;
 }
 
-void _jl_me_kill(jvct_t* jprg) {
-	free(jprg);
+void _jl_me_kill(jvct_t* pjlc) {
+	free(pjlc);
 //	cl_list_destroy(g_vmap_list);
 }

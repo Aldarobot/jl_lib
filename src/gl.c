@@ -123,7 +123,7 @@ void _jl_gl_cerr(jvct_t *pjlc, int width, char *fname) {
 	_jl_fl_errf(pjlc, fstrerr);
 	_jl_fl_errf(pjlc, ":\n:");
 	_jl_fl_errf(pjlc, (void*)jl_me_strt_fnum(width)->data);
-	jl_sg_die(pjlc, "\n");
+	jl_sg_kill(pjlc->sg.usrd, "\n");
 }
 
 void __jl_gl_buff_bind(jvct_t *pjlc, uint32_t buffer) {
@@ -134,7 +134,7 @@ void __jl_gl_buff_bind(jvct_t *pjlc, uint32_t buffer) {
 void _jl_gl_buff_data(jvct_t *pjlc, uint32_t buffer, void *buffer_data,
 	u08t buffer_size)
 {
-	if(buffer == 0) jl_sg_die(pjlc,	"buffer got deleted!");
+	if(buffer == 0) jl_sg_kill(pjlc->sg.usrd, "buffer got deleted!");
 	__jl_gl_buff_bind(pjlc, buffer);
 	glBufferData(GL_ARRAY_BUFFER, buffer_size * sizeof(float), buffer_data,
 		GL_STATIC_DRAW);
@@ -172,7 +172,7 @@ GLuint loadShader(jvct_t *pjlc, GLenum shaderType, const char* pSource) {
 					_jl_fl_errf(pjlc, ":Could not compile shader:\n:");
 					_jl_fl_errf(pjlc, buf);
 					free(buf);
-					jl_sg_die(pjlc, "\n");
+					jl_sg_kill(pjlc->sg.usrd, "\n");
 				}
 				glDeleteShader(shader);
 				shader = 0;
@@ -187,12 +187,12 @@ GLuint createProgram(jvct_t *pjlc, const char* pVertexSource,
 {
 	GLuint vertexShader = loadShader(pjlc, GL_VERTEX_SHADER, pVertexSource);
 	if (!vertexShader) {
-		jl_sg_die(pjlc, ":couldn't load vertex shader\n");
+		jl_sg_kill(pjlc->sg.usrd, ":couldn't load vertex shader\n");
 	}
 
 	GLuint pixelShader = loadShader(pjlc, GL_FRAGMENT_SHADER, pFragmentSource);
 	if (!pixelShader) {
-		jl_sg_die(pjlc, ":couldn't load fragment shader\n");
+		jl_sg_kill(pjlc->sg.usrd, ":couldn't load fragment shader\n");
 	}
 
 	GLuint program = glCreateProgram();
@@ -223,17 +223,18 @@ GLuint createProgram(jvct_t *pjlc, const char* pVertexSource,
 					_jl_fl_errf(pjlc, "Could not link program:\n");
 					_jl_fl_errf(pjlc, buf);
 					free(buf);
-					jl_sg_die(pjlc, "\n");
+					jl_sg_kill(pjlc->sg.usrd, "\n");
 				}else{
-					jl_sg_die(pjlc, ":failed malloc\n");
+					jl_sg_kill(pjlc->sg.usrd,
+						":failed malloc\n");
 				}
 			}else{
 				glDeleteProgram(program);
-				jl_sg_die(pjlc, ":no info log\n");
+				jl_sg_kill(pjlc->sg.usrd, ":no info log\n");
 			}
 		}
 	}
-	if (program == 0) jl_sg_die(pjlc, "Failed to load program");
+	if (program == 0) jl_sg_kill(pjlc->sg.usrd, "Failed to load program");
 	return program;
 }
 
@@ -246,7 +247,7 @@ void jl_gl_maketexture(jl_t* pusr, uint16_t gid, uint16_t id,
 	
 	jl_io_offset(pjlc->sg.usrd, "MKTX", JL_IO_TAG_SIMPLE-JL_IO_TAG_MAX);
 	if (!pixels)
-		jl_sg_die(pjlc, "null pixels");
+		jl_sg_kill(pusr, "null pixels");
 	if (pjlc->gl.allocatedg < gid + 1) {
 		pjlc->gl.textures =
 			realloc(pjlc->gl.textures, sizeof(GLuint *) * (gid+1));
@@ -305,7 +306,7 @@ void jl_gl_maketexture(jl_t* pusr, uint16_t gid, uint16_t id,
 	if(pjlc->gl.textures[gid][id] == 0) {
 		printf("bad texture:\n");
 		_jl_gl_cerr(pjlc, 0,"BADT");
-		jl_sg_die(pjlc, ":Bad Texture, but no gl error? WHY!?\n");
+		jl_sg_kill(pusr, ":Bad Texture, but no gl error? WHY!?\n");
 	}
 	jl_io_close_block(pjlc->sg.usrd); //Close Block "MKTX"
 }
@@ -317,7 +318,7 @@ void _jl_gl_colr(float r, float g, float b, float a) {
 }
 
 void _jl_gl_usep(jvct_t *pjlc, GLuint prg) {
-	if(!prg) { jl_sg_die(pjlc, ":program ain't a prg!\n"); } 
+	if(!prg) { jl_sg_kill(pjlc->sg.usrd, ":program ain't a prg!\n"); } 
 	glUseProgram(prg);
 	_jl_gl_cerr(pjlc, 0,"glUseProgram");
 }
@@ -524,7 +525,7 @@ int32_t _jl_gl_getu(jvct_t *pjlc, GLuint prg, char *var) {
 	if((a = glGetUniformLocation(pjlc->gl.prgs[JL_GL_SLPR_TEX], var)) == -1) {
 		_jl_fl_errf(pjlc, ":opengl: bad name; is:\n:");
 		_jl_fl_errf(pjlc, var);
-		jl_sg_die(pjlc, "\n");
+		jl_sg_kill(pjlc->sg.usrd, "\n");
 	}
 	_jl_gl_cerr(pjlc, 0,"glGetUniformLocation");
 	return a;
@@ -534,7 +535,7 @@ void _jl_gl_geta(jvct_t *pjlc, GLuint prg, s32t *attrib, const char *title) {
 	if((*attrib
 		= glGetAttribLocation(prg, title)) == -1)
 	{
-		 jl_sg_die(pjlc,
+		 jl_sg_kill(pjlc->sg.usrd,
 		 	"attribute name is either reserved or non-existant");
 	}
 }
@@ -558,7 +559,7 @@ static inline void _jl_gl_make_res(jvct_t *pjlc) {
 	__jl_gl_buff_make(pjlc, &pjlc->gl.temp_buff_vrtx); 
 	__jl_gl_buff_make(pjlc, &pjlc->gl.temp_buff_txtr);
 	if(pjlc->gl.temp_buff_vrtx == 0 || pjlc->gl.temp_buff_txtr == 0) {
-		jl_sg_die(pjlc,	"buffer is made wrongly.");
+		jl_sg_kill(pjlc->sg.usrd, "buffer is made wrongly.");
 	}
 
 	jl_io_printc(pjlc->sg.usrd, "created buffers.\n");
@@ -570,7 +571,7 @@ static inline void _jl_gl_make_res(jvct_t *pjlc) {
 
 	jl_io_printc(pjlc->sg.usrd, "setting up shaders....\n");
 	if(pjlc->gl.uniforms.textures == NULL)
-		jl_sg_die(pjlc, "Couldn't create uniforms");
+		jl_sg_kill(pjlc->sg.usrd, "Couldn't create uniforms");
 	pjlc->gl.uniforms.textures[0][0] =
 		_jl_gl_getu(pjlc, pjlc->gl.prgs[JL_GL_SLPR_TEX], "texture");
 	pjlc->gl.uniforms.multiply_alpha =
@@ -602,7 +603,8 @@ static inline void _jl_gl_make_res(jvct_t *pjlc) {
 void _jl_gl_init(jvct_t *pjlc) {
 #ifndef JLVM_USEL_GLES
 	printf(" [JLVM/GLEW] init\n");
-	if(glewInit()!=GLEW_OK) jl_sg_die(pjlc, "glew fail!(no sticky)");
+	if(glewInit()!=GLEW_OK)
+		jl_sg_kill(pjlc->sg.usrd, "glew fail!(no sticky)");
 #endif
 	_jl_gl_make_res(pjlc);
 	//Textures on by default

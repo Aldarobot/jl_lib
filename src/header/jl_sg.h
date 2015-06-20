@@ -55,4 +55,12 @@ typedef struct{
 	jl_sprite_t *mouse; //Sprite to represent mouse pointer
 	void* pjlc; //The library's context
 	void* uctx; //The program's context
+	struct{
+		float x; //X position 0-1
+		float y; //Y position 0-1
+		float r; //Rotational Value in "pi radians" 2=full circle
+		float p; //Pressure 0-1
+		uint8_t h; //How long held down.
+		uint8_t k; //Which key [ a-z , left/right click ]
+	}ctrl;
 }jl_t;

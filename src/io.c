@@ -71,7 +71,8 @@ static inline void _jl_io_old_block(jvct_t *pjlc) {
 
 static inline void _jl_io_printc_endline(jvct_t *pjlc, const char *print) {
 	pjlc->io.newline = 1;
-	char *string = jl_me_alloc(strlen(print) + 1);
+	char *string = NULL;
+	jl_me_alloc(pjlc->sg.usrd, (void**)&string, strlen(print) + 1, 0);
 	memcpy(string, print, strlen(print));
 	string[strlen(print) - 1] = '\0';
 	printf("%s", string);
@@ -160,8 +161,8 @@ void jl_io_printc(jl_t* pusr, const char * print) {
  * @param print: the string to print.
 */
 void jl_io_printt(jl_t *pusr, uint8_t a, const char *print) {
-	char *string = jl_me_alloc(strlen(print) + 1);
-	char *string2 = jl_me_alloc(6);
+	char *string = NULL; jl_me_alloc(pusr, (void**)&string, strlen(print) + 1, 0);
+	char *string2= NULL; jl_me_alloc(pusr, (void**)&string2, 6, 0);
 	sprintf(string2, "%%%ds", a);
 	sprintf(string, string2, print);
 	jl_io_printc(pusr, string);
@@ -175,7 +176,7 @@ void jl_io_printt(jl_t *pusr, uint8_t a, const char *print) {
  * @param print: the number to print.
 */
 void jl_io_printi(jl_t *pusr, int print) {
-	char *string = jl_me_alloc(10);
+	char *string = NULL; jl_me_alloc(pusr, (void**) &string, 10, 0);
 	sprintf(string, "%d", print);
 	jl_io_printc(pusr, string);
 	free(string);
@@ -187,7 +188,7 @@ void jl_io_printi(jl_t *pusr, int print) {
  * @param print: the number to print.
 */
 void jl_io_printd(jl_t *pusr, double print) {
-	char *string = jl_me_alloc(20);
+	char *string = NULL; jl_me_alloc(pusr, (void**)&string, 20, 0);
 	sprintf(string, "%f", print);
 	jl_io_printc(pusr, string);
 	free(string);
