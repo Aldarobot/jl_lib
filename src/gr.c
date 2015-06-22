@@ -208,12 +208,12 @@ static void _jl_gr_textbox_lt(jl_t* pusr);
 	 * @param 'size': how big to draw the text
 	 * @param 'a': transparency of the text, 255=Opaque 0=Transparent
 	**/
-	void jl_gr_draw_text(jl_t* pusr, char *str, dect x, dect y, dect size,
-		uint8_t a)
+	void jl_gr_draw_text(jl_t* pusr, char *str, dect x, dect y,
+		dect size, uint8_t a)
 	{
 		if(str == NULL) return;
-		void *Str = str;
-		uint8_t *STr = Str;
+		const void *Str = str;
+		const uint8_t *STr = Str;
 		uint32_t i;
 		for(i = 0; i < strlen(str); i++) {
 			jl_gr_draw_image(pusr, 0, 0, //Font 0:0

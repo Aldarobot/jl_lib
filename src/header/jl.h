@@ -72,8 +72,8 @@
 		jl_simple_fnt loop, u32t ctxs);
 	u08t jl_gr_sprite_collide(jl_t* pusr,
 		jl_sprite_t *sprite1, jl_sprite_t *sprite2);
-	void jl_gr_draw_text(jl_t* pusr, char *str, dect x, dect y, dect size,
-		uint8_t a);
+	void jl_gr_draw_text(jl_t* pusr, char *str, dect x, dect y,
+		dect size, uint8_t a);
 	void jl_gr_draw_numi(jl_t* pusr, uint32_t num, dect x, dect y, dect size,
 		uint8_t a);
 	void jl_gr_draw_text_area(jl_t* pusr, jl_sprite_t * psprite, char *txt);
@@ -116,8 +116,8 @@
 		void *pdata, uint64_t psize);
 	void jl_fl_mkdir(jl_t* pusr, strt pfilebase);
 	char * jl_fl_get_resloc(jl_t* pusr, char* pprg_name, char* pfilename);
-	void jl_fl_user_select_init(jl_t* pusr, char *program_name, void *newfiledata,
-		uint64_t newfilesize);
+	uint8_t jl_fl_user_select_init(jl_t* pusr, const char *program_name,
+		void *newfiledata, uint64_t newfilesize);
 	void jl_fl_user_select_loop(jl_t* pusr);
 	char *jl_fl_user_select_get(jl_t* pusr);
 // "cm.c"

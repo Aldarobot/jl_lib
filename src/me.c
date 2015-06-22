@@ -64,7 +64,7 @@ static void _jl_me_alloc_malloc(jl_t* pusr, void **a, uint32_t size) {
 }
 
 /**
- * Copy "size" bytes of "src" to "dst"
+ * Copy "size" bytes of "src" to a new pointer of "size" bytes and return it.
  * @param pusr: The library context.
  * @param src: source buffer
  * @param size: # of bytes of "src" to copy to "dst"

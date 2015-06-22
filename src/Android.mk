@@ -249,11 +249,13 @@ LOCAL_SRC_FILES +=\
 	me.c cl.c io.c fl.c cm.c ct.c\
 	sg.c dl.c gl.c gr.c vi.c au.c
 
-LOCAL_CFLAGS += -DGL_GLEXT_PROTOTYPES
+LOCAL_CFLAGS += -DGL_GLEXT_PROTOTYPES -DNDEBUG -O3
 
 LOCAL_STATIC_LIBRARIES := 
 
 LOCAL_LDLIBS := -lz -ldl -lGLESv2 -llog -landroid
+
+APP_OPTIM := release
 
 include $(BUILD_SHARED_LIBRARY)
 #$(call import-module,SDL)LOCAL_PATH := $(call my-dir)

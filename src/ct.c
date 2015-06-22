@@ -9,6 +9,24 @@
 
 uint8_t jl_ct_key_pressed(jl_t *pusr, uint8_t key);
 
+static void _jl_ct_press(jl_t *pusr) {
+	jvct_t* pjlc = pusr->pjlc;
+	pusr->ctrl.h = pjlc->ct.heldDown;
+	pusr->ctrl.r = 0.;
+	pusr->ctrl.x = jl_ct_gmousex(pusr);
+	pusr->ctrl.y = jl_ct_gmousey(pusr);
+}
+
+static void _jl_ct_not_down(jl_t* pusr) {
+	pusr->ctrl.p = 0.;
+	pusr->ctrl.k = 0;
+}
+
+static void _jl_ct_is_down(jl_t* pusr) {
+	pusr->ctrl.k = 1;
+	pusr->ctrl.p = 1.;
+}
+
 #if JL_PLAT == JL_PLAT_COMPUTER
 
 	void jl_ct_key(jl_t *pusr, jl_simple_fnt prun,
@@ -24,8 +42,7 @@ uint8_t jl_ct_key_pressed(jl_t *pusr, uint8_t key);
 			pusr->ctrl.k = key;
 			prun(pusr);
 		}else{
-			pusr->ctrl.p = 0.;
-			pusr->ctrl.k = 0;
+			_jl_ct_not_down(pusr);
 			pno(pusr);
 		}
 	}
@@ -88,19 +105,14 @@ uint8_t jl_ct_key_pressed(jl_t *pusr, uint8_t key);
 		jl_simple_fnt pno)
 	{
 		jvct_t* pjlc = pusr->pjlc;
-		pusr->ctrl.h = pjlc->ct.heldDown;
-		pusr->ctrl.r = 0.;
-		pusr->ctrl.x = jl_ct_gmousex(pusr);
-		pusr->ctrl.y = jl_ct_gmousey(pusr);
+		_jl_ct_press(pusr); //hrxy
 		if(pjlc->ct.heldDown &&
 			((pjlc->ct.msx <= .9) || (pjlc->ct.msy >= .1)))
 		{
-			pusr->ctrl.k = 1;
-			pusr->ctrl.p = 1.;
+			_jl_ct_is_down(pusr); //pk
 			prun(pusr);
 		}else{
-			pusr->ctrl.k = 0;
-			pusr->ctrl.p = 0.;
+			_jl_ct_not_down(pusr); //pk
 			pno(pusr);
 		}
 	}
@@ -113,13 +125,16 @@ uint8_t jl_ct_key_pressed(jl_t *pusr, uint8_t key);
 		jl_simple_fnt pno)
 	{ //touch center
 		jvct_t* pjlc = pusr->pjlc;
+		_jl_ct_press(pusr); //hrxy
 		if(((pjlc->ct.msy>.4f * jl_dl_p(pusr)) &&
 			(pjlc->ct.msy<.6f * jl_dl_p(pusr))) &&
 			((pjlc->ct.msx>.4f) && (pjlc->ct.msx<.6f)))
 		{
-			prun(pusr, 255, (float)pjlc->ct.heldDown + .25);
+			_jl_ct_is_down(pusr); //pk
+			prun(pusr);
 		}else{
-			pno(pusr, 255, (float)pjlc->ct.heldDown + .25);
+			_jl_ct_not_down(pusr); //pk
+			pno(pusr);
 		}
 	}
 	//
@@ -127,13 +142,16 @@ uint8_t jl_ct_key_pressed(jl_t *pusr, uint8_t key);
 		jl_simple_fnt pno)
 	{ //near right
 		jvct_t* pjlc = pusr->pjlc;
+		_jl_ct_press(pusr); //hrxy
 		if(((pjlc->ct.msx>.6f) && (pjlc->ct.msx<.8f)) &&
 			((pjlc->ct.msy * jl_dl_p(pusr)>.2f) &&
 			(pjlc->ct.msy * jl_dl_p(pusr)<.8f)))
 		{
-			prun(pusr, 255, (float)pjlc->ct.heldDown + .25);
+			_jl_ct_is_down(pusr); //pk
+			prun(pusr);
 		}else{
-			pno(pusr, 255, (float)pjlc->ct.heldDown + .25);
+			_jl_ct_not_down(pusr); //pk
+			pno(pusr);
 		}
 	}
 
@@ -141,13 +159,16 @@ uint8_t jl_ct_key_pressed(jl_t *pusr, uint8_t key);
 		jl_simple_fnt pno)
 	{ //near left
 		jvct_t* pjlc = pusr->pjlc;
+		_jl_ct_press(pusr); //hrxy
 		if(((pjlc->ct.msx<.4f) && (pjlc->ct.msx>.2f)) &&
 			((pjlc->ct.msy>.2f * jl_dl_p(pusr)) &&
 			(pjlc->ct.msy<.8f * jl_dl_p(pusr))))
 		{
-			prun(pusr, 255, (float)pjlc->ct.heldDown + .25);
+			_jl_ct_is_down(pusr); //pk
+			prun(pusr);
 		}else{
-			pno(pusr, 255, (float)pjlc->ct.heldDown + .25);
+			_jl_ct_not_down(pusr); //pk
+			pno(pusr);
 		}
 	}
 
@@ -155,13 +176,16 @@ uint8_t jl_ct_key_pressed(jl_t *pusr, uint8_t key);
 		jl_simple_fnt pno)
 	{ //near up
 		jvct_t* pjlc = pusr->pjlc;
+		_jl_ct_press(pusr); //hrxy
 		if(((pjlc->ct.msy<.4f * jl_dl_p(pusr)) &&
 			(pjlc->ct.msy>.2f * jl_dl_p(pusr))) &&
 			((pjlc->ct.msx>.2f) && (pjlc->ct.msx<.8f)))
 		{
-			prun(pusr, 255, (float)pjlc->ct.heldDown + .25);
+			_jl_ct_is_down(pusr); //pk
+			prun(pusr);
 		}else{
-			pno(pusr, 255, (float)pjlc->ct.heldDown + .25);
+			_jl_ct_not_down(pusr); //pk
+			pno(pusr);
 		}
 	}
 
@@ -169,13 +193,16 @@ uint8_t jl_ct_key_pressed(jl_t *pusr, uint8_t key);
 		jl_simple_fnt pno)
 	{ //near down
 		jvct_t* pjlc = pusr->pjlc;
+		_jl_ct_press(pusr); //hrxy
 		if(((pjlc->ct.msy>.6f * jl_dl_p(pusr)) &&
 			(pjlc->ct.msy<.8f * jl_dl_p(pusr))) &&
 			((pjlc->ct.msx>.2f) && (pjlc->ct.msx<.8f)))
 		{
-			prun(pusr, 255, (float)pjlc->ct.heldDown + .25);
+			_jl_ct_is_down(pusr); //pk
+			prun(pusr);
 		}else{
-			pno(pusr, 255, (float)pjlc->ct.heldDown + .25);
+			_jl_ct_not_down(pusr); //pk
+			pno(pusr);
 		}
 	}
 	//
@@ -184,10 +211,13 @@ uint8_t jl_ct_key_pressed(jl_t *pusr, uint8_t key);
 		jl_simple_fnt pno)
 	{//far right
 		jvct_t* pjlc = pusr->pjlc;
+		_jl_ct_press(pusr); //hrxy
 		if(pjlc->ct.msx>.8f) {
-			prun(pusr, 255, (float)pjlc->ct.heldDown + .25);
+			_jl_ct_is_down(pusr); //pk
+			prun(pusr);
 		}else{
-			pno(pusr, 255, (float)pjlc->ct.heldDown + .25);
+			_jl_ct_not_down(pusr); //pk
+			pno(pusr);
 		}
 	}
 
@@ -195,10 +225,13 @@ uint8_t jl_ct_key_pressed(jl_t *pusr, uint8_t key);
 		jl_simple_fnt pno)
 	{//far left
 		jvct_t* pjlc = pusr->pjlc;
+		_jl_ct_press(pusr); //hrxy
 		if(pjlc->ct.msx<.2f) {
-			prun(pusr, 255, (float)pjlc->ct.heldDown + .25);
+			_jl_ct_is_down(pusr); //pk
+			prun(pusr);
 		}else{
-			pno(pusr, 255, (float)pjlc->ct.heldDown + .25);
+			_jl_ct_not_down(pusr); //pk
+			pno(pusr);
 		}
 	}
 
@@ -206,10 +239,13 @@ uint8_t jl_ct_key_pressed(jl_t *pusr, uint8_t key);
 		jl_simple_fnt pno)
 	{//far up
 		jvct_t* pjlc = pusr->pjlc;
+		_jl_ct_press(pusr); //hrxy
 		if(pjlc->ct.msy<.2f * jl_dl_p(pusr)) {
-			prun(pusr, 255, (float)pjlc->ct.heldDown + .25);
+			_jl_ct_is_down(pusr); //pk
+			prun(pusr);
 		}else{
-			pno(pusr, 255, (float)pjlc->ct.heldDown + .25);
+			_jl_ct_not_down(pusr); //pk
+			pno(pusr);
 		}
 	}
 
@@ -217,10 +253,13 @@ uint8_t jl_ct_key_pressed(jl_t *pusr, uint8_t key);
 		jl_simple_fnt pno)
 	{//far down
 		jvct_t* pjlc = pusr->pjlc;
+		_jl_ct_press(pusr); //hrxy
 		if(pjlc->ct.msy>.8f * jl_dl_p(pusr)) {
-			prun(pusr, 255, (float)pjlc->ct.heldDown + .25);
+			_jl_ct_is_down(pusr); //pk
+			prun(pusr);
 		}else{
-			pno(pusr, 255, (float)pjlc->ct.heldDown + .25);
+			_jl_ct_not_down(pusr); //pk
+			pno(pusr);
 		}
 	}
 
@@ -228,10 +267,14 @@ uint8_t jl_ct_key_pressed(jl_t *pusr, uint8_t key);
 		jl_simple_fnt pno)
 	{//Any touch
 		jvct_t* pjlc = pusr->pjlc;
-		if(pjlc->ct.heldDown)
-			prun(pusr,jl_ct_gmousex(pusr), jl_ct_gmousey(pusr));
-		else
-			pno(pusr, jl_ct_gmousex(pusr), jl_ct_gmousey(pusr));
+		_jl_ct_press(pusr); //hrxy
+		if(pjlc->ct.heldDown) {
+			_jl_ct_is_down(pusr); //pk
+			prun(pusr);
+		}else{
+			_jl_ct_not_down(pusr); //pk
+			pno(pusr);
+		}
 	}
 #endif
 
@@ -239,13 +282,22 @@ void jl_ct_key_menu(jl_t *pusr, jl_simple_fnt prun,
 	jl_simple_fnt pno)
 {
 	#if JL_PLAT == JL_PLAT_COMPUTER
-	jl_ct_key(pusr, prun, pno, SDL_SCANCODE_APPLICATION);
+	jl_ct_key(pusr, prun, pno, SDL_SCANCODE_APPLICATION); //xyrhpk
 	#elif JL_PLAT == JL_PLAT_PHONE
 	jvct_t* pjlc = pusr->pjlc;
-	if(pjlc->ct.menu)
-		prun(pusr, 255, pjlc->ct.menu);
-	else
-		pno(pusr, 255, pjlc->ct.menu);
+	pusr->ctrl.x = 0.;
+	pusr->ctrl.y = 0.;
+	pusr->ctrl.r = 0.;
+	pusr->ctrl.h = pjlc->ct.menu;
+	if(pjlc->ct.menu) {
+		pusr->ctrl.p = 1.;
+		pusr->ctrl.k = SDL_SCANCODE_APPLICATION;
+		prun(pusr);
+	}else{
+		pusr->ctrl.p = 0.;
+		pusr->ctrl.k = 0;
+		pno(pusr);
+	}
 	#endif
 }
 

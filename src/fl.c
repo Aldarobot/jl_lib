@@ -448,21 +448,35 @@ char * jl_fl_get_resloc(jl_t* pusr, char* pprg_name, char* pfilename) {
 	return location;
 }
 
-static void _jl_fl_user_select_open_dir(jl_t* pusr, char *dirname) {
-	DIR *dir;
-	struct dirent *ent;
-	jvct_t * pjlc = pusr->pjlc;
-
+static void _jl_fl_user_select_check_extradir(char *dirname) {
 	if(dirname[strlen(dirname)-1] == '/' &&
 		dirname[strlen(dirname)-2] == '/')
 	{
 		dirname[strlen(dirname)-1] = '\0';
 	}
+}
+
+// Return 1 on success
+// Return 0 if directory not available
+static uint8_t _jl_fl_user_select_open_dir(jl_t* pusr, char *dirname) {
+	DIR *dir;
+	struct dirent *ent;
+	jvct_t * pjlc = pusr->pjlc;
+	uint8_t offset = 0;
+
+	_jl_fl_user_select_check_extradir(dirname);
+	if(dirname[1] == '\0') {
+		jl_me_alloc(pusr, (void**)&dirname, 0, 0);
+		dirname = SDL_GetPrefPath("JLVM", "\0");
+		_jl_fl_user_select_check_extradir(dirname);
+	}
+	offset = dirname[0] == '!';
 	pjlc->fl.dirname = dirname;
 	pjlc->fl.cursor = 0;
 	pjlc->fl.cpage = 0;
 	cl_list_clear(pjlc->fl.filelist);
-	if ((dir = opendir (dirname)) != NULL) {
+	printf("dirname=%s\n", pjlc->fl.dirname);
+	if ((dir = opendir (dirname + offset)) != NULL) {
 		/* print all the files and directories within directory */
 		while ((ent = readdir (dir)) != NULL) {
 			char *element = malloc(strlen(ent->d_name) + 1);
@@ -480,15 +494,37 @@ static void _jl_fl_user_select_open_dir(jl_t* pusr, char *dirname) {
 			pjlc->fl.dirname[strlen(dirname)-1] = '\0';
 			pjlc->fl.inloop = 0;
 			pusr->loop = JL_SG_WM_EXIT; //Go into exit loop
+		}else if(errsv == ENOENT) { // Directory Doesn't Exist
+			return 0;
+		}else if(errsv == EACCES) { // Doesn't have permission
+			return 0;
+		}else if((errsv == EMFILE) || (errsv == ENFILE) ||
+			(errsv == ENOMEM)) //Not enough memory!
+		{
+			jl_sg_kill(pusr, "FileViewer Can't Open Directory:"
+				"Not Enough Memory!");
+		}else{ //Unknown error
+			jl_sg_kill(pusr, "FileViewer Can't Open Directory:"
+				"Unknown Error!");
 		}
 	}
+	return 1;
 }
 
 /**
  * Open directory for file viewer.
+ * If '!' is put at the beginning of "program_name", then it's treated as a
+ *	relative path instead of a program name.
+ * @param pusr: The library context
+ * @param program_name: program name or '!'+relative path
+ * @param newfiledata: any new files created with the fileviewer will
+ *	automatically be saved with this data.
+ * @param newfilesize: size of "newfiledata"
+ * @returns 0: if can't open the directory. ( Doesn't exist, Bad permissions )
+ * @returns 1: on success.
 **/
-void jl_fl_user_select_init(jl_t* pusr, char *program_name, void *newfiledata,
-	uint64_t newfilesize)
+uint8_t jl_fl_user_select_init(jl_t* pusr, const char *program_name,
+	void *newfiledata, uint64_t newfilesize)
 {
 	jvct_t * pjlc = pusr->pjlc;
 	pusr->loop = JL_SG_WM_DN;
@@ -498,7 +534,13 @@ void jl_fl_user_select_init(jl_t* pusr, char *program_name, void *newfiledata,
 	pjlc->fl.newfilesize = newfilesize;
 	pjlc->fl.prompt = 0;
 	pjlc->fl.promptstring = NULL;
-	_jl_fl_user_select_open_dir(pusr, SDL_GetPrefPath("JLVM",program_name));
+	if(program_name[0] == '!') {
+		char *path = jl_me_copy(pusr,program_name,strlen(program_name));
+		return _jl_fl_user_select_open_dir(pusr, path);
+	}else{
+		return _jl_fl_user_select_open_dir(pusr,
+			SDL_GetPrefPath("JLVM",program_name));
+	}
 }
 
 static void _jl_fl_user_select_up(jl_t* pusr) {
@@ -609,8 +651,6 @@ void jl_fl_user_select_loop(jl_t* pusr) {
 
 	jl_gr_draw_image(pusr, 0, 1, 0., 0., 1., jl_dl_p(pusr), 1, 127);
 	jl_gr_draw_text(pusr, "Select File", .02, .02, .04,255);
-	pjlc->fl.btns[0]->loop(pusr);
-	pjlc->fl.btns[1]->loop(pusr);
 
 	jl_ct_run_event(pusr,JL_CT_MAINUP, _jl_fl_user_select_up, jl_dont);
 	jl_ct_run_event(pusr,JL_CT_MAINDN, _jl_fl_user_select_dn, jl_dont);
@@ -660,11 +700,12 @@ void jl_fl_user_select_loop(jl_t* pusr) {
 	}else{
 		jl_gr_draw_text(pusr, ">", .02, .08 + (.04 * pjlc->fl.cursor),
 			.04,255);
-		printf("dirname=%s\n", pjlc->fl.dirname);
 		jl_gr_draw_text(pusr, pjlc->fl.dirname, .02, jl_dl_p(pusr) - .02, .02, 255);
 		jl_ct_run_event(pusr, JL_CT_SELECT, _jl_fl_user_select_do,
 			jl_dont);
 	}
+	pjlc->fl.btns[0]->loop(pusr);
+	pjlc->fl.btns[1]->loop(pusr);
 }
 
 /**
