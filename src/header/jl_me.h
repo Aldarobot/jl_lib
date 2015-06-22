@@ -13,12 +13,20 @@ typedef enum{
 }jl_imgi_t;
 
 typedef enum{
-	JL_IO_TAG_MINIMAL,	//JL-lib prints starting/started/stopping etc.
-	JL_IO_TAG_PROGRESS,	//JL-lib prints image/audio loading
-	JL_IO_TAG_SIMPLE,	//JL-lib prints all landmarks
-	JL_IO_TAG_INTENSE,	//JL-lib prints all debug info
-	JL_IO_TAG_MAX,
+	_JL_IO_MINIMAL,	//JL-lib prints starting/started/stopping etc.
+	_JL_IO_PROGRESS,//JL-lib prints image/audio loading
+	_JL_IO_SIMPLE,	//JL-lib prints all landmarks
+	_JL_IO_INTENSE,	//JL-lib prints all debug info
+	_JL_IO_MAX,
 }jl_io_tag_t;
+
+//IO TAGS
+#define JL_IO_MINIMAL _JL_IO_MINIMAL - _JL_IO_MAX
+#define JL_IO_PROGRESS _JL_IO_PROGRESS - _JL_IO_MAX
+#define JL_IO_SIMPLE _JL_IO_SIMPLE - _JL_IO_MAX
+#define JL_IO_INTENSE _JL_IO_INTENSE - _JL_IO_MAX
+
+#define JLVM_DEBUG error deprecated
 
 typedef void(*jl_simple_fnt)(jl_t*pusr);
 typedef void(*jl_ct_event_fnt)(jl_t* pusr, jl_simple_fnt prun,
@@ -49,6 +57,11 @@ typedef struct{
 	uint32_t curs; //Cursor In String
 	uint8_t type;
 }strt_t;
+
+typedef struct{
+	char *opt;
+	jl_simple_fnt run;
+}jl_popup_button_t;
 
 //strt_t.Type:
 	//TEMPORARY - Free after used

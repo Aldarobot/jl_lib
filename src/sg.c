@@ -96,14 +96,14 @@ void _jl_sg_mode_add(jvct_t* pjlc) {
 /**
  * Set the loop functions for a mode.
  *
- * @param pusr: the library context
+ * @param pusr: The library context.
  * @param mode: the mode to add functions to.
  * @param exit: exit loop
  * @param wups: upper screen loop
  * @param wdns: lower screen loop
  * @param term: terminal screen loop
 */
-void jl_sg_smode_fncs(jl_t* pusr, uint8_t mode, jl_simple_fnt exit,
+void jl_sg_mode_set(jl_t* pusr, uint8_t mode, jl_simple_fnt exit,
 	jl_simple_fnt wups, jl_simple_fnt wdns, jl_simple_fnt term)
 {
 	jl_gr_draw_msge(pusr, "Switching Mode...");
@@ -120,11 +120,51 @@ void jl_sg_smode_fncs(jl_t* pusr, uint8_t mode, jl_simple_fnt exit,
 }
 
 /**
- *Set the current mode & the current mode loop.
+ * Change the mode functions without actually changing the mode.
+ * @param pusr: The library context.
+ * @param exit: exit loop
+ * @param upsl: upper screen loop
+ * @param dnsl: lower screen loop
+ * @param term: terminal screen loop
  */
-void jl_sg_setlm(jl_t* pusr, uint8_t mode, jl_sg_wm_t loop) {
+void jl_sg_mode_override(jl_t* pusr, jl_simple_fnt exit,
+	jl_simple_fnt upsl, jl_simple_fnt dnsl, jl_simple_fnt term)
+{
+	jvct_t* pjlc = pusr->pjlc;
+
+	pjlc->sg.mode.tclp[JL_SG_WM_EXIT] = exit;
+	pjlc->sg.mode.tclp[JL_SG_WM_UP] = upsl;
+	pjlc->sg.mode.tclp[JL_SG_WM_DN] = dnsl;
+	pjlc->sg.mode.tclp[JL_SG_WM_TERM] = term;
+}
+
+/**
+ * Reset any functions overwritten with jl_sg_mode_override().
+ * @param pusr: The library context.
+ */
+void jl_sg_mode_reset(jl_t* pusr) {
+	jvct_t* pjlc = pusr->pjlc;
+
+	pjlc->sg.mode.tclp[JL_SG_WM_EXIT] =
+		pjlc->sg.mdes[pusr->mode].tclp[JL_SG_WM_EXIT];
+	pjlc->sg.mode.tclp[JL_SG_WM_UP] =
+		pjlc->sg.mdes[pusr->mode].tclp[JL_SG_WM_UP];
+	pjlc->sg.mode.tclp[JL_SG_WM_DN] =
+		pjlc->sg.mdes[pusr->mode].tclp[JL_SG_WM_DN];
+	pjlc->sg.mode.tclp[JL_SG_WM_TERM] =
+		pjlc->sg.mdes[pusr->mode].tclp[JL_SG_WM_TERM];
+}
+
+/**
+ * Switch which mode is in use & the current mode loop.
+ * @param pusr: The library context.
+ * @param mode: The mode to switch to.
+ * @param loop: The loop to switch to.
+ */
+void jl_sg_mode_switch(jl_t* pusr, uint8_t mode, jl_sg_wm_t loop) {
 	pusr->mode = mode;
 	pusr->loop = loop;
+	jl_sg_mode_reset(pusr);
 }
 
 void _jl_sg_load_jlpx(jvct_t* pjlc,uint8_t *data,void **pixels,int *w,int *h) {
@@ -136,8 +176,8 @@ void _jl_sg_load_jlpx(jvct_t* pjlc,uint8_t *data,void **pixels,int *w,int *h) {
 	jgr_img_t *image = NULL;
 	jl_me_alloc(pjlc->sg.usrd, (void**)&image, sizeof(jgr_img_t), 0);
 	
-	jl_io_offset(pjlc->sg.usrd, "LOAD", JL_IO_TAG_PROGRESS-JL_IO_TAG_MAX);
-	jl_io_offset(pjlc->sg.usrd, "JLPX", JL_IO_TAG_PROGRESS-JL_IO_TAG_MAX);
+	jl_io_offset(pjlc->sg.usrd, JL_IO_PROGRESS, "LOAD"); // {
+	jl_io_offset(pjlc->sg.usrd, JL_IO_PROGRESS, "JLPX"); // {
 	
 	//Check If File Is Of Correct Format
 	jl_io_printc(pjlc->sg.usrd, "loading image - header@");
@@ -154,7 +194,7 @@ void _jl_sg_load_jlpx(jvct_t* pjlc,uint8_t *data,void **pixels,int *w,int *h) {
 		testing[i] = data[pjlc->sg.init_image_location+i];
 	}
 	testing[strlen(JL_IMG_HEADER)] = '\0';
-	jl_io_offset(pjlc->sg.usrd, "JLPX", JL_IO_TAG_SIMPLE-JL_IO_TAG_MAX);
+	jl_io_offset(pjlc->sg.usrd, JL_IO_SIMPLE, "JLPX"); // =
 	jl_io_printc(pjlc->sg.usrd, "header:");
 	jl_io_printc(pjlc->sg.usrd, testing);
 	jl_io_printc(pjlc->sg.usrd, "\n");
@@ -178,7 +218,7 @@ void _jl_sg_load_jlpx(jvct_t* pjlc,uint8_t *data,void **pixels,int *w,int *h) {
 		FSIZE = IMG_FORMAT_PIC;
 		jl_io_printc(pjlc->sg.usrd, "pic quality\n");
 	}else{
-		jl_io_offset(pjlc->sg.usrd, "JLPX", JL_IO_TAG_MINIMAL-JL_IO_TAG_MAX);
+		jl_io_offset(pjlc->sg.usrd, JL_IO_MINIMAL, "JLPX");
 		jl_io_printc(pjlc->sg.usrd, "bad file type(must be 1,2 or 3) is: ");
 		jl_io_printi(pjlc->sg.usrd, tester);
 		jl_io_printc(pjlc->sg.usrd, "\n");
@@ -196,7 +236,7 @@ void _jl_sg_load_jlpx(jvct_t* pjlc,uint8_t *data,void **pixels,int *w,int *h) {
 		image->key[i].a = data[pjlc->sg.init_image_location+ki];
 		ki++;
 	}
-	jl_io_offset(pjlc->sg.usrd, "JLPX", JL_IO_TAG_INTENSE-JL_IO_TAG_MAX);
+	jl_io_offset(pjlc->sg.usrd, JL_IO_INTENSE, "JLPX");
 	jl_io_printc(pjlc->sg.usrd, "Key: ");
 	jl_io_printi(pjlc->sg.usrd, image->key[0].r);
 	jl_io_printc(pjlc->sg.usrd, ", ");
@@ -212,7 +252,7 @@ void _jl_sg_load_jlpx(jvct_t* pjlc,uint8_t *data,void **pixels,int *w,int *h) {
 	}
 	// Don't comment out this line!!!! it will cause an endless freeze!
 	pjlc->sg.init_image_location+=FSIZE+1;
-	jl_io_offset(pjlc->sg.usrd, "JLPX", JL_IO_TAG_SIMPLE-JL_IO_TAG_MAX);
+	jl_io_offset(pjlc->sg.usrd, JL_IO_SIMPLE, "JLPX");
 	jl_io_printc(pjlc->sg.usrd, "creating texture...\n");
 
 	uint8_t *tex_pixels = NULL;
@@ -235,8 +275,8 @@ void _jl_sg_load_jlpx(jvct_t* pjlc,uint8_t *data,void **pixels,int *w,int *h) {
 	//Cleanup
 	free(image);
 	
-	jl_io_close_block(pjlc->sg.usrd); //Close Block "JLPX"
-	jl_io_close_block(pjlc->sg.usrd); //Close Block "LOAD"
+	jl_io_close_block(pjlc->sg.usrd); // } :Close Block "JLPX"
+	jl_io_close_block(pjlc->sg.usrd); // } :Close Block "LOAD"
 }
 
 //loads next image in the currently loaded file.
@@ -244,7 +284,7 @@ static inline uint8_t _jl_sg_load_next_img(jvct_t * pjlc) {
 	void *fpixels = NULL;
 	int fw;
 	int fh;
-	jl_io_offset(pjlc->sg.usrd, "IMGS", JL_IO_TAG_PROGRESS-JL_IO_TAG_MAX);
+	jl_io_offset(pjlc->sg.usrd, JL_IO_PROGRESS, "IMGS");
 	_jl_sg_load_jlpx(pjlc, pjlc->sg.image_data, &fpixels, &fw, &fh);
 	jl_io_printc(pjlc->sg.usrd, "{IMGS}\n");
 	if(fpixels == NULL) {
@@ -280,9 +320,9 @@ static inline void _jl_sg_init_images(jvct_t * pjlc, uint8_t *data, uint16_t p){
 	pjlc->sg.igid = p;
 	pjlc->sg.image_data = data;
 
-	jl_io_offset(pjlc->sg.usrd, "INIM", JL_IO_TAG_PROGRESS-JL_IO_TAG_MAX);
+	jl_io_offset(pjlc->sg.usrd, JL_IO_PROGRESS, "INIM");
 	jl_io_printc(pjlc->sg.usrd, "loading images...\n");
-	jl_io_offset(pjlc->sg.usrd, "INIM", JL_IO_TAG_SIMPLE-JL_IO_TAG_MAX);
+	jl_io_offset(pjlc->sg.usrd, JL_IO_SIMPLE, "INIM");
 	stringlength = jl_me_string_fnum(pjlc->sg.usrd, (int)strlen((void *)data));
 	jl_io_printc(pjlc->sg.usrd, "lne ");
 	jl_io_printc(pjlc->sg.usrd, stringlength);
@@ -294,10 +334,10 @@ static inline void _jl_sg_init_images(jvct_t * pjlc, uint8_t *data, uint16_t p){
 }
 
 static uint32_t _jl_sg_quit(jvct_t* pjlc, int rc) {
+	jl_io_offset(pjlc->sg.usrd, JL_IO_SIMPLE, "KILL"); // {
 	if(pjlc->has.graphics)
 		jl_gr_draw_msge(pjlc->sg.usrd, "QUITING JLLIB....");
 	_jl_fl_errf(pjlc, ":Quitting....\n"); //Exited properly
-	jl_io_offset(pjlc->sg.usrd, "KILL", JL_IO_TAG_SIMPLE-JL_IO_TAG_MAX);
 	_jl_dl_kill(pjlc);
 	_jl_fl_kill(pjlc);
 	_jl_fl_errf(pjlc, ":No Error! YAY!\n"); //Exited properly
@@ -318,7 +358,7 @@ void jl_sg_kill(jl_t* pusr, char * msg) {
 	//	Also, don't automatically quit, like it does now!  ERQT can be
 	//	inline at that point.
 	_jl_fl_errf(pusr->pjlc, ":Quitting On Error...\n");
-	jl_io_offset(pusr, "ERQT", JL_IO_TAG_INTENSE-JL_IO_TAG_MAX);
+	jl_io_offset(pusr, JL_IO_INTENSE, "ERQT");
 	jl_io_printc(pusr, msg);
 	_jl_fl_errf(pusr->pjlc, msg);
 	_jl_sg_quit(pusr->pjlc, -1);
@@ -375,7 +415,7 @@ static inline float _jal5_sgrp_istm(jvct_t* pjlc) {
  * @param pigid: which image group to load the images into.
 */
 void jl_sg_add_image(jl_t* pusr, char *pzipfile, uint16_t pigid) {
-	jl_io_offset(pusr, "LIMG", JL_IO_TAG_PROGRESS-JL_IO_TAG_MAX);
+	jl_io_offset(pusr, JL_IO_PROGRESS, "LIMG");
 	//Load Graphics
 	uint8_t *img = jl_fl_media(pusr, "jlex/2/_img", pzipfile,
 		jal5_head_jlvm(), jal5_head_size());
@@ -385,9 +425,9 @@ void jl_sg_add_image(jl_t* pusr, char *pzipfile, uint16_t pigid) {
 		_jl_sg_init_images(pusr->pjlc, img, pigid);
 	else
 		jl_io_printc(pusr, "Loaded 0 images!\n");
-	jl_io_offset(pusr, "LIMG", JL_IO_TAG_PROGRESS-JL_IO_TAG_MAX);
+	jl_io_offset(pusr, JL_IO_PROGRESS, "LIMG"); // {
 	jl_io_printc(pusr, "Loaded Images...\n");
-	jl_io_close_block(pusr); //Close Block "LIMG"
+	jl_io_close_block(pusr); // }
 }
 
 static inline void _jl_sg_initb(jvct_t * pjlc) {
@@ -424,22 +464,22 @@ void _jl_sg_loop(jl_t* pusr) {
 		jl_gl_default_clippane(pjlc);
 		jl_gr_draw_rect(pusr, 0., 0., 1., jl_dl_p(pjlc->sg.usrd),
 			0, 64, 127, 255);
-		pjlc->sg.mdes[pusr->mode].tclp[pusr->loop](pusr);
+		pjlc->sg.mode.tclp[pusr->loop](pusr);
 		_jl_gr_loop(pusr); //Draw Menu Bar & Mouse
 		pjlc->gl.ytrans = 0.f;
 		jl_gl_default_clippane(pjlc);
 		jl_gr_draw_rect(pusr, 0., 0., 1., jl_dl_p(pjlc->sg.usrd),
 			0, 127, 0, 255);
 		if(pusr->loop == JL_SG_WM_UP)
-			pjlc->sg.mdes[pusr->mode].tclp[JL_SG_WM_DN](pusr);
+			pjlc->sg.mode.tclp[JL_SG_WM_DN](pusr);
 		else if(pusr->loop == JL_SG_WM_DN)
-			pjlc->sg.mdes[pusr->mode].tclp[JL_SG_WM_UP](pusr);
+			pjlc->sg.mode.tclp[JL_SG_WM_UP](pusr);
 	}else{
 		pjlc->gl.ytrans = 0.f;
 		jl_gl_default_clippane(pjlc);
 		jl_gr_draw_rect(pusr, 0., 0., 1., jl_dl_p(pjlc->sg.usrd),
 			0, 255, 0, 255);
-		pjlc->sg.mdes[pusr->mode].tclp[pusr->loop](pusr);
+		pjlc->sg.mode.tclp[pusr->loop](pusr);
 		_jl_gr_loop(pusr); //Draw Menu Bar & Mouse
 	}
 	_jl_dl_loop(pjlc); //Update Screen
@@ -483,19 +523,15 @@ static inline void _jl_sg_init_libs(jvct_t *pjlc) {
 }
 
 static inline void _jl_ini(jvct_t *pjlc) {
-	//Open Block "JLLB" (Minimal)
-	jl_io_offset(pjlc->sg.usrd, "JLLB", JL_IO_TAG_MINIMAL-JL_IO_TAG_MAX);
 	jl_io_printc(pjlc->sg.usrd, "Initializing...\n");
+
 	_jl_sg_init_libs(pjlc);
 	hack_user_init(pjlc->sg.usrd);
 
-	//Change Block "JLLB" to SIMPLE
-	jl_io_offset(pjlc->sg.usrd, "JLLB", JL_IO_TAG_SIMPLE-JL_IO_TAG_MAX);
+	jl_io_offset(pjlc->sg.usrd, JL_IO_SIMPLE, "JLLB"); //"JLLB" to SIMPLE
 	jl_io_printc(pjlc->sg.usrd, "Init5...\n");
-//	_jl_sg_ini_memory_allocate();
-
-	//Change Block "JLLB" Back to MINIMAL
-	jl_io_offset(pjlc->sg.usrd, "JLLB", JL_IO_TAG_MINIMAL-JL_IO_TAG_MAX);
+	
+	jl_io_offset(pjlc->sg.usrd, JL_IO_MINIMAL, "JLLB"); //"JLLB" to MINIMAL
 	jl_io_printc(pjlc->sg.usrd, "Initialized!\n");
 }
 

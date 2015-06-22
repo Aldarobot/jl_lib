@@ -245,7 +245,7 @@ void jl_gl_maketexture(jl_t* pusr, uint16_t gid, uint16_t id,
 	char *hstr;
 	char *wstr;
 	
-	jl_io_offset(pjlc->sg.usrd, "MKTX", JL_IO_TAG_SIMPLE-JL_IO_TAG_MAX);
+	jl_io_offset(pjlc->sg.usrd, JL_IO_SIMPLE, "MKTX");
 	if (!pixels)
 		jl_sg_kill(pusr, "null pixels");
 	if (pjlc->gl.allocatedg < gid + 1) {
@@ -542,7 +542,7 @@ void _jl_gl_geta(jvct_t *pjlc, GLuint prg, s32t *attrib, const char *title) {
 
 //Load and create all resources
 static inline void _jl_gl_make_res(jvct_t *pjlc) {
-	jl_io_offset(pjlc->sg.usrd, "GLIN", JL_IO_TAG_SIMPLE-JL_IO_TAG_MAX);
+	jl_io_offset(pjlc->sg.usrd, JL_IO_SIMPLE, "GLIN");
 	//set up opengl
 	//TODO:Later, Add Implementation with this enabled
 	jl_io_printc(pjlc->sg.usrd, "setting properties...\n");

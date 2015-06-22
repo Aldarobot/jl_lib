@@ -18,8 +18,8 @@ void jl_au_load(jvct_t *pjlc, int IDinStack, void *data, int dataSize,
 	char volumeChange)
 {
 	//Open Block "AUDI/LOAD"
-	jl_io_offset(pjlc->sg.usrd, "AUDI", JL_IO_TAG_PROGRESS-JL_IO_TAG_MAX);
-	jl_io_offset(pjlc->sg.usrd, "LOAD", JL_IO_TAG_PROGRESS-JL_IO_TAG_MAX);
+	jl_io_offset(pjlc->sg.usrd, JL_IO_PROGRESS, "AUDI");
+	jl_io_offset(pjlc->sg.usrd, JL_IO_PROGRESS, "LOAD");
 
 	jl_io_printc(pjlc->sg.usrd, "loading music....\n");
 	jl_io_printc(pjlc->sg.usrd, "loading music ");
@@ -29,6 +29,10 @@ void jl_au_load(jvct_t *pjlc, int IDinStack, void *data, int dataSize,
 	pjlc->au.jmus[IDinStack]._MUS =
 		Mix_LoadMUS_RW(SDL_RWFromMem(data, dataSize), 1);
 	pjlc->au.jmus[IDinStack]._VOL = volumeChange;
+	jl_io_offset(pjlc->sg.usrd, JL_IO_MINIMAL, "LOAD");
+	jl_io_printc(pjlc->sg.usrd, "audata: \"");
+	jl_io_printt(pjlc->sg.usrd, 10, data);
+	jl_io_printc(pjlc->sg.usrd, "\"\n");
 	if(pjlc->au.jmus[IDinStack]._MUS == NULL) {
 		_jl_fl_errf(pjlc, ":Couldn't load music because:");
 		_jl_fl_errf(pjlc, (char *)SDL_GetError());
@@ -55,7 +59,7 @@ uint8_t jl_au_mus_playing(void) {
 
 /*allocates "PMusMax" slots for music*/
 static inline void jls_ini(jvct_t *pjlc, int PMusMax) {
-	jl_io_offset(pjlc->sg.usrd, "AUDI", JL_IO_TAG_SIMPLE-JL_IO_TAG_MAX);
+	jl_io_offset(pjlc->sg.usrd, JL_IO_SIMPLE, "AUDI");
 	jl_io_printc(pjlc->sg.usrd, "allocating music space:");
 	jl_io_printi(pjlc->sg.usrd, PMusMax);
 	jl_io_printc(pjlc->sg.usrd, "\n");
@@ -142,8 +146,8 @@ static inline void jlvm_ini_sounds(jvct_t *pjlc, u08t *data) {
 	uint32_t fil = 0;
 	uint32_t fid = 0;
 
-	jl_io_offset(pjlc->sg.usrd, "AUDI", JL_IO_TAG_SIMPLE-JL_IO_TAG_MAX);
-	jl_io_offset(pjlc->sg.usrd, "LOAD", JL_IO_TAG_SIMPLE-JL_IO_TAG_MAX);
+	jl_io_offset(pjlc->sg.usrd, JL_IO_SIMPLE, "AUDI");
+	jl_io_offset(pjlc->sg.usrd, JL_IO_SIMPLE, "LOAD");
 
 //	uint32_t cursor = 0;
 	jls_ini(pjlc, 1000000);
@@ -193,7 +197,7 @@ void jl_au_add_audio(jl_t* pusr, char *pzipfile, uint16_t pigid) {
 
 /** @cond **/
 static void _jl_au_print_openblock(jl_t* pusr) {
-	jl_io_offset(pusr, "AUDI", JL_IO_TAG_SIMPLE-JL_IO_TAG_MAX);
+	jl_io_offset(pusr, JL_IO_SIMPLE, "AUDI");
 }
 
 void _jl_au_init(jvct_t *pjlc) {

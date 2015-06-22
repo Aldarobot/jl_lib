@@ -38,6 +38,7 @@ static void _jl_gr_menubar_name(jl_t* pusr);
 static void _jl_gr_draw_icon(jl_t* pusr);
 static void _jl_gr_textbox_rt(jl_t* pusr);
 static void _jl_gr_textbox_lt(jl_t* pusr);
+static void _jl_gr_popup_loop(jl_t* pusr);
 
 /*EXPORTED FUNCTIONS*/
 
@@ -299,6 +300,20 @@ static void _jl_gr_textbox_lt(jl_t* pusr);
 	}
 	
 	/**
+	 * Create a popup window.
+	 */
+	void jl_gr_popup(jl_t* pusr, char *name, char *message,
+		jl_popup_button_t *btns, uint8_t opt_count)
+	{
+		jvct_t *pjlc = pusr->pjlc;
+		pjlc->gr.popup.window_name = name;
+		pjlc->gr.popup.message = message;
+		pjlc->gr.popup.btns = btns;
+		jl_sg_mode_override(pusr, jl_sg_exit, _jl_gr_popup_loop,
+			_jl_gr_popup_loop, jl_dont);
+	}
+	
+	/**
 	 * Draw a slide button, and activate if it is pressed.
 	 * @param 'pusr': the libary context
  	 * @param 'psprite': the sprite to draw
@@ -453,6 +468,11 @@ static void _jl_gr_textbox_lt(jl_t* pusr);
 /** @cond **/
 /*BACKGROUND FUNCTIONS*/
 
+	static void _jl_gr_popup_loop(jl_t* pusr) {
+		jl_gr_draw_rect(pusr, .1, .1, .8, .2, 127, 127, 255, 255);
+		jl_gr_draw_rect(pusr, .1, .3, .8, .8, 64, 127, 127, 255);
+	}
+
 	static void _jl_gr_textbox_lt(jl_t* pusr) {
 //		if((int)y != 1) return;
 		jvct_t *pjlc = pusr->pjlc;
@@ -583,7 +603,7 @@ static void _jl_gr_textbox_lt(jl_t* pusr);
 	}
 
 	void _jl_gr_init(jvct_t *pjlc) {
-		jl_io_offset(pjlc->sg.usrd, "GRIN", JL_IO_TAG_SIMPLE-JL_IO_TAG_MAX);
+		jl_io_offset(pjlc->sg.usrd, JL_IO_SIMPLE, "GRIN");
 		pjlc->gr.menuoverlay = _jl_gr_menubar;
 		pjlc->sg.usrd->mouse = jl_gr_sprite_make(
 			pjlc->sg.usrd, 0, 0, 254, 255, //G,I,C,A

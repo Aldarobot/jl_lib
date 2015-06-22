@@ -28,19 +28,20 @@ static void _jl_fl_save(jl_t* pusr, void *file, const char *name, uint32_t bytes
 		return;
 	}
 
-	jl_io_offset(pusr, "FLSV", JL_IO_TAG_SIMPLE-JL_IO_TAG_MAX);
+	jl_io_offset(pusr, JL_IO_SIMPLE, "FLSV");
 	jl_io_printc(pusr, "SAVING....");
-	jl_io_offset(pusr, "FLSV", JL_IO_TAG_INTENSE-JL_IO_TAG_MAX);
+	jl_io_offset(pusr, JL_IO_INTENSE, "FLSV");
 	bytecount = jl_me_string_fnum(pusr, bytes);
 	jl_io_printc(pusr, bytecount);
 	free(bytecount);
 
-	fd = open(name, O_RDWR | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
+	uint8_t offs = (name[0] == '!');
+	fd = open(name + offs, O_RDWR | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
 
 	if(fd <= 0) {
 		errsv = errno;
 
-		jl_io_offset(pusr, "FLSV", JL_IO_TAG_MINIMAL-JL_IO_TAG_MAX);
+		jl_io_offset(pusr, JL_IO_MINIMAL, "FLSV");
 		jl_io_printc(pusr, "jl_fl_save: Failed to open file: \"");
 		jl_io_printc(pusr, name);
 		jl_io_printc(pusr, "\" Write failed: ");
@@ -49,7 +50,7 @@ static void _jl_fl_save(jl_t* pusr, void *file, const char *name, uint32_t bytes
 		exit(-1);
 	}
 	int at = lseek(fd, 0, SEEK_END);
-	jl_io_offset(pusr, "FLSV", JL_IO_TAG_SIMPLE-JL_IO_TAG_MAX);
+	jl_io_offset(pusr, JL_IO_SIMPLE, "FLSV");
 	jl_io_printc(pusr, "Writing....");
 	n_bytes = write(fd, file, bytes);
 	if(n_bytes <= 0) {
@@ -91,13 +92,12 @@ static inline void _jl_fl_reset_cursor(char *file_name) {
 
 //NON-STATIC Library Dependent Functions
 void _jl_fl_errf(jvct_t * pjlc, char *msg) {
-	jl_io_offset(pjlc->sg.usrd, "ERRF", JL_IO_TAG_SIMPLE-JL_IO_TAG_MAX);
+	jl_io_offset(pjlc->sg.usrd, JL_IO_SIMPLE, "ERRF");
 	jl_io_printc(pjlc->sg.usrd, "saving to errf: ");
 	jl_io_printc(pjlc->sg.usrd, pjlc->fl.errf_filename);
-	jl_io_offset(pjlc->sg.usrd, "ERRF", JL_IO_TAG_MINIMAL-JL_IO_TAG_MAX);
+	jl_io_offset(pjlc->sg.usrd, JL_IO_MINIMAL, "ERRF");
 	jl_io_printc(pjlc->sg.usrd, msg);
-	jl_io_printc(pjlc->sg.usrd, "\n");
-	jl_io_offset(pjlc->sg.usrd, "ERRF", JL_IO_TAG_SIMPLE-JL_IO_TAG_MAX);
+	jl_io_offset(pjlc->sg.usrd, JL_IO_SIMPLE, "ERRF");
 	//Write to the errf file
 	_jl_fl_save(pjlc->sg.usrd, msg, pjlc->fl.errf_filename, strlen(msg));
 	jl_io_printc(pjlc->sg.usrd, "saved to errf!\n");
@@ -130,10 +130,11 @@ strt jl_fl_load(jl_t* pusr, char *file_name) {
 	_jl_fl_reset_cursor(file_name);
 	u32t i;
 	unsigned char *file = malloc(MAXFILELEN);
-	int fd = open(file_name, O_RDWR);
+	uint8_t offs = (file_name[0] == '!');
+	int fd = open(file_name + offs, O_RDWR);
 	
 	//Open Block FLLD
-	jl_io_offset(pusr, "FLLD", JL_IO_TAG_SIMPLE-JL_IO_TAG_MAX);
+	jl_io_offset(pusr, JL_IO_SIMPLE, "FLLD");
 	
 	if(fd <= 0) {
 		jl_io_printc(pusr, "failed to open: \"");
@@ -144,7 +145,9 @@ strt jl_fl_load(jl_t* pusr, char *file_name) {
 	int Read = read(fd, file, MAXFILELEN + 1);
 	pusr->info = Read;
 
-	printf("[JLVM/FILE/FILE/LOAD] read %d bytes\n", pusr->info);
+	jl_io_printc(pusr, "read ");
+	jl_io_printi(pusr, pusr->info);
+	jl_io_printc(pusr, "bytes\n");
 	close(fd);
 	strt frtn = jl_me_strt_make(pusr->info, STRT_KEEP);
 	for( i = 0; i < pusr->info; i++) {
@@ -170,18 +173,19 @@ strt jl_fl_load(jl_t* pusr, char *file_name) {
 char jl_fl_pk_save(jl_t* pusr, char *packageFileName, char *fileName,
 	void *data, uint64_t dataSize)
 {
-	#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
-	printf("[JLVM/FILE/PKDJ/SAVE] opening \"%s\"....\n", packageFileName);
-	#endif
+	jl_io_offset(pusr, JL_IO_SIMPLE, "PKSV"); // {
+	jl_io_printc(pusr, "opening \"");
+	jl_io_printc(pusr, packageFileName);
+	jl_io_printc(pusr, "\"....\n");
 	struct zip *archive = zip_open(packageFileName, ZIP_CREATE 
 		/*| ZIP_CHECKCONS*/, NULL);
 	if(archive == NULL) {
+		jl_io_close_block(pusr); // !}
 		return 1;
 	}else{
-		#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
-		printf("[JLVM/FILE/PKDJ/SAVE] opened file system:\"%s\".\n",
-			packageFileName);
-		#endif
+		jl_io_printc(pusr, "opened file system:\"");
+		jl_io_printc(pusr, packageFileName);
+		jl_io_printc(pusr, "\".\n");
 	}
 
 	struct zip_source *s;
@@ -193,16 +197,17 @@ char jl_fl_pk_save(jl_t* pusr, char *packageFileName, char *fileName,
 	}
 //	printf("%d,%d,%d\n",archive,sb.index,s);
 	if(zip_file_add(archive, fileName, s, ZIP_FL_OVERWRITE)) {
-		printf("[JLVM/FILE/PKDJ/SAVE] add/err: %s\n", zip_strerror(archive));
+		jl_io_printc(pusr, "add/err: \"");
+		jl_io_printc(pusr, zip_strerror(archive));
+		jl_io_printc(pusr, "\"\n");
 	}else{
-		#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
-		printf("[JLVM/FILE/PKDJ/SAVE] added %s to file sys.\n", fileName);
-		#endif
+		jl_io_printc(pusr, "added \"");
+		jl_io_printc(pusr, fileName);
+		jl_io_printc(pusr, "\" to file sys.\n");
 	}
 	zip_close(archive);
-	#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
-	printf("[JLVM/FILE/PKDJ/SAVE] DONE!\n");
-	#endif
+	jl_io_printc(pusr, "DONE!\n");
+	jl_io_close_block(pusr); // }
 	return 0;
 }
 
@@ -224,7 +229,7 @@ uint8_t *jl_fl_pk_load(jl_t* pusr, const char *packageFileName,
 	const char *filename)
 {
 	//Open Block PKLD
-	jl_io_offset(pusr, "PKLD", JL_IO_TAG_SIMPLE-JL_IO_TAG_MAX);
+	jl_io_offset(pusr, JL_IO_SIMPLE, "PKLD");
 	int zerror = 0;
 	jl_io_printc(pusr, "loading package:\"");
 	jl_io_printc(pusr, packageFileName);
@@ -283,22 +288,20 @@ uint8_t *jl_fl_pk_load(jl_t* pusr, const char *packageFileName,
  * @param pfilebase: name of directory to create
 */
 void jl_fl_mkdir(jl_t* pusr, strt pfilebase) {
+	jl_io_offset(pusr, JL_IO_SIMPLE, "MDIR"); // {
 	if(mkdir((void *)pfilebase->data, 0)) {
 		int errsv = errno;
 		if(errsv == EEXIST) {
-			#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
 			jl_io_printc(pusr, "Directory Exist! Continue...\n");
-			#endif
 		}else{
 			_jl_fl_errf(pusr->pjlc, ":Directory: Uh oh...:\n:");
 			_jl_fl_errf(pusr->pjlc, strerror(errsv));
 			jl_sg_kill(pusr, "\n");
 		}
 	}else{
-		#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
 		jl_io_printc(pusr, "Created Directory!\n");
-		#endif
 	}
+	jl_io_close_block(pusr); // } : MDIR
 }
 
 /**
@@ -318,7 +321,7 @@ uint8_t * jl_fl_mkfile(jl_t* pusr, char *pzipfile, char *pfilebase,
 	uint8_t *freturn;
 
 	//Create Block "MKFL"
-	jl_io_offset(pusr, "MKFL", JL_IO_TAG_SIMPLE-JL_IO_TAG_MAX);
+	jl_io_offset(pusr, JL_IO_SIMPLE, "MKFL"); // {
 
 	jl_io_printc(pusr, "Creating File...\n");
 	jl_fl_save(pusr, contents, pzipfile, size);
@@ -333,7 +336,7 @@ uint8_t * jl_fl_mkfile(jl_t* pusr, char *pzipfile, char *pfilebase,
 	}
 	jl_io_printc(pusr, "Good loading!\n");
 	//Close Block "MKFL"
-	jl_io_close_block(pusr);
+	jl_io_close_block(pusr); // }
 	jl_io_printc(pusr, "File Made!\n");
 	return freturn;
 }
@@ -374,7 +377,7 @@ char * jl_fl_get_resloc(jl_t* pusr, char* pprg_name, char* pfilename) {
 	strt errfs = jl_me_strt_make(0, STRT_KEEP);
 	
 	//Open Block "FLBS"
-	jl_io_offset(pusr, "FLBS", JL_IO_TAG_SIMPLE-JL_IO_TAG_MAX);
+	jl_io_offset(pusr, JL_IO_SIMPLE, "FLBS");
 	
 	jl_io_printc(pusr, "Getting FileBase....\n");
 	
@@ -760,8 +763,8 @@ void _jl_fl_initb(jvct_t * pjlc) {
 }
 
 void _jl_fl_inita(jvct_t * pjlc) {
-	jl_io_offset(pjlc->sg.usrd, "FILE", JL_IO_TAG_SIMPLE-JL_IO_TAG_MAX);
-	jl_io_offset(pjlc->sg.usrd, "INIT", JL_IO_TAG_SIMPLE-JL_IO_TAG_MAX);
+	jl_io_offset(pjlc->sg.usrd, JL_IO_SIMPLE, "FILE"); // {
+	jl_io_offset(pjlc->sg.usrd, JL_IO_SIMPLE, "INIT"); // {
 
 	jl_io_printc(pjlc->sg.usrd, "program name:");
 	jl_dl_progname(pjlc->sg.usrd, Strt("JLVM"));
@@ -772,7 +775,7 @@ void _jl_fl_inita(jvct_t * pjlc) {
 
 	truncate(pjlc->fl.errf_filename, 0);
 	_jl_fl_errf(pjlc, ":Starting...\n");
-	jl_io_close_block(pjlc->sg.usrd); //Close Block "INIT"
-	jl_io_close_block(pjlc->sg.usrd); //Close Block "FILE"
+	jl_io_close_block(pjlc->sg.usrd); // } Close Block "INIT"
+	jl_io_close_block(pjlc->sg.usrd); // } Close Block "FILE"
 	jl_io_printc(pjlc->sg.usrd, "finished file init\n");
 }

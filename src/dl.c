@@ -47,19 +47,17 @@ static void _jl_dl_fscreen(jvct_t* pjlc, uint8_t a) {
 }
 
 static inline void jlvmpi_ini_sdl(jvct_t* pjlc) {
-	
-	#if JLVM_DEBUG >= JLVM_DEBUG_MINIMAL
+	jl_io_offset(pjlc->sg.usrd, JL_IO_MINIMAL, "ISDL"); // {
 	jl_io_printc(pjlc->sg.usrd, "Starting up...\n");
-	#endif
 	SDL_Init(JLVM_INIT);
-	#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
-	jl_io_printc(pjlc->sg.usrd, "[JLVM] input...\n");
-	#endif
+	jl_io_offset(pjlc->sg.usrd, JL_IO_SIMPLE, "ISDL"); // =
+	jl_io_printc(pjlc->sg.usrd, "input...\n");
 	#if JL_PLAT == JL_PLAT_COMPUTER
 	SDL_ShowCursor(SDL_DISABLE);
 	SDL_EventState(SDL_KEYDOWN, SDL_IGNORE);
 	SDL_EventState(SDL_KEYUP, SDL_IGNORE);
 	#endif
+	jl_io_close_block(pjlc->sg.usrd); // }
 }
 
 //Update the SDL_displayMode structure
@@ -69,14 +67,14 @@ static void _jlvm_curd_mode(jvct_t *pjlc) {
 		_jl_fl_errf(pjlc, (char *)SDL_GetError());
 		jl_sg_kill(pjlc->sg.usrd, "\n");
 	}
-	#if JLVM_DEBUG >= JLVM_DEBUG_SIMPLE
+	jl_io_offset(pjlc->sg.usrd, JL_IO_SIMPLE, "CURD"); // {
 	jl_io_printc(pjlc->sg.usrd,
 		jl_me_string_fnum(pjlc->sg.usrd, pjlc->dl.current.w));
 	jl_io_printc(pjlc->sg.usrd, ",");
 	jl_io_printc(pjlc->sg.usrd,
 		jl_me_string_fnum(pjlc->sg.usrd, pjlc->dl.current.h));
 	jl_io_printc(pjlc->sg.usrd, "\n");
-	#endif
+	jl_io_close_block(pjlc->sg.usrd); // }
 }
 
 //This is the code that actually creates the window by accessing SDL

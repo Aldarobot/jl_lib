@@ -48,9 +48,12 @@
 		void *pixels, int width, int height);
 // "sg.c"
 	void jl_sg_mode_init(jl_t* pusr, u08t mdec);
-	void jl_sg_smode_fncs(jl_t* pusr, uint8_t mode, jl_simple_fnt exit,
+	void jl_sg_mode_set(jl_t* pusr, uint8_t mode, jl_simple_fnt exit,
 		jl_simple_fnt wups, jl_simple_fnt wdns, jl_simple_fnt term);
-	void jl_sg_setlm(jl_t* pusr, uint8_t mode, jl_sg_wm_t loop);
+	void jl_sg_mode_override(jl_t* pusr, jl_simple_fnt exit,
+		jl_simple_fnt upsl, jl_simple_fnt dnsl, jl_simple_fnt term);
+	void jl_sg_mode_reset(jl_t* pusr);
+	void jl_sg_mode_switch(jl_t* pusr, uint8_t mode, jl_sg_wm_t loop);
 	void jl_sg_kill(jl_t* pusr, char * msg);
 	void jl_sg_exit(jl_t* pusr);
 	void jl_sg_add_image(jl_t* pusr, char *pzipfile, uint16_t pigid);
@@ -96,7 +99,7 @@
 	void jl_gr_addicon_name(jl_t* pusr);
 // "ct.c"
 // "io.c"
-	void jl_io_offset(jl_t* pusr, char * this, int16_t tag);
+	void jl_io_offset(jl_t* pusr, int16_t tag, char * this);
 	void jl_io_close_block(jl_t* pusr);
 	void jl_io_tag_set(jl_t* pusr,
 		int16_t tag, uint8_t shouldprint, jl_io_print_fnt tagfn);

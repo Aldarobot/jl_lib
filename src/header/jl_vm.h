@@ -29,22 +29,6 @@
 		jl_simple_fnt tclp[JL_SG_WM_MAX];
 	}__sg_mode_t;
 
-	typedef struct{
-		jl_t * usrd;
-		__sg_mode_t *mdes; //Array Sizof Number Of Modes
-		
-		uint32_t taskbar[5];
-		uint32_t init_image_location;
-		uint32_t prev_tick;
-		uint32_t this_tick;
-		uint32_t processingTimeMillis;
-		
-		//For loading images
-		uint16_t image_id;
-		uint16_t igid;
-		void *image_data;
-	}_sg_t;
-
 //INPT:
 	typedef struct{
 		jl_ct_event_fnt getEvents[JL_CT_MAXX];
@@ -142,19 +126,6 @@
 		strt promptstring;
 		char *errf_filename;
 	}_fl_t;
-	
-	typedef struct {
-		jl_simple_fnt menuoverlay;
-		struct{
-			uint16_t grp[10];
-			uint16_t iid[10];
-			uint8_t chr[10];
-			jl_simple_fnt func[2][10];
-			uint8_t cursor;
-			float iconx;
-		}menubar;
-		strt textbox_string;
-	}_gr_t;
 
 	typedef struct {
 		uint8_t fullscreen;
@@ -183,12 +154,47 @@ typedef struct{
 //JLVM Context Structure
 typedef struct{
 	_io_t io; //Terminal Data
-	_sg_t sg; //Window Info
+	//Window Info
+	struct{
+		jl_t * usrd;
+		__sg_mode_t *mdes; // Array Sizof Number Of Modes
+		__sg_mode_t mode; // Current Mode Data
+		
+		uint32_t taskbar[5];
+		uint32_t init_image_location;
+		uint32_t prev_tick;
+		uint32_t this_tick;
+		uint32_t processingTimeMillis;
+		
+		//For loading images
+		uint16_t image_id;
+		uint16_t igid;
+		void *image_data;
+	}sg;
 	_ct_t ct; //Input Information
 	_au_t au; //Audio Info
 	_gl_t gl; //Opengl Data
 	_fl_t fl; //File Manager
-	_gr_t gr; //Graphics
+	
+	//Graphics
+	struct{
+		jl_simple_fnt menuoverlay;
+		struct{
+			uint16_t grp[10];
+			uint16_t iid[10];
+			uint8_t chr[10];
+			jl_simple_fnt func[2][10];
+			uint8_t cursor;
+			float iconx;
+		}menubar;
+		struct{
+			char* window_name;
+			char* message;
+			jl_popup_button_t* btns;
+		}popup;
+		strt textbox_string;
+	}gr;
+
 	_dl_t dl; //Base SDL
 
 	//in: What's Available

@@ -118,7 +118,7 @@ void jl_io_tag_set(jl_t* pusr,
 	int16_t tag, uint8_t shouldprint, jl_io_print_fnt tagfn)
 {
 	jvct_t *pjlc = pusr->pjlc;
-	uint16_t realtag = tag + JL_IO_TAG_MAX;
+	uint16_t realtag = tag + _JL_IO_MAX;
 
 	if(realtag > pjlc->io.maxtag) {
 		pjlc->io.maxtag = realtag;
@@ -150,7 +150,7 @@ void jl_io_printc(jl_t* pusr, const char * print) {
 		exit(0);
 	}
 	//Skip over hidden values
-	pjlc->io.printfn[pjlc->io.tag[pjlc->io.offs] + JL_IO_TAG_MAX]
+	pjlc->io.printfn[pjlc->io.tag[pjlc->io.offs] + _JL_IO_MAX]
 		(pusr, print);
 }
 
@@ -205,7 +205,7 @@ void jl_io_close_block(jl_t* pusr) {
 	if(pjlc->io.offs != 1)
 		pjlc->io.offs -= 1;
 	else
-		printf("\n[DONE!]\n");
+		printf("[EXIT] ");
 }
 
 /**
@@ -214,7 +214,7 @@ void jl_io_close_block(jl_t* pusr) {
  * @param this: the name of the block.
  * @param tag: the tag attached to the block.
 */
-void jl_io_offset(jl_t* pusr, char * this, int16_t tag) {
+void jl_io_offset(jl_t* pusr, int16_t tag, char * this) {
 	jvct_t *pjlc = pusr->pjlc;
 	int i = 0;
 
@@ -251,15 +251,15 @@ void _jl_io_init(jvct_t * pjlc) {
 	pjlc->io.offs = 0;
 	pjlc->io.ofs2 = 0;
 	pjlc->io.newline = 2;
-	jl_io_tag_set(pjlc->sg.usrd, JL_IO_TAG_MINIMAL -JL_IO_TAG_MAX, 1, NULL);
-	jl_io_tag_set(pjlc->sg.usrd, JL_IO_TAG_PROGRESS-JL_IO_TAG_MAX, 0, NULL);
-	jl_io_tag_set(pjlc->sg.usrd, JL_IO_TAG_SIMPLE  -JL_IO_TAG_MAX, 0, NULL);
-	jl_io_tag_set(pjlc->sg.usrd, JL_IO_TAG_INTENSE -JL_IO_TAG_MAX, 0, NULL);
-	jl_io_offset(pjlc->sg.usrd, "JLVM", JL_IO_TAG_MINIMAL-JL_IO_TAG_MAX);
+	jl_io_tag_set(pjlc->sg.usrd, JL_IO_MINIMAL, 1, NULL);
+	jl_io_tag_set(pjlc->sg.usrd, JL_IO_PROGRESS, 0, NULL);
+	jl_io_tag_set(pjlc->sg.usrd, JL_IO_SIMPLE, 0, NULL);
+	jl_io_tag_set(pjlc->sg.usrd, JL_IO_INTENSE, 0, NULL);
+	jl_io_offset(pjlc->sg.usrd, JL_IO_MINIMAL, "JLLB");
 }
 
 void _jl_io_kill(jl_t * pusr) {
-	jl_io_printc(pusr, "Killed Program\n");
 	jl_io_close_block(pusr); //Close Block "KILL"
+	jl_io_printc(pusr, "Killed Program\n\n");
 	jl_io_close_block(pusr); //Close Block "JLVM"
 }
