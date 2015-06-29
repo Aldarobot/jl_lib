@@ -237,25 +237,33 @@ void _jal5_jl_me_vary_make(u32t vari, u08t size) {
 }
 
 /**
- * Replace "bytes" bytes of string "b" at the point "p" of string "a" 
- * @param 'pusr': library context
- * @param 'a': string being modified
- * @param 'b': string being appended onto "a"
- * @param 'p': the place in a to start copying b
- * @param 'bytes': the number of bytes to copy over
+ * At the cursor in string 'a' replace 'bytes' bytes of 'b' at it's cursor.
+ * jl_me_strt_strt(pusr, { data="HELLO", curs=2 }, { "WORLD", curs=2 }, 2);
+ *  would make 'a'
+ *	"HELLO"-"LL" = "HE\0\0O"
+ *	"WORLD"[2] and [3] = "RL"
+ *	"HE"+"RL"+"O" = "HERLO"
+ * @param pusr: library context
+ * @param a: string being modified
+ * @param b: string being copied into 'a'
+ * @param bytes: the number of bytes to copy over
  */
-void jl_me_strt_strt(jl_t *pusr, strt a, strt b, uint64_t p, uint64_t bytes) {
+void jl_me_strt_strt(jl_t *pusr, strt a, strt b, uint64_t bytes) {
+	int32_t i;
+	uint32_t size = a->size;
+	uint32_t sizeb = a->curs + bytes;
+
 	if(a == NULL) {
 		jl_sg_kill(pusr, "NULL A STRING");
 	}else if(b == NULL) {
 		jl_sg_kill(pusr, "NULL B STRING");
 	}
-	a->data = _jl_me_hydd_allc(pusr->pjlc, a->data, p + bytes + 1);
-	int i;
+	if(sizeb > size) size = sizeb;
+	a->data = _jl_me_hydd_allc(pusr->pjlc, a->data, size + 1);
 	for(i = 0; i < bytes; i++) {
-		a->data[i+p] = b->data[i];
+		a->data[i + a->curs] = b->data[i + b->curs];
 	}
-	a->size = p + bytes;
+	a->size = size;
 	a->data[a->size] = '\0';
 }
 
@@ -266,7 +274,8 @@ void jl_me_strt_strt(jl_t *pusr, strt a, strt b, uint64_t p, uint64_t bytes) {
  * @param 'b': string being appended onto "a"
  */
 void jl_me_strt_merg(jl_t *pusr, strt a, strt b) {
-	jl_me_strt_strt(pusr, a, b, a->size, b->size);
+	a->curs = a->size;
+	jl_me_strt_strt(pusr, a, b, b->size);
 }
 
 /**

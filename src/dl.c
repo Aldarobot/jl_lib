@@ -47,10 +47,9 @@ static void _jl_dl_fscreen(jvct_t* pjlc, uint8_t a) {
 }
 
 static inline void jlvmpi_ini_sdl(jvct_t* pjlc) {
-	jl_io_offset(pjlc->sg.usrd, JL_IO_MINIMAL, "ISDL"); // {
+	jl_io_offset(pjlc->sg.usrd, JL_IO_SIMPLE, "ISDL"); // {
 	jl_io_printc(pjlc->sg.usrd, "Starting up...\n");
 	SDL_Init(JLVM_INIT);
-	jl_io_offset(pjlc->sg.usrd, JL_IO_SIMPLE, "ISDL"); // =
 	jl_io_printc(pjlc->sg.usrd, "input...\n");
 	#if JL_PLAT == JL_PLAT_COMPUTER
 	SDL_ShowCursor(SDL_DISABLE);

@@ -28,9 +28,9 @@ static void _jl_fl_save(jl_t* pusr, void *file, const char *name, uint32_t bytes
 		return;
 	}
 
-	jl_io_offset(pusr, JL_IO_SIMPLE, "FLSV");
+	jl_io_offset(pusr, JL_IO_SIMPLE, "FLSV"); // { : FLSV
 	jl_io_printc(pusr, "SAVING....");
-	jl_io_offset(pusr, JL_IO_INTENSE, "FLSV");
+	jl_io_offset(pusr, JL_IO_INTENSE, "FLSV"); // =
 	bytecount = jl_me_string_fnum(pusr, bytes);
 	jl_io_printc(pusr, bytecount);
 	free(bytecount);
@@ -41,7 +41,7 @@ static void _jl_fl_save(jl_t* pusr, void *file, const char *name, uint32_t bytes
 	if(fd <= 0) {
 		errsv = errno;
 
-		jl_io_offset(pusr, JL_IO_MINIMAL, "FLSV");
+		jl_io_offset(pusr, JL_IO_MINIMAL, "FLSV"); // =
 		jl_io_printc(pusr, "jl_fl_save: Failed to open file: \"");
 		jl_io_printc(pusr, name);
 		jl_io_printc(pusr, "\" Write failed: ");
@@ -64,23 +64,14 @@ static void _jl_fl_save(jl_t* pusr, void *file, const char *name, uint32_t bytes
 	atplace = jl_me_string_fnum(pusr, at);
 	jl_io_printc(pusr, "Wrote ");
 	jl_io_printc(pusr, bytecount);
-	jl_io_printc(pusr, "bytes @");
+	jl_io_printc(pusr, " bytes @");
 	jl_io_printc(pusr, atplace);
 	jl_io_printc(pusr, "\n");
 	free(bytecount);
 	free(atplace);
-/*	jl_io_print_lows(0,
-		jl_me_strt_merg(
-			jl_me_strt_merg(Strt("Wrote "),
-				jl_me_strt_fnum((int)n_bytes), STRT_TEMP),
-			jl_me_strt_merg(Strt(" bytes @ "),
-				jl_me_strt_fnum(at), STRT_TEMP), STRT_TEMP
-		)
-	);*/
-	jl_io_printc(pusr, "Wrote....");
 	close(fd);
-	
-	jl_io_close_block(pjlc->sg.usrd); //Close Block "FLSV"
+	jl_io_printc(pusr, "Saved!");
+	jl_io_close_block(pjlc->sg.usrd); // } : Close Block "FLSV"
 	return;
 }
 
@@ -217,9 +208,11 @@ static void _jl_fl_pk_load_quit(jl_t* pusr) {
 
 /**
  * Load file "filename" in package "packageFileName" & Return contents
- * -ERRF:
- *	-ERRF_NONE:	can't find filename in packageFileName
- *	-ERRF_FIND:	can't find packageFileName
+ * May return NULL.  If it does pusr->errf will be set.
+ * -ERR:
+ *	-ERR_NERR:	File is empty.
+ *	-ERR_NONE:	Can't find filename in packageFileName. [ DNE ]
+ *	-ERR_FIND:	Can't find packageFileName. [ DNE ]
  * @param pusr: Library Context
  * @param packageFileName: Package to load file from
  * @param filename: file within package to load
@@ -228,8 +221,8 @@ static void _jl_fl_pk_load_quit(jl_t* pusr) {
 uint8_t *jl_fl_pk_load(jl_t* pusr, const char *packageFileName,
 	const char *filename)
 {
-	//Open Block PKLD
-	jl_io_offset(pusr, JL_IO_SIMPLE, "PKLD");
+	pusr->errf = JL_ERR_NERR;
+	jl_io_offset(pusr, JL_IO_SIMPLE, "PKLD"); // { : PKLD
 	int zerror = 0;
 	jl_io_printc(pusr, "loading package:\"");
 	jl_io_printc(pusr, packageFileName);
@@ -271,9 +264,14 @@ uint8_t *jl_fl_pk_load(jl_t* pusr, const char *packageFileName,
 	if((pusr->info = zip_fread(file, fileToLoad, PKFMAX)) == -1) {
 		jl_sg_kill(pusr, "file reading failed");
 	}
+	jl_io_offset(pusr, JL_IO_MINIMAL, "PKLD"); // = : PKLD TODO: REMOVE
+	if(pusr->info == 0) {
+		jl_io_printc(pusr, "empty file, returning NULL.");
+		return NULL;
+	}
 	jl_io_printc(pusr, "read ");
 	jl_io_printi(pusr, pusr->info);
-	jl_io_printc(pusr, "bytes\n");
+	jl_io_printc(pusr, " bytes\n");
 	jl_io_printc(pusr, "read opened file.\n");
 	zip_close(zipfile);
 	jl_io_printc(pusr, "done.\n");
@@ -418,7 +416,7 @@ char * jl_fl_get_resloc(jl_t* pusr, char* pprg_name, char* pfilename) {
 	#if JL_PLAT == JL_PLAT_PHONE
 	jl_fl_mkdir(pusr, Strt(JLVM_FILEBASE));
 	#else
-	jl_io_printc(pusr, "FB2....\n");
+	jl_io_printc(pusr, "\nFB2....\n");
 	int fsize = strlen(filebase)+strlen(JLVM_FILEBASE) + 1;
 	char *filebase2 = malloc(fsize);
 	jl_io_printc(pusr, "Clear....\n");
@@ -442,6 +440,7 @@ char * jl_fl_get_resloc(jl_t* pusr, char* pprg_name, char* pfilename) {
 
 	jl_io_printc(pusr, "filebase: ");
 	jl_io_printc(pusr, filebase);
+	jl_io_printc(pusr, "\nlocation: ");
 	jl_io_printc(pusr, location);
 	
 	jl_io_close_block(pusr); //Close Block "FLBS"

@@ -202,10 +202,12 @@ void jl_io_close_block(jl_t* pusr) {
 	jvct_t *pjlc = pusr->pjlc;
 
 	pjlc->io.ofs2 -= 1;
-	if(pjlc->io.offs != 1)
+	if(pjlc->io.offs != 1) {
 		pjlc->io.offs -= 1;
-	else
+	}else{
+		if(pjlc->io.newline) printf("\n");
 		printf("[EXIT] ");
+	}
 }
 
 /**
@@ -260,6 +262,6 @@ void _jl_io_init(jvct_t * pjlc) {
 
 void _jl_io_kill(jl_t * pusr) {
 	jl_io_close_block(pusr); //Close Block "KILL"
-	jl_io_printc(pusr, "Killed Program\n\n");
+	jl_io_printc(pusr, "Killed Program\n");
 	jl_io_close_block(pusr); //Close Block "JLVM"
 }

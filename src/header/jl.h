@@ -22,7 +22,7 @@
 	strt jl_me_strt_c8ts(const char *string);
 	#define Strt(x) jl_me_strt_c8ts((const void*)x)
 	strt jl_me_strt_mkfrom_data(jl_t* pusr, uint32_t size, void *data);
-	void jl_me_strt_strt(jl_t*pusr,strt a,strt b,uint64_t p,uint64_t bytes);
+	void jl_me_strt_strt(jl_t*pusr, strt a, strt b, uint64_t p);
 	void jl_me_strt_merg(jl_t *pusr, strt a, strt b);
 	void jl_me_strt_trunc(jl_t *pusr, strt a, uint32_t size);
 	strt jl_me_strt_fnum(s32t a);
