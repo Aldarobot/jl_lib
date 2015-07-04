@@ -189,14 +189,17 @@ static inline void _jl_au_init_sounds(jvct_t *pjlc, uint8_t *data) {
 void jl_au_add_audio(jl_t* pusr, char *pzipfile, uint16_t pigid) {
 	uint8_t *aud = jl_fl_media(pusr, "jlex/2/_aud", pzipfile,
 		jal5_head_jlvm(), jal5_head_size());
-	jl_io_offset(pusr, JL_IO_MINIMAL, "LOAD");
+	jl_io_offset(pusr, JL_IO_MINIMAL, "LOAD"); // { : Open Block "LOAD"
 	jl_io_printc(pusr, "AUDIO_AUDIO:");
 	jl_io_printi(pusr, pusr->info);
 	jl_io_printc(pusr, "\nLoading audiostuffs...\n");
+	jl_io_close_block(pusr); // } : Close Block "LOAD"
 	if((aud != NULL) || (pusr->info > 4)) {
 		_jl_au_init_sounds(pusr->pjlc,aud);
 	}
+	jl_io_offset(pusr, JL_IO_MINIMAL, "LOAD"); // { : Open Block "LOAD"
 	jl_io_printc(pusr, "Loaded audiostuffs!\n");
+	jl_io_close_block(pusr); // } : Close Block "LOAD"
 }
 
 /** @cond **/

@@ -254,8 +254,8 @@ void _jl_io_init(jvct_t * pjlc) {
 	pjlc->io.ofs2 = 0;
 	pjlc->io.newline = 2;
 	jl_io_tag_set(pjlc->sg.usrd, JL_IO_MINIMAL, 1, NULL);
-	jl_io_tag_set(pjlc->sg.usrd, JL_IO_PROGRESS, 0, NULL);
-	jl_io_tag_set(pjlc->sg.usrd, JL_IO_SIMPLE, 0, NULL);
+	jl_io_tag_set(pjlc->sg.usrd, JL_IO_PROGRESS, 1, NULL);
+	jl_io_tag_set(pjlc->sg.usrd, JL_IO_SIMPLE, 1, NULL);
 	jl_io_tag_set(pjlc->sg.usrd, JL_IO_INTENSE, 0, NULL);
 	jl_io_offset(pjlc->sg.usrd, JL_IO_MINIMAL, "JLLB");
 }

@@ -25,7 +25,6 @@ char *source_frag_clr =
 	
 char *source_vert_clr = 
 	GLSL_HEAD
-	"uniform vec4 transform;\n"
 	"\n"
 	"attribute vec3 position;\n"
 	"attribute vec4 acolor;\n"
@@ -35,7 +34,7 @@ char *source_vert_clr =
 	"\n"
 	"void main()\n"
 	"{\n"
-	"	gl_Position = vec4(position, 1.0) * transform;\n"
+	"	gl_Position = vec4(position, 1.0);\n"
 	"	vcolor = acolor;\n"
 	"	poscoord = position;\n"
 	"}\n\0";
@@ -73,8 +72,6 @@ char *source_frag_tex =
 
 char *source_vert_tex = 
 	GLSL_HEAD
-	"uniform vec4 transform;\n"
-	"\n"
 	"attribute vec3 position;\n"
 	"attribute vec2 texpos;\n"
 	"\n"
@@ -83,7 +80,7 @@ char *source_vert_tex =
 	"\n"
 	"void main()\n"
 	"{\n"
-	"	gl_Position = vec4(position, 1.0) * transform;\n"
+	"	gl_Position = vec4(position, 1.0);\n"
 	"	texcoord = texpos;\n"
 	"	poscoord = position;\n"
 	"}\n\0";
@@ -126,25 +123,30 @@ void _jl_gl_cerr(jvct_t *pjlc, int width, char *fname) {
 	jl_sg_kill(pjlc->sg.usrd, "\n");
 }
 
-void __jl_gl_buff_bind(jvct_t *pjlc, uint32_t buffer) {
+static void _jl_gl_buff_use(jvct_t *pjlc, uint32_t buffer) {
 	glBindBuffer(GL_ARRAY_BUFFER, buffer);
 	_jl_gl_cerr(pjlc, 0,"bind buffer");
 }
 
-void _jl_gl_buff_data(jvct_t *pjlc, uint32_t buffer, void *buffer_data,
+// Set the Data for VBO "buffer" to "buffer_data" with "buffer_size"
+static void _jl_gl_buff_set(jvct_t *pjlc, uint32_t buffer, void *buffer_data,
 	u08t buffer_size)
 {
+	// Check For Deleted Buffer
 	if(buffer == 0) jl_sg_kill(pjlc->sg.usrd, "buffer got deleted!");
-	__jl_gl_buff_bind(pjlc, buffer);
+	//Bind Buffer "buffer"
+	_jl_gl_buff_use(pjlc, buffer);
+	//Set the data
 	glBufferData(GL_ARRAY_BUFFER, buffer_size * sizeof(float), buffer_data,
 		GL_STATIC_DRAW);
 	_jl_gl_cerr(pjlc, buffer,"buffer data");
 }
 
-void __jl_gl_buff_make(jvct_t *pjlc, uint32_t *buffer)
+static void _jl_gl_buffer_make(jvct_t *pjlc, uint32_t *buffer)
 {
 	glGenBuffers(1, buffer);
 	_jl_gl_cerr(pjlc, 0,"buffer gen");
+	if(*buffer == 0) jl_sg_kill(pjlc->sg.usrd, "buffer is made wrongly.");
 }
 
 GLuint loadShader(jvct_t *pjlc, GLenum shaderType, const char* pSource) {
@@ -312,62 +314,109 @@ void jl_gl_maketexture(jl_t* pusr, uint16_t gid, uint16_t id,
 }
 
 //Lower Level Stuff
-void _jl_gl_colr(float r, float g, float b, float a) {
-//	glColor4f(r,g,b,a);
-//	_jl_gl_cerr(pjlc, 0,"glColor4f");
-}
-
-void _jl_gl_usep(jvct_t *pjlc, GLuint prg) {
+static void _jl_gl_usep(jvct_t *pjlc, GLuint prg) {
 	if(!prg) { jl_sg_kill(pjlc->sg.usrd, ":program ain't a prg!\n"); } 
 	glUseProgram(prg);
 	_jl_gl_cerr(pjlc, 0,"glUseProgram");
 }
 
-void _jl_gl_bind(jvct_t *pjlc, u16t g, u16t i) {
-	glActiveTexture(GL_TEXTURE0);
-	_jl_gl_cerr(pjlc, 0,"glActiveTexture");
+// Bind a texture.
+static void _jl_gl_bind(jvct_t *pjlc, uint16_t g, uint16_t i) {
 	glBindTexture(GL_TEXTURE_2D, pjlc->gl.textures[g][i]);
 	_jl_gl_cerr(pjlc, 0,"glBindTexture");
-	glUniform1i(pjlc->gl.uniforms.textures[g][i], i);
-	_jl_gl_cerr(pjlc, 0,"glUniform1i");
 }
 
-void _jl_gl_setalpha(jvct_t *pjlc, float a) {
+static void _jl_gl_setalpha(jvct_t *pjlc, float a) {
 	glUniform1f(pjlc->gl.uniforms.multiply_alpha, a);
-	_jl_gl_cerr(pjlc, 0,"glUniform1i");
+	_jl_gl_cerr(pjlc, 0,"glUniform1f");
 }
 
-//This sets vertex attribute "vertexAttrib" to "pointer".
-//Set xyzw to 2 if 2 dimensional coordinates 3 if 3D. etc.
-void _jl_gl_setv(jvct_t *pjlc, uint32_t vertexAttrib, uint8_t xyzw) {
-//	__jl_gl_buff_bind(pjlc, 0);
-	_jl_gl_cerr(pjlc, 0,"glBindBuffer");
+//This pushes VBO "buff" up to the shader's vertex attribute "vertexAttrib"
+//Set xyzw to 2 if 2D coordinates 3 if 3D. etc.
+void _jl_gl_setv(jvct_t *pjlc, uint32_t buff, uint32_t vertexAttrib, uint8_t xyzw) {
+	// Bind Buffer
+	if(buff != 0) _jl_gl_buff_use(pjlc, buff);
+	// Set Vertex Attrib Pointer
 	glEnableVertexAttribArray(vertexAttrib);
 	_jl_gl_cerr(pjlc, vertexAttrib,"glEnableVertexAttribArray");
 	glVertexAttribPointer(
-		vertexAttrib,  	//attribute
-		xyzw,			// x+y+z = 3
-		GL_FLOAT,		// type
-		GL_FALSE,		// normalized?
-		0,				// stride
-		0				// array buffer offset
+		vertexAttrib,  	// attribute
+		xyzw,		// x+y+z = 3
+		GL_FLOAT,	// type
+		GL_FALSE,	// normalized?
+		0,		// stride
+		0		// array buffer offset
 	);
 	_jl_gl_cerr(pjlc, 0,"glVertexAttribPointer");
 }
 
-void _jl_gl_drra(jvct_t *pjlc, uint8_t count) {
-	glDrawArrays(GL_TRIANGLE_FAN, 0, count);
+static void _jl_gl_draw_arrays(jvct_t *pjlc, GLenum mode, uint8_t count) {
+	glDrawArrays(mode, 0, count);
 	_jl_gl_cerr(pjlc, 0,"glDrawArrays");
 }
 
+static inline void _jl_gl_init_disable_extras(jvct_t *pjlc) {
+	glDisable( GL_DEPTH_TEST);
+	_jl_gl_cerr(pjlc, 0, "glDisable(GL_DEPTH_TEST)");
+	glDisable( GL_DITHER );
+	_jl_gl_cerr(pjlc, 0, "glDisable(GL_DITHER)");
+}
+
+static inline void _jl_gl_init_enable_alpha(jvct_t *pjlc) {
+	glEnable( GL_BLEND );
+	_jl_gl_cerr(pjlc, 0,"glEnable( GL_BLEND )");
+	glBlendColor(1.f,1.f,1.f,0.f);
+	_jl_gl_cerr(pjlc, 0,"glBlendColor");
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	_jl_gl_cerr(pjlc, 0,"glBlendFunc");
+}
+
+void jl_gl_vo_vertices(jvct_t *pjlc, jl_vo* pv, float *xyzw, uint8_t vertices) {
+	uint16_t i;
+
+	pv->vc = vertices;
+	if(vertices) {
+		//Free pv->cv if non-null
+		if(pv->cv) jl_me_alloc(pjlc->sg.usrd, (void**)&pv->cv, 0, 0);
+		//Allocate pv->cv
+		jl_me_alloc(pjlc->sg.usrd,
+			(void**)&pv->cv, vertices * sizeof(float) * 3, 0);
+	}
+	for(i = 0; i < vertices*3; i+=3) {
+		pv->cv[i] =
+			(xyzw[i]*pjlc->dl.multiplyx) + pjlc->dl.shiftx;
+		pv->cv[i+1] =
+			((-pjlc->dl.multiplyy) * (xyzw[i+1]+ pjlc->gl.ytrans))
+			+ pjlc->dl.shifty;
+		pv->cv[i+2] = xyzw[i+2] * 2.f;
+	}
+	//Write Buffer Data "pv->cv" to Buffer "pv->gl"
+	_jl_gl_buff_set(pjlc, pv->gl, pv->cv, vertices * 3);
+}
+
+jl_vo *jl_gl_vo_make(jvct_t *pjlc, float *xyzw, uint8_t vertices) {
+	jl_vo *rtn = NULL;
+
+	jl_me_alloc(pjlc->sg.usrd, (void**)&rtn, sizeof(jl_vo),0);
+	// GL VBO
+	_jl_gl_buffer_make(pjlc, &rtn->gl);
+	// GL Texture Buffer
+	_jl_gl_buffer_make(pjlc, &rtn->bt);
+	// Converted Vertices & Vertex Count
+	rtn->cv = NULL;
+	jl_gl_vo_vertices(pjlc, rtn, xyzw, vertices); // cv & vc
+	// Converted Colors
+	rtn->cc = NULL;
+	// Rendering Style = Polygon
+	rtn->rs = 0;
+	return rtn;
+}
+
 static void _jl_gl_vrtx_updatevectors(jvct_t *pjlc, uint8_t *update,
-	GLint* transform, GLint* cliprange, GLint* position)
+	GLint* cliprange, GLint* position)
 {
-	_jl_gl_setv(pjlc, *position, 3);
+	_jl_gl_setv(pjlc, 0, *position, 3);
 	if(*update == 1) {
-		glUniform4f(*transform,
-			pjlc->gl.transform.x, pjlc->gl.transform.y,
-			pjlc->gl.transform.w, pjlc->gl.transform.h);
 		glUniform4f(*cliprange,
 			pjlc->gl.cliprange.x, pjlc->gl.cliprange.y,
 			pjlc->gl.cliprange.w, pjlc->gl.cliprange.h);
@@ -376,22 +425,18 @@ static void _jl_gl_vrtx_updatevectors(jvct_t *pjlc, uint8_t *update,
 }
 
 static void _jl_gl_updatetex(jvct_t *pjlc) {
-//	jl_gl_setp(pjlc, JL_GL_SLPR_TEX);
 	_jl_gl_vrtx_updatevectors(pjlc, &pjlc->gl.update,
-		&pjlc->gl.uniforms.transform,
 		&pjlc->gl.uniforms.cliprange,
 		&pjlc->gl.attr.tex.position);
 }
 
 static void _jl_gl_updateclr(jvct_t *pjlc) {
-//	jl_gl_setp(pjlc, JL_GL_SLPR_CLR);
 	_jl_gl_vrtx_updatevectors(pjlc, &pjlc->gl.update2,
-		&pjlc->gl.uniforms.transformclr,
 		&pjlc->gl.uniforms.cliprangeclr,
 		&pjlc->gl.attr.clr.position);	
 }
 
-static void _jl_gl_updatevectors(jvct_t *pjlc) {
+static void _jl_gl_update_clip_pane(jvct_t *pjlc) {
 	if(pjlc->gl.whichprg == JL_GL_SLPR_TEX) {
 		_jl_gl_updatetex(pjlc);
 	}else if(pjlc->gl.whichprg == JL_GL_SLPR_CLR){
@@ -399,22 +444,33 @@ static void _jl_gl_updatevectors(jvct_t *pjlc) {
 	}
 }
 
-void jl_gl_setp(jvct_t *pjlc, jl_gl_slpr id) {
+static void _jl_gl_setp(jvct_t *pjlc, jl_gl_slpr id) {
 	if(pjlc->gl.whichprg != id) {
 		pjlc->gl.whichprg = id;
 		_jl_gl_usep(pjlc, pjlc->gl.prgs[id]);
 	}
-	_jl_gl_updatevectors(pjlc);
+}
+
+static void _jl_gl_col_begin(jvct_t *pjlc, jl_vo* pv) {
+	//Free anything old
+	if(pv->cc != NULL) jl_me_alloc(pjlc->sg.usrd, (void**)&pv->cc, 0, 0);
+	//Allocate memory
+	jl_me_alloc(pjlc->sg.usrd,
+		(void**)&pv->cc, pv->vc * sizeof(float) * 4, 0);
+}
+
+static void _jl_gl_col_end(jvct_t *pjlc, jl_vo* pv) {
+	_jl_gl_buff_set(pjlc, pv->bt, pv->cc, 16);
+	_jl_gl_setv(pjlc, pv->bt, pjlc->gl.attr.clr.acolor, 4);
 }
 
 void jl_gl_set_clippane(jvct_t *pjlc, float xmin, float xmax, float ymin, float ymax) {
 	pjlc->gl.update = 1;
 	pjlc->gl.update2 = 1;
-	pjlc->gl.cliprange.x = xmin+(pjlc->dl.shiftx/pjlc->dl.multiplyx);
-	pjlc->gl.cliprange.y = xmax+(pjlc->dl.shiftx/pjlc->dl.multiplyx);
-	pjlc->gl.cliprange.w = ymin+(pjlc->dl.shifty/pjlc->dl.multiplyy);
-	pjlc->gl.cliprange.h = (-(ymax))+
-		(pjlc->dl.shifty/pjlc->dl.multiplyy);	
+	pjlc->gl.cliprange.x = (xmin*pjlc->dl.multiplyx) + pjlc->dl.shiftx;
+	pjlc->gl.cliprange.y = (xmax*pjlc->dl.multiplyx) + pjlc->dl.shiftx;
+	pjlc->gl.cliprange.w = (ymin*pjlc->dl.multiplyy) + pjlc->dl.shifty;
+	pjlc->gl.cliprange.h = ((-pjlc->dl.multiplyy)*(ymax)) + pjlc->dl.shifty;
 }
 
 void jl_gl_default_clippane(jvct_t *pjlc) {
@@ -424,21 +480,15 @@ void jl_gl_default_clippane(jvct_t *pjlc) {
 
 void _jl_gl_setmatrix(jvct_t *pjlc) {
 	jl_gl_default_clippane(pjlc);
-	pjlc->gl.transform.x = pjlc->dl.multiplyx;
-	pjlc->gl.transform.y = pjlc->dl.multiplyy;
-	pjlc->gl.transform.w = 2.;
-	pjlc->gl.transform.h = 1.;
 }
 
 //HIGHER LEVEL
 
-void jl_gl_vrtx(jvct_t *pjlc, u08t vertices, dect *xyzw) {
-	glEnable( GL_BLEND );
-	_jl_gl_cerr(pjlc, 0,"glEnable( GL_BLEND )");
-	glBlendColor(1.f,1.f,1.f,0.f);
-	_jl_gl_cerr(pjlc, 0,"glBlendColor");
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	_jl_gl_cerr(pjlc, 0,"glBlendFunc");
+// Set vertices for a polygon.
+void jl_gl_poly(jvct_t *pjlc, jl_vo* pv, uint8_t vertices, float *xyzw) {
+	if(pv == NULL) pv = pjlc->gl.temp_vo;
+	// Rendering Style = polygon
+	pv->rs = 0;
 	if(!xyzw) {
 		const float DEFAULT_VERTEX[] = {
 			0.,jl_dl_p(pjlc->sg.usrd) + pjlc->gl.ytrans,0.,
@@ -450,40 +500,52 @@ void jl_gl_vrtx(jvct_t *pjlc, u08t vertices, dect *xyzw) {
 		memcpy(xyzw, DEFAULT_VERTEX, 12 * sizeof(float));
 		vertices = 4;
 	}
-	u16t i;
-	for(i = 0; i < vertices*3; i+=3) {
-		pjlc->gl.buff_vert[i] = xyzw[i]+(pjlc->dl.shiftx/pjlc->dl.multiplyx);
-		pjlc->gl.buff_vert[i+1] =
-			(-((xyzw[i+1]+ pjlc->gl.ytrans))
-			+(pjlc->dl.shifty/pjlc->dl.multiplyy));
-		pjlc->gl.buff_vert[i+2] = xyzw[i+2];
+	// Set the vertices of vertex object "pv"
+	jl_gl_vo_vertices(pjlc, pv, xyzw, vertices);
+}
+
+// Set Texturing to Gradient Color "rgba" { (4 * vertex count) values }
+void jl_gl_clrg(jvct_t *pjlc, jl_vo* pv, uint8_t *rgba) {
+	int i;
+
+	if(pv == NULL) pv = pjlc->gl.temp_vo;
+	_jl_gl_col_begin(pjlc, pv);
+	//Set RGBA for each vertex
+	for(i = 0; i < pv->vc; i++) { 
+		pv->cc[(i * 4) + 0] = (double) rgba[(i * 4) + 0] / 255.;
+		pv->cc[(i * 4) + 1] = (double) rgba[(i * 4) + 1] / 255.;
+		pv->cc[(i * 4) + 2] = (double) rgba[(i * 4) + 2] / 255.;
+		pv->cc[(i * 4) + 3] = (double) rgba[(i * 4) + 3] / 255.;
 	}
-	_jl_gl_buff_data(pjlc, pjlc->gl.temp_buff_vrtx,
-		pjlc->gl.buff_vert, vertices * 3);
-	//
-	_jl_gl_updatevectors(pjlc);
+	_jl_gl_col_end(pjlc, pv);
 }
 
-void jl_gl_clrs(jvct_t *pjlc, float *rgba) {
-	jl_gl_setp(pjlc, JL_GL_SLPR_CLR);
-	_jl_gl_buff_data(pjlc, pjlc->gl.temp_buff_txtr, rgba, 16);
-	_jl_gl_setv(pjlc, pjlc->gl.attr.clr.acolor, 4);
+// Set Texturing to Solid Color "rgba" { 4 values }
+void jl_gl_clrs(jvct_t *pjlc, jl_vo* pv, uint8_t *rgba) {
+	int i;
+
+	if(pv == NULL) pv = pjlc->gl.temp_vo;
+	_jl_gl_col_begin(pjlc, pv);
+
+	//Set RGBA for each vertex
+	for(i = 0; i < pv->vc; i++) { 
+		pv->cc[(i * 4) + 0] = (double) rgba[0] / 255.;
+		pv->cc[(i * 4) + 1] = (double) rgba[1] / 255.;
+		pv->cc[(i * 4) + 2] = (double) rgba[2] / 255.;
+		pv->cc[(i * 4) + 3] = (double) rgba[3] / 255.;
+	}
+	_jl_gl_col_end(pjlc, pv);
 }
 
-void jl_gl_colr(jvct_t *pjlc, float *rgba) {
-	jl_gl_setp(pjlc, JL_GL_SLPR_CLR);
-	float Rgba[] = {
-		rgba[0], rgba[1], rgba[2], rgba[3],
-		rgba[0], rgba[1], rgba[2], rgba[3],
-		rgba[0], rgba[1], rgba[2], rgba[3],
-		rgba[0], rgba[1], rgba[2], rgba[3]
-	};
-	_jl_gl_buff_data(pjlc, pjlc->gl.temp_buff_txtr, Rgba, 16);
-	_jl_gl_setv(pjlc, pjlc->gl.attr.clr.acolor, 4);
-}
-
-void jl_gl_txtr(jvct_t *pjlc, u08t map, u08t a, u16t pgid, u16t pi) {
-	jl_gl_setp(pjlc, JL_GL_SLPR_TEX);
+// Set texturing to a bitmap
+void jl_gl_txtr(jvct_t *pjlc, jl_vo* pv, u08t map, u08t a, u16t pgid, u16t pi) {
+	if(pv == NULL) pv = pjlc->gl.temp_vo;
+	// Set Simple Variabes
+	pv->a = ((float)a) / 255.f;
+	pv->g = pgid;
+	pv->i = pi;
+	// Make sure non-textured colors aren't attempted
+	if(pv->cc != NULL) jl_me_alloc(pjlc->sg.usrd, (void**)&pv->cc, 0, 0);
 	if(map) {
 		int32_t cX = map%16;
 		int32_t cY = map/16;
@@ -496,7 +558,7 @@ void jl_gl_txtr(jvct_t *pjlc, u08t map, u08t a, u16t pgid, u16t pi) {
 			(1./16.)+CX, CY,
 			(1./16.)+CX, CY - (1./16.)
 		};
-		_jl_gl_buff_data(pjlc, pjlc->gl.temp_buff_txtr, tex1, 8);
+		_jl_gl_buff_set(pjlc, pv->bt, tex1, 8);
 	}else{
 		float tex2[] =
 		{	
@@ -505,18 +567,31 @@ void jl_gl_txtr(jvct_t *pjlc, u08t map, u08t a, u16t pgid, u16t pi) {
 			1., 1.,
 			1., 0.
 		};
-		_jl_gl_buff_data(pjlc, pjlc->gl.temp_buff_txtr, tex2, 8);
+		_jl_gl_buff_set(pjlc, pv->bt, tex2, 8);
 	}
-	_jl_gl_setv(pjlc, pjlc->gl.attr.tex.texpos, 2);
-	glBindTexture(GL_TEXTURE_2D, pjlc->gl.textures[pgid][pi]);
-	_jl_gl_setalpha(pjlc, ((float)a) / 255.f);
+	_jl_gl_setv(pjlc, pv->bt, pjlc->gl.attr.tex.texpos, 2);
 }
 
 //Draw object with "vertices" vertices.  The vertex data is in "x","y" and "z".
 //"map" refers to the charecter map.  0 means don't zoom in to one charecter.
 //Otherwise it will zoom in x16 to a single charecter
-void jl_gl_draw(jvct_t *pjlc) {
-	_jl_gl_drra(pjlc, 4);
+/**
+ * If "pv" is NULL then draw what's on the temporary buffer
+ * Else render vertex object "pv" on the screen.
+*/
+void jl_gl_draw(jvct_t *pjlc, jl_vo* pv) {
+	if(pv == NULL) pv = pjlc->gl.temp_vo;
+	// Use "pv->cc" to determine which shader to use: texturing or coloring?
+	_jl_gl_setp(pjlc, pv->cc == NULL ? JL_GL_SLPR_TEX : JL_GL_SLPR_CLR);
+	// Set texture and transparency if texturing.
+	if(pv->cc == NULL) {
+		_jl_gl_setalpha(pjlc, pv->a);
+		_jl_gl_bind(pjlc, pv->g, pv->i); // Bind the texture
+	}
+	// Update the clipping pane.
+	_jl_gl_update_clip_pane(pjlc);
+	// Finally, draw the image!
+	_jl_gl_draw_arrays(pjlc, pv->rs ? GL_TRIANGLES : GL_TRIANGLE_FAN, 4);
 }
 
 int32_t _jl_gl_getu(jvct_t *pjlc, GLuint prg, char *var) {
@@ -544,25 +619,13 @@ void _jl_gl_geta(jvct_t *pjlc, GLuint prg, s32t *attrib, const char *title) {
 static inline void _jl_gl_make_res(jvct_t *pjlc) {
 	jl_io_offset(pjlc->sg.usrd, JL_IO_SIMPLE, "GLIN");
 	//set up opengl
-	//TODO:Later, Add Implementation with this enabled
-	jl_io_printc(pjlc->sg.usrd, "setting properties...\n");
-	glDisable( GL_DEPTH_TEST);
-	
-	_jl_gl_cerr(pjlc, 0, "glDisable(GL_DEPTH_TEST)");
-	glDisable( GL_DITHER );
-	_jl_gl_cerr(pjlc, 0, "glDisable(GL_DITHER)");
-	glEnable( GL_BLEND );
-	_jl_gl_cerr(pjlc, 0, "glEnable(GL_BLEND)");
-	jl_io_printc(pjlc->sg.usrd, "set glproperties.\n");
-	//Create the temporary buffers.
-	jl_io_printc(pjlc->sg.usrd, "creating buffers....\n");
-	__jl_gl_buff_make(pjlc, &pjlc->gl.temp_buff_vrtx); 
-	__jl_gl_buff_make(pjlc, &pjlc->gl.temp_buff_txtr);
-	if(pjlc->gl.temp_buff_vrtx == 0 || pjlc->gl.temp_buff_txtr == 0) {
-		jl_sg_kill(pjlc->sg.usrd, "buffer is made wrongly.");
-	}
 
-	jl_io_printc(pjlc->sg.usrd, "created buffers.\n");
+	jl_io_printc(pjlc->sg.usrd, "setting properties...\n");
+	//Disallow Dither & Depth Test
+	_jl_gl_init_disable_extras(pjlc);
+	//Set alpha=0 to transparent
+	_jl_gl_init_enable_alpha(pjlc);		
+	jl_io_printc(pjlc->sg.usrd, "set glproperties.\n");
 
 	jl_io_printc(pjlc->sg.usrd, "making GLSL programs....\n");
 	pjlc->gl.prgs[JL_GL_SLPR_TEX] = createProgram(pjlc, source_vert_tex, source_frag_tex);
@@ -576,10 +639,6 @@ static inline void _jl_gl_make_res(jvct_t *pjlc) {
 		_jl_gl_getu(pjlc, pjlc->gl.prgs[JL_GL_SLPR_TEX], "texture");
 	pjlc->gl.uniforms.multiply_alpha =
 		_jl_gl_getu(pjlc, pjlc->gl.prgs[JL_GL_SLPR_TEX], "multiply_alpha");
-	pjlc->gl.uniforms.transform =
-		_jl_gl_getu(pjlc, pjlc->gl.prgs[JL_GL_SLPR_TEX], "transform");
-	pjlc->gl.uniforms.transformclr =
-		_jl_gl_getu(pjlc, pjlc->gl.prgs[JL_GL_SLPR_CLR], "transform");
 	pjlc->gl.uniforms.cliprange =
 		_jl_gl_getu(pjlc, pjlc->gl.prgs[JL_GL_SLPR_TEX], "cliprange");
 	pjlc->gl.uniforms.cliprangeclr =
@@ -596,7 +655,9 @@ static inline void _jl_gl_make_res(jvct_t *pjlc) {
 	_jl_gl_geta(pjlc, pjlc->gl.prgs[JL_GL_SLPR_CLR],
 		&pjlc->gl.attr.clr.acolor, "acolor");
 	jl_io_printc(pjlc->sg.usrd, "set up shaders.\n");
-//	_jl_gl_setmatrix(pjlc);
+	jl_io_printc(pjlc->sg.usrd, "making temporary vertex object....\n");
+	pjlc->gl.temp_vo = jl_gl_vo_make(pjlc, NULL, 0);
+	jl_io_printc(pjlc->sg.usrd, "made temporary vertex object!\n");
 	jl_io_close_block(pjlc->sg.usrd); //Close Block "GLIN"
 }
 

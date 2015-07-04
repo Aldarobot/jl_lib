@@ -83,19 +83,15 @@ static void _jl_gr_popup_loop(jl_t* pusr);
 	void jl_gr_draw_rect(jl_t* pusr, float x, float y, float w, float h,
 		uint8_t r, uint8_t g, uint8_t b, uint8_t a)
 	{
-		dect Oone[] = {
+		float Oone[] = {
 			x,	h+y,	0.f,
 			x,	y,	0.f,
 			w+x,	y,	0.f,
 			w+x,	h+y,	0.f };
-		dect Otwo[] = {
-			((double)r) / 255.,
-			((double)g) / 255.,
-			((double)b) / 255., 
-			((double)a) / 255.};
-		jl_gl_colr(pusr->pjlc, Otwo);
-		jl_gl_vrtx(pusr->pjlc, 4, Oone);
-		jl_gl_draw(pusr->pjlc);
+		uint8_t Otwo[] = { r, g, b, a };
+		jl_gl_clrs(pusr->pjlc, NULL, Otwo);
+		jl_gl_poly(pusr->pjlc, NULL, 4, Oone);
+		jl_gl_draw(pusr->pjlc, NULL);
 	}
 	/**
 	 * Draw An Image.
@@ -116,14 +112,14 @@ static void _jl_gr_popup_loop(jl_t* pusr);
 		float x,float y,float w,float h,
 		u08t c, u08t a)
 	{
-		dect Oone[] = {
+		float Oone[] = {
 			x,	h+y,	0.f,
 			x,	y,	0.f,
 			w+x,	y,	0.f,
 			w+x,	h+y,	0.f };
-		jl_gl_txtr(pusr->pjlc, c, a, g, i);
-		jl_gl_vrtx(pusr->pjlc, 4, Oone);
-		jl_gl_draw(pusr->pjlc);
+		jl_gl_txtr(pusr->pjlc, NULL, c, a, g, i);
+		jl_gl_poly(pusr->pjlc, NULL, 4, Oone);
+		jl_gl_draw(pusr->pjlc, NULL);
 	}
 	
 	/**
@@ -158,7 +154,7 @@ static void _jl_gr_popup_loop(jl_t* pusr);
 	**/
 	jl_sprite_t * jl_gr_sprite_make(
 		jl_t* pusr, u16t g, u16t i, u08t c, u08t a,
-		dect x, dect y, dect w, dect h,
+		float x, float y, float w, float h,
 		jl_simple_fnt loop, u32t ctxs)
 	{
 		jl_sprite_t *rtn;
@@ -209,8 +205,8 @@ static void _jl_gr_popup_loop(jl_t* pusr);
 	 * @param 'size': how big to draw the text
 	 * @param 'a': transparency of the text, 255=Opaque 0=Transparent
 	**/
-	void jl_gr_draw_text(jl_t* pusr, char *str, dect x, dect y,
-		dect size, uint8_t a)
+	void jl_gr_draw_text(jl_t* pusr, char *str, float x, float y,
+		float size, uint8_t a)
 	{
 		if(str == NULL) return;
 		const void *Str = str;
@@ -233,7 +229,7 @@ static void _jl_gr_popup_loop(jl_t* pusr);
 	 * @param 'size': how big to draw the text
 	 * @param 'a': transparency of the text, 255=Opaque 0=Transparent
 	 */
-	void jl_gr_draw_numi(jl_t* pusr, uint32_t num, dect x, dect y, dect size,
+	void jl_gr_draw_numi(jl_t* pusr, uint32_t num, float x, float y, float size,
 		uint8_t a)
 	{
 		char display[10];
@@ -273,7 +269,7 @@ static void _jl_gr_popup_loop(jl_t* pusr);
 	 * @param 'p_y': y coordinate to draw it at
 	 * @param 'p_a': 255 = opaque, 0 = invisible
 	 */
-	void jl_gr_draw_ctxt(jl_t* pusr, char *str, dect p_y, uint8_t p_a) {
+	void jl_gr_draw_ctxt(jl_t* pusr, char *str, float p_y, uint8_t p_a) {
 		jl_gr_draw_text(pusr, str, 0, p_y,
 			1. / ((float)(strlen(str))), p_a);
 	}

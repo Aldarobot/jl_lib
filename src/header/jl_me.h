@@ -58,6 +58,19 @@ typedef struct{
 	uint8_t type;
 }strt_t;
 
+//Vertex Object
+typedef struct{
+	uint8_t rs; // Rendering Style 0=GL_TRIANGLE_FAN 1=GL_TRIANGLES
+	uint32_t vc; // # of Vertices
+	uint32_t gl; // GL Vertex Buffer Object [ 0 = Not Enabled ]
+	uint32_t bt; // Buffer for Texture coordinates or Color Vertices.
+	float* cv; // Converted Vertices
+	float* cc; // Converted Colors [ NULL = Texturing Instead ]
+	uint16_t g; // Texturing: Image Group
+	uint16_t i; // Texturing: Image ID
+	float a; // Texturing: Converted Alpha
+}jl_vo;
+
 typedef struct{
 	char *opt;
 	jl_simple_fnt run;

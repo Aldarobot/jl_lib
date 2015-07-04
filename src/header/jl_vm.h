@@ -68,47 +68,6 @@
 		__mixr_jmus *jmus; //Pointer Of "smax" Music Pieces
 		double pofr; //Point Of Return (Where Music Should Start)
 	}_au_t;
-
-	typedef struct {
-		GLuint temp_buff_vrtx, temp_buff_txtr;
-		GLuint **textures;
-		
-		uint16_t allocatedg;
-		uint16_t allocatedi;
-		
-		uint8_t whichprg;
-		uint8_t update;
-		uint8_t update2;
-		GLuint prgs[JL_GL_SLPR_MAX];
-
-		struct {
-			//PRG: TEX
-			GLint **textures;
-			GLint multiply_alpha;
-			GLint transform;
-			GLint transformclr;
-			GLint cliprange;
-			GLint cliprangeclr;
-		} uniforms;
-
-		//attributes
-		struct {
-			struct{//PRG: TEX
-				GLint position;
-				GLint texpos;
-			} tex;
-			struct{//PRG: CLR
-				GLint position;
-				GLint acolor;
-			} clr;
-		} attr;
-
-		float buff_vert[255*3];
-		float ytrans;
-		
-		jl_rect_t cliprange;
-		jl_rect_t transform;
-	}_gl_t;
 	
 	typedef struct {
 		struct cl_list *filelist; //List of all files in working dir.
@@ -173,7 +132,47 @@ typedef struct{
 	}sg;
 	_ct_t ct; //Input Information
 	_au_t au; //Audio Info
-	_gl_t gl; //Opengl Data
+	
+	//Opengl Data
+	struct{
+		GLuint **textures;
+		
+		uint16_t allocatedg;
+		uint16_t allocatedi;
+		
+		uint8_t whichprg;
+		uint8_t update;
+		uint8_t update2;
+		GLuint prgs[JL_GL_SLPR_MAX];
+
+		struct {
+			//PRG: TEX
+			GLint **textures;
+			GLint multiply_alpha;
+			GLint translate; // TODO: Implement
+			GLint translateclr; // TODO: Implement
+			GLint cliprange;
+			GLint cliprangeclr;
+		} uniforms;
+
+		//attributes
+		struct {
+			struct{//PRG: TEX
+				GLint position;
+				GLint texpos;
+			} tex;
+			struct{//PRG: CLR
+				GLint position;
+				GLint acolor;
+			} clr;
+		} attr;
+
+		jl_vo *temp_vo;
+		float ytrans;
+		
+		jl_rect_t cliprange;
+	}gl;
+	
 	_fl_t fl; //File Manager
 	
 	//Graphics
