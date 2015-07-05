@@ -29,6 +29,8 @@ char *GMessage[2] = {
 
 /*_jal5_jl_gr_t* g_grph;*/
 
+jl_vo *jl_gl_vo_make(jvct_t *pjlc, float *xyzw, uint8_t vertices);
+
 void _jl_dl_loop(jvct_t* pjlc);
 
 static void _jl_gr_menubar(jl_t* pusr);
@@ -64,6 +66,18 @@ static void _jl_gr_popup_loop(jl_t* pusr);
 	**/
 	void jl_gr_default_clippane(jl_t* pusr) {
 		jl_gl_default_clippane(pusr->pjlc);
+	}
+
+	/**
+	 * Draw Vector Graphics.
+	**/
+	void jl_gr_draw_vect(jl_t* pusr, uint16_t tricount, float* triangles,
+		uint8_t* colors, uint8_t multicolor)
+	{
+		jl_gl_vect(pusr->pjlc, NULL, tricount * 3, triangles);
+		if(multicolor) jl_gl_clrg(pusr->pjlc, NULL, colors);
+		else jl_gl_clrs(pusr->pjlc, NULL, colors);
+		jl_gl_draw(pusr->pjlc, NULL);
 	}
 
 	/**
@@ -112,6 +126,7 @@ static void _jl_gr_popup_loop(jl_t* pusr);
 		float x,float y,float w,float h,
 		u08t c, u08t a)
 	{
+		//From bottom left & clockwise
 		float Oone[] = {
 			x,	h+y,	0.f,
 			x,	y,	0.f,
@@ -122,6 +137,25 @@ static void _jl_gr_popup_loop(jl_t* pusr);
 		jl_gl_draw(pusr->pjlc, NULL);
 	}
 	
+	/**
+	 * 
+	**/
+	void jl_gr_vof_image(jl_t* pusr, jl_vo* pv, u16t g, u16t i,
+		float x,float y,float w,float h,
+		u08t c, u08t a)
+	{
+		
+	}
+
+	/**
+	 * Create an empty vertex object & return it.
+	 * @param 'pusr': library context
+	 * @returns: a new vertex object with 0 vertices.
+	**/
+	jl_vo* jl_gr_vo_new(jl_t* pusr) {
+		return jl_gl_vo_make(pusr->pjlc, NULL, 0);
+	}
+
 	/**
 	 * Draw the sprite.
 	 *

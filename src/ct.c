@@ -37,7 +37,7 @@ static void _jl_ct_is_down(jl_t* pusr) {
 		pusr->ctrl.r = 0.;
 		pusr->ctrl.x = 0.;
 		pusr->ctrl.y = 0.;
-		if(a) {
+		if(a && (a!=3)) {
 			pusr->ctrl.p = 1.;
 			pusr->ctrl.k = key;
 			prun(pusr);
@@ -538,7 +538,7 @@ uint8_t jl_ct_key_pressed(jl_t *pusr, uint8_t key) {
 	if(pjlc->ct.keyDown[key] == 0) {
 		pjlc->ct.keyDown[key] = pjlc->ct.keys[key];
 		return pjlc->ct.keyDown[key]; //1: Just Pressed, 0: Not pressed
-	}else if(pjlc->ct.keyDown[key] == 2 && !pjlc->ct.keys[key]) {
+	}else if(pjlc->ct.keyDown[key] && !pjlc->ct.keys[key]) {
 		//If Was Held Down And Now Isnt | 3: Release
 		pjlc->ct.keyDown[key] = 0;
 		return 3;

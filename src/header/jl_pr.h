@@ -159,6 +159,7 @@ uint32_t jal5_head_size(void);
 void _jl_fl_errf(jvct_t * pjct, char *msg);
 
 void jl_gl_poly(jvct_t *pjlc, jl_vo* pv, uint8_t vertices, float *xyzw);
+void jl_gl_vect(jvct_t *pjlc, jl_vo* pv, uint8_t vertices, float *xyzw);
 void jl_gl_clrg(jvct_t *pjlc, jl_vo* pv, uint8_t *rgba);
 void jl_gl_clrs(jvct_t *pjlc, jl_vo* pv, uint8_t *rgba);
 void jl_gl_txtr(jvct_t *pjlc, jl_vo* pv, u08t map, u08t a, u16t pgid, u16t pi);

@@ -460,7 +460,7 @@ static void _jl_gl_col_begin(jvct_t *pjlc, jl_vo* pv) {
 }
 
 static void _jl_gl_col_end(jvct_t *pjlc, jl_vo* pv) {
-	_jl_gl_buff_set(pjlc, pv->bt, pv->cc, 16);
+	_jl_gl_buff_set(pjlc, pv->bt, pv->cc, pv->vc * 4);
 	_jl_gl_setv(pjlc, pv->bt, pjlc->gl.attr.clr.acolor, 4);
 }
 
@@ -504,6 +504,15 @@ void jl_gl_poly(jvct_t *pjlc, jl_vo* pv, uint8_t vertices, float *xyzw) {
 	jl_gl_vo_vertices(pjlc, pv, xyzw, vertices);
 }
 
+// Set vertices for vector triangles.
+void jl_gl_vect(jvct_t *pjlc, jl_vo* pv, uint8_t vertices, float *xyzw) {
+	if(pv == NULL) pv = pjlc->gl.temp_vo;
+	// Rendering Style = triangles
+	pv->rs = 1;
+	// Set the vertices of vertex object "pv"
+	jl_gl_vo_vertices(pjlc, pv, xyzw, vertices);
+}
+
 // Set Texturing to Gradient Color "rgba" { (4 * vertex count) values }
 void jl_gl_clrg(jvct_t *pjlc, jl_vo* pv, uint8_t *rgba) {
 	int i;
@@ -512,10 +521,10 @@ void jl_gl_clrg(jvct_t *pjlc, jl_vo* pv, uint8_t *rgba) {
 	_jl_gl_col_begin(pjlc, pv);
 	//Set RGBA for each vertex
 	for(i = 0; i < pv->vc; i++) { 
-		pv->cc[(i * 4) + 0] = (double) rgba[(i * 4) + 0] / 255.;
-		pv->cc[(i * 4) + 1] = (double) rgba[(i * 4) + 1] / 255.;
-		pv->cc[(i * 4) + 2] = (double) rgba[(i * 4) + 2] / 255.;
-		pv->cc[(i * 4) + 3] = (double) rgba[(i * 4) + 3] / 255.;
+		pv->cc[(i * 4) + 0] = ((double) rgba[(i * 4) + 0]) / 255.;
+		pv->cc[(i * 4) + 1] = ((double) rgba[(i * 4) + 1]) / 255.;
+		pv->cc[(i * 4) + 2] = ((double) rgba[(i * 4) + 2]) / 255.;
+		pv->cc[(i * 4) + 3] = ((double) rgba[(i * 4) + 3]) / 255.;
 	}
 	_jl_gl_col_end(pjlc, pv);
 }
@@ -529,10 +538,10 @@ void jl_gl_clrs(jvct_t *pjlc, jl_vo* pv, uint8_t *rgba) {
 
 	//Set RGBA for each vertex
 	for(i = 0; i < pv->vc; i++) { 
-		pv->cc[(i * 4) + 0] = (double) rgba[0] / 255.;
-		pv->cc[(i * 4) + 1] = (double) rgba[1] / 255.;
-		pv->cc[(i * 4) + 2] = (double) rgba[2] / 255.;
-		pv->cc[(i * 4) + 3] = (double) rgba[3] / 255.;
+		pv->cc[(i * 4) + 0] = ((double) rgba[0]) / 255.;
+		pv->cc[(i * 4) + 1] = ((double) rgba[1]) / 255.;
+		pv->cc[(i * 4) + 2] = ((double) rgba[2]) / 255.;
+		pv->cc[(i * 4) + 3] = ((double) rgba[3]) / 255.;
 	}
 	_jl_gl_col_end(pjlc, pv);
 }
@@ -588,10 +597,13 @@ void jl_gl_draw(jvct_t *pjlc, jl_vo* pv) {
 		_jl_gl_setalpha(pjlc, pv->a);
 		_jl_gl_bind(pjlc, pv->g, pv->i); // Bind the texture
 	}
-	// Update the clipping pane.
+	// Bind Position Buffer
+	_jl_gl_buff_use(pjlc, pv->gl);
+	// Update the clipping pane & position in shader.
 	_jl_gl_update_clip_pane(pjlc);
 	// Finally, draw the image!
-	_jl_gl_draw_arrays(pjlc, pv->rs ? GL_TRIANGLES : GL_TRIANGLE_FAN, 4);
+	_jl_gl_draw_arrays(pjlc, pv->rs ? GL_TRIANGLES : GL_TRIANGLE_FAN,
+		pv->vc);
 }
 
 int32_t _jl_gl_getu(jvct_t *pjlc, GLuint prg, char *var) {
@@ -672,3 +684,7 @@ void _jl_gl_init(jvct_t *pjlc) {
 	pjlc->gl.whichprg = JL_GL_SLPR_TEX;
 	_jl_gl_usep(pjlc, pjlc->gl.prgs[JL_GL_SLPR_TEX]);
 }
+
+//		glVertexPointer(3, GL_FLOAT, 0, head);
+//		glEnableClientState(GL_VERTEX_ARRAY);
+//		glDrawArrays(GL_TRIANGLES, 0, 6);
