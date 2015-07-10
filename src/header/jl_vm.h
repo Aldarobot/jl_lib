@@ -29,30 +29,6 @@
 		jl_simple_fnt tclp[JL_SG_WM_MAX];
 	}__sg_mode_t;
 
-//INPT:
-	typedef struct{
-		jl_ct_event_fnt getEvents[JL_CT_MAXX];
-
-		float msx, msy;
-		int msxi, msyi;
-
-		SDL_Event event;
-		
-		#if JL_PLAT == JL_PLAT_PHONE
-		uint8_t menu;
-		#elif JL_PLAT == JL_PLAT_COMPUTER
-		const Uint8 *keys;
-		#endif
-		
-		uint8_t heldDown;
-		uint8_t keyDown[255];
-		uint32_t sd; //NYI: stylus delete
-		
-		uint8_t sc;
-		uint8_t text_input[32];
-		uint8_t read_cursor;
-	}_ct_t;
-
 //AU:
 	typedef struct{
 		Mix_Music *_MUS;
@@ -130,7 +106,50 @@ typedef struct{
 		uint16_t igid;
 		void *image_data;
 	}sg;
-	_ct_t ct; //Input Information
+	
+	//Input Information
+	struct{
+		jl_ct_event_fnt getEvents[JL_CT_MAXX];
+
+		float msx, msy;
+		int msxi, msyi;
+
+		SDL_Event event;
+		
+		#if JL_PLAT == JL_PLAT_PHONE
+		uint8_t menu;
+
+		#elif JL_PLAT == JL_PLAT_COMPUTER
+		const Uint8 *keys;
+		#endif
+		
+		struct{
+			#if JL_PLAT == JL_PLAT_PHONE
+			uint8_t finger;
+			uint8_t menu;
+			uint8_t back;
+			#elif JL_PLAT == JL_PLAT_COMPUTER
+			uint8_t click_left; // Or Click
+			uint8_t click_right; // Or Ctrl-Click
+			uint8_t click_middle; // Or Shift-Click
+			#endif
+			//Multi-Platform
+			uint8_t scroll_right;
+			uint8_t scroll_left;
+			uint8_t scroll_up;
+			uint8_t scroll_down;
+		}input;
+
+		uint8_t back; //Back Key, Escape Key, Start Button
+		uint8_t heldDown;
+		uint8_t keyDown[255];
+		uint32_t sd; //NYI: stylus delete
+		
+		uint8_t sc;
+		uint8_t text_input[32];
+		uint8_t read_cursor;
+	}ct;
+	
 	_au_t au; //Audio Info
 	
 	//Opengl Data
@@ -144,6 +163,7 @@ typedef struct{
 		uint8_t update;
 		uint8_t update2;
 		GLuint prgs[JL_GL_SLPR_MAX];
+		GLuint fb; //Frame Buffer
 
 		struct {
 			//PRG: TEX

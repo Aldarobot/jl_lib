@@ -9,12 +9,35 @@
 
 uint8_t jl_ct_key_pressed(jl_t *pusr, uint8_t key);
 
+/*
+ * Returns 0 if key isn't pressed
+ * Returns 1 if key is just pressed
+ * Returns 2 if key is held down
+ * Returns 3 if key is released
+ * "Preval" is a pointer to previous key pressed value.
+ * "read" is the value currently active
+*/
+static uint8_t _jl_ct_state(uint8_t *preval, const uint8_t read) {
+	if(*preval == 0) {
+		*preval = read;
+		return *preval; //1: Just Pressed, 0: Not pressed
+	}else if(*preval && !read) {
+		//If Was Held Down And Now Isnt | 3: Release
+		*preval = 0;
+		return 3;
+	}else{
+		*preval = 2; //2: Held Down
+		return 2;
+	}
+}
+
 static void _jl_ct_press(jl_t *pusr) {
 	jvct_t* pjlc = pusr->pjlc;
 	pusr->ctrl.h = pjlc->ct.heldDown;
 	pusr->ctrl.r = 0.;
 	pusr->ctrl.x = jl_ct_gmousex(pusr);
 	pusr->ctrl.y = jl_ct_gmousey(pusr);
+	jl_io_printi(pusr, pjlc->ct.heldDown);
 }
 
 static void _jl_ct_not_down(jl_t* pusr) {
@@ -126,9 +149,9 @@ static void _jl_ct_is_down(jl_t* pusr) {
 	{ //touch center
 		jvct_t* pjlc = pusr->pjlc;
 		_jl_ct_press(pusr); //hrxy
-		if(((pjlc->ct.msy>.4f * jl_dl_p(pusr)) &&
+		if(pjlc->ct.heldDown && (((pjlc->ct.msy>.4f * jl_dl_p(pusr)) &&
 			(pjlc->ct.msy<.6f * jl_dl_p(pusr))) &&
-			((pjlc->ct.msx>.4f) && (pjlc->ct.msx<.6f)))
+			((pjlc->ct.msx>.4f) && (pjlc->ct.msx<.6f))))
 		{
 			_jl_ct_is_down(pusr); //pk
 			prun(pusr);
@@ -143,9 +166,9 @@ static void _jl_ct_is_down(jl_t* pusr) {
 	{ //near right
 		jvct_t* pjlc = pusr->pjlc;
 		_jl_ct_press(pusr); //hrxy
-		if(((pjlc->ct.msx>.6f) && (pjlc->ct.msx<.8f)) &&
+		if(pjlc->ct.heldDown && (((pjlc->ct.msx>.6f) && (pjlc->ct.msx<.8f)) &&
 			((pjlc->ct.msy * jl_dl_p(pusr)>.2f) &&
-			(pjlc->ct.msy * jl_dl_p(pusr)<.8f)))
+			(pjlc->ct.msy * jl_dl_p(pusr)<.8f))))
 		{
 			_jl_ct_is_down(pusr); //pk
 			prun(pusr);
@@ -160,9 +183,9 @@ static void _jl_ct_is_down(jl_t* pusr) {
 	{ //near left
 		jvct_t* pjlc = pusr->pjlc;
 		_jl_ct_press(pusr); //hrxy
-		if(((pjlc->ct.msx<.4f) && (pjlc->ct.msx>.2f)) &&
+		if(pjlc->ct.heldDown && (((pjlc->ct.msx<.4f) && (pjlc->ct.msx>.2f)) &&
 			((pjlc->ct.msy>.2f * jl_dl_p(pusr)) &&
-			(pjlc->ct.msy<.8f * jl_dl_p(pusr))))
+			(pjlc->ct.msy<.8f * jl_dl_p(pusr)))))
 		{
 			_jl_ct_is_down(pusr); //pk
 			prun(pusr);
@@ -177,9 +200,9 @@ static void _jl_ct_is_down(jl_t* pusr) {
 	{ //near up
 		jvct_t* pjlc = pusr->pjlc;
 		_jl_ct_press(pusr); //hrxy
-		if(((pjlc->ct.msy<.4f * jl_dl_p(pusr)) &&
+		if(pjlc->ct.heldDown && (((pjlc->ct.msy<.4f * jl_dl_p(pusr)) &&
 			(pjlc->ct.msy>.2f * jl_dl_p(pusr))) &&
-			((pjlc->ct.msx>.2f) && (pjlc->ct.msx<.8f)))
+			((pjlc->ct.msx>.2f) && (pjlc->ct.msx<.8f))))
 		{
 			_jl_ct_is_down(pusr); //pk
 			prun(pusr);
@@ -194,9 +217,9 @@ static void _jl_ct_is_down(jl_t* pusr) {
 	{ //near down
 		jvct_t* pjlc = pusr->pjlc;
 		_jl_ct_press(pusr); //hrxy
-		if(((pjlc->ct.msy>.6f * jl_dl_p(pusr)) &&
+		if(pjlc->ct.heldDown && (((pjlc->ct.msy>.6f * jl_dl_p(pusr)) &&
 			(pjlc->ct.msy<.8f * jl_dl_p(pusr))) &&
-			((pjlc->ct.msx>.2f) && (pjlc->ct.msx<.8f)))
+			((pjlc->ct.msx>.2f) && (pjlc->ct.msx<.8f))))
 		{
 			_jl_ct_is_down(pusr); //pk
 			prun(pusr);
@@ -212,7 +235,7 @@ static void _jl_ct_is_down(jl_t* pusr) {
 	{//far right
 		jvct_t* pjlc = pusr->pjlc;
 		_jl_ct_press(pusr); //hrxy
-		if(pjlc->ct.msx>.8f) {
+		if(pjlc->ct.heldDown && (pjlc->ct.msx>.8f)) {
 			_jl_ct_is_down(pusr); //pk
 			prun(pusr);
 		}else{
@@ -226,7 +249,7 @@ static void _jl_ct_is_down(jl_t* pusr) {
 	{//far left
 		jvct_t* pjlc = pusr->pjlc;
 		_jl_ct_press(pusr); //hrxy
-		if(pjlc->ct.msx<.2f) {
+		if(pjlc->ct.heldDown && (pjlc->ct.msx<.2f)) {
 			_jl_ct_is_down(pusr); //pk
 			prun(pusr);
 		}else{
@@ -240,7 +263,7 @@ static void _jl_ct_is_down(jl_t* pusr) {
 	{//far up
 		jvct_t* pjlc = pusr->pjlc;
 		_jl_ct_press(pusr); //hrxy
-		if(pjlc->ct.msy<.2f * jl_dl_p(pusr)) {
+		if(pjlc->ct.heldDown && (pjlc->ct.msy<.2f * jl_dl_p(pusr))) {
 			_jl_ct_is_down(pusr); //pk
 			prun(pusr);
 		}else{
@@ -254,7 +277,7 @@ static void _jl_ct_is_down(jl_t* pusr) {
 	{//far down
 		jvct_t* pjlc = pusr->pjlc;
 		_jl_ct_press(pusr); //hrxy
-		if(pjlc->ct.msy>.8f * jl_dl_p(pusr)) {
+		if(pjlc->ct.heldDown && (pjlc->ct.msy>.8f * jl_dl_p(pusr))) {
 			_jl_ct_is_down(pusr); //pk
 			prun(pusr);
 		}else{
@@ -290,7 +313,7 @@ void jl_ct_key_menu(jl_t *pusr, jl_simple_fnt prun,
 	pusr->ctrl.r = 0.;
 	pusr->ctrl.h = pjlc->ct.menu;
 	if(pjlc->ct.menu) {
-		pusr->ctrl.p = 1.;
+		pusr->ctrl.p = 1. * (pjlc->ct.menu != 3);
 		pusr->ctrl.k = SDL_SCANCODE_APPLICATION;
 		prun(pusr);
 	}else{
@@ -319,17 +342,63 @@ float jl_ct_gmousey(jl_t *pusr) {
 	return pjlc->ct.msy;
 }
 
-static inline void _jal5_jl_ct_hndl(jvct_t *pjlc) {
-	#if JL_PLAT == JL_PLAT_PHONE
-		pjlc->ct.menu = 0;
-	#endif
+static inline void _jl_ct_handle_events_platform_dependant(jvct_t *pjlc) {
+#if JL_PLAT == JL_PLAT_PHONE
+	if( pjlc->ct.event.type==SDL_FINGERDOWN ) {
+		pjlc->ct.msx = pjlc->ct.event.tfinger.x;
+		pjlc->ct.input.finger = 1;
+		pjlc->ct.msy = pjlc->ct.event.tfinger.y * jl_dl_p(pjlc->sg.usrd);
+		if(pjlc->sg.usrd->smde) {
+			pjlc->ct.msy = pjlc->ct.msy * 2.;
+			pjlc->ct.msy -= jl_dl_p(pjlc->sg.usrd);
+			if(pjlc->ct.msy < 0.) pjlc->ct.input.finger = 0;
+		}
+
+	}else if( pjlc->ct.event.type==SDL_FINGERUP ) {
+		pjlc->ct.input.finger = 0;
+	}else if( pjlc->ct.event.type==SDL_KEYDOWN || pjlc->ct.event.type==SDL_KEYUP) {
+		if( pjlc->ct.event.key.keysym.scancode == SDL_SCANCODE_AC_BACK)
+			pjlc->ct.input.back = (pjlc->ct.event.type==SDL_KEYDOWN); //Back Key
+		else
+			pjlc->ct.input.menu = (pjlc->ct.event.type==SDL_KEYDOWN); //Menu Key
+	}
+#elif JL_PLAT == JL_PLAT_COMPUTER
+	uint8_t isNowDown = pjlc->ct.event.type == SDL_MOUSEBUTTONDOWN;
+	uint8_t isNowUp = pjlc->ct.event.type == SDL_MOUSEBUTTONUP;
+	if( isNowDown || isNowUp) {
+		if(pjlc->ct.event.button.button == SDL_BUTTON_LEFT)
+			pjlc->ct.input.click_left = isNowDown;
+		else if(pjlc->ct.event.button.button == SDL_BUTTON_RIGHT)
+			pjlc->ct.input.click_right = isNowDown;
+		else if(pjlc->ct.event.button.button == SDL_BUTTON_MIDDLE)
+			pjlc->ct.input.click_middle = isNowDown;
+	}else if(pjlc->ct.event.wheel.type == SDL_MOUSEWHEEL) {
+		//SDL 2.0.4 NYI
+		uint8_t flip = 1;
+			/*(direction == SDL_MOUSEWHEEL_FLIPPED) ? -1 : 1*/;
+		int32_t x = flip * pjlc->ct.event.wheel.x;
+		int32_t y = flip * pjlc->ct.event.wheel.y;
+		if(pjlc->ct.event.wheel.y > 0)
+			pjlc->ct.input.scroll_up = (y > 0) ? y : -y;
+		else if(pjlc->ct.event.wheel.y < 0)
+			pjlc->ct.input.scroll_down = (y > 0) ? y : -y;
+		if(pjlc->ct.event.wheel.x > 0)
+			pjlc->ct.input.scroll_right = (x > 0) ? x : -x;
+		else if(pjlc->ct.event.wheel.x < 0)
+			pjlc->ct.input.scroll_left = (x > 0) ? x : -x;
+	}
+
+#endif
+}
+
+static inline void _jl_ct_handle_events(jvct_t *pjlc) {
 	if ( pjlc->ct.event.type == SDL_TEXTINPUT) {
 		printf("%1s\n", &(pjlc->ct.event.text.text[0]));
 		int i;
 		for(i = 0; i < 32; i++)
 			pjlc->ct.text_input[i] = pjlc->ct.event.text.text[i];
 		pjlc->ct.read_cursor = 0;
-	}else if(pjlc->ct.event.type==SDL_WINDOWEVENT) {
+	}else if(pjlc->ct.event.type==SDL_WINDOWEVENT) { //Resize
 		if(pjlc->ct.event.window.event ==
 			SDL_WINDOWEVENT_RESIZED)
 		{
@@ -338,41 +407,17 @@ static inline void _jal5_jl_ct_hndl(jvct_t *pjlc) {
 				pjlc->ct.event.window.data2);
 		}
 	}
-	#if JL_PLAT == JL_PLAT_PHONE
-		if( pjlc->ct.event.type==SDL_FINGERDOWN ) {
-			pjlc->ct.msx = pjlc->ct.event.tfinger.x;
+	_jl_ct_handle_events_platform_dependant(pjlc);
+}
 
-			pjlc->ct.heldDown = 1;
-			pjlc->ct.msy = pjlc->ct.event.tfinger.y * jl_dl_p(pjlc->sg.usrd);
-			if(pjlc->sg.usrd->smde) {
-				pjlc->ct.msy = pjlc->ct.msy * 2.;
-				pjlc->ct.msy -= jl_dl_p(pjlc->sg.usrd);
-				if(pjlc->ct.msy < 0.) pjlc->ct.heldDown = 0;
-			}
-
-		}else if( pjlc->ct.event.type==SDL_FINGERUP ) {
-			pjlc->ct.heldDown = 0;
-		}else if( pjlc->ct.event.type==SDL_KEYDOWN ) {
-			if( pjlc->ct.event.key.keysym.scancode ==
-				SDL_SCANCODE_AC_BACK)
-			{ //Back Key
-				jl_io_printc(pjlc->sg.usrd,"JLVM sêȳ'ēŋ: \"a'kwyt'ēŋ\"");
-				exit(0);
-			}else{ //Menu Key
-				pjlc->ct.menu = 1;
-			}
-		}
-	#elif JL_PLAT == JL_PLAT_COMPUTER
-		if( pjlc->ct.event.wheel.y > 0 &&
-			 pjlc->ct.event.wheel.type == SDL_MOUSEWHEEL)
-		{
-			//Grscrup = JL_PP;
-		}else if ( pjlc->ct.event.wheel.y < 0 &&
-			 pjlc->ct.event.wheel.type == SDL_MOUSEWHEEL )
-		{
-			//Glscrdn = JL_PP;
-		}
-	#endif
+static inline void _jl_ct_process_events(jvct_t *pjlc) {
+#if JL_PLAT == JL_PLAT_PHONE
+	_jl_ct_state(&pjlc->ct.heldDown, pjlc->ct.input.finger);
+	_jl_ct_state(&pjlc->ct.menu, pjlc->ct.input.menu);
+	_jl_ct_state(&pjlc->ct.back, pjlc->ct.input.back);
+#elif JL_PLAT == JL_PLAT_COMPUTER
+	_jl_ct_state(&pjlc->ct.heldDown, pjlc->ct.input.click_left);
+#endif
 }
 
 static void _jl_ct_run_event(jvct_t * pjlc, uint8_t pevent,
@@ -393,33 +438,15 @@ void jl_ct_run_event(jl_t *pusr, uint8_t pevent,
 	_jl_ct_run_event(pusr->pjlc, pevent, prun, pno);
 }
 
-static inline void _jal5_jl_ct_evnt_updt(jvct_t * pjlc) {
-	while(SDL_PollEvent(&pjlc->ct.event)) _jal5_jl_ct_hndl(pjlc);
-	#if JL_PLAT == JL_PLAT_COMPUTER
-		pjlc->ct.keys = SDL_GetKeyboardState(NULL);
-	#endif
-}
-
 //Main Input Loop
 void _jl_ct_loop(jvct_t* pjlc) {
-	#if JL_PLAT == JL_PLAT_PHONE
-	if(pjlc->ct.heldDown) pjlc->ct.heldDown = 2;
-	if(pjlc->ct.menu) pjlc->ct.menu = 2;
-	#endif
-	_jal5_jl_ct_evnt_updt(pjlc); //Get the information on current events
+	//Get the information on current events
+	while(SDL_PollEvent(&pjlc->ct.event)) _jl_ct_handle_events(pjlc);
+	_jl_ct_process_events(pjlc);
 	#if JL_PLAT == JL_PLAT_COMPUTER
+		pjlc->ct.keys = SDL_GetKeyboardState(NULL);
 		//Get Whether mouse is down or not and xy coordinates
-		if(
-			SDL_GetMouseState(&pjlc->ct.msxi,&pjlc->ct.msyi)
-			&SDL_BUTTON(1))
-		{
-			if(pjlc->ct.heldDown)
-				pjlc->ct.heldDown = 2;
-			else
-				pjlc->ct.heldDown = 1;
-		}else{
-			pjlc->ct.heldDown = 0;
-		}
+		SDL_GetMouseState(&pjlc->ct.msxi,&pjlc->ct.msyi);
 		if(pjlc->ct.msxi < pjlc->dl.window.x ||
 			pjlc->ct.msxi > pjlc->dl.window.x + pjlc->dl.window.w ||
 			pjlc->ct.msyi < pjlc->dl.window.y ||
@@ -449,11 +476,11 @@ void _jl_ct_loop(jvct_t* pjlc) {
 			pjlc->ct.heldDown = 0;
 		}
 		//If Escape key is pressed, then quit the program
-		if(jl_ct_key_pressed(pjlc->sg.usrd, SDL_SCANCODE_ESCAPE) == 1)
-			jl_sg_exit(pjlc->sg.usrd);
+		pjlc->ct.back = jl_ct_key_pressed(pjlc->sg.usrd, SDL_SCANCODE_ESCAPE);
 		if(jl_ct_key_pressed(pjlc->sg.usrd, SDL_SCANCODE_F11) == 1)
 			jl_dl_togglefullscreen(pjlc->sg.usrd);
 	#endif
+	if(pjlc->ct.back == 1) jl_sg_exit(pjlc->sg.usrd); // Back Button/Key
 }
 
 static inline void _jl_ct_fn_init(jvct_t* pjlc) {
@@ -525,27 +552,17 @@ void jl_ct_typing_disable(jl_t *pusr) {
 	SDL_StopTextInput();
 }
 
+
 /**
  * Returns 0 if key isn't pressed
  * Returns 1 if key is just pressed
  * Returns 2 if key is held down
  * Returns 3 if key is released
 */
-
 uint8_t jl_ct_key_pressed(jl_t *pusr, uint8_t key) {
 #if JL_PLAT == JL_PLAT_COMPUTER
 	jvct_t* pjlc = pusr->pjlc;
-	if(pjlc->ct.keyDown[key] == 0) {
-		pjlc->ct.keyDown[key] = pjlc->ct.keys[key];
-		return pjlc->ct.keyDown[key]; //1: Just Pressed, 0: Not pressed
-	}else if(pjlc->ct.keyDown[key] && !pjlc->ct.keys[key]) {
-		//If Was Held Down And Now Isnt | 3: Release
-		pjlc->ct.keyDown[key] = 0;
-		return 3;
-	}else{
-		pjlc->ct.keyDown[key] = 2; //2: Held Down
-		return 2;
-	}
+	return _jl_ct_state(&pjlc->ct.keyDown[key], pjlc->ct.keys[key]);
 #else
 	return 0; //Unimplemented
 #endif

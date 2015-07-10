@@ -606,6 +606,8 @@ void jl_gl_draw(jvct_t *pjlc, jl_vo* pv) {
 		pv->vc);
 }
 
+//void jl_gl_
+
 int32_t _jl_gl_getu(jvct_t *pjlc, GLuint prg, char *var) {
 	return glGetUniformLocation(prg, var);
 	int32_t a;
@@ -627,18 +629,16 @@ void _jl_gl_geta(jvct_t *pjlc, GLuint prg, s32t *attrib, const char *title) {
 	}
 }
 
-//Load and create all resources
-static inline void _jl_gl_make_res(jvct_t *pjlc) {
-	jl_io_offset(pjlc->sg.usrd, JL_IO_SIMPLE, "GLIN");
-	//set up opengl
-
+static inline void _jl_gl_init_setup_gl(jvct_t *pjlc) {
 	jl_io_printc(pjlc->sg.usrd, "setting properties...\n");
 	//Disallow Dither & Depth Test
 	_jl_gl_init_disable_extras(pjlc);
 	//Set alpha=0 to transparent
-	_jl_gl_init_enable_alpha(pjlc);		
+	_jl_gl_init_enable_alpha(pjlc);
 	jl_io_printc(pjlc->sg.usrd, "set glproperties.\n");
+}
 
+static inline void _jl_gl_init_shaders(jvct_t *pjlc) {
 	jl_io_printc(pjlc->sg.usrd, "making GLSL programs....\n");
 	pjlc->gl.prgs[JL_GL_SLPR_TEX] = createProgram(pjlc, source_vert_tex, source_frag_tex);
 	pjlc->gl.prgs[JL_GL_SLPR_CLR] = createProgram(pjlc, source_vert_clr, source_frag_clr);
@@ -667,6 +667,29 @@ static inline void _jl_gl_make_res(jvct_t *pjlc) {
 	_jl_gl_geta(pjlc, pjlc->gl.prgs[JL_GL_SLPR_CLR],
 		&pjlc->gl.attr.clr.acolor, "acolor");
 	jl_io_printc(pjlc->sg.usrd, "set up shaders.\n");
+}
+
+static inline void _jl_gl_init_prerenderer(jvct_t *pjlc) {
+	// Make the framebuffer [ groups 0+ textures & 0-1 depth buffers ].
+	pjlc->gl.fb = 0;
+	glGenFramebuffers(1, &pjlc->gl.fb);
+	_jl_gl_cerr(pjlc, pjlc->gl.fb,"glGenFramebuffers");
+	glBindFramebuffer(GL_FRAMEBUFFER, pjlc->gl.fb);
+	_jl_gl_cerr(pjlc, pjlc->gl.fb,"glBindFramebuffer");
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	_jl_gl_cerr(pjlc, pjlc->gl.fb,"glBindFramebuffer2");
+}
+
+//Load and create all resources
+static inline void _jl_gl_make_res(jvct_t *pjlc) {
+	jl_io_offset(pjlc->sg.usrd, JL_IO_SIMPLE, "GLIN");
+	//Setup opengl properties
+	_jl_gl_init_setup_gl(pjlc);
+	//Create shaders and set up attribute/uniform variable communication
+	_jl_gl_init_shaders(pjlc);
+	//Setup for gl Render To Texture
+	_jl_gl_init_prerenderer(pjlc);
+
 	jl_io_printc(pjlc->sg.usrd, "making temporary vertex object....\n");
 	pjlc->gl.temp_vo = jl_gl_vo_make(pjlc, NULL, 0);
 	jl_io_printc(pjlc->sg.usrd, "made temporary vertex object!\n");
