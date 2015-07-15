@@ -173,7 +173,7 @@ void jl_gl_default_clippane(jvct_t *pjlc);
 
 //void jal5_eogl_draw(uint8_t vertices, uint8_t map, float *xyz);
 
-void _jal5_lsdl_glpt_view(jvct_t *pjct, u16t x, u16t y);
+void _jl_dl_resize(jvct_t *pjlc, uint16_t x, uint16_t y);
 
 float jal5_inpt_xmse(void);
 float jal5_inpt_ymse(void);

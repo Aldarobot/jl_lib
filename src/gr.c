@@ -677,7 +677,7 @@ static void _jl_gr_popup_loop(jl_t* pusr);
 		jvct_t *pjlc = pusr->pjlc;
 	//Update Mouse
 		pusr->mouse->r.x = jl_ct_gmousex(pusr);
-		pusr->mouse->r.y = jl_ct_gmousey(pusr);
+		pusr->mouse->r.y = jl_ct_gmousey(pusr) + pjlc->gl.ytrans;
 		pusr->mouse->cb.x = pusr->mouse->r.x;
 		pusr->mouse->cb.y = pusr->mouse->r.y;
 	//if computer, draw mouse

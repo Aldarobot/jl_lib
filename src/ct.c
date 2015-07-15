@@ -400,9 +400,7 @@ static inline void _jl_ct_handle_events(jvct_t *pjlc) {
 		pjlc->ct.read_cursor = 0;
 	}else if(pjlc->ct.event.type==SDL_WINDOWEVENT) { //Resize
 		if(pjlc->ct.event.window.event == SDL_WINDOWEVENT_RESIZED) {
-			jl_io_printc(pjlc->sg.usrd, "when!\n");
-			_jal5_lsdl_glpt_view(pjlc,
-				pjlc->ct.event.window.data1,
+			_jl_dl_resize(pjlc, pjlc->ct.event.window.data1,
 				pjlc->ct.event.window.data2);
 			pjlc->sg.mode.tclp[JL_SG_WM_RESZ](pjlc->sg.usrd);
 		}

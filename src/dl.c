@@ -114,7 +114,7 @@ static inline void jlvmpi_upd(uint8_t r, uint8_t g, uint8_t b) {
 //Function is available to user: set window's resolution
 void jlvm_sres(jvct_t *pjlc, uint16_t w, uint16_t h) {
 	SDL_SetWindowSize(pjlc->dl.displayWindow,w,h);
-	_jal5_lsdl_glpt_view(pjlc, w,h);
+	_jl_dl_resize(pjlc, w,h);
 }
 
 void _jl_dl_loop(jvct_t* pjlc) {
@@ -125,7 +125,7 @@ void _jl_dl_loop(jvct_t* pjlc) {
 	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 }
 
-void _jal5_lsdl_glpt_view(jvct_t *pjlc, uint16_t x, uint16_t y) {
+void _jl_dl_resize(jvct_t *pjlc, uint16_t x, uint16_t y) {
 	uint16_t offx = 0;
 	uint16_t offy = 0;
 	glViewport( 0, 0, x, y);
@@ -218,7 +218,7 @@ void _jl_dl_inita(jvct_t* pjlc) {
 
 void _jl_dl_initb(jvct_t* pjlc) {
 	//Update viewport to fix any rendering glitches
-	_jal5_lsdl_glpt_view(pjlc, pjlc->dl.current.w, pjlc->dl.current.h);
+	_jl_dl_resize(pjlc, pjlc->dl.current.w, pjlc->dl.current.h);
 	_jl_dl_loop(pjlc);
 }
 

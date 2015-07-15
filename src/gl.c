@@ -325,7 +325,7 @@ void jl_gl_maketexture(jl_t* pusr, uint16_t gid, uint16_t id,
 static void _jl_gl_usep(jvct_t *pjlc, GLuint prg) {
 	if(!prg) { jl_sg_kill(pjlc->sg.usrd, ":program ain't a prg!\n"); } 
 	glUseProgram(prg);
-	_jl_gl_cerr(pjlc, 0,"glUseProgram");
+	_jl_gl_cerr(pjlc, prg, "glUseProgram");
 }
 
 // Bind a texture.
@@ -436,10 +436,6 @@ static void _jl_gl_vrtx_updatevectors(jvct_t *pjlc, uint8_t *update,
 {
 	_jl_gl_setv(pjlc, gl, *position, 3);
 	if(*update == 1) {
-		jl_io_printc(pjlc->sg.usrd, "update!\n");
-		printf("CLIPRANGE %p IS SET %f, %f, %f, %f\n", cliprange, 
-			pjlc->gl.cliprange.x, pjlc->gl.cliprange.y,
-			pjlc->gl.cliprange.w, pjlc->gl.cliprange.h);
 		glUniform4f(*cliprange,
 			pjlc->gl.cliprange.x, pjlc->gl.cliprange.y,
 			pjlc->gl.cliprange.w, pjlc->gl.cliprange.h);
