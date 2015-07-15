@@ -160,9 +160,13 @@ void _jl_fl_errf(jvct_t * pjct, char *msg);
 
 void jl_gl_poly(jvct_t *pjlc, jl_vo* pv, uint8_t vertices, float *xyzw);
 void jl_gl_vect(jvct_t *pjlc, jl_vo* pv, uint8_t vertices, float *xyzw);
+void jl_gl_clrc(jvct_t *pjlc, jl_vo* pv, jl_ccolor_t* cc);
+jl_ccolor_t* jl_gl_clrcs(jvct_t *pjlc, uint8_t *rgba, uint32_t vc);
+jl_ccolor_t* jl_gl_clrcg(jvct_t *pjlc, uint8_t *rgba, uint32_t vc);
 void jl_gl_clrg(jvct_t *pjlc, jl_vo* pv, uint8_t *rgba);
 void jl_gl_clrs(jvct_t *pjlc, jl_vo* pv, uint8_t *rgba);
 void jl_gl_txtr(jvct_t *pjlc, jl_vo* pv, u08t map, u08t a, u16t pgid, u16t pi);
+void jl_gl_translate(jvct_t *pjlc, jl_vo* pv, float x, float y, float z);
 void jl_gl_draw(jvct_t *pjlc, jl_vo* pv);
 void jl_gl_set_clippane(jvct_t *pjlc, float xmin, float xmax, float ymin, float ymax);
 void jl_gl_default_clippane(jvct_t *pjlc);

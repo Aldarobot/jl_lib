@@ -6,15 +6,6 @@
 
 /* 
  * these are control definitions 
- * These Keys Are Reserved For hack_user_back():
- *   3DS/WiiU: Select
- *   Android: Back
- *   Computer: Escape
- * When these keys are pressed hack_user_back() is called in a loop and then
- * when it is finished and the return value is:
- *   0:  Then it quits
- *   1:  Then it continues the loop
- *   2:  Then it quits the loop, but continues the main loop.
 */
 //nintendo game systems, or other.
 	//Normal buttons

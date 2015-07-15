@@ -25,6 +25,7 @@ char *source_frag_clr =
 	
 char *source_vert_clr = 
 	GLSL_HEAD
+	"uniform vec3 translate;\n"
 	"\n"
 	"attribute vec3 position;\n"
 	"attribute vec4 acolor;\n"
@@ -34,9 +35,9 @@ char *source_vert_clr =
 	"\n"
 	"void main()\n"
 	"{\n"
-	"	gl_Position = vec4(position, 1.0);\n"
+	"	poscoord = position + translate;\n"
+	"	gl_Position = vec4(poscoord, 1.0);\n"
 	"	vcolor = acolor;\n"
-	"	poscoord = position;\n"
 	"}\n\0";
 
 char *source_frag_tex = 
@@ -72,6 +73,8 @@ char *source_frag_tex =
 
 char *source_vert_tex = 
 	GLSL_HEAD
+	"uniform vec3 translate;\n"
+	"\n"
 	"attribute vec3 position;\n"
 	"attribute vec2 texpos;\n"
 	"\n"
@@ -80,9 +83,9 @@ char *source_vert_tex =
 	"\n"
 	"void main()\n"
 	"{\n"
-	"	gl_Position = vec4(position, 1.0);\n"
+	"	poscoord = position + translate;\n"
+	"	gl_Position = vec4(poscoord, 1.0);\n"
 	"	texcoord = texpos;\n"
-	"	poscoord = position;\n"
 	"}\n\0";
 
 /*static const char source_vert_tex[] = 
@@ -147,6 +150,11 @@ static void _jl_gl_buffer_make(jvct_t *pjlc, uint32_t *buffer)
 	glGenBuffers(1, buffer);
 	_jl_gl_cerr(pjlc, 0,"buffer gen");
 	if(*buffer == 0) jl_sg_kill(pjlc->sg.usrd, "buffer is made wrongly.");
+}
+
+static void _jl_gl_buffer_free(jvct_t *pjlc, uint32_t *buffer) {
+	glDeleteBuffers(1, buffer);
+	_jl_gl_cerr(pjlc, 0,"buffer free");
 }
 
 GLuint loadShader(jvct_t *pjlc, GLenum shaderType, const char* pSource) {
@@ -386,12 +394,23 @@ void jl_gl_vo_vertices(jvct_t *pjlc, jl_vo* pv, float *xyzw, uint8_t vertices) {
 		pv->cv[i] =
 			(xyzw[i]*pjlc->dl.multiplyx) + pjlc->dl.shiftx;
 		pv->cv[i+1] =
-			((-pjlc->dl.multiplyy) * (xyzw[i+1]+ pjlc->gl.ytrans))
-			+ pjlc->dl.shifty;
+			((-pjlc->dl.multiplyy) * xyzw[i+1]) + pjlc->dl.shifty;
 		pv->cv[i+2] = xyzw[i+2] * 2.f;
 	}
 	//Write Buffer Data "pv->cv" to Buffer "pv->gl"
 	_jl_gl_buff_set(pjlc, pv->gl, pv->cv, vertices * 3);
+}
+
+void jl_gl_vo_free(jvct_t *pjlc, jl_vo *pv) {
+	// Free GL VBO
+	_jl_gl_buffer_free(pjlc, &pv->gl);
+	// Free GL Texture Buffer
+	_jl_gl_buffer_free(pjlc, &pv->bt);
+	// Free Converted Vertices & Colors
+	if(pv->cv) jl_me_alloc(pjlc->sg.usrd, (void**)&pv->cv, 0,0);
+	if(pv->cc) jl_me_alloc(pjlc->sg.usrd, (void**)&pv->cc, 0,0);
+	// Free main structure
+	jl_me_alloc(pjlc->sg.usrd, (void**)&pv, 0,0);
 }
 
 jl_vo *jl_gl_vo_make(jvct_t *pjlc, float *xyzw, uint8_t vertices) {
@@ -413,10 +432,14 @@ jl_vo *jl_gl_vo_make(jvct_t *pjlc, float *xyzw, uint8_t vertices) {
 }
 
 static void _jl_gl_vrtx_updatevectors(jvct_t *pjlc, uint8_t *update,
-	GLint* cliprange, GLint* position)
+	GLint* cliprange, GLint* position, uint32_t gl)
 {
-	_jl_gl_setv(pjlc, 0, *position, 3);
+	_jl_gl_setv(pjlc, gl, *position, 3);
 	if(*update == 1) {
+		jl_io_printc(pjlc->sg.usrd, "update!\n");
+		printf("CLIPRANGE %p IS SET %f, %f, %f, %f\n", cliprange, 
+			pjlc->gl.cliprange.x, pjlc->gl.cliprange.y,
+			pjlc->gl.cliprange.w, pjlc->gl.cliprange.h);
 		glUniform4f(*cliprange,
 			pjlc->gl.cliprange.x, pjlc->gl.cliprange.y,
 			pjlc->gl.cliprange.w, pjlc->gl.cliprange.h);
@@ -424,23 +447,23 @@ static void _jl_gl_vrtx_updatevectors(jvct_t *pjlc, uint8_t *update,
 	}
 }
 
-static void _jl_gl_updatetex(jvct_t *pjlc) {
+static void _jl_gl_updatetex(jvct_t *pjlc, uint32_t gl) {
 	_jl_gl_vrtx_updatevectors(pjlc, &pjlc->gl.update,
 		&pjlc->gl.uniforms.cliprange,
-		&pjlc->gl.attr.tex.position);
+		&pjlc->gl.attr.tex.position, gl);
 }
 
-static void _jl_gl_updateclr(jvct_t *pjlc) {
+static void _jl_gl_updateclr(jvct_t *pjlc, uint32_t gl) {
 	_jl_gl_vrtx_updatevectors(pjlc, &pjlc->gl.update2,
 		&pjlc->gl.uniforms.cliprangeclr,
-		&pjlc->gl.attr.clr.position);	
+		&pjlc->gl.attr.clr.position, gl);	
 }
 
-static void _jl_gl_update_clip_pane(jvct_t *pjlc) {
+static void _jl_gl_update_clip_pane(jvct_t *pjlc, uint32_t gl) {
 	if(pjlc->gl.whichprg == JL_GL_SLPR_TEX) {
-		_jl_gl_updatetex(pjlc);
+		_jl_gl_updatetex(pjlc, gl);
 	}else if(pjlc->gl.whichprg == JL_GL_SLPR_CLR){
-		_jl_gl_updateclr(pjlc);
+		_jl_gl_updateclr(pjlc, gl);
 	}
 }
 
@@ -454,14 +477,6 @@ static void _jl_gl_setp(jvct_t *pjlc, jl_gl_slpr id) {
 static void _jl_gl_col_begin(jvct_t *pjlc, jl_vo* pv) {
 	//Free anything old
 	if(pv->cc != NULL) jl_me_alloc(pjlc->sg.usrd, (void**)&pv->cc, 0, 0);
-	//Allocate memory
-	jl_me_alloc(pjlc->sg.usrd,
-		(void**)&pv->cc, pv->vc * sizeof(float) * 4, 0);
-}
-
-static void _jl_gl_col_end(jvct_t *pjlc, jl_vo* pv) {
-	_jl_gl_buff_set(pjlc, pv->bt, pv->cc, pv->vc * 4);
-	_jl_gl_setv(pjlc, pv->bt, pjlc->gl.attr.clr.acolor, 4);
 }
 
 void jl_gl_set_clippane(jvct_t *pjlc, float xmin, float xmax, float ymin, float ymax) {
@@ -469,13 +484,12 @@ void jl_gl_set_clippane(jvct_t *pjlc, float xmin, float xmax, float ymin, float 
 	pjlc->gl.update2 = 1;
 	pjlc->gl.cliprange.x = (xmin*pjlc->dl.multiplyx) + pjlc->dl.shiftx;
 	pjlc->gl.cliprange.y = (xmax*pjlc->dl.multiplyx) + pjlc->dl.shiftx;
-	pjlc->gl.cliprange.w = (ymin*pjlc->dl.multiplyy) + pjlc->dl.shifty;
-	pjlc->gl.cliprange.h = ((-pjlc->dl.multiplyy)*(ymax)) + pjlc->dl.shifty;
+	pjlc->gl.cliprange.w = ((ymin+pjlc->gl.ytrans)*(-pjlc->dl.multiplyy)) + pjlc->dl.shifty;
+	pjlc->gl.cliprange.h = ((ymax+pjlc->gl.ytrans)*(-pjlc->dl.multiplyy)) + pjlc->dl.shifty;
 }
 
 void jl_gl_default_clippane(jvct_t *pjlc) {
-	jl_gl_set_clippane(pjlc, 0., 1., pjlc->gl.ytrans,
-		jl_dl_p(pjlc->sg.usrd) + pjlc->gl.ytrans);
+	jl_gl_set_clippane(pjlc, 0., 1., 0.f, jl_dl_p(pjlc->sg.usrd));
 }
 
 void _jl_gl_setmatrix(jvct_t *pjlc) {
@@ -491,10 +505,10 @@ void jl_gl_poly(jvct_t *pjlc, jl_vo* pv, uint8_t vertices, float *xyzw) {
 	pv->rs = 0;
 	if(!xyzw) {
 		const float DEFAULT_VERTEX[] = {
-			0.,jl_dl_p(pjlc->sg.usrd) + pjlc->gl.ytrans,0.,
+			0.,jl_dl_p(pjlc->sg.usrd),0.,
 			0.,0.,0.,
 			1.,0.,0.,
-			1.,jl_dl_p(pjlc->sg.usrd) + pjlc->gl.ytrans,0.
+			1.,jl_dl_p(pjlc->sg.usrd),0.
 		};
 		xyzw = alloca(12 * sizeof(float));
 		memcpy(xyzw, DEFAULT_VERTEX, 12 * sizeof(float));
@@ -513,37 +527,62 @@ void jl_gl_vect(jvct_t *pjlc, jl_vo* pv, uint8_t vertices, float *xyzw) {
 	jl_gl_vo_vertices(pjlc, pv, xyzw, vertices);
 }
 
+// Set colors to "cc" in vertex oject "pv" - cc will be freed when done
+void jl_gl_clrc(jvct_t *pjlc, jl_vo* pv, jl_ccolor_t* cc) {
+	_jl_gl_col_begin(pjlc, pv); // Free "pv->cc" if non-null
+	pv->cc = cc;
+	// Set Color Buffer "pv->bt" to "pv->cc"
+	_jl_gl_buff_set(pjlc, pv->bt, pv->cc, pv->vc * 4);
+}
+
+//Convert color to solid
+jl_ccolor_t* jl_gl_clrcs(jvct_t *pjlc, uint8_t *rgba, uint32_t vc) {
+	int i;
+	jl_ccolor_t* cc = NULL;
+
+	//Allocate memory
+	jl_me_alloc(pjlc->sg.usrd,
+		(void**)&cc, vc * sizeof(float) * 4, 0);
+	//Set RGBA for each vertex
+	for(i = 0; i < vc; i++) { 
+		cc[(i * 4) + 0] = ((double) rgba[0]) / 255.;
+		cc[(i * 4) + 1] = ((double) rgba[1]) / 255.;
+		cc[(i * 4) + 2] = ((double) rgba[2]) / 255.;
+		cc[(i * 4) + 3] = ((double) rgba[3]) / 255.;
+	}
+	return cc;
+}
+
+//Convert Color To Gradient
+jl_ccolor_t* jl_gl_clrcg(jvct_t *pjlc, uint8_t *rgba, uint32_t vc) {
+	int i;
+	jl_ccolor_t* cc = NULL;
+
+	//Allocate memory
+	jl_me_alloc(pjlc->sg.usrd,
+		(void**)&cc, vc * sizeof(float) * 4, 0);
+	//Set RGBA for each vertex
+	for(i = 0; i < vc; i++) { 
+		cc[(i * 4) + 0] = ((double) rgba[(i * 4) + 0]) / 255.;
+		cc[(i * 4) + 1] = ((double) rgba[(i * 4) + 1]) / 255.;
+		cc[(i * 4) + 2] = ((double) rgba[(i * 4) + 2]) / 255.;
+		cc[(i * 4) + 3] = ((double) rgba[(i * 4) + 3]) / 255.;
+	}
+	return cc;
+}
+
 // Set Texturing to Gradient Color "rgba" { (4 * vertex count) values }
 void jl_gl_clrg(jvct_t *pjlc, jl_vo* pv, uint8_t *rgba) {
-	int i;
-
 	if(pv == NULL) pv = pjlc->gl.temp_vo;
 	_jl_gl_col_begin(pjlc, pv);
-	//Set RGBA for each vertex
-	for(i = 0; i < pv->vc; i++) { 
-		pv->cc[(i * 4) + 0] = ((double) rgba[(i * 4) + 0]) / 255.;
-		pv->cc[(i * 4) + 1] = ((double) rgba[(i * 4) + 1]) / 255.;
-		pv->cc[(i * 4) + 2] = ((double) rgba[(i * 4) + 2]) / 255.;
-		pv->cc[(i * 4) + 3] = ((double) rgba[(i * 4) + 3]) / 255.;
-	}
-	_jl_gl_col_end(pjlc, pv);
+	jl_gl_clrc(pjlc, pv, jl_gl_clrcg(pjlc, rgba, pv->vc));
 }
 
 // Set Texturing to Solid Color "rgba" { 4 values }
 void jl_gl_clrs(jvct_t *pjlc, jl_vo* pv, uint8_t *rgba) {
-	int i;
-
 	if(pv == NULL) pv = pjlc->gl.temp_vo;
 	_jl_gl_col_begin(pjlc, pv);
-
-	//Set RGBA for each vertex
-	for(i = 0; i < pv->vc; i++) { 
-		pv->cc[(i * 4) + 0] = ((double) rgba[0]) / 255.;
-		pv->cc[(i * 4) + 1] = ((double) rgba[1]) / 255.;
-		pv->cc[(i * 4) + 2] = ((double) rgba[2]) / 255.;
-		pv->cc[(i * 4) + 3] = ((double) rgba[3]) / 255.;
-	}
-	_jl_gl_col_end(pjlc, pv);
+	jl_gl_clrc(pjlc, pv, jl_gl_clrcs(pjlc, rgba, pv->vc));
 }
 
 // Set texturing to a bitmap
@@ -581,8 +620,17 @@ void jl_gl_txtr(jvct_t *pjlc, jl_vo* pv, u08t map, u08t a, u16t pgid, u16t pi) {
 	_jl_gl_setv(pjlc, pv->bt, pjlc->gl.attr.tex.texpos, 2);
 }
 
+void jl_gl_translate(jvct_t *pjlc, jl_vo* pv, float x, float y, float z) {
+	if(pv == NULL) pv = pjlc->gl.temp_vo;
+	glUniform3f(pv->cc == NULL ? pjlc->gl.uniforms.translate :
+		pjlc->gl.uniforms.translateclr,
+		x * pjlc->dl.multiplyx,
+		(y + pjlc->gl.ytrans) * -pjlc->dl.multiplyy,
+		z * 2.f);
+}
+
 //Draw object with "vertices" vertices.  The vertex data is in "x","y" and "z".
-//"map" refers to the charecter map.  0 means don't zoom in to one charecter.
+//"map" refers to the charecter map.  0 means don't zoom in to one character.
 //Otherwise it will zoom in x16 to a single charecter
 /**
  * If "pv" is NULL then draw what's on the temporary buffer
@@ -592,15 +640,18 @@ void jl_gl_draw(jvct_t *pjlc, jl_vo* pv) {
 	if(pv == NULL) pv = pjlc->gl.temp_vo;
 	// Use "pv->cc" to determine which shader to use: texturing or coloring?
 	_jl_gl_setp(pjlc, pv->cc == NULL ? JL_GL_SLPR_TEX : JL_GL_SLPR_CLR);
-	// Set texture and transparency if texturing.
-	if(pv->cc == NULL) {
+	// Set texture and transparency if texturing.  If colors: bind colors
+	if(pv->cc) {
+		// Bind Colors to shader
+		_jl_gl_setv(pjlc, pv->bt, pjlc->gl.attr.clr.acolor, 4);
+	}else{
+		// Set Alpha Value In Shader
 		_jl_gl_setalpha(pjlc, pv->a);
-		_jl_gl_bind(pjlc, pv->g, pv->i); // Bind the texture
+		// Bind the texture
+		_jl_gl_bind(pjlc, pv->g, pv->i);
 	}
-	// Bind Position Buffer
-	_jl_gl_buff_use(pjlc, pv->gl);
 	// Update the clipping pane & position in shader.
-	_jl_gl_update_clip_pane(pjlc);
+	_jl_gl_update_clip_pane(pjlc, pv->gl);
 	// Finally, draw the image!
 	_jl_gl_draw_arrays(pjlc, pv->rs ? GL_TRIANGLES : GL_TRIANGLE_FAN,
 		pv->vc);
@@ -640,8 +691,10 @@ static inline void _jl_gl_init_setup_gl(jvct_t *pjlc) {
 
 static inline void _jl_gl_init_shaders(jvct_t *pjlc) {
 	jl_io_printc(pjlc->sg.usrd, "making GLSL programs....\n");
-	pjlc->gl.prgs[JL_GL_SLPR_TEX] = createProgram(pjlc, source_vert_tex, source_frag_tex);
-	pjlc->gl.prgs[JL_GL_SLPR_CLR] = createProgram(pjlc, source_vert_clr, source_frag_clr);
+	pjlc->gl.prgs[JL_GL_SLPR_TEX] = 
+		createProgram(pjlc, source_vert_tex, source_frag_tex);
+	pjlc->gl.prgs[JL_GL_SLPR_CLR] =
+		createProgram(pjlc, source_vert_clr, source_frag_clr);
 	jl_io_printc(pjlc->sg.usrd, "made programs.\n");
 
 	jl_io_printc(pjlc->sg.usrd, "setting up shaders....\n");
@@ -650,12 +703,16 @@ static inline void _jl_gl_init_shaders(jvct_t *pjlc) {
 	pjlc->gl.uniforms.textures[0][0] =
 		_jl_gl_getu(pjlc, pjlc->gl.prgs[JL_GL_SLPR_TEX], "texture");
 	pjlc->gl.uniforms.multiply_alpha =
-		_jl_gl_getu(pjlc, pjlc->gl.prgs[JL_GL_SLPR_TEX], "multiply_alpha");
+		_jl_gl_getu(pjlc, pjlc->gl.prgs[JL_GL_SLPR_TEX],
+			"multiply_alpha");
 	pjlc->gl.uniforms.cliprange =
 		_jl_gl_getu(pjlc, pjlc->gl.prgs[JL_GL_SLPR_TEX], "cliprange");
 	pjlc->gl.uniforms.cliprangeclr =
 		_jl_gl_getu(pjlc, pjlc->gl.prgs[JL_GL_SLPR_CLR], "cliprange");
-		
+	pjlc->gl.uniforms.translate =
+		_jl_gl_getu(pjlc, pjlc->gl.prgs[JL_GL_SLPR_TEX], "translate");
+	pjlc->gl.uniforms.translateclr =
+		_jl_gl_getu(pjlc, pjlc->gl.prgs[JL_GL_SLPR_CLR], "translate");
 	jl_io_printc(pjlc->sg.usrd, "setting up tex shader attrib's....\n");
 	_jl_gl_geta(pjlc, pjlc->gl.prgs[JL_GL_SLPR_TEX],
 		&pjlc->gl.attr.tex.position, "position");
@@ -703,11 +760,25 @@ void _jl_gl_init(jvct_t *pjlc) {
 		jl_sg_kill(pjlc->sg.usrd, "glew fail!(no sticky)");
 #endif
 	_jl_gl_make_res(pjlc);
+	//Set uniform values
+	_jl_gl_usep(pjlc, pjlc->gl.prgs[JL_GL_SLPR_CLR]);
+	glUniform3f(pjlc->gl.uniforms.translateclr, 0.f, 0.f, 0.f);
+	_jl_gl_usep(pjlc, pjlc->gl.prgs[JL_GL_SLPR_TEX]);
+	glUniform3f(pjlc->gl.uniforms.translate, 0.f, 0.f, 0.f);
 	//Textures on by default
 	pjlc->gl.whichprg = JL_GL_SLPR_TEX;
-	_jl_gl_usep(pjlc, pjlc->gl.prgs[JL_GL_SLPR_TEX]);
 }
 
 //		glVertexPointer(3, GL_FLOAT, 0, head);
 //		glEnableClientState(GL_VERTEX_ARRAY);
 //		glDrawArrays(GL_TRIANGLES, 0, 6);
+
+	/* Draw the cube 
+	glColor4f(1.0,1.0,1.0,1.0);
+//		glEnableClientState(GL_COLOR_ARRAY);
+	glVertexPointer(3, GL_FLOAT, 0, cube);
+	glEnableClientState(GL_VERTEX_ARRAY);
+//		glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_BYTE, indices);
+	glctx->drawarrays(GL_TRIANGLES, 0, 6);
+
+	glMatrixMode(GL_MODELVIEW);*/

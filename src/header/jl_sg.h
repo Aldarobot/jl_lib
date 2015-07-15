@@ -19,6 +19,7 @@ typedef enum{
 	JL_SG_WM_DN, //Run When In Lower Graphical Window
 	JL_SG_WM_TERM, //Run When In Terminal Window
 	JL_SG_WM_EXIT, //Run When Not In This Program's Window
+	JL_SG_WM_RESZ, //Run When Window is Resized
 	JL_SG_WM_MAX,
 }jl_sg_wm_t;
 
@@ -30,9 +31,14 @@ typedef enum{
 	JL_ERR_NULL, //Something requested is empty/null
 }jl_err_t;
 
+// Coordinate Structures
 typedef struct{
 	float x, y, w, h;
 }jl_rect_t;
+
+typedef struct{
+	float x, y, z;
+}jl_vec3_t;
 
 typedef struct{
 	uint16_t g; //Image group ID

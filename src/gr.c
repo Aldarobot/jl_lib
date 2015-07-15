@@ -29,10 +29,14 @@ char *GMessage[2] = {
 
 /*_jal5_jl_gr_t* g_grph;*/
 
+//Upper OpenGL prototypes
 jl_vo *jl_gl_vo_make(jvct_t *pjlc, float *xyzw, uint8_t vertices);
+void jl_gl_vo_free(jvct_t *pjlc, jl_vo *pv);
 
+//Upper SDL prototype
 void _jl_dl_loop(jvct_t* pjlc);
 
+//Graphics Prototypes
 static void _jl_gr_menubar(jl_t* pusr);
 static void _jl_gr_flipscreen(jl_t* pusr);
 static void _jl_gr_menubar_slow(jl_t* pusr);
@@ -46,7 +50,7 @@ static void _jl_gr_popup_loop(jl_t* pusr);
 
 	/**
 	 * Set the clipping pane for the screen.
-	 * @param pusr: the library context.
+	 * @param pusr: The library context.
   	 * @param xmin: anything drawn left of this line is disregarded.
   	 * @param xmax: anything drawn right of this line is disregarded.
 	 * @param ymin: if something is drawn below this line it is disregarded.
@@ -55,17 +59,60 @@ static void _jl_gr_popup_loop(jl_t* pusr);
 	void jl_gr_set_clippane(jl_t* pusr, float xmin, float xmax,
 		float ymin, float ymax)
 	{
-		jvct_t *pjlc = pusr->pjlc;
-		jl_gl_set_clippane(pusr->pjlc, xmin, xmax,
-			ymin + pjlc->gl.ytrans, ymax + pjlc->gl.ytrans);
+		jl_gl_set_clippane(pusr->pjlc, xmin, xmax, ymin, ymax);
 	}
 	
 	/**
 	 * Reset the clipping pane for the screen.
- 	 * @param pusr: the library context.
+ 	 * @param pusr: The library context.
 	**/
 	void jl_gr_default_clippane(jl_t* pusr) {
 		jl_gl_default_clippane(pusr->pjlc);
+	}
+
+	/**
+	 * Convert a color.
+	 * @param pusr: The library context.
+	 * @param rgba: The color to convert ( Not freed - Reusable ).
+	 * @param vc: How many vertices to acount for.
+	 * @param gradient: 1 if "rgba" is a gradient array, 0 if solid color.
+	 * @returns: The converted color
+	**/
+	jl_ccolor_t* jl_gr_convert_color(jl_t* pusr, uint8_t *rgba, uint32_t vc,
+		uint8_t gradient)
+	{
+		if(gradient) return jl_gl_clrcg(pusr->pjlc, rgba, vc);
+		else return jl_gl_clrcs(pusr->pjlc, rgba, vc);
+	}
+	
+	/**
+	 * Change the coloring scheme for a vertex object.
+ 	 * @param pusr: The library context.
+ 	 * @param pv: The Vertex Object
+ 	 * @param cc: The Converted Color Object to use on the Vertex Object.
+ 	 *	The library takes care of freeing this variable.
+	**/
+	void jl_gr_vo_color(jl_t* pusr, jl_vo* pv, jl_ccolor_t* cc) {
+		jl_gl_clrc(pusr->pjlc, pv, cc);
+	}
+
+	/**
+	 * Draw a vertex object.
+  	 * @param pusr: The library context.
+  	 * @param pv: the vertex object to draw.
+	**/
+	void jl_gr_draw_vo(jl_t* pusr, jl_vo* pv) {
+		jl_gl_translate(pusr->pjlc, pv, 0.f, 0.f, 0.f);
+		jl_gl_draw(pusr->pjlc, pv);
+	}
+	
+	/**
+	 * Draw a vertex object with offset by translation.
+	 *
+	**/
+	void jl_gr_draw_tvo(jl_t* pusr, jl_vo* pv, jl_vec3_t* vec) {
+		jl_gl_translate(pusr->pjlc, pv, vec->x, vec->y, vec->z);
+		jl_gl_draw(pusr->pjlc, pv);
 	}
 
 	/**
@@ -77,7 +124,21 @@ static void _jl_gr_popup_loop(jl_t* pusr);
 		jl_gl_vect(pusr->pjlc, NULL, tricount * 3, triangles);
 		if(multicolor) jl_gl_clrg(pusr->pjlc, NULL, colors);
 		else jl_gl_clrs(pusr->pjlc, NULL, colors);
+		jl_gl_translate(pusr->pjlc, NULL, 0.f, 0.f, 0.f);
 		jl_gl_draw(pusr->pjlc, NULL);
+	}
+	
+	/**
+	 * Get a a Vertex Object From vector graphics.
+	**/
+	jl_vo* jl_gr_vof_vec(jl_t* pusr, uint16_t tricount, float* triangles,
+		uint8_t* colors, uint8_t multicolor)
+	{
+		jl_vo *rtn = jl_gl_vo_make(pusr->pjlc, NULL, 0);
+		jl_gl_vect(pusr->pjlc, rtn, tricount * 3, triangles);
+		if(multicolor) jl_gl_clrg(pusr->pjlc, rtn, colors);
+		else jl_gl_clrs(pusr->pjlc, rtn, colors);
+		return rtn;
 	}
 
 	/**
@@ -105,6 +166,7 @@ static void _jl_gr_popup_loop(jl_t* pusr);
 		uint8_t Otwo[] = { r, g, b, a };
 		jl_gl_clrs(pusr->pjlc, NULL, Otwo);
 		jl_gl_poly(pusr->pjlc, NULL, 4, Oone);
+		jl_gl_translate(pusr->pjlc, NULL, 0.f, 0.f, 0.f);
 		jl_gl_draw(pusr->pjlc, NULL);
 	}
 	/**
@@ -134,6 +196,7 @@ static void _jl_gr_popup_loop(jl_t* pusr);
 			w+x,	h+y,	0.f };
 		jl_gl_txtr(pusr->pjlc, NULL, c, a, g, i);
 		jl_gl_poly(pusr->pjlc, NULL, 4, Oone);
+		jl_gl_translate(pusr->pjlc, NULL, 0.f, 0.f, 0.f);
 		jl_gl_draw(pusr->pjlc, NULL);
 	}
 	
@@ -149,18 +212,27 @@ static void _jl_gr_popup_loop(jl_t* pusr);
 
 	/**
 	 * Create an empty vertex object & return it.
-	 * @param 'pusr': library context
-	 * @returns: a new vertex object with 0 vertices.
+	 * @param pusr: The library context
+	 * @returns: A new vertex object with 0 vertices.
 	**/
 	jl_vo* jl_gr_vo_new(jl_t* pusr) {
 		return jl_gl_vo_make(pusr->pjlc, NULL, 0);
+	}
+	
+	/**
+	 * Free a vertex object.
+	 * @param pusr: The library context
+	 * @param pv: The vertex object to free
+	**/
+	void jl_gr_vo_old(jl_t* pusr, jl_vo* pv) {
+		jl_gl_vo_free(pusr->pjlc, pv);
 	}
 
 	/**
 	 * Draw the sprite.
 	 *
-	 * @param 'pusr': library context
-	 * @param 'psprite': the sprite to draw.
+	 * @param pusr: The library context
+	 * @param psprite: Which sprite to draw.
 	**/
 	void jl_gr_sprite_draw(jl_t* pusr, jl_sprite_t *psprite) {
 		jl_gr_draw_image(pusr, psprite->g, psprite->i,
@@ -339,8 +411,11 @@ static void _jl_gr_popup_loop(jl_t* pusr);
 		pjlc->gr.popup.window_name = name;
 		pjlc->gr.popup.message = message;
 		pjlc->gr.popup.btns = btns;
-		jl_sg_mode_override(pusr, jl_sg_exit, _jl_gr_popup_loop,
-			_jl_gr_popup_loop, jl_dont);
+		jl_sg_mode_override(pusr, JL_SG_WM_EXIT, jl_sg_exit);
+		jl_sg_mode_override(pusr, JL_SG_WM_UP, _jl_gr_popup_loop);
+		jl_sg_mode_override(pusr, JL_SG_WM_DN, _jl_gr_popup_loop);
+		jl_sg_mode_override(pusr, JL_SG_WM_TERM, jl_dont);
+		jl_sg_mode_override(pusr, JL_SG_WM_RESZ, jl_dont);
 	}
 	
 	/**

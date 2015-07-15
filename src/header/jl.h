@@ -48,10 +48,9 @@
 		void *pixels, int width, int height);
 // "sg.c"
 	void jl_sg_mode_init(jl_t* pusr, u08t mdec);
-	void jl_sg_mode_set(jl_t* pusr, uint8_t mode, jl_simple_fnt exit,
-		jl_simple_fnt wups, jl_simple_fnt wdns, jl_simple_fnt term);
-	void jl_sg_mode_override(jl_t* pusr, jl_simple_fnt exit,
-		jl_simple_fnt upsl, jl_simple_fnt dnsl, jl_simple_fnt term);
+	void jl_sg_mode_set(jl_t* pusr, uint8_t mode, uint8_t wm,
+		jl_simple_fnt loop);
+	void jl_sg_mode_override(jl_t* pusr, uint8_t wm, jl_simple_fnt loop);
 	void jl_sg_mode_reset(jl_t* pusr);
 	void jl_sg_mode_switch(jl_t* pusr, uint8_t mode, jl_sg_wm_t loop);
 	void jl_sg_kill(jl_t* pusr, char * msg);
@@ -63,13 +62,21 @@
 	void jl_gr_set_clippane(jl_t* pusr, float xmin, float xmax,
 		float ymin, float ymax);
 	void jl_gr_default_clippane(jl_t* pusr);
+	jl_ccolor_t* jl_gr_convert_color(jl_t* pusr, uint8_t *rgba, uint32_t vc,
+		uint8_t gradient);
+	void jl_gr_vo_color(jl_t* pusr, jl_vo* pv, jl_ccolor_t* cc);
+	void jl_gr_draw_vo(jl_t* pusr, jl_vo* pv);
+	void jl_gr_draw_tvo(jl_t* pusr, jl_vo* pv, jl_vec3_t* vec);
 	void jl_gr_draw_vect(jl_t* pusr, uint16_t tricount, float* triangles,
+		uint8_t* colors, uint8_t multicolor);
+	jl_vo* jl_gr_vof_vec(jl_t* pusr, uint16_t tricount, float* triangles,
 		uint8_t* colors, uint8_t multicolor);
 	void jl_gr_draw_rect(jl_t* pusr, float x, float y, float w, float h,
 		uint8_t r, uint8_t g, uint8_t b, uint8_t a);
 	void jl_gr_draw_image(jl_t* pusr, u16t g, u16t i,
 		float x,float y,float w,float h,
 		u08t c, u08t a);
+	void jl_gr_vo_old(jl_t* pusr, jl_vo* pv);
 	void jl_gr_sprite_draw(jl_t* pusr, jl_sprite_t *psprite);
 	jl_sprite_t * jl_gr_sprite_make(
 		jl_t* pusr, u16t g, u16t i, u08t c, u08t a,

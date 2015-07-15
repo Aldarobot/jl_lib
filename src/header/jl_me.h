@@ -33,6 +33,8 @@ typedef void(*jl_ct_event_fnt)(jl_t* pusr, jl_simple_fnt prun,
 	jl_simple_fnt pno);
 typedef void(*jl_io_print_fnt)(jl_t* pusr, const char * print);
 
+typedef float jl_ccolor_t;
+
 //Variable Types
 #define u08t uint8_t	//Small int
 #define u16t uint16_t	//Short int
@@ -65,7 +67,7 @@ typedef struct{
 	uint32_t gl; // GL Vertex Buffer Object [ 0 = Not Enabled ]
 	uint32_t bt; // Buffer for Texture coordinates or Color Vertices.
 	float* cv; // Converted Vertices
-	float* cc; // Converted Colors [ NULL = Texturing Instead ]
+	jl_ccolor_t* cc; // Converted Colors [ NULL = Texturing Instead ]
 	uint16_t g; // Texturing: Image Group
 	uint16_t i; // Texturing: Image ID
 	float a; // Texturing: Converted Alpha

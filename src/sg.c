@@ -86,56 +86,63 @@ uint8_t jal5_sgrp_lsdl_gmse(uint8_t a) {
 	return SDL_GetMouseState(NULL,NULL)&SDL_BUTTON(a);
 }
 
-void _jl_sg_mode_add(jvct_t* pjlc) {
+void _jl_sg_mode_add(jvct_t* pjlc, uint8_t mode) {
 	//Add & Allocate a new mode
-	pjlc->sg.usrd->mdec++;
+	pjlc->sg.usrd->mdec = mode + 1;
 	pjlc->sg.mdes = realloc(pjlc->sg.mdes,
 		(pjlc->sg.usrd->mdec + 1) * sizeof(__sg_mode_t));
+	pjlc->sg.mdes[mode].tclp[JL_SG_WM_EXIT] = jl_sg_exit;
+	pjlc->sg.mdes[mode].tclp[JL_SG_WM_UP] = jl_dont;
+	pjlc->sg.mdes[mode].tclp[JL_SG_WM_DN] = jl_dont;
+	pjlc->sg.mdes[mode].tclp[JL_SG_WM_TERM] = jl_dont;
+	pjlc->sg.mdes[mode].tclp[JL_SG_WM_RESZ] = jl_dont;
 }
 
 /**
  * Set the loop functions for a mode.
  *
  * @param pusr: The library context.
- * @param mode: the mode to add functions to.
- * @param exit: exit loop
- * @param wups: upper screen loop
- * @param wdns: lower screen loop
- * @param term: terminal screen loop
+ * @param mode: The mode to change the loop functions of.
+ * @param wm: Which loop to change.
+ *	JL_SG_WM_EXIT: Called when "Back Button" Is Pressed.  "Back Button" is:
+ *		- 3DS/WiiU: Select
+ *		- Android: Back
+ *		- Computer: Escape
+ *		The default is to quit the program.  If set to something else
+ *		then the function will loop forever unless interupted by a
+ *		second press of the "Back Button" or unless the mode is changed.
+ *	JL_SG_WM_UP: Called when upper screen is visible.  Whatever draw
+ *		functions are called in this loop will be displayed on the upper
+ *		screen each frame when in this mode.
+ *	JL_SG_WM_DN: Like JL_SG_WM_UP but for lower screen
+ *	JL_SG_WM_TERM: This loop is called when instead of being in either upper
+ *		or lower screen the only thing displayed is the terminal.
+ *	JL_SG_WM_RESZ: This loop is called when the window is resized.
+ * @param loop: What to change the loop to.
 */
-void jl_sg_mode_set(jl_t* pusr, uint8_t mode, jl_simple_fnt exit,
-	jl_simple_fnt wups, jl_simple_fnt wdns, jl_simple_fnt term)
-{
+void jl_sg_mode_set(jl_t* pusr, uint8_t mode, uint8_t wm, jl_simple_fnt loop) {
 	jl_gr_draw_msge(pusr, "Switching Mode...");
 	jvct_t* pjlc = pusr->pjlc;
 	
-	if(mode > pjlc->sg.usrd->mdec - 1) _jl_sg_mode_add(pjlc);
-	pjlc->sg.mdes[mode].tclp[JL_SG_WM_EXIT] = exit;
-	pjlc->sg.mdes[mode].tclp[JL_SG_WM_UP] = wups;
-	pjlc->sg.mdes[mode].tclp[JL_SG_WM_DN] = wdns;
-	pjlc->sg.mdes[mode].tclp[JL_SG_WM_TERM] = term;
-	
+	if(mode > pjlc->sg.usrd->mdec - 1) _jl_sg_mode_add(pjlc, mode);
+	pjlc->sg.mdes[mode].tclp[wm] = loop;
+	// Reset things
 	pjlc->ct.heldDown = 0;
 	jl_gr_draw_msge(pusr, "Switched Mode!");
 }
 
 /**
- * Change the mode functions without actually changing the mode.
+ * Temporarily change the mode functions without actually changing the mode.
  * @param pusr: The library context.
  * @param exit: exit loop
  * @param upsl: upper screen loop
  * @param dnsl: lower screen loop
  * @param term: terminal screen loop
  */
-void jl_sg_mode_override(jl_t* pusr, jl_simple_fnt exit,
-	jl_simple_fnt upsl, jl_simple_fnt dnsl, jl_simple_fnt term)
-{
+void jl_sg_mode_override(jl_t* pusr, uint8_t wm, jl_simple_fnt loop) {
 	jvct_t* pjlc = pusr->pjlc;
 
-	pjlc->sg.mode.tclp[JL_SG_WM_EXIT] = exit;
-	pjlc->sg.mode.tclp[JL_SG_WM_UP] = upsl;
-	pjlc->sg.mode.tclp[JL_SG_WM_DN] = dnsl;
-	pjlc->sg.mode.tclp[JL_SG_WM_TERM] = term;
+	pjlc->sg.mode.tclp[wm] = loop;
 }
 
 /**
@@ -144,15 +151,10 @@ void jl_sg_mode_override(jl_t* pusr, jl_simple_fnt exit,
  */
 void jl_sg_mode_reset(jl_t* pusr) {
 	jvct_t* pjlc = pusr->pjlc;
+	int i;
 
-	pjlc->sg.mode.tclp[JL_SG_WM_EXIT] =
-		pjlc->sg.mdes[pusr->mode].tclp[JL_SG_WM_EXIT];
-	pjlc->sg.mode.tclp[JL_SG_WM_UP] =
-		pjlc->sg.mdes[pusr->mode].tclp[JL_SG_WM_UP];
-	pjlc->sg.mode.tclp[JL_SG_WM_DN] =
-		pjlc->sg.mdes[pusr->mode].tclp[JL_SG_WM_DN];
-	pjlc->sg.mode.tclp[JL_SG_WM_TERM] =
-		pjlc->sg.mdes[pusr->mode].tclp[JL_SG_WM_TERM];
+	for(i = 0; i < JL_SG_WM_MAX; i++)
+		pjlc->sg.mode.tclp[i] = pjlc->sg.mdes[pusr->mode].tclp[i];
 }
 
 /**
