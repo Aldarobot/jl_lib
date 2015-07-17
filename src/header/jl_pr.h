@@ -60,6 +60,15 @@
 	#include <dirent.h>
 	
 	#include "jl_vm.h" //Variable Map
+	
+// Return Values
+enum {
+	JL_RTN_SUCCESS, // 0
+	JL_RTN_FAIL, // 1
+	JL_RTN_IMPOSSIBLE, // 2
+	JL_RTN_SUPER_IMPOSSIBLE, // 3
+	JL_RTN_COMPLETE_IMPOSSIBLE, // 4
+} JL_RTN;
 
 #define MAXFILELEN 1000 * 100000 //100,000 kb
 
@@ -67,16 +76,6 @@
 #define JGR_STN 0 //standard 1280 by 960
 #define JGR_LOW 1 //Low Res: 640 by 480
 #define JGR_DSI 2 //DSi res: 256 by 192
-
-//Buffer ID's
-//permanent
-#define BUFFER_TEXTURE 1
-//changeable
-#define BUFFER_CHARECTER_MAP_TEXTURE 2
-#define BUFFER_SPRITE 3
-#define BUFFER_TEXT 4
-#define BUFFER_OBJECT 5 //3D
-#define BUFFER_MAX 6
 
 #define VAR_POSITION 0
 #define VAR_COLORS 1
@@ -90,23 +89,6 @@
 #endif
 #define JLVM_INIT SDL_INIT_AUDIO|SDL_INIT_VIDEO
 
-#ifdef SHADERS
-
-//SHADER DATA
-	#define IMGID_MAX 16
-
-	//RENDER DATA
-	#define TEX_BRIGHT 0 //Bright colors
-	#define TEX_COLORFUL 1 //Colorful blending
-	#define TEX_DARK 2 //Darkenned blending
-	#define TEX_MOVE 3 //Animated version of bright
-	#define TEX_SIMPLE 4 //Displays one color
-	#define TEX_NO 5 //Don't Draw
-	GLfloat *GOne;
-	GLfloat *GColor;
-	uint32_t *GTex;
-
-#endif
 #ifdef VIRTUAL_MACH_DAT
 //VIRTUAL MACHINE DATA
 	typedef struct{
@@ -133,24 +115,15 @@
 	uint8_t GTerminal = 1;
 #endif
 
+//Replacement for NULL
 #define STRT_NULL "(NULL)"
-
 //screen frames per second
 #define JL_MAIN_SFPS 30
 //Allowed Processing Time
 #define JL_MAIN_SAPT 1000/JL_MAIN_SFPS
 
-typedef struct{
-	
-}_jal5_sgrp_main_data_t;
-
-typedef struct{
-	u32t size; //Size of "data" array
-	_jal5_sgrp_main_data_t *data;
-}jal5_sgrp_main_data_t;
-
 //USER's Functions
-void hack_user_init(jl_t* pusr);
+void hack_user_init(jl_t* jlc);
 //USER's MAIN
 char *jal5_head_jlvm(void);
 uint32_t jal5_head_size(void);
@@ -158,24 +131,21 @@ uint32_t jal5_head_size(void);
 //OTHER LIB STUFF
 void _jl_fl_errf(jvct_t * pjct, char *msg);
 
-void jl_gl_poly(jvct_t *pjlc, jl_vo* pv, uint8_t vertices, float *xyzw);
-void jl_gl_vect(jvct_t *pjlc, jl_vo* pv, uint8_t vertices, float *xyzw);
-void jl_gl_clrc(jvct_t *pjlc, jl_vo* pv, jl_ccolor_t* cc);
-jl_ccolor_t* jl_gl_clrcs(jvct_t *pjlc, uint8_t *rgba, uint32_t vc);
-jl_ccolor_t* jl_gl_clrcg(jvct_t *pjlc, uint8_t *rgba, uint32_t vc);
-void jl_gl_clrg(jvct_t *pjlc, jl_vo* pv, uint8_t *rgba);
-void jl_gl_clrs(jvct_t *pjlc, jl_vo* pv, uint8_t *rgba);
-void jl_gl_txtr(jvct_t *pjlc, jl_vo* pv, u08t map, u08t a, u16t pgid, u16t pi);
-void jl_gl_translate(jvct_t *pjlc, jl_vo* pv, float x, float y, float z);
-void jl_gl_draw(jvct_t *pjlc, jl_vo* pv);
-void jl_gl_set_clippane(jvct_t *pjlc, float xmin, float xmax, float ymin, float ymax);
-void jl_gl_default_clippane(jvct_t *pjlc);
+//GL
+void jl_gl_poly(jvct_t *_jlc, jl_vo* pv, uint8_t vertices, const float *xyzw);
+void jl_gl_vect(jvct_t *_jlc, jl_vo* pv, uint8_t vertices, const float *xyzw);
+void jl_gl_clrc(jvct_t *_jlc, jl_vo* pv, jl_ccolor_t* cc);
+jl_ccolor_t* jl_gl_clrcs(jvct_t *_jlc, uint8_t *rgba, uint32_t vc);
+jl_ccolor_t* jl_gl_clrcg(jvct_t *_jlc, uint8_t *rgba, uint32_t vc);
+void jl_gl_clrg(jvct_t *_jlc, jl_vo* pv, uint8_t *rgba);
+void jl_gl_clrs(jvct_t *_jlc, jl_vo* pv, uint8_t *rgba);
+void jl_gl_txtr(jvct_t *_jlc, jl_vo* pv, u08t map, u08t a, u16t pgid, u16t pi);
+void jl_gl_translate(jvct_t *_jlc, jl_vo* pv, float x, float y, float z);
+void jl_gl_draw(jvct_t *_jlc, jl_vo* pv);
+void jl_gl_set_clippane(jvct_t *_jlc, float xmin, float xmax, float ymin, float ymax);
+void jl_gl_default_clippane(jvct_t *_jlc);
 
-//void jal5_eogl_draw(uint8_t vertices, uint8_t map, float *xyz);
-
-void _jl_dl_resize(jvct_t *pjlc, uint16_t x, uint16_t y);
-
-float jal5_inpt_xmse(void);
-float jal5_inpt_ymse(void);
+//DL
+void _jl_dl_resize(jvct_t *_jlc, uint16_t x, uint16_t y);
 
 void _jl_gr_flip_scrn(jvct_t *pjct);

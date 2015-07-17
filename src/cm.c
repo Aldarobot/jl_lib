@@ -6,6 +6,6 @@
 
 #include "header/jl_pr.h"
 
-void _jal5_comm_init(void) {
+void _jl_cm_init(jvct_t* _jlc) {
 	
 }

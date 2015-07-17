@@ -88,10 +88,11 @@ typedef struct{
 
 //JLVM Context Structure
 typedef struct{
+	jl_t * jlc; // JL_Lib context
+
 	_io_t io; //Terminal Data
 	//Window Info
 	struct{
-		jl_t * usrd;
 		__sg_mode_t *mdes; // Array Sizof Number Of Modes
 		__sg_mode_t mode; // Current Mode Data
 		
@@ -105,6 +106,14 @@ typedef struct{
 		uint16_t image_id;
 		uint16_t igid;
 		void *image_data;
+		
+		// 1 Background for each screen
+		struct{
+			jl_vo* up;
+			jl_vo* dn;
+		}bg;
+		
+		jl_simple_fnt loop;
 	}sg;
 	
 	//Input Information

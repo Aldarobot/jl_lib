@@ -1,3 +1,6 @@
+// Version Definitions
+#define JL_VERSION "4.0.0-e1"
+
 typedef enum{
 	JL_GL_SLPR_TEX, //Texture Shader
 	JL_GL_SLPR_CLR, //Color Shader
@@ -28,10 +31,9 @@ typedef enum{
 
 #define JLVM_DEBUG error deprecated
 
-typedef void(*jl_simple_fnt)(jl_t*pusr);
-typedef void(*jl_ct_event_fnt)(jl_t* pusr, jl_simple_fnt prun,
-	jl_simple_fnt pno);
-typedef void(*jl_io_print_fnt)(jl_t* pusr, const char * print);
+typedef void(*jl_simple_fnt)(jl_t* jlc);
+typedef void(*jl_ct_event_fnt)(jl_t* jlc, jl_simple_fnt prun,jl_simple_fnt pno);
+typedef void(*jl_io_print_fnt)(jl_t* jlc, const char * print);
 
 typedef float jl_ccolor_t;
 

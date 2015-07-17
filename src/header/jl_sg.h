@@ -46,7 +46,7 @@ typedef struct{
 	jl_rect_t r; //Where & how big to draw sprite
 	jl_rect_t cb; //Collision Box
 	uint8_t c, a; //How to texture the sprite
-	void(* loop)(void * pusr); //Loop function
+	void(* loop)(void * jlc); //Loop function
 	void* ctx; //The sprite's context [ for variables]
 }jl_sprite_t;
 
@@ -59,7 +59,7 @@ typedef struct{
 	uint8_t mode; //Current Mode
 	jl_sg_wm_t loop; //[WINDOW MODE] ( terminal,up,down,exit screen)
 	jl_sprite_t *mouse; //Sprite to represent mouse pointer
-	void* pjlc; //The library's context
+	void* _jlc; //The library's context
 	void* uctx; //The program's context
 	struct{
 		float x; //X position 0-1
