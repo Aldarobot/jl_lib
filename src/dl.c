@@ -6,6 +6,9 @@
 
 #include "header/jl_pr.h"
 
+#define JL_DL_INIT SDL_INIT_AUDIO|SDL_INIT_VIDEO
+#define JL_DL_FULLSCREEN SDL_WINDOW_FULLSCREEN_DESKTOP
+
 //PROTOTYPES
 void _jl_gl_setmatrix(jvct_t *_jlc);
 
@@ -41,15 +44,21 @@ float jl_dl_p(jl_t *jlc) {
 
 //STATIC FUNCTIONS
 static void _jl_dl_fscreen(jvct_t* _jlc, uint8_t a) {
-	_jlc->dl.fullscreen = a;
-	SDL_SetWindowFullscreen(_jlc->dl.displayWindow,
-		SDL_WINDOW_FULLSCREEN_DESKTOP*a);
+	// Make sure the fullscreen value is either a 1 or a 0.
+	_jlc->dl.fullscreen = !!a;
+	// Actually set whether fullscreen or not.
+	if(SDL_SetWindowFullscreen(_jlc->dl.displayWindow,
+		JL_DL_FULLSCREEN * _jlc->dl.fullscreen))
+	{
+		_jl_fl_errf(_jlc, SDL_GetError());
+		jl_sg_kill(_jlc->jlc, "\n");
+	}
 }
 
 static inline void jlvmpi_ini_sdl(jvct_t* _jlc) {
 	jl_io_offset(_jlc->jlc, JL_IO_SIMPLE, "ISDL"); // {
 	jl_io_printc(_jlc->jlc, "Starting up...\n");
-	SDL_Init(JLVM_INIT);
+	SDL_Init(JL_DL_INIT);
 	jl_io_printc(_jlc->jlc, "input...\n");
 	#if JL_PLAT == JL_PLAT_COMPUTER
 	SDL_ShowCursor(SDL_DISABLE);
@@ -105,10 +114,6 @@ static inline void _jlvm_crea_wind(jvct_t *_jlc) {
 	_jlc->dl.fullscreen = 1;
 }
 
-static inline void jlvmpi_upd(uint8_t r, uint8_t g, uint8_t b) {
-
-}
-
 //NON-STATIC FUNCTIONS
 
 //Function is available to user: set window's resolution
@@ -128,7 +133,9 @@ void _jl_dl_loop(jvct_t* _jlc) {
 void _jl_dl_resize(jvct_t *_jlc, uint16_t x, uint16_t y) {
 	uint16_t offx = 0;
 	uint16_t offy = 0;
-	glViewport( 0, 0, x, y);
+	_jlc->dl.full_w = x;
+	_jlc->dl.full_h = y;
+	jl_gl_viewport_screen(_jlc);
 	_jlc->dl.multiplyy = -2.*((float)x)/((float)y);
 	_jlc->dl.multiplyx = 2.;
 	_jlc->dl.shiftx = -1.;
@@ -179,9 +186,6 @@ void _jl_dl_resize(jvct_t *_jlc, uint16_t x, uint16_t y) {
 		_jlc->dl.window.y = 0.;
 		_jlc->dl.window.w = x;
 		_jlc->dl.window.h = y;
-	}
-	if(glGetError() != GL_NO_ERROR ) {
-		jl_sg_kill(_jlc->jlc, "Couldn't initialize(Reshape)");
 	}
 	_jlc->dl.current.w = x;
 	_jlc->dl.current.h = y + (x - y);

@@ -31,6 +31,10 @@ char *GMessage[2] = {
 jl_vo *jl_gl_vo_make(jvct_t *_jlc, float *xyzw, uint8_t vertices);
 void jl_gl_vo_free(jvct_t *_jlc, jl_vo *pv);
 
+void jl_gl_prer_old(jvct_t *_jlc, jl_vo* pv);
+void jl_gl_prer_new(jvct_t *_jlc, jl_vo* pv, uint16_t w, uint16_t h);
+uint8_t jl_gl_prer_isi(jvct_t *_jlc, jl_vo* pv);
+
 //Upper SDL prototype
 void _jl_dl_loop(jvct_t* _jlc);
 
@@ -43,8 +47,31 @@ static void _jl_gr_draw_icon(jl_t* jlc);
 static void _jl_gr_textbox_rt(jl_t* jlc);
 static void _jl_gr_textbox_lt(jl_t* jlc);
 static void _jl_gr_popup_loop(jl_t* jlc);
+static void _jl_gr_prer_new(jl_t* jlc, jl_vo* pv);
 
 /*EXPORTED FUNCTIONS*/
+
+	/**
+	 * Delete a prerenderer image for a vertex object.
+	 * @param jlc: The library context.
+	 * @param pv: The prerenderer's vertex object.
+	**/
+	void jl_gr_prer_old(jl_t* jlc, jl_vo* pv) {
+		jl_gl_prer_old(jlc->_jlc, pv);
+	}
+	
+	/**
+	 * Create or replace a prerenderer image for a vertex object based on
+	 * the current vertex locations.
+	 * @param jlc: The library context.
+	 * @param pv: The vertex object to create/replace a prerenderer for.
+	**/
+	void jl_gr_prer_new(jl_t* jlc, jl_vo* pv) {
+		// If prerender is already initialized, then delete
+		if(jl_gl_prer_isi(jlc->_jlc, pv)) jl_gr_prer_old(jlc, pv);
+		// Make new prerenderer
+		_jl_gr_prer_new(jlc, pv);
+	}
 
 	/**
 	 * Set the clipping pane for the screen.
@@ -122,7 +149,7 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 	void jl_gr_vos_vec(jl_t* jlc, jl_vo *pv, uint16_t tricount,
 		float* triangles, uint8_t* colors, uint8_t multicolor)
 	{
-		// Set the vertex object
+		// Overwrite the vertex object
 		jl_gl_vect(jlc->_jlc, pv, tricount * 3, triangles);
 		// Texture the vertex object
 		if(multicolor) jl_gl_clrg(jlc->_jlc, pv, colors);
@@ -131,6 +158,12 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 	
 	/**
 	 * Set a vertex object to a rectangle.
+ 	 * @param jlc: The library context.
+ 	 * @param pv: The vertex object
+	 * @param rc: The rectangle coordinates.
+	 * @param colors: The color(s) to use - [ R, G, B, A ]
+	 * @param multicolor: If 0: Then 1 color is used.
+	 *	If 1: Then 1 color per each vertex is used.
 	**/
 	void jl_gr_vos_rec(jl_t* jlc, jl_vo *pv, jl_rect_t rc, uint8_t* colors,
 		uint8_t multicolor)
@@ -141,52 +174,11 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 			rc.w + rc.x,	rc.y,		0.f,
 			rc.w + rc.x,	rc.h+rc.y,	0.f };
 
-		// Set the vertex object
+		// Overwrite the vertex object
 		jl_gl_poly(jlc->_jlc, pv, 4, rectangle_coords);
 		// Texture the vertex object
 		if(multicolor) jl_gl_clrg(jlc->_jlc, pv, colors);
 		else jl_gl_clrs(jlc->_jlc, pv, colors);
-	}
-	
-	/**
-	 * Get a Vertex Object for vector graphics.
-	**/
-	jl_vo* jl_gr_vof_vec(jl_t* jlc, uint16_t tricount, float* triangles,
-		uint8_t* colors, uint8_t multicolor)
-	{
-		// Make the vertex object
-		jl_vo *rtn = jl_gl_vo_make(jlc->_jlc, NULL, 0);
-		// Set the vertex object
-		jl_gr_vos_vec(jlc,rtn,tricount,triangles,colors,multicolor);
-		// Return the vertex object
-		return rtn;
-	}
-	
-	/**
-	 * Get a a Vertex Object for a rectangle.
-	 * @param jlc: The library context.
-	 * @param rc: The rectangle coordinates.
-	 * @param colors: The color(s) to use - [ R, G, B, A ]
-	 * @param multicolor: If 0: Then 1 color is used.
-	 *	If 1: Then 1 color per each vertex is used.
-	**/
-	jl_vo* jl_gr_vof_rec(jl_t* jlc, jl_rect_t rc, uint8_t* colors,
-		uint8_t multicolor)
-	{
-		float rectangle_coords[] = {
-			rc.x,		rc.h+rc.y,	0.f,
-			rc.x,		rc.y,		0.f,
-			rc.w + rc.x,	rc.y,		0.f,
-			rc.w + rc.x,	rc.h+rc.y,	0.f };
-		// Make the vertex object
-		jl_vo *rtn = jl_gl_vo_make(jlc->_jlc, NULL, 0);
-		// Set the vertex object
-		jl_gl_poly(jlc->_jlc, rtn, 4, rectangle_coords);
-		// Texture the vertex object
-		if(multicolor) jl_gl_clrg(jlc->_jlc, rtn, colors);
-		else jl_gl_clrs(jlc->_jlc, rtn, colors);
-		// Return the vertex object
-		return rtn;
 	}
 
 	/**
@@ -591,6 +583,27 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 
 /** @cond **/
 /*BACKGROUND FUNCTIONS*/
+
+	static void _jl_gr_prer_new(jl_t* jlc, jl_vo* pv) {
+		jvct_t * _jlc = jlc->_jlc;
+		int i;
+		
+		uint16_t x = _jlc->dl.full_w;
+		uint16_t y = _jlc->dl.full_h;
+		uint16_t w = 0, h = 0;
+
+		for(i = 0; i < pv->vc*3; i+=3) {
+			uint16_t xx = ((pv->cv[i] + 1.) / 2.) *
+				((double)_jlc->dl.full_w);
+			uint16_t yy = ((pv->cv[i+1] + 1.) / 2.) *
+				((double)_jlc->dl.full_h);
+			if(xx < x) x = xx; 
+			if(yy < y) y = yy;
+			if(xx > w) w = xx;
+			if(yy > h) h = yy;
+		}
+		jl_gl_prer_new(jlc->_jlc, pv, w - x, h - y);
+	}
 
 	static void _jl_gr_popup_loop(jl_t* jlc) {
 //		jl_gr_draw_rect(jlc, .1, .1, .8, .2, 127, 127, 255, 255);

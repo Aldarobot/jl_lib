@@ -12,7 +12,9 @@
 
 /** @cond **/
 //Static Functions 
-static void _jl_fl_save(jl_t* jlc, void *file, const char *name, uint32_t bytes) {
+static void _jl_fl_save(jl_t* jlc, const void *file, const char *name,
+	uint32_t bytes)
+{
 	jvct_t * _jlc = jlc->_jlc;
 	int errsv;
 	ssize_t n_bytes;
@@ -82,7 +84,7 @@ static inline void _jl_fl_reset_cursor(char *file_name) {
 }
 
 //NON-STATIC Library Dependent Functions
-void _jl_fl_errf(jvct_t * _jlc, char *msg) {
+void _jl_fl_errf(jvct_t * _jlc, const char *msg) {
 	jl_io_offset(_jlc->jlc, JL_IO_SIMPLE, "ERRF");
 	jl_io_printc(_jlc->jlc, "saving to errf: ");
 	jl_io_printc(_jlc->jlc, _jlc->fl.errf_filename);
@@ -106,7 +108,7 @@ void _jl_fl_errf(jvct_t * _jlc, char *msg) {
  * @param name: The Name Of The File to save to
  * @param bytes: Size of "File"
  */
-void jl_fl_save(jl_t* jlc, void *file, const char *name, uint32_t bytes) {
+void jl_fl_save(jl_t* jlc, const void *file, const char *name, uint32_t bytes) {
 	truncate(name, 0);
 	_jl_fl_save(jlc, file, name, bytes);
 }

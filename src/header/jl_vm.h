@@ -62,25 +62,6 @@
 		char *errf_filename;
 	}_fl_t;
 
-	typedef struct {
-		uint8_t fullscreen;
-
-		char windowTitle[2][16];
-
-		//where everything is blitted to
-		SDL_GLContext *glcontext;
-		SDL_DisplayMode current;
-		SDL_Window *displayWindow;
-
-		uint16_t currenty;
-		float multiplyy;
-		float multiplyx;
-		float shifty;
-		float shiftx;
-		
-		jl_rect_t window;
-	}_dl_t;
-
 //OTHER:
 typedef struct{
 	void (*duu)(void *param);
@@ -112,6 +93,8 @@ typedef struct{
 			jl_vo* up;
 			jl_vo* dn;
 		}bg;
+		
+		jl_vo* cbg;
 		
 		jl_simple_fnt loop;
 	}sg;
@@ -172,14 +155,13 @@ typedef struct{
 		uint8_t update;
 		uint8_t update2;
 		GLuint prgs[JL_GL_SLPR_MAX];
-		GLuint fb; //Frame Buffer
 
 		struct {
 			//PRG: TEX
 			GLint **textures;
 			GLint multiply_alpha;
-			GLint translate; // TODO: Implement
-			GLint translateclr; // TODO: Implement
+			GLint translate;
+			GLint translateclr;
 			GLint cliprange;
 			GLint cliprangeclr;
 		} uniforms;
@@ -198,6 +180,8 @@ typedef struct{
 
 		jl_vo *temp_vo;
 		float ytrans;
+		// Default texture coordinates.
+		uint32_t default_tc;
 		
 		jl_rect_t cliprange;
 	}gl;
@@ -223,7 +207,29 @@ typedef struct{
 		strt textbox_string;
 	}gr;
 
-	_dl_t dl; //Base SDL
+	// SDL
+	struct {
+		uint8_t fullscreen;
+
+		char windowTitle[2][16];
+
+		//where everything is blitted to
+		SDL_GLContext *glcontext;
+		SDL_DisplayMode current;
+		SDL_Window *displayWindow;
+
+		uint16_t currenty;
+		float multiplyy;
+		float multiplyx;
+		float shifty;
+		float shiftx;
+		
+		jl_rect_t window;
+		
+		// The complete width and height of the window.
+		uint16_t full_w, full_h;
+	}dl;
+
 
 	//in: What's Available
 	struct{

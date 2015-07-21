@@ -64,15 +64,21 @@ typedef struct{
 
 //Vertex Object
 typedef struct{
-	uint8_t rs; // Rendering Style 0=GL_TRIANGLE_FAN 1=GL_TRIANGLES
-	uint32_t vc; // # of Vertices
-	uint32_t gl; // GL Vertex Buffer Object [ 0 = Not Enabled ]
-	uint32_t bt; // Buffer for Texture coordinates or Color Vertices.
-	float* cv; // Converted Vertices
-	jl_ccolor_t* cc; // Converted Colors [ NULL = Texturing Instead ]
-	uint16_t g; // Texturing: Image Group
-	uint16_t i; // Texturing: Image ID
-	float a; // Texturing: Converted Alpha
+	// Basic:
+	uint8_t rs;	// Rendering Style 0=GL_TRIANGLE_FAN 1=GL_TRIANGLES
+	uint32_t gl;	// GL Vertex Buffer Object [ 0 = Not Enabled ]
+	uint32_t vc;	// # of Vertices
+	float* cv;	// Converted Vertices
+	uint32_t bt;	// Buffer for Texture coordinates or Color Vertices.
+	// Coloring:
+	jl_ccolor_t* cc;// Converted Colors [ NULL = Texturing Instead ]
+	// Texturing:
+	uint32_t tx;	// ID to texture.
+	uint16_t w, h;	// Width and hieght of texture
+	float a;	// Converted Alpha.
+	// Texturing ( Pre-Renderer only):
+	uint32_t db;	// ID to Depth Buffer
+	uint32_t fb;	// ID to Frame Buffer
 }jl_vo;
 
 typedef struct{

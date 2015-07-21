@@ -59,6 +59,8 @@
 // "dl.c"
 	void jl_dl_progname(jl_t* jlc, strt name);
 // "gr.c"
+	void jl_gr_prer_old(jl_t* jlc, jl_vo* pv);
+	void jl_gr_prer_new(jl_t* jlc, jl_vo* pv);
 	void jl_gr_set_clippane(jl_t* jlc, float xmin, float xmax,
 		float ymin, float ymax);
 	void jl_gr_default_clippane(jl_t* jlc);
@@ -71,11 +73,7 @@
 		float* triangles, uint8_t* colors, uint8_t multicolor);
 	void jl_gr_vos_rec(jl_t* jlc, jl_vo *pv, jl_rect_t rc, uint8_t* colors,
 		uint8_t multicolor);
-	//Deprecated now
-	jl_vo* jl_gr_vof_vec(jl_t* jlc, uint16_t tricount, float* triangles,
-		uint8_t* colors, uint8_t multicolor);
-	jl_vo* jl_gr_vof_rec(jl_t* jlc, jl_rect_t rc, uint8_t* colors,
-		uint8_t multicolor);
+	//Deprecated now;
 	void jl_gr_draw_image(jl_t* jlc, u16t g, u16t i,
 		float x,float y,float w,float h,
 		u08t c, u08t a);
@@ -121,7 +119,7 @@
 	void jl_io_printi(jl_t *jlc, int print);
 	void jl_io_printd(jl_t *jlc, double print);
 // "fl.c"
-	void jl_fl_save(jl_t* jlc, void *file, const char *name,
+	void jl_fl_save(jl_t* jlc, const void *file, const char *name,
 		uint32_t bytes);
 	strt jl_fl_load(jl_t* jlc, char *file_name);
 	char jl_fl_pk_save(jl_t* jlc, char *packageFileName,

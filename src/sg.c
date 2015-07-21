@@ -12,6 +12,11 @@
 
 #include "header/jl_pr.h"
 
+// SG Prototypes
+void jl_gl_prer_use(jvct_t *_jlc, jl_vo* pv);
+void jl_gl_prer_off(jvct_t *_jlc);
+void jl_gl_draw_prerendered(jvct_t *_jlc, jl_vo* pv);
+
 //Prototypes
 	//LIB INITIALIZATION fn(Context)
 	void _jl_cm_init(jvct_t* _jlc);
@@ -39,6 +44,7 @@
 	void _jl_fl_kill(jvct_t* _jlc);
 	void _jl_io_kill(jl_t* jlc);
 	void _jl_au_kill(jvct_t *_jlc);
+	void _jl_sg_kill(jl_t* jlc);
 
 // Constants
 	//ALL IMAGES: 1024x1024
@@ -337,6 +343,7 @@ static uint32_t _jl_sg_quit(jvct_t* _jlc, int rc) {
 	_jl_au_kill(_jlc);
 	_jl_dl_kill(_jlc);
 	_jl_fl_kill(_jlc);
+	_jl_sg_kill(_jlc->jlc);
 	_jl_fl_errf(_jlc, ":No Error! YAY!\n"); //Exited properly
 	_jl_io_kill(_jlc->jlc);
 	_jl_me_kill(_jlc);
@@ -370,6 +377,13 @@ void jl_sg_exit(jl_t* jlc) {
 		_jl_sg_quit(jlc->_jlc, JL_RTN_SUCCESS);
 	else
 		jlc->loop = JL_SG_WM_EXIT;
+}
+
+void _jl_sg_kill(jl_t* jlc) {
+	// Delete window size data.
+	jvct_t * _jlc = jlc->_jlc;
+	jl_gr_prer_old(jlc, _jlc->sg.bg.up);
+	jl_gr_prer_old(jlc, _jlc->sg.bg.dn);
 }
 
 /**
@@ -431,9 +445,20 @@ static void _jl_sg_screen_draw(jl_t* jlc, float ytrans, jl_vo* bg, uint8_t lp) {
 	jvct_t * _jlc = jlc->_jlc;
 
 	_jlc->gl.ytrans = ytrans;
+	_jlc->sg.cbg = bg;
+
+	// Use the prerenderer for this screen.
+	jl_gl_prer_use(_jlc, _jlc->sg.cbg);
+	// Use default clippane TODO: REMOVE
 	jl_gl_default_clippane(_jlc);
+	// Draw the vertex object.
 	jl_gr_draw_vo(jlc, bg);
+	// Run the screen's loop
 	_jlc->sg.mode.tclp[lp](jlc);
+	// Turn off the prerenderer.
+	jl_gl_prer_off(_jlc);
+	// Draw the prerendered texture.
+	jl_gl_draw_prerendered(_jlc, bg);
 }
 
 // Double screen loop
@@ -442,7 +467,7 @@ static void _jl_sg_loop_ds(jl_t* jlc) {
 
 	// Draw lower screen - default screen
 	_jl_sg_screen_draw(jlc, jl_dl_p(jlc), _jlc->sg.bg.up, jlc->loop);
-	// Draw Menu Bar & Mouse
+	// Draw Menu Bar & Mouse - on lower screen
 	_jl_gr_loop(jlc);
 	// Draw upper screen - alternate screen
 	_jl_sg_screen_draw(jlc, 0.f, _jlc->sg.bg.dn,
@@ -453,8 +478,10 @@ static void _jl_sg_loop_ds(jl_t* jlc) {
 static void _jl_sg_loop_ss(jl_t* jlc) {
 	jvct_t * _jlc = jlc->_jlc;
 
+	// Draw lower screen - default screen
 	_jl_sg_screen_draw(jlc, 0.f, _jlc->sg.bg.dn, jlc->loop);
-	_jl_gr_loop(jlc); //Draw Menu Bar & Mouse
+	// Draw Menu Bar & Mouse
+	_jl_gr_loop(jlc);
 }
 
 void _jl_sg_loop(jvct_t *_jlc) {
@@ -472,15 +499,15 @@ void _jl_sg_resize(jl_t* jlc) {
 	if(jlc->smde) {
 		// Update the rectangle backgrounds.
 		jl_gr_vos_rec(jlc, _jlc->sg.bg.up, rcrd, rclr_up, 0);
+		jl_gr_prer_new(jlc, _jlc->sg.bg.up);
 		jl_gr_vos_rec(jlc, _jlc->sg.bg.dn, rcrd, rclr_dn, 0);
-		int i;
-		for( i = 0; i < 12; i++) printf("%f,", _jlc->sg.bg.up->cv[i]);
-		printf("\n");
+		jl_gr_prer_new(jlc, _jlc->sg.bg.dn);
 		// Set double screen loop.
 		_jlc->sg.loop = _jl_sg_loop_ds;
 	}else{
 		// Update the rectangle backgrounds.
 		jl_gr_vos_rec(jlc, _jlc->sg.bg.dn, rcrd, rclr_bg, 0);
+		jl_gr_prer_new(jlc, _jlc->sg.bg.dn);
 		// Set single screen loop.
 		_jlc->sg.loop = _jl_sg_loop_ss;
 	}

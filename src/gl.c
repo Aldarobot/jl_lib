@@ -130,19 +130,19 @@ void _jl_gl_cerr(jvct_t *_jlc, int width, char *fname) {
 	jl_sg_kill(_jlc->jlc, "\n");
 }
 
-static void _jl_gl_buff_use(jvct_t *_jlc, uint32_t buffer) {
+static void _jl_gl_buff_bind(jvct_t *_jlc, uint32_t buffer) {
 	glBindBuffer(GL_ARRAY_BUFFER, buffer);
 	_jl_gl_cerr(_jlc, 0,"bind buffer");
 }
 
 // Set the Data for VBO "buffer" to "buffer_data" with "buffer_size"
-static void _jl_gl_buff_set(jvct_t *_jlc, uint32_t buffer, void *buffer_data,
+static void _jl_gl_buffer_push(jvct_t *_jlc, uint32_t buffer, void *buffer_data,
 	u08t buffer_size)
 {
 	// Check For Deleted Buffer
 	if(buffer == 0) jl_sg_kill(_jlc->jlc, "buffer got deleted!");
 	//Bind Buffer "buffer"
-	_jl_gl_buff_use(_jlc, buffer);
+	_jl_gl_buff_bind(_jlc, buffer);
 	//Set the data
 	glBufferData(GL_ARRAY_BUFFER, buffer_size * sizeof(float), buffer_data,
 		GL_STATIC_DRAW);
@@ -332,12 +332,6 @@ static void _jl_gl_usep(jvct_t *_jlc, GLuint prg) {
 	_jl_gl_cerr(_jlc, prg, "glUseProgram");
 }
 
-// Bind a texture.
-static void _jl_gl_bind(jvct_t *_jlc, uint16_t g, uint16_t i) {
-	glBindTexture(GL_TEXTURE_2D, _jlc->gl.textures[g][i]);
-	_jl_gl_cerr(_jlc, 0,"glBindTexture");
-}
-
 static void _jl_gl_setalpha(jvct_t *_jlc, float a) {
 	glUniform1f(_jlc->gl.uniforms.multiply_alpha, a);
 	_jl_gl_cerr(_jlc, 0,"glUniform1f");
@@ -347,7 +341,7 @@ static void _jl_gl_setalpha(jvct_t *_jlc, float a) {
 //Set xyzw to 2 if 2D coordinates 3 if 3D. etc.
 void _jl_gl_setv(jvct_t *_jlc, uint32_t buff, uint32_t vertexAttrib, uint8_t xyzw) {
 	// Bind Buffer
-	if(buff != 0) _jl_gl_buff_use(_jlc, buff);
+	if(buff != 0) _jl_gl_buff_bind(_jlc, buff);
 	// Set Vertex Attrib Pointer
 	glEnableVertexAttribArray(vertexAttrib);
 	_jl_gl_cerr(_jlc, vertexAttrib,"glEnableVertexAttribArray");
@@ -426,7 +420,7 @@ void jl_gl_vo_vertices(jvct_t *_jlc, jl_vo* pv, const float *xyzw,
 		pv->cv[i+2] = jl_gl_convert_z(_jlc, xyzw[i+2]);
 	}
 	//Write Buffer Data "pv->cv" to Buffer "pv->gl"
-	_jl_gl_buff_set(_jlc, pv->gl, pv->cv, vertices * 3);
+	_jl_gl_buffer_push(_jlc, pv->gl, pv->cv, vertices * 3);
 }
 
 void jl_gl_vo_free(jvct_t *_jlc, jl_vo *pv) {
@@ -447,7 +441,7 @@ jl_vo *jl_gl_vo_make(jvct_t *_jlc, float *xyzw, uint8_t vertices) {
 	jl_me_alloc(_jlc->jlc, (void**)&rtn, sizeof(jl_vo),0);
 	// GL VBO
 	_jl_gl_buffer_make(_jlc, &rtn->gl);
-	// GL Texture Buffer
+	// GL Texture Coordinate Buffer
 	_jl_gl_buffer_make(_jlc, &rtn->bt);
 	// Converted Vertices & Vertex Count
 	rtn->cv = NULL;
@@ -456,6 +450,10 @@ jl_vo *jl_gl_vo_make(jvct_t *_jlc, float *xyzw, uint8_t vertices) {
 	rtn->cc = NULL;
 	// Rendering Style = Polygon
 	rtn->rs = 0;
+	// No pre-renderer has been created.
+	rtn->tx = 0;
+	rtn->db = 0;
+	rtn->fb = 0;
 	return rtn;
 }
 
@@ -520,7 +518,216 @@ void _jl_gl_setmatrix(jvct_t *_jlc) {
 	jl_gl_default_clippane(_jlc);
 }
 
+static void _jl_gl_depthbuffer_free(jvct_t *_jlc, uint32_t *db) {
+	glDeleteRenderbuffers(1, db);
+	_jl_gl_cerr(_jlc,*db,"_jl_gl_depthbuffer_free: glDeleteRenderbuffers");
+	*db = 0;
+}
+
+static void _jl_gl_depthbuffer_make(jvct_t *_jlc, uint32_t *db) {
+	glGenRenderbuffers(1, db);
+	_jl_gl_cerr(_jlc,*db,"make prerenderer: glGenRenderbuffers");
+}
+
+static void _jl_gl_depthbuffer_bind(jvct_t *_jlc, uint32_t db) {
+	glBindRenderbuffer(GL_RENDERBUFFER, db);
+	_jl_gl_cerr(_jlc, db,"_jl_gl_depthbuffer_bind: glBindRenderbuffer");
+}
+
+static void _jl_gl_depthbuffer_unbind(jvct_t *_jlc) {
+	glBindRenderbuffer(GL_RENDERBUFFER, 0);
+	_jl_gl_cerr(_jlc, 0,"_jl_gl_depthbuffer_unbind: glBindRenderbuffer");
+}
+
+static void _jl_gl_framebuffer_free(jvct_t *_jlc, uint32_t *fb) {
+	glDeleteFramebuffers(1, fb);
+	_jl_gl_cerr(_jlc, *fb, "glDeleteFramebuffers");
+	*fb = 0;
+}
+
+static void _jl_gl_framebuffer_make(jvct_t *_jlc, uint32_t *fb) {
+	glGenFramebuffers(1, fb);
+	_jl_gl_cerr(_jlc, *fb,"glGenFramebuffers");
+}
+
+static void _jl_gl_framebuffer_bind(jvct_t *_jlc, uint32_t fb) {
+	glBindFramebuffer(GL_FRAMEBUFFER, fb);
+	_jl_gl_cerr(_jlc, fb,"glBindFramebuffer");
+}
+
+static void _jl_gl_framebuffer_unbind(jvct_t *_jlc) {
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	_jl_gl_cerr(_jlc, 0,"_jl_gl_framebuffer_unbind: glBindFramebuffer");
+}
+
+static void _jl_gl_texture_free(jvct_t *_jlc, uint32_t *tex) {
+	glDeleteTextures(1, tex);
+	_jl_gl_cerr(_jlc, 0, "_jl_gl_texture_free: glDeleteTextures");
+	*tex = 0;
+}
+
+static void _jl_gl_texture_make(jvct_t *_jlc, uint32_t *tex) {
+	glGenTextures(1, tex);
+	_jl_gl_cerr(_jlc, 0, "_jl_gl_texture_make: glGenTextures");
+}
+
+// Bind a texture.
+static void _jl_gl_texture_bind(jvct_t *_jlc, uint32_t tex) {
+	glBindTexture(GL_TEXTURE_2D, tex);
+	_jl_gl_cerr(_jlc, tex,"_jl_gl_texture_bind: glBindTexture");
+}
+
+// Unbind a texture
+static void _jl_gl_texture_unbind(jvct_t *_jlc) {
+	glBindTexture(GL_TEXTURE_2D, 0);
+	_jl_gl_cerr(_jlc, 0,"_jl_gl_texture_unbind: glBindTexture");
+}
+
+static void _jl_gl_viewport(jvct_t *_jlc, uint16_t w, uint16_t h) {
+	glViewport(0,0,w,h);
+	_jl_gl_cerr(_jlc, w * h, "glViewport");
+}
+
+static void _jl_gl_prerenderer_use(jvct_t *_jlc, uint32_t fb, uint16_t w,
+	uint16_t h)
+{
+	// Render to our framebuffer
+	_jl_gl_framebuffer_bind(_jlc, fb);
+	// Render on the whole framebuffer [ lower left -> upper right ]
+	_jl_gl_viewport(_jlc, w, h);
+}
+
+static void _jl_gl_prerenderer_unuse(jvct_t *_jlc) {
+	// Render to the screen
+	_jl_gl_framebuffer_unbind(_jlc);
+	// Render to the whole screen.
+	jl_gl_viewport_screen(_jlc);
+}
+
+static void _jl_gl_prerenderer_obj_free(jvct_t *_jlc,
+	uint32_t *tex, uint32_t *db, uint32_t *fb)
+{
+	_jl_gl_texture_free(_jlc, tex);
+	_jl_gl_framebuffer_free(_jlc, fb);
+	_jl_gl_depthbuffer_free(_jlc, db);
+}
+
+// Create a prerenderer object with width and hieght of "w" & "h" and save the
+// Texture into variable "tex", the frame buffer into variable "fb", and the
+// depth buffer into variable "db"
+static void _jl_gl_prerenderer_obj_make(jvct_t *_jlc,
+	uint32_t *tex, uint32_t *db, uint32_t *fb,
+	uint16_t w, uint16_t h)
+{
+	// Make the texture for prerendering.
+	_jl_gl_texture_make(_jlc, tex);
+	// Bind the texture for prerendering.
+	_jl_gl_texture_bind(_jlc, *tex);
+	// Empty texture - the last "0" sets it empty.
+	glTexImage2D(GL_TEXTURE_2D, 0,GL_RGB, w, h, 0,GL_RGB, GL_UNSIGNED_BYTE, 0);
+	_jl_gl_cerr(_jlc, 0,"make prerenderer: glTexImage2D");
+	// 
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	_jl_gl_cerr(_jlc, 0,"make prerenderer: glTexParameteri");
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	_jl_gl_cerr(_jlc, 0,"make prerenderer: glTexParameteri");
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	_jl_gl_cerr(_jlc, 2,"glTexParameteri");
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	_jl_gl_cerr(_jlc, 3,"glTexParameteri");
+// Configure the framebuffer.
+	// Make Frame Buffer
+	_jl_gl_framebuffer_make(_jlc, fb);
+	// Bind Frame Buffer
+	_jl_gl_framebuffer_bind(_jlc, *fb);
+	// Set "renderedTexture" as our colour attachement #0
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+		GL_TEXTURE_2D, *tex, 0);
+// The depth buffer
+	// Make Depth Buffer
+	_jl_gl_depthbuffer_make(_jlc, db);
+	// Bind Depth Buffer
+	_jl_gl_depthbuffer_bind(_jlc, *db);
+	// Set the depth buffer
+	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, w, h);
+	_jl_gl_cerr(_jlc, 0,"make prerenderer: glRenderbufferStorage");
+	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
+		GL_RENDERBUFFER, *db);
+	_jl_gl_cerr(_jlc, 0,"make prerenderer: glFramebufferRenderbuffer");
+
+	// Always check that our framebuffer is ok
+	if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+		jl_sg_kill(_jlc->jlc, "Frame buffer not complete!\n");
+// De-activate pre-renderer.
+	// Unbind Frame Buffer
+	_jl_gl_framebuffer_unbind(_jlc);
+	// Unbind Texture
+	_jl_gl_texture_unbind(_jlc);
+	// Unbind Depth Buffer
+	_jl_gl_depthbuffer_unbind(_jlc);
+}
+
+static void _jl_gl_txtr(jvct_t *_jlc, jl_vo** pv, uint8_t a, uint8_t is_rt) {
+	if((*pv) == NULL) (*pv) = _jlc->gl.temp_vo;
+	// Set Simple Variabes
+	(*pv)->a = ((float)a) / 255.f;
+	// Make sure non-textured colors aren't attempted
+	if((!is_rt) && ((*pv)->cc != NULL))
+		jl_me_alloc(_jlc->jlc, (void**)&((*pv)->cc), 0,0);
+}
+
+static inline void _jl_gl_set_shader(jvct_t *_jlc, jl_vo* pv) {
+	_jl_gl_setp(_jlc, pv->cc == NULL ? JL_GL_SLPR_TEX : JL_GL_SLPR_CLR);
+}
+
 //HIGHER LEVEL
+
+// Set the viewport to the screen size.
+void jl_gl_viewport_screen(jvct_t *_jlc) {
+	_jl_gl_viewport(_jlc, _jlc->dl.full_w, _jlc->dl.full_h);
+}
+
+// Free a prerenderer for a vertex object
+void jl_gl_prer_old(jvct_t *_jlc, jl_vo* pv) {
+	_jl_gl_prerenderer_obj_free(_jlc, &(pv->tx), &(pv->db), &(pv->fb));
+}
+
+// Make a prerender for a vertex object w/ width "w" & hieght "h"
+void jl_gl_prer_new(jvct_t *_jlc, jl_vo* pv, uint16_t w, uint16_t h) {
+	pv->w = w;
+	pv->h = h;
+	_jl_gl_prerenderer_obj_make(_jlc, &(pv->tx), &(pv->db), &(pv->fb), w,h);
+}
+
+// Test if pre-renderer is initialized.
+uint8_t jl_gl_prer_isi(jvct_t *_jlc, jl_vo* pv) {
+	if(pv->tx && pv->db && pv->fb) {
+		return 1;
+	}else if((!pv->db) && (!pv->fb)) {
+		return 0;
+	}else{
+		if(pv->tx) jl_io_printc(_jlc->jlc, "[OK] pv->tx\n");
+		else jl_io_printc(_jlc->jlc, "[FAIL] pv->tx\n");
+		if(pv->db) jl_io_printc(_jlc->jlc, "[OK] pv->db\n");
+		else jl_io_printc(_jlc->jlc, "[FAIL] pv->db\n");
+		if(pv->fb) jl_io_printc(_jlc->jlc, "[OK] pv->fb\n");
+		else jl_io_printc(_jlc->jlc, "[FAIL] pv->fb\n");
+		jl_sg_kill(_jlc->jlc, "\n");
+	}
+	// Never reached
+	return 2;
+}
+
+// Use a vertex object's prerender for rendering.
+void jl_gl_prer_use(jvct_t *_jlc, jl_vo* pv) {
+	pv->a = 1.f;
+	_jl_gl_prerenderer_use(_jlc, pv->fb, pv->w, pv->h);
+}
+
+// Turn a prerender off in order to draw to the screen.
+void jl_gl_prer_off(jvct_t *_jlc) {
+	_jl_gl_prerenderer_unuse(_jlc);
+}
 
 // Set vertices for a polygon.
 void jl_gl_poly(jvct_t *_jlc, jl_vo* pv, uint8_t vertices, const float *xyzw) {
@@ -553,7 +760,7 @@ void jl_gl_clrc(jvct_t *_jlc, jl_vo* pv, jl_ccolor_t* cc) {
 	_jl_gl_col_begin(_jlc, pv); // Free "pv->cc" if non-null
 	pv->cc = cc;
 	// Set Color Buffer "pv->bt" to "pv->cc"
-	_jl_gl_buff_set(_jlc, pv->bt, pv->cc, pv->vc * 4);
+	_jl_gl_buffer_push(_jlc, pv->bt, pv->cc, pv->vc * 4);
 }
 
 //Convert color to solid
@@ -608,13 +815,8 @@ void jl_gl_clrs(jvct_t *_jlc, jl_vo* pv, uint8_t *rgba) {
 
 // Set texturing to a bitmap
 void jl_gl_txtr(jvct_t *_jlc, jl_vo* pv, u08t map, u08t a, u16t pgid, u16t pi) {
-	if(pv == NULL) pv = _jlc->gl.temp_vo;
-	// Set Simple Variabes
-	pv->a = ((float)a) / 255.f;
-	pv->g = pgid;
-	pv->i = pi;
-	// Make sure non-textured colors aren't attempted
-	if(pv->cc != NULL) jl_me_alloc(_jlc->jlc, (void**)&pv->cc, 0, 0);
+	_jl_gl_txtr(_jlc, &pv, a, 0);
+	pv->tx = _jlc->gl.textures[pgid][pi];
 	if(map) {
 		int32_t cX = map%16;
 		int32_t cY = map/16;
@@ -627,7 +829,7 @@ void jl_gl_txtr(jvct_t *_jlc, jl_vo* pv, u08t map, u08t a, u16t pgid, u16t pi) {
 			(1./16.)+CX, CY,
 			(1./16.)+CX, CY - (1./16.)
 		};
-		_jl_gl_buff_set(_jlc, pv->bt, tex1, 8);
+		_jl_gl_buffer_push(_jlc, pv->bt, tex1, 8);
 	}else{
 		float tex2[] =
 		{	
@@ -636,9 +838,8 @@ void jl_gl_txtr(jvct_t *_jlc, jl_vo* pv, u08t map, u08t a, u16t pgid, u16t pi) {
 			1., 1.,
 			1., 0.
 		};
-		_jl_gl_buff_set(_jlc, pv->bt, tex2, 8);
+		_jl_gl_buffer_push(_jlc, pv->bt, tex2, 8);
 	}
-	_jl_gl_setv(_jlc, pv->bt, _jlc->gl.attr.tex.texpos, 2);
 }
 
 void jl_gl_translate(jvct_t *_jlc, jl_vo* pv, float x, float y, float z) {
@@ -654,6 +855,30 @@ void jl_gl_translate(jvct_t *_jlc, jl_vo* pv, float x, float y, float z) {
 	_jl_gl_cerr(_jlc, 0,"glUniform3f - translate");
 }
 
+// Prepare to draw a solid color
+static inline void _jl_gl_draw_colr(jvct_t *_jlc, jl_vo* pv) {
+	// Bind Colors to shader
+	_jl_gl_setv(_jlc, pv->bt, _jlc->gl.attr.clr.acolor, 4);
+}
+
+// Prepare to draw a texture with texture coordinates "tc". 
+static void _jl_gl_draw_txtr(jvct_t *_jlc, jl_vo* pv, uint32_t tc) {
+	// Bind Texture Coordinates to shader
+	_jl_gl_setv(_jlc, tc, _jlc->gl.attr.tex.texpos, 2);
+	// Set Alpha Value In Shader
+	_jl_gl_setalpha(_jlc, pv->a);
+	// Bind the texture
+	_jl_gl_texture_bind(_jlc, pv->tx);
+}
+
+static void _jl_gl_draw_onts(jvct_t *_jlc, jl_vo* pv) {
+	// Update the clipping pane & position in shader.
+	_jl_gl_update_clip_pane(_jlc, pv->gl);
+	// Finally, draw the image!
+	_jl_gl_draw_arrays(_jlc, pv->rs ? GL_TRIANGLES : GL_TRIANGLE_FAN,
+		pv->vc);
+}
+
 //Draw object with "vertices" vertices.  The vertex data is in "x","y" and "z".
 //"map" refers to the charecter map.  0 means don't zoom in to one character.
 //Otherwise it will zoom in x16 to a single charecter
@@ -663,26 +888,27 @@ void jl_gl_translate(jvct_t *_jlc, jl_vo* pv, float x, float y, float z) {
 */
 void jl_gl_draw(jvct_t *_jlc, jl_vo* pv) {
 	if(pv == NULL) pv = _jlc->gl.temp_vo;
-	// Use "pv->cc" to determine which shader to use: texturing or coloring?
-	_jl_gl_setp(_jlc, pv->cc == NULL ? JL_GL_SLPR_TEX : JL_GL_SLPR_CLR);
+	// Determine which shader to use: texturing or coloring?
+	_jl_gl_set_shader(_jlc, pv);
 	// Set texture and transparency if texturing.  If colors: bind colors
-	if(pv->cc) {
-		// Bind Colors to shader
-		_jl_gl_setv(_jlc, pv->bt, _jlc->gl.attr.clr.acolor, 4);
-	}else{
-		// Set Alpha Value In Shader
-		_jl_gl_setalpha(_jlc, pv->a);
-		// Bind the texture
-		_jl_gl_bind(_jlc, pv->g, pv->i);
-	}
-	// Update the clipping pane & position in shader.
-	_jl_gl_update_clip_pane(_jlc, pv->gl);
-	// Finally, draw the image!
-	_jl_gl_draw_arrays(_jlc, pv->rs ? GL_TRIANGLES : GL_TRIANGLE_FAN,
-		pv->vc);
+	if(pv->cc) _jl_gl_draw_colr(_jlc, pv);
+	else _jl_gl_draw_txtr(_jlc, pv, pv->bt);
+	// Draw onto the screen.
+	_jl_gl_draw_onts(_jlc, pv);
 }
 
-//void jl_gl_
+void jl_gl_draw_prerendered(jvct_t *_jlc, jl_vo* pv) {
+	if(pv == NULL) pv = _jlc->gl.temp_vo;
+	// Use texturing shader.
+	_jl_gl_setp(_jlc, JL_GL_SLPR_TEX);
+	// Set texture to prerendered.  Fail if no prerendered texture.
+	if(jl_gl_prer_isi(_jlc, pv))
+		_jl_gl_draw_txtr(_jlc, pv, _jlc->gl.default_tc);
+	else
+		jl_sg_kill(_jlc->jlc, "Pre-renderer Not Initialized!\n");
+	// Draw onto the screen.
+	_jl_gl_draw_onts(_jlc, pv);
+}
 
 int32_t _jl_gl_getu(jvct_t *_jlc, GLuint prg, char *var) {
 	return glGetUniformLocation(prg, var);
@@ -697,9 +923,7 @@ int32_t _jl_gl_getu(jvct_t *_jlc, GLuint prg, char *var) {
 }
 
 void _jl_gl_geta(jvct_t *_jlc, GLuint prg, s32t *attrib, const char *title) {
-	if((*attrib
-		= glGetAttribLocation(prg, title)) == -1)
-	{
+	if((*attrib = glGetAttribLocation(prg, title)) == -1) {
 		 jl_sg_kill(_jlc->jlc,
 		 	"attribute name is either reserved or non-existant");
 	}
@@ -751,30 +975,28 @@ static inline void _jl_gl_init_shaders(jvct_t *_jlc) {
 	jl_io_printc(_jlc->jlc, "set up shaders.\n");
 }
 
-static inline void _jl_gl_init_prerenderer(jvct_t *_jlc) {
-	// Make the framebuffer [ groups 0+ textures & 0-1 depth buffers ].
-	_jlc->gl.fb = 0;
-	glGenFramebuffers(1, &_jlc->gl.fb);
-	_jl_gl_cerr(_jlc, _jlc->gl.fb,"glGenFramebuffers");
-	glBindFramebuffer(GL_FRAMEBUFFER, _jlc->gl.fb);
-	_jl_gl_cerr(_jlc, _jlc->gl.fb,"glBindFramebuffer");
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	_jl_gl_cerr(_jlc, _jlc->gl.fb,"glBindFramebuffer2");
-}
-
 //Load and create all resources
 static inline void _jl_gl_make_res(jvct_t *_jlc) {
+	float tex2[] = {
+		0. + (2./1024.), 0.,
+		0. + (2./1024.), 1.,
+		1., 1.,
+		1., 0.
+	};
+
 	jl_io_offset(_jlc->jlc, JL_IO_SIMPLE, "GLIN");
 	//Setup opengl properties
 	_jl_gl_init_setup_gl(_jlc);
 	//Create shaders and set up attribute/uniform variable communication
 	_jl_gl_init_shaders(_jlc);
-	//Setup for gl Render To Texture
-	_jl_gl_init_prerenderer(_jlc);
 
 	jl_io_printc(_jlc->jlc, "making temporary vertex object....\n");
 	_jlc->gl.temp_vo = jl_gl_vo_make(_jlc, NULL, 0);
-	jl_io_printc(_jlc->jlc, "made temporary vertex object!\n");
+	jl_io_printc(_jlc->jlc, "making default texc buff!\n");
+	// Default GL Texture Coordinate Buffer
+	_jl_gl_buffer_make(_jlc, &(_jlc->gl.default_tc));
+	_jl_gl_buffer_push(_jlc, _jlc->gl.default_tc, tex2, 8);
+	jl_io_printc(_jlc->jlc, "made temp vo & default tex. c. buff!\n");
 	jl_io_close_block(_jlc->jlc); //Close Block "GLIN"
 }
 

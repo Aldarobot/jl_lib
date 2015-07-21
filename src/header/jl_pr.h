@@ -87,7 +87,6 @@ enum {
 #elif JL_PLAT == JL_PLAT_PHONE
 	#define JLVM_FILEBASE "/storage/sdcard0/JLVM/\0"
 #endif
-#define JLVM_INIT SDL_INIT_AUDIO|SDL_INIT_VIDEO
 
 #ifdef VIRTUAL_MACH_DAT
 //VIRTUAL MACHINE DATA
@@ -129,9 +128,10 @@ char *jal5_head_jlvm(void);
 uint32_t jal5_head_size(void);
 
 //OTHER LIB STUFF
-void _jl_fl_errf(jvct_t * pjct, char *msg);
-
+void _jl_fl_errf(jvct_t * _jlc, const char *msg);
 //GL
+void jl_gl_viewport_screen(jvct_t *_jlc);
+//
 void jl_gl_poly(jvct_t *_jlc, jl_vo* pv, uint8_t vertices, const float *xyzw);
 void jl_gl_vect(jvct_t *_jlc, jl_vo* pv, uint8_t vertices, const float *xyzw);
 void jl_gl_clrc(jvct_t *_jlc, jl_vo* pv, jl_ccolor_t* cc);
