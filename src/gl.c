@@ -10,19 +10,11 @@
 
 char *source_frag_clr = 
 	GLSL_HEAD
-	"uniform vec4 cliprange;\n"
 	"varying vec4 vcolor;\n"
 	"varying vec3 poscoord;\n"
 	"\n"
-	"void main()\n"
-	"{\n"
-	"	if((poscoord.x > cliprange.y) || (poscoord.y > cliprange.z) ||"
-	"		(poscoord.x < cliprange.x) || (poscoord.y < cliprange.w))"
-	"	{"
-	"		discard;"
-	"	}else{"
-	"		gl_FragColor = vcolor;\n"
-	"	}"
+	"void main() {\n"
+	"	gl_FragColor = vcolor;\n"
 	"}\n\0";
 	
 char *source_vert_clr = 
@@ -35,8 +27,7 @@ char *source_vert_clr =
 	"varying vec4 vcolor;\n"
 	"varying vec3 poscoord;\n"
 	"\n"
-	"void main()\n"
-	"{\n"
+	"void main() {\n"
 	"	poscoord = position + translate;\n"
 	"	gl_Position = vec4(poscoord, 1.0);\n"
 	"	vcolor = acolor;\n"
@@ -46,22 +37,15 @@ char *source_frag_tex =
 	GLSL_HEAD
 	"uniform sampler2D texture;\n"
 	"uniform float multiply_alpha;\n"
-	"uniform vec4 cliprange;\n"
 	"\n"
 	"varying vec2 texcoord;\n"
 	"varying vec3 poscoord;\n"
 	"\n"
 	"void main()\n"
 	"{\n"
-	"	if((poscoord.x > cliprange.y) || (poscoord.y > cliprange.z) ||"
-	"		(poscoord.x < cliprange.x) || (poscoord.y < cliprange.w))"
-	"	{"
-	"		discard;"
-	"	}else{"
-	"		gl_FragColor = texture2D(texture,"
+	"	gl_FragColor = texture2D(texture,"
 	"		vec2(texcoord.x - .0039, texcoord.y + .001));"
-	"		gl_FragColor.a = gl_FragColor.a * multiply_alpha;"
-	"	}"
+	"	gl_FragColor.a = gl_FragColor.a * multiply_alpha;"
 //	"	gl_FragColor = mix(\n"
 //	"		texture2D(textures[0], texcoord),\n"
 //	"		texture2D(textures[1], texcoord),\n"
@@ -265,20 +249,20 @@ void jl_gl_maketexture(jl_t* jlc, uint16_t gid, uint16_t id,
 	if (_jlc->gl.allocatedg < gid + 1) {
 		_jlc->gl.textures =
 			realloc(_jlc->gl.textures, sizeof(GLuint *) * (gid+1));
-		_jlc->gl.uniforms.textures =
-			realloc(_jlc->gl.uniforms.textures,
+		_jlc->gl.tex.uniforms.textures =
+			realloc(_jlc->gl.tex.uniforms.textures,
 				sizeof(GLint *) * (gid+1));
 		_jlc->gl.allocatedg = gid + 1;
 		_jlc->gl.allocatedi = 0;
 		_jlc->gl.textures[gid] = NULL;
-		_jlc->gl.uniforms.textures[gid] = NULL;
+		_jlc->gl.tex.uniforms.textures[gid] = NULL;
 	}
 	if (_jlc->gl.allocatedi < id + 1) {
 		_jlc->gl.textures[gid] =
 			realloc(_jlc->gl.textures[gid],
 				sizeof(GLuint) * (id+1));
-		_jlc->gl.uniforms.textures[gid] =
-			realloc(_jlc->gl.uniforms.textures[gid],
+		_jlc->gl.tex.uniforms.textures[gid] =
+			realloc(_jlc->gl.tex.uniforms.textures[gid],
 				sizeof(GLint) * (id+1));
 		_jlc->gl.allocatedi = id + 1;
 	}
@@ -327,13 +311,13 @@ void jl_gl_maketexture(jl_t* jlc, uint16_t gid, uint16_t id,
 
 //Lower Level Stuff
 static void _jl_gl_usep(jvct_t *_jlc, GLuint prg) {
-	if(!prg) { jl_sg_kill(_jlc->jlc, ":program ain't a prg!\n"); } 
+	if(!prg) jl_sg_kill(_jlc->jlc, ":program ain't a prg!\n");
 	glUseProgram(prg);
 	_jl_gl_cerr(_jlc, prg, "glUseProgram");
 }
 
 static void _jl_gl_setalpha(jvct_t *_jlc, float a) {
-	glUniform1f(_jlc->gl.uniforms.multiply_alpha, a);
+	glUniform1f(_jlc->gl.tex.uniforms.multiply_alpha, a);
 	_jl_gl_cerr(_jlc, 0,"glUniform1f");
 }
 
@@ -378,11 +362,11 @@ static inline void _jl_gl_init_enable_alpha(jvct_t *_jlc) {
 }
 
 static float jl_gl_convert_rx(jvct_t *_jlc, float x) {
-	return (x*_jlc->dl.multiplyx);
+	return (x*2.f);
 }
 
 static float jl_gl_convert_ry(jvct_t *_jlc, float y) {
-	return (y*_jlc->dl.multiplyy);
+	return (y*-2.f)/jl_dl_p(_jlc->jlc);
 }
 
 static float jl_gl_convert_rz(jvct_t *_jlc, float z) {
@@ -390,11 +374,11 @@ static float jl_gl_convert_rz(jvct_t *_jlc, float z) {
 }
 
 static float jl_gl_convert_x(jvct_t *_jlc, float x) {
-	return jl_gl_convert_rx(_jlc, x) + _jlc->dl.shiftx;
+	return jl_gl_convert_rx(_jlc, x) - 1.f;
 }
 
 static float jl_gl_convert_y(jvct_t *_jlc, float y) {
-	return jl_gl_convert_ry(_jlc, y) + _jlc->dl.shifty;
+	return jl_gl_convert_ry(_jlc, y) + 1.f;
 }
 
 static float jl_gl_convert_z(jvct_t *_jlc, float z) {
@@ -457,36 +441,11 @@ jl_vo *jl_gl_vo_make(jvct_t *_jlc, float *xyzw, uint8_t vertices) {
 	return rtn;
 }
 
-static void _jl_gl_vrtx_updatevectors(jvct_t *_jlc, uint8_t *update,
-	GLint* cliprange, GLint* position, uint32_t gl)
-{
-	_jl_gl_setv(_jlc, gl, *position, 3);
-	if(*update == 1) {
-		glUniform4f(*cliprange,
-			_jlc->gl.cliprange.x, _jlc->gl.cliprange.y,
-			_jlc->gl.cliprange.w, _jlc->gl.cliprange.h);
-		*update = 0;
-	}
-}
-
-static void _jl_gl_updatetex(jvct_t *_jlc, uint32_t gl) {
-	_jl_gl_vrtx_updatevectors(_jlc, &_jlc->gl.update,
-		&_jlc->gl.uniforms.cliprange,
-		&_jlc->gl.attr.tex.position, gl);
-}
-
-static void _jl_gl_updateclr(jvct_t *_jlc, uint32_t gl) {
-	_jl_gl_vrtx_updatevectors(_jlc, &_jlc->gl.update2,
-		&_jlc->gl.uniforms.cliprangeclr,
-		&_jlc->gl.attr.clr.position, gl);	
-}
-
-static void _jl_gl_update_clip_pane(jvct_t *_jlc, uint32_t gl) {
-	if(_jlc->gl.whichprg == JL_GL_SLPR_TEX) {
-		_jl_gl_updatetex(_jlc, gl);
-	}else if(_jlc->gl.whichprg == JL_GL_SLPR_CLR){
-		_jl_gl_updateclr(_jlc, gl);
-	}
+static void _jl_gl_updatevectors(jvct_t *_jlc, uint32_t gl){
+	_jl_gl_setv(_jlc, gl,
+		(_jlc->gl.whichprg == JL_GL_SLPR_TEX) ?
+		_jlc->gl.clr.attr.position : _jlc->gl.tex.attr.position,
+		3);
 }
 
 static void _jl_gl_setp(jvct_t *_jlc, jl_gl_slpr id) {
@@ -499,23 +458,6 @@ static void _jl_gl_setp(jvct_t *_jlc, jl_gl_slpr id) {
 static void _jl_gl_col_begin(jvct_t *_jlc, jl_vo* pv) {
 	//Free anything old
 	if(pv->cc != NULL) jl_me_alloc(_jlc->jlc, (void**)&pv->cc, 0, 0);
-}
-
-void jl_gl_set_clippane(jvct_t *_jlc, float xmin, float xmax, float ymin, float ymax) {
-	_jlc->gl.update = 1;
-	_jlc->gl.update2 = 1;
-	_jlc->gl.cliprange.x = jl_gl_convert_x(_jlc, xmin);
-	_jlc->gl.cliprange.y = jl_gl_convert_x(_jlc, xmax);
-	_jlc->gl.cliprange.w = jl_gl_convert_y(_jlc, ymin + _jlc->gl.ytrans);
-	_jlc->gl.cliprange.h = jl_gl_convert_y(_jlc, ymax + _jlc->gl.ytrans);
-}
-
-void jl_gl_default_clippane(jvct_t *_jlc) {
-	jl_gl_set_clippane(_jlc, 0., 1., 0.f, jl_dl_p(_jlc->jlc));
-}
-
-void _jl_gl_setmatrix(jvct_t *_jlc) {
-	jl_gl_default_clippane(_jlc);
 }
 
 static void _jl_gl_depthbuffer_free(jvct_t *_jlc, uint32_t *db) {
@@ -588,11 +530,13 @@ static void _jl_gl_viewport(jvct_t *_jlc, uint16_t w, uint16_t h) {
 	_jl_gl_cerr(_jlc, w * h, "glViewport");
 }
 
-static void _jl_gl_prerenderer_use(jvct_t *_jlc, uint32_t fb, uint16_t w,
-	uint16_t h)
+static void _jl_gl_prerenderer_use(jvct_t *_jlc, uint32_t fb, uint32_t db,
+	uint16_t w, uint16_t h)
 {
 	// Render to our framebuffer
 	_jl_gl_framebuffer_bind(_jlc, fb);
+	// Render on the depth buffer
+	_jl_gl_depthbuffer_bind(_jlc, db);
 	// Render on the whole framebuffer [ lower left -> upper right ]
 	_jl_gl_viewport(_jlc, w, h);
 }
@@ -600,6 +544,8 @@ static void _jl_gl_prerenderer_use(jvct_t *_jlc, uint32_t fb, uint16_t w,
 static void _jl_gl_prerenderer_unuse(jvct_t *_jlc) {
 	// Render to the screen
 	_jl_gl_framebuffer_unbind(_jlc);
+	// Use the screen's depth buffer.
+	_jl_gl_depthbuffer_unbind(_jlc);
 	// Render to the whole screen.
 	jl_gl_viewport_screen(_jlc);
 }
@@ -619,13 +565,51 @@ static void _jl_gl_prerenderer_obj_make(jvct_t *_jlc,
 	uint32_t *tex, uint32_t *db, uint32_t *fb,
 	uint16_t w, uint16_t h)
 {
+	{
+	char *wmsg = jl_me_string_fnum(_jlc->jlc, w);
+	char *hmsg = jl_me_string_fnum(_jlc->jlc, h);
+	_jl_fl_errf(_jlc, ":w = ");
+	_jl_fl_errf(_jlc, wmsg);
+	_jl_fl_errf(_jlc, "\n:h = ");
+	_jl_fl_errf(_jlc, hmsg);
+	_jl_fl_errf(_jlc, "\n:");
+	}
+	{
+	char *wmsg = jl_me_string_fnum(_jlc->jlc, _jlc->dl.full_w);
+	char *hmsg = jl_me_string_fnum(_jlc->jlc, _jlc->dl.full_h);
+	_jl_fl_errf(_jlc, ":rw = ");
+	_jl_fl_errf(_jlc, wmsg);
+	_jl_fl_errf(_jlc, "\n:rh = ");
+	_jl_fl_errf(_jlc, hmsg);
+	_jl_fl_errf(_jlc, "\n:");
+	}
+	if(w < 1) {
+		_jl_fl_errf(_jlc, ":_jl_gl_prerenderer_obj_make() failed:\n:");
+		jl_sg_kill(_jlc->jlc, ": 'w' must be more than 1\n");
+	}
+	if(h < 1) {
+		_jl_fl_errf(_jlc, ":_jl_gl_prerenderer_obj_make() failed:\n:");
+		jl_sg_kill(_jlc->jlc, ": 'h' must be more than 1\n");	
+	}
+	if((w > GL_MAX_TEXTURE_SIZE) || (h > GL_MAX_TEXTURE_SIZE)) {
+		char *wmsg = jl_me_string_fnum(_jlc->jlc, w);
+		char *hmsg = jl_me_string_fnum(_jlc->jlc, h);
+		_jl_fl_errf(_jlc, ":_jl_gl_prerenderer_obj_make() failed:\n");
+		_jl_fl_errf(_jlc, ":w = ");
+		_jl_fl_errf(_jlc, wmsg);
+		_jl_fl_errf(_jlc, "\n:h = ");
+		_jl_fl_errf(_jlc, hmsg);
+		_jl_fl_errf(_jlc, "\n");
+		jl_sg_kill(_jlc->jlc,
+			": texture is too big for graphics card.\n");
+	}
 	// Make the texture for prerendering.
 	_jl_gl_texture_make(_jlc, tex);
 	// Bind the texture for prerendering.
 	_jl_gl_texture_bind(_jlc, *tex);
 	// Empty texture - the last "0" sets it empty.
-	glTexImage2D(GL_TEXTURE_2D, 0,GL_RGB, w, h, 0,GL_RGB, GL_UNSIGNED_BYTE, 0);
-	_jl_gl_cerr(_jlc, 0,"make prerenderer: glTexImage2D");
+	glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA,w,h,0,GL_RGBA,GL_UNSIGNED_BYTE,0);
+	_jl_gl_cerr(_jlc, w * h,"make prerenderer: glTexImage2D");
 	// 
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	_jl_gl_cerr(_jlc, 0,"make prerenderer: glTexParameteri");
@@ -680,7 +664,33 @@ static inline void _jl_gl_set_shader(jvct_t *_jlc, jl_vo* pv) {
 	_jl_gl_setp(_jlc, pv->cc == NULL ? JL_GL_SLPR_TEX : JL_GL_SLPR_CLR);
 }
 
-//HIGHER LEVEL
+// Prepare to draw a solid color
+static inline void _jl_gl_draw_colr(jvct_t *_jlc, jl_vo* pv) {
+	// Bind Colors to shader
+	_jl_gl_setv(_jlc, pv->bt, _jlc->gl.clr.attr.acolor, 4);
+}
+
+// Prepare to draw a texture with texture coordinates "tc". 
+static void _jl_gl_draw_txtr(jvct_t *_jlc, jl_vo* pv, uint32_t tc) {
+	// Bind Texture Coordinates to shader
+	_jl_gl_setv(_jlc, tc, _jlc->gl.tex.attr.texpos, 2);
+	// Set Alpha Value In Shader
+	_jl_gl_setalpha(_jlc, pv->a);
+	// Bind the texture
+	_jl_gl_texture_bind(_jlc, pv->tx);
+}
+
+static void _jl_gl_draw_onts(jvct_t *_jlc, jl_vo* pv) {
+	// Update the clipping pane & position in shader.
+	_jl_gl_updatevectors(_jlc, pv->gl);
+	// Finally, draw the image!
+	_jl_gl_draw_arrays(_jlc, pv->rs ? GL_TRIANGLES : GL_TRIANGLE_FAN,
+		pv->vc);
+}
+
+/************************/
+/***  ETOM Functions  ***/
+/************************/
 
 // Set the viewport to the screen size.
 void jl_gl_viewport_screen(jvct_t *_jlc) {
@@ -696,6 +706,7 @@ void jl_gl_prer_old(jvct_t *_jlc, jl_vo* pv) {
 void jl_gl_prer_new(jvct_t *_jlc, jl_vo* pv, uint16_t w, uint16_t h) {
 	pv->w = w;
 	pv->h = h;
+	pv->a = 255;
 	_jl_gl_prerenderer_obj_make(_jlc, &(pv->tx), &(pv->db), &(pv->fb), w,h);
 }
 
@@ -718,10 +729,19 @@ uint8_t jl_gl_prer_isi(jvct_t *_jlc, jl_vo* pv) {
 	return 2;
 }
 
+// Clear the screen with a color
+// Used by: "dl.c"
+void jl_gl_clear(uint8_t r, uint8_t g, uint8_t b, uint8_t a) {
+	glClearColor(((double)r)/255., ((double)g)/255.,
+		((double)b)/255., ((double)a)/255.);
+	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+}
+
 // Use a vertex object's prerender for rendering.
 void jl_gl_prer_use(jvct_t *_jlc, jl_vo* pv) {
 	pv->a = 1.f;
-	_jl_gl_prerenderer_use(_jlc, pv->fb, pv->w, pv->h);
+	_jl_gl_prerenderer_use(_jlc, pv->fb, pv->db, pv->w, pv->h);
+	jl_gl_clear(255, 255, 255, 0);
 }
 
 // Turn a prerender off in order to draw to the screen.
@@ -842,41 +862,34 @@ void jl_gl_txtr(jvct_t *_jlc, jl_vo* pv, u08t map, u08t a, u16t pgid, u16t pi) {
 	}
 }
 
+//TODO:MOVE
+// Shader true if texturing, false if coloring
+static void _jl_gl_translate(jvct_t *_jlc, const uint8_t shader, float x,
+	float y, float z)
+{
+	// Determine which shader to use: texturing or coloring?
+	_jl_gl_setp(_jlc, shader ? JL_GL_SLPR_TEX : JL_GL_SLPR_CLR);
+	// Set the uniforms
+	glUniform3f(shader ? _jlc->gl.tex.uniforms.translate :
+		_jlc->gl.clr.uniforms.translate,
+		jl_gl_convert_rx(_jlc, x),
+		jl_gl_convert_ry(_jlc, y),
+		jl_gl_convert_rz(_jlc, z));
+	_jl_gl_cerr(_jlc, 0,"glUniform3f - translate");	
+}
+
 void jl_gl_translate(jvct_t *_jlc, jl_vo* pv, float x, float y, float z) {
 	if(pv == NULL) pv = _jlc->gl.temp_vo;
-	// Use "pv->cc" to determine which shader to use: texturing or coloring?
-	_jl_gl_setp(_jlc, pv->cc == NULL ? JL_GL_SLPR_TEX : JL_GL_SLPR_CLR);
-	// Set the uniforms
-	glUniform3f(pv->cc == NULL ? _jlc->gl.uniforms.translate :
-		_jlc->gl.uniforms.translateclr,
-		jl_gl_convert_rx(_jlc, x),
-		jl_gl_convert_ry(_jlc, y + _jlc->gl.ytrans),
-		jl_gl_convert_rz(_jlc, z));
-	_jl_gl_cerr(_jlc, 0,"glUniform3f - translate");
+	_jl_gl_translate(_jlc, (pv->cc == NULL), x, y, z);
 }
 
-// Prepare to draw a solid color
-static inline void _jl_gl_draw_colr(jvct_t *_jlc, jl_vo* pv) {
-	// Bind Colors to shader
-	_jl_gl_setv(_jlc, pv->bt, _jlc->gl.attr.clr.acolor, 4);
-}
-
-// Prepare to draw a texture with texture coordinates "tc". 
-static void _jl_gl_draw_txtr(jvct_t *_jlc, jl_vo* pv, uint32_t tc) {
-	// Bind Texture Coordinates to shader
-	_jl_gl_setv(_jlc, tc, _jlc->gl.attr.tex.texpos, 2);
-	// Set Alpha Value In Shader
-	_jl_gl_setalpha(_jlc, pv->a);
-	// Bind the texture
-	_jl_gl_texture_bind(_jlc, pv->tx);
-}
-
-static void _jl_gl_draw_onts(jvct_t *_jlc, jl_vo* pv) {
-	// Update the clipping pane & position in shader.
-	_jl_gl_update_clip_pane(_jlc, pv->gl);
-	// Finally, draw the image!
-	_jl_gl_draw_arrays(_jlc, pv->rs ? GL_TRIANGLES : GL_TRIANGLE_FAN,
-		pv->vc);
+void jl_gl_translate_prerendered(jvct_t *_jlc, jl_vo* pv, float x, float y, float z) {
+	if(pv == NULL) pv = _jlc->gl.temp_vo;
+	if(jl_gl_prer_isi(_jlc, pv))
+		_jl_gl_translate(_jlc, 1, x, y, z);
+	else
+		jl_sg_kill(_jlc->jlc, "jl_gl_translate_prerendered: "
+			"Pre-renderer Not Initialized!\n");
 }
 
 //Draw object with "vertices" vertices.  The vertex data is in "x","y" and "z".
@@ -947,31 +960,27 @@ static inline void _jl_gl_init_shaders(jvct_t *_jlc) {
 	jl_io_printc(_jlc->jlc, "made programs.\n");
 
 	jl_io_printc(_jlc->jlc, "setting up shaders....\n");
-	if(_jlc->gl.uniforms.textures == NULL)
+	if(_jlc->gl.tex.uniforms.textures == NULL)
 		jl_sg_kill(_jlc->jlc, "Couldn't create uniforms");
-	_jlc->gl.uniforms.textures[0][0] =
+	_jlc->gl.tex.uniforms.textures[0][0] =
 		_jl_gl_getu(_jlc, _jlc->gl.prgs[JL_GL_SLPR_TEX], "texture");
-	_jlc->gl.uniforms.multiply_alpha =
+	_jlc->gl.tex.uniforms.multiply_alpha =
 		_jl_gl_getu(_jlc, _jlc->gl.prgs[JL_GL_SLPR_TEX],
 			"multiply_alpha");
-	_jlc->gl.uniforms.cliprange =
-		_jl_gl_getu(_jlc, _jlc->gl.prgs[JL_GL_SLPR_TEX], "cliprange");
-	_jlc->gl.uniforms.cliprangeclr =
-		_jl_gl_getu(_jlc, _jlc->gl.prgs[JL_GL_SLPR_CLR], "cliprange");
-	_jlc->gl.uniforms.translate =
+	_jlc->gl.tex.uniforms.translate =
 		_jl_gl_getu(_jlc, _jlc->gl.prgs[JL_GL_SLPR_TEX], "translate");
-	_jlc->gl.uniforms.translateclr =
+	_jlc->gl.clr.uniforms.translate =
 		_jl_gl_getu(_jlc, _jlc->gl.prgs[JL_GL_SLPR_CLR], "translate");
 	jl_io_printc(_jlc->jlc, "setting up tex shader attrib's....\n");
 	_jl_gl_geta(_jlc, _jlc->gl.prgs[JL_GL_SLPR_TEX],
-		&_jlc->gl.attr.tex.position, "position");
+		&_jlc->gl.tex.attr.position, "position");
 	_jl_gl_geta(_jlc, _jlc->gl.prgs[JL_GL_SLPR_TEX],
-		&_jlc->gl.attr.tex.texpos, "texpos");
+		&_jlc->gl.tex.attr.texpos, "texpos");
 	jl_io_printc(_jlc->jlc, "setting up clr shader attrib's....\n");
 	_jl_gl_geta(_jlc, _jlc->gl.prgs[JL_GL_SLPR_CLR],
-		&_jlc->gl.attr.clr.position, "position");
+		&_jlc->gl.clr.attr.position, "position");
 	_jl_gl_geta(_jlc, _jlc->gl.prgs[JL_GL_SLPR_CLR],
-		&_jlc->gl.attr.clr.acolor, "acolor");
+		&_jlc->gl.clr.attr.acolor, "acolor");
 	jl_io_printc(_jlc->jlc, "set up shaders.\n");
 }
 
@@ -1009,9 +1018,9 @@ void _jl_gl_init(jvct_t *_jlc) {
 	_jl_gl_make_res(_jlc);
 	//Set uniform values
 	_jl_gl_usep(_jlc, _jlc->gl.prgs[JL_GL_SLPR_CLR]);
-	glUniform3f(_jlc->gl.uniforms.translateclr, 0.f, 0.f, 0.f);
+	glUniform3f(_jlc->gl.clr.uniforms.translate, 0.f, 0.f, 0.f);
 	_jl_gl_usep(_jlc, _jlc->gl.prgs[JL_GL_SLPR_TEX]);
-	glUniform3f(_jlc->gl.uniforms.translate, 0.f, 0.f, 0.f);
+	glUniform3f(_jlc->gl.tex.uniforms.translate, 0.f, 0.f, 0.f);
 	//Textures on by default
 	_jlc->gl.whichprg = JL_GL_SLPR_TEX;
 }

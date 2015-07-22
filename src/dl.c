@@ -10,7 +10,7 @@
 #define JL_DL_FULLSCREEN SDL_WINDOW_FULLSCREEN_DESKTOP
 
 //PROTOTYPES
-void _jl_gl_setmatrix(jvct_t *_jlc);
+void jl_gl_clear(uint8_t r, uint8_t g, uint8_t b, uint8_t a);
 
 static void _jl_dl_fscreen(jvct_t* _jlc, uint8_t a);
 static void _jlvm_curd_mode(jvct_t *_jlc);
@@ -126,8 +126,7 @@ void _jl_dl_loop(jvct_t* _jlc) {
 	//Update Screen
 	SDL_GL_SwapWindow(_jlc->dl.displayWindow); //end current draw
 	//start next draw
-	glClearColor(2.f/255.f, 5./255.f, 255./255.f, 1.f);
-	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+	jl_gl_clear(2, 5, 255, 255);
 }
 
 void _jl_dl_resize(jvct_t *_jlc, uint16_t x, uint16_t y) {
@@ -138,8 +137,8 @@ void _jl_dl_resize(jvct_t *_jlc, uint16_t x, uint16_t y) {
 	jl_gl_viewport_screen(_jlc);
 	_jlc->dl.multiplyy = -2.*((float)x)/((float)y);
 	_jlc->dl.multiplyx = 2.;
-	_jlc->dl.shiftx = -1.;
-	_jlc->dl.shifty = 1.;
+	_jlc->dl.shiftx = 0.;
+	_jlc->dl.shifty = 0.;
 	if(y < x * .5625) {
 		offx = x;
 		x = y * 16./9.; //Widesceen
@@ -156,7 +155,7 @@ void _jl_dl_resize(jvct_t *_jlc, uint16_t x, uint16_t y) {
 		if(y > x * 1.5) {
 			offy = y;
 			y = x * 1.5; //Standard
-			_jlc->dl.shifty -= ((float)offy-(float)y)/((float)offy);
+			_jlc->dl.shifty += ((float)offy-(float)y)/((float)offy);
 			_jlc->dl.window.x = 0.;
 			_jlc->dl.window.y = (offy) / 2.;
 			_jlc->dl.window.w = x;
@@ -173,7 +172,7 @@ void _jl_dl_resize(jvct_t *_jlc, uint16_t x, uint16_t y) {
 	}else if(y > x * .75) {
 		offy = y;
 		y = x * .75; //Standard
-		_jlc->dl.shifty -= ((float)offy-(float)y)/((float)offy);
+		_jlc->dl.shifty += ((float)offy-(float)y)/((float)offy);
 		offy = (offy - y) / 2;
 		_jlc->jlc->smde = 0;
 		_jlc->dl.window.x = 0.;
@@ -190,12 +189,13 @@ void _jl_dl_resize(jvct_t *_jlc, uint16_t x, uint16_t y) {
 	_jlc->dl.current.w = x;
 	_jlc->dl.current.h = y + (x - y);
 	_jlc->dl.currenty = y;
-	_jl_gl_setmatrix(_jlc);
 }
 
-/*
+/**
  * Set the program title.  Used as window name, and as resource
  * directory.
+ * @param jlc: The library context.
+ * @param name: The name of the program.
 */
 void jl_dl_progname(jl_t* jlc, strt name) {
 	jvct_t* _jlc = jlc->_jlc;

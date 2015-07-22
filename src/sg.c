@@ -443,22 +443,22 @@ void jl_sg_add_image(jl_t* jlc, char *pzipfile, uint16_t pigid) {
 
 static void _jl_sg_screen_draw(jl_t* jlc, float ytrans, jl_vo* bg, uint8_t lp) {
 	jvct_t * _jlc = jlc->_jlc;
+	jl_vec3_t translate = { 0., ytrans, 0. };
 
-	_jlc->gl.ytrans = ytrans;
 	_jlc->sg.cbg = bg;
 
+	// Draw the vertex object.
+	jl_gr_draw_vo(jlc, bg, &translate);
 	// Use the prerenderer for this screen.
 	jl_gl_prer_use(_jlc, _jlc->sg.cbg);
-	// Use default clippane TODO: REMOVE
-	jl_gl_default_clippane(_jlc);
-	// Draw the vertex object.
-	jl_gr_draw_vo(jlc, bg);
 	// Run the screen's loop
 	_jlc->sg.mode.tclp[lp](jlc);
+	// If BG is lower screen: Draw Menu Bar & Mouse - on lower screen
+	if(bg == _jlc->sg.bg.dn) _jl_gr_loop(jlc);
 	// Turn off the prerenderer.
 	jl_gl_prer_off(_jlc);
 	// Draw the prerendered texture.
-	jl_gl_draw_prerendered(_jlc, bg);
+	jl_gr_draw_pr(jlc, bg, &translate);
 }
 
 // Double screen loop
@@ -466,12 +466,11 @@ static void _jl_sg_loop_ds(jl_t* jlc) {
 	jvct_t * _jlc = jlc->_jlc;
 
 	// Draw lower screen - default screen
-	_jl_sg_screen_draw(jlc, jl_dl_p(jlc), _jlc->sg.bg.up, jlc->loop);
-	// Draw Menu Bar & Mouse - on lower screen
-	_jl_gr_loop(jlc);
-	// Draw upper screen - alternate screen
-	_jl_sg_screen_draw(jlc, 0.f, _jlc->sg.bg.dn,
+	_jl_sg_screen_draw(jlc, 0.f, _jlc->sg.bg.up,
 		(jlc->loop == JL_SG_WM_UP) ? JL_SG_WM_DN : JL_SG_WM_UP);
+	// Draw upper screen - alternate screen
+	_jl_sg_screen_draw(jlc, _jlc->sg.screen_height, _jlc->sg.bg.dn,
+		jlc->loop);
 }
 
 // Single screen loop
@@ -480,8 +479,6 @@ static void _jl_sg_loop_ss(jl_t* jlc) {
 
 	// Draw lower screen - default screen
 	_jl_sg_screen_draw(jlc, 0.f, _jlc->sg.bg.dn, jlc->loop);
-	// Draw Menu Bar & Mouse
-	_jl_gr_loop(jlc);
 }
 
 void _jl_sg_loop(jvct_t *_jlc) {
@@ -491,11 +488,22 @@ void _jl_sg_loop(jvct_t *_jlc) {
 
 void _jl_sg_resize(jl_t* jlc) {
 	jvct_t * _jlc = jlc->_jlc;
-	jl_rect_t rcrd = { 0., 0., 1., jl_dl_p(_jlc->jlc) };
+	const float isDoubleScreen = (double)jlc->smde;
+	const float shiftx = _jlc->dl.shiftx;
+	const float shifty = _jlc->dl.shifty / (isDoubleScreen+1.);
+	const float rcrdx = shiftx/2.;
+	const float rcrdy = (shifty * (1. + isDoubleScreen))/2.;
+	const float rcrdw = 1. - _jlc->dl.shiftx;
+	const float rcrdh = (1./(1.+isDoubleScreen)) - shifty;
+	jl_rect_t rcrd = {
+		rcrdx, rcrdy * jl_dl_p(jlc),
+		rcrdw, rcrdh * jl_dl_p(jlc)
+	};
 	uint8_t rclr_up[4] = { 127,	127,	127,	255 };
 	uint8_t rclr_dn[4] = { 0,	127,	0,	255 };
 	uint8_t rclr_bg[4] = { 0,	255,	0,	255 };
 
+	_jlc->sg.screen_height = rcrd.h;
 	if(jlc->smde) {
 		// Update the rectangle backgrounds.
 		jl_gr_vos_rec(jlc, _jlc->sg.bg.up, rcrd, rclr_up, 0);
@@ -529,7 +537,7 @@ static inline void _jl_sg_initb(jvct_t * _jlc) {
 static inline void _jl_sg_inita(jvct_t * _jlc) {
 	//Set Up Variables
 	_jlc->gl.textures = NULL;
-	_jlc->gl.uniforms.textures = NULL;
+	_jlc->gl.tex.uniforms.textures = NULL;
 	_jlc->sg.image_id = 0; //Reset Image Id
 	_jlc->sg.igid = 0; //Reset Image Group Id
 	//Load Graphics
@@ -549,7 +557,14 @@ static inline void _jl_sg_inita(jvct_t * _jlc) {
 static inline void _jl_sg_init_done(jvct_t *_jlc) {
 	_jlc->has.graphics = 1; //Graphics Now Available For Use
 	jl_gr_draw_msge(_jlc->jlc, "LOADING JLLIB....");
-	jl_io_printc(_jlc->jlc, "started up display.\n");
+	jl_io_offset(_jlc->jlc, JL_IO_MINIMAL, "JLLB"); //"JLLB" to SIMPLE
+	jl_io_printc(_jlc->jlc, "started up display ");
+	jl_io_printc(_jlc->jlc,
+		jl_me_string_fnum_tmp(_jlc->jlc, _jlc->dl.full_w));
+	jl_io_printc(_jlc->jlc, "x");
+	jl_io_printc(_jlc->jlc,
+		jl_me_string_fnum_tmp(_jlc->jlc, _jlc->dl.full_h));
+	jl_io_printc(_jlc->jlc, "\n");
 }
 
 //Initialize The Libraries Needed At Very Beginning: The Base Of It All

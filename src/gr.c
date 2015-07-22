@@ -30,7 +30,7 @@ char *GMessage[2] = {
 //Upper OpenGL prototypes
 jl_vo *jl_gl_vo_make(jvct_t *_jlc, float *xyzw, uint8_t vertices);
 void jl_gl_vo_free(jvct_t *_jlc, jl_vo *pv);
-
+void jl_gl_draw_prerendered(jvct_t *_jlc, jl_vo* pv);
 void jl_gl_prer_old(jvct_t *_jlc, jl_vo* pv);
 void jl_gl_prer_new(jvct_t *_jlc, jl_vo* pv, uint16_t w, uint16_t h);
 uint8_t jl_gl_prer_isi(jvct_t *_jlc, jl_vo* pv);
@@ -74,28 +74,6 @@ static void _jl_gr_prer_new(jl_t* jlc, jl_vo* pv);
 	}
 
 	/**
-	 * Set the clipping pane for the screen.
-	 * @param jlc: The library context.
-  	 * @param xmin: anything drawn left of this line is disregarded.
-  	 * @param xmax: anything drawn right of this line is disregarded.
-	 * @param ymin: if something is drawn below this line it is disregarded.
- 	 * @param ymax: if something is drawn above this line it is disregarded.
-	**/
-	void jl_gr_set_clippane(jl_t* jlc, float xmin, float xmax,
-		float ymin, float ymax)
-	{
-		jl_gl_set_clippane(jlc->_jlc, xmin, xmax, ymin, ymax);
-	}
-	
-	/**
-	 * Reset the clipping pane for the screen.
- 	 * @param jlc: The library context.
-	**/
-	void jl_gr_default_clippane(jl_t* jlc) {
-		jl_gl_default_clippane(jlc->_jlc);
-	}
-
-	/**
 	 * Convert a color.
 	 * @param jlc: The library context.
 	 * @param rgba: The color to convert ( Not freed - Reusable ).
@@ -122,24 +100,31 @@ static void _jl_gr_prer_new(jl_t* jlc, jl_vo* pv);
 	}
 
 	/**
-	 * Draw a vertex object.
-  	 * @param jlc: The library context.
-  	 * @param pv: the vertex object to draw.
-	**/
-	void jl_gr_draw_vo(jl_t* jlc, jl_vo* pv) {
-		jl_gl_translate(jlc->_jlc, pv, 0.f, 0.f, 0.f);
-		jl_gl_draw(jlc->_jlc, pv);
-	}
-	
-	/**
 	 * Draw a vertex object with offset by translation.
   	 * @param jlc: The library context.
   	 * @param pv: The vertex object to draw.
   	 * @param vec: The vector of offset/translation.
 	**/
-	void jl_gr_draw_tvo(jl_t* jlc, jl_vo* pv, jl_vec3_t* vec) {
-		jl_gl_translate(jlc->_jlc, pv, vec->x, vec->y, vec->z);
+	void jl_gr_draw_vo(jl_t* jlc, jl_vo* pv, jl_vec3_t* vec) {
+		if(vec == NULL) jl_gl_translate(jlc->_jlc, pv, 0.f, 0.f, 0.f);
+		else jl_gl_translate(jlc->_jlc, pv, vec->x, vec->y, vec->z);
 		jl_gl_draw(jlc->_jlc, pv);
+	}
+	
+	/**
+	 * Draw a vertex object's pre-rendered texture.
+  	 * @param jlc: The library context.
+  	 * @param pv: The vertex object to get the pre-rendered texture from.
+  	 * @param vec: The vector of offset/translation.
+	**/
+	void jl_gr_draw_pr(jl_t* jlc, jl_vo* pv, jl_vec3_t* vec) {
+		if(vec == NULL)
+			jl_gl_translate_prerendered(jlc->_jlc, pv,
+				0.f, 0.f, 0.f);
+		else
+			jl_gl_translate_prerendered(jlc->_jlc, pv,
+				vec->x, vec->y, vec->z);
+		jl_gl_draw_prerendered(jlc->_jlc, pv);
 	}
 	
 	/**
@@ -208,7 +193,7 @@ static void _jl_gr_prer_new(jl_t* jlc, jl_vo* pv);
 			w+x,	h+y,	0.f };
 		jl_gl_txtr(jlc->_jlc, NULL, c, a, g, i);
 		jl_gl_poly(jlc->_jlc, NULL, 4, Oone);
-		jl_gr_draw_vo(jlc, NULL);
+		jl_gr_draw_vo(jlc, NULL, NULL);
 	}
 	
 	/**
@@ -595,9 +580,11 @@ static void _jl_gr_prer_new(jl_t* jlc, jl_vo* pv);
 		for(i = 0; i < pv->vc*3; i+=3) {
 			uint16_t xx = ((pv->cv[i] + 1.) / 2.) *
 				((double)_jlc->dl.full_w);
-			uint16_t yy = ((pv->cv[i+1] + 1.) / 2.) *
-				((double)_jlc->dl.full_h);
-			if(xx < x) x = xx; 
+			uint16_t yy =
+				((pv->cv[i+1] - 1.) / -2.)
+				 * ((double)_jlc->dl.full_h);
+			printf("%f\n", ((pv->cv[i+1] - 1.) / -2.));
+			if(xx < x) x = xx;
 			if(yy < y) y = yy;
 			if(xx > w) w = xx;
 			if(yy > h) h = yy;

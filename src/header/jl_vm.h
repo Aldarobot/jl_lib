@@ -70,6 +70,11 @@ typedef struct{
 //JLVM Context Structure
 typedef struct{
 	jl_t * jlc; // JL_Lib context
+	
+	// Memory
+	struct{
+		uint8_t temp_buff[30];
+	}me;
 
 	_io_t io; //Terminal Data
 	//Window Info
@@ -95,6 +100,7 @@ typedef struct{
 		}bg;
 		
 		jl_vo* cbg;
+		float screen_height;
 		
 		jl_simple_fnt loop;
 	}sg;
@@ -147,43 +153,36 @@ typedef struct{
 	//Opengl Data
 	struct{
 		GLuint **textures;
-		
 		uint16_t allocatedg;
 		uint16_t allocatedi;
-		
 		uint8_t whichprg;
-		uint8_t update;
-		uint8_t update2;
 		GLuint prgs[JL_GL_SLPR_MAX];
-
-		struct {
-			//PRG: TEX
-			GLint **textures;
-			GLint multiply_alpha;
-			GLint translate;
-			GLint translateclr;
-			GLint cliprange;
-			GLint cliprangeclr;
-		} uniforms;
-
-		//attributes
-		struct {
-			struct{//PRG: TEX
+		//PRG: TEX
+		struct{
+			struct {
 				GLint position;
 				GLint texpos;
-			} tex;
-			struct{//PRG: CLR
+			} attr;
+			struct {
+				//PRG: TEX
+				GLint **textures;
+				GLint multiply_alpha;
+				GLint translate;
+			} uniforms;
+		} tex;
+		//PRG: CLR
+		struct{
+			struct {
 				GLint position;
 				GLint acolor;
-			} clr;
-		} attr;
-
+			} attr;
+			struct {
+				GLint translate;
+			} uniforms;
+		} clr;
 		jl_vo *temp_vo;
-		float ytrans;
 		// Default texture coordinates.
 		uint32_t default_tc;
-		
-		jl_rect_t cliprange;
 	}gl;
 	
 	_fl_t fl; //File Manager

@@ -9,18 +9,11 @@
 #include "header/jl_pr.h"
 #include <malloc.h>
 
-//MEMORY
-#define JLVM_MEMORY_SIZE 1000*256*256*16
+/************************/
+/*** Static Functions ***/
+/************************/
 
-uint8_t *memory;
-
-//Return Amount Of Total Memory Being Used
-uint32_t jl_me_tbiu(void) {
-	struct mallinfo mi;
-	mi = mallinfo();
-	return mi.uordblks;
-}
-
+// TODO: Remove dependencies on this function.  jl_me_alloc() should replace.
 static void *_jl_me_hydd_allc(jvct_t* _jlc, void *a, uint32_t size) {
 	if((a = realloc(a, size)) == NULL) {
 		jl_sg_kill(_jlc->jlc, "realloc() memory error!");
@@ -37,8 +30,36 @@ static inline void _jlvm_jl_me_resz(jvct_t* _jlc, uint32_t kb) {
 	printf("[jl_me] JLVM Size =  %d\n", 0);
 	printf("[jl_me] NonLib Size =%d\n", 0);
 	printf("[jl_me] Unknown =    %d\n", 0);
-	memory = _jl_me_hydd_allc(_jlc, memory, (1000*kb));
 	malloc_trim(0); //Remove Free Memory
+}
+
+static void _jl_me_alloc_malloc(jl_t* jlc, void **a, uint32_t size) {
+	if(size == 0)
+		jl_sg_kill(jlc, "Double Free or free on NULL pointer");
+	*a = malloc(size);
+	if(*a == NULL)
+		jl_sg_kill(jlc, "jl_me_alloc: Out Of Memory!");
+	jl_me_clr(*a, size);
+}
+
+static void _jl_me_truncate_curs(strt pstr) {
+	if(pstr->curs > pstr->size) {
+		pstr->curs = pstr->size;
+	}
+}
+
+/************************/
+/*** Global Functions ***/
+/************************/
+
+/**
+ * Return Amount Of Total Memory Being Used
+ * @returns The total amount of memory being used in bytes.
+**/
+uint32_t jl_me_tbiu(void) {
+	struct mallinfo mi;
+	mi = mallinfo();
+	return mi.uordblks;
 }
 
 /**
@@ -52,15 +73,6 @@ void jl_me_clr(void *pmem, uint64_t size) {
 	for(i = 0; i < size; i++) {
 		fmem[i] = 0;
 	}
-}
-
-static void _jl_me_alloc_malloc(jl_t* jlc, void **a, uint32_t size) {
-	if(size == 0)
-		jl_sg_kill(jlc, "Double Free or free on NULL pointer");
-	*a = malloc(size);
-	if(*a == NULL)
-		jl_sg_kill(jlc, "jl_me_alloc: Out Of Memory!");
-	jl_me_clr(*a, size);
 }
 
 /**
@@ -164,12 +176,6 @@ strt jl_me_strt_mkfrom_data(jl_t* jlc, uint32_t size, void *data) {
 	return a;
 }
 
-void _jl_me_truncate_curs(strt pstr) {
-	if(pstr->curs > pstr->size) {
-		pstr->curs = pstr->size;
-	}
-}
-
 /**
  * Returns the byte at the cursor of a "strt".
  * @param pstr: the string to read.
@@ -204,8 +210,7 @@ void jl_me_strt_delete_byte(jl_t *jlc, strt pstr) {
 		pstr->data[i] = pstr->data[i+1];
 	pstr->size--;
 	pstr->data[pstr->size] = '\0';
-	pstr->data =
-		_jl_me_hydd_allc(jlc->_jlc, pstr->data, pstr->size+1);
+	pstr->data = _jl_me_hydd_allc(jlc->_jlc, pstr->data, pstr->size+1);
 	_jl_me_truncate_curs(pstr);
 }
 
@@ -293,11 +298,17 @@ strt jl_me_strt_fnum(s32t a) {
 }
 
 char* jl_me_string_fnum(jl_t* jlc, int32_t a) {
-	char *string = malloc(30);
-	jl_me_clr(string, 30);
+	char *string = NULL;
+	jl_me_alloc(jlc, (void**)&string, 30, 0);
 	sprintf(string, "%d", a);
-//	string = _jl_me_hydd_allc(jlc->_jlc, string, strlen(string + 1));
 	return string;
+}
+
+const char* jl_me_string_fnum_tmp(jl_t* jlc, int32_t a) {
+	jvct_t * _jlc = jlc->_jlc;
+	jl_me_clr((void*)_jlc->me.temp_buff, 30);
+	sprintf((void*)_jlc->me.temp_buff, "%d", a);
+	return (void*)_jlc->me.temp_buff;
 }
 
 /**
@@ -358,7 +369,9 @@ strt jl_me_read_upto(strt script, u08t end, u32t psize) {
 	return compiled;
 }
 
-//struct cl_list *g_vmap_list;
+/************************/
+/***  ETOM Functions  ***/
+/************************/
 
 jvct_t* _jl_me_init(void) {
 	//Create a context for the currently loaded program

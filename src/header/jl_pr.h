@@ -141,9 +141,8 @@ void jl_gl_clrg(jvct_t *_jlc, jl_vo* pv, uint8_t *rgba);
 void jl_gl_clrs(jvct_t *_jlc, jl_vo* pv, uint8_t *rgba);
 void jl_gl_txtr(jvct_t *_jlc, jl_vo* pv, u08t map, u08t a, u16t pgid, u16t pi);
 void jl_gl_translate(jvct_t *_jlc, jl_vo* pv, float x, float y, float z);
+void jl_gl_translate_prerendered(jvct_t *_jlc, jl_vo* pv, float x, float y, float z);
 void jl_gl_draw(jvct_t *_jlc, jl_vo* pv);
-void jl_gl_set_clippane(jvct_t *_jlc, float xmin, float xmax, float ymin, float ymax);
-void jl_gl_default_clippane(jvct_t *_jlc);
 
 //DL
 void _jl_dl_resize(jvct_t *_jlc, uint16_t x, uint16_t y);

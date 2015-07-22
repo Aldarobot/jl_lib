@@ -12,6 +12,7 @@
 
 	void jl_dont(jl_t* jlc);
 // "me.c"
+	uint32_t jl_me_tbiu(void);
 	void jl_me_clr(void *pmem, uint64_t size);
 	void * jl_me_copy(jl_t* jlc, const void *src, size_t size);
 	void jl_me_alloc(jl_t* jlc, void **a, uint32_t size, uint32_t oldsize);
@@ -27,6 +28,7 @@
 	void jl_me_strt_trunc(jl_t *jlc, strt a, uint32_t size);
 	strt jl_me_strt_fnum(s32t a);
 	char* jl_me_string_fnum(jl_t* jlc, int32_t a);
+	const char* jl_me_string_fnum_tmp(jl_t* jlc, int32_t a);
 	char* jl_me_string_fstrt(jl_t* jlc, strt a);
 	u08t jl_me_strt_byte(strt pstr);
 	void jl_me_strt_add_byte(strt pstr, u08t pvalue);
@@ -61,14 +63,11 @@
 // "gr.c"
 	void jl_gr_prer_old(jl_t* jlc, jl_vo* pv);
 	void jl_gr_prer_new(jl_t* jlc, jl_vo* pv);
-	void jl_gr_set_clippane(jl_t* jlc, float xmin, float xmax,
-		float ymin, float ymax);
-	void jl_gr_default_clippane(jl_t* jlc);
 	jl_ccolor_t* jl_gr_convert_color(jl_t* jlc, uint8_t *rgba, uint32_t vc,
 		uint8_t gradient);
 	void jl_gr_vo_color(jl_t* jlc, jl_vo* pv, jl_ccolor_t* cc);
-	void jl_gr_draw_vo(jl_t* jlc, jl_vo* pv);
-	void jl_gr_draw_tvo(jl_t* jlc, jl_vo* pv, jl_vec3_t* vec);
+	void jl_gr_draw_vo(jl_t* jlc, jl_vo* pv, jl_vec3_t* vec);
+	void jl_gr_draw_pr(jl_t* jlc, jl_vo* pv, jl_vec3_t* vec);
 	void jl_gr_vos_vec(jl_t* jlc, jl_vo *pv, uint16_t tricount,
 		float* triangles, uint8_t* colors, uint8_t multicolor);
 	void jl_gr_vos_rec(jl_t* jlc, jl_vo *pv, jl_rect_t rc, uint8_t* colors,
