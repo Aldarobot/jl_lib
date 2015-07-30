@@ -10,8 +10,6 @@
 #define JL_DL_FULLSCREEN SDL_WINDOW_FULLSCREEN_DESKTOP
 
 //PROTOTYPES
-void jl_gl_clear(uint8_t r, uint8_t g, uint8_t b, uint8_t a);
-
 static void _jl_dl_fscreen(jvct_t* _jlc, uint8_t a);
 static void _jlvm_curd_mode(jvct_t *_jlc);
 
@@ -34,12 +32,6 @@ uint16_t jl_dl_getw(jl_t *jlc) {
 uint16_t jl_dl_geth(jl_t *jlc) {
 	jvct_t* _jlc = jlc->_jlc;
 	return _jlc->dl.current.h;
-}
-
-float jl_dl_p(jl_t *jlc) {
-	jvct_t* _jlc = jlc->_jlc;
-	return (((float)_jlc->dl.currenty) / (((float)_jlc->dl.current.w) *
-		(1 + jlc->smde)));
 }
 
 //STATIC FUNCTIONS
@@ -116,22 +108,17 @@ static inline void _jlvm_crea_wind(jvct_t *_jlc) {
 
 //NON-STATIC FUNCTIONS
 
-//Function is available to user: set window's resolution
-void jlvm_sres(jvct_t *_jlc, uint16_t w, uint16_t h) {
-	SDL_SetWindowSize(_jlc->dl.displayWindow,w,h);
-	_jl_dl_resize(_jlc, w,h);
-}
-
 void _jl_dl_loop(jvct_t* _jlc) {
 	//Update Screen
 	SDL_GL_SwapWindow(_jlc->dl.displayWindow); //end current draw
-	//start next draw
-	jl_gl_clear(2, 5, 255, 255);
+	// Clear the screen of anything wierd.
+	jl_gl_clear(_jlc->jlc, 2, 5, 255, 255);
 }
 
-void _jl_dl_resize(jvct_t *_jlc, uint16_t x, uint16_t y) {
+void _jl_dl_resz(jvct_t *_jlc, uint16_t x, uint16_t y) {
 	uint16_t offx = 0;
 	uint16_t offy = 0;
+
 	_jlc->dl.full_w = x;
 	_jlc->dl.full_h = y;
 	jl_gl_viewport_screen(_jlc);
@@ -140,18 +127,19 @@ void _jl_dl_resize(jvct_t *_jlc, uint16_t x, uint16_t y) {
 	_jlc->dl.shiftx = 0.;
 	_jlc->dl.shifty = 0.;
 	if(y < x * .5625) {
+		_jlc->jlc->smde = 0;
 		offx = x;
 		x = y * 16./9.; //Widesceen
 		_jlc->dl.multiplyy = -2.*((float)x)/((float)y);
 		_jlc->dl.multiplyx = 2.*((float)x)/((float)offx);
 		_jlc->dl.shiftx += ((float)offx - (float)x)/((float)offx);
 		offx = (offx - x) / 2;
-		_jlc->jlc->smde = 0;
 		_jlc->dl.window.x = offx;
 		_jlc->dl.window.y = 0.;
 		_jlc->dl.window.w = x;
 		_jlc->dl.window.h = y;
 	}else if(y > x * 1.125) {//DOUBLE SCREEN
+		_jlc->jlc->smde = 1;
 		if(y > x * 1.5) {
 			offy = y;
 			y = x * 1.5; //Standard
@@ -168,13 +156,12 @@ void _jl_dl_resize(jvct_t *_jlc, uint16_t x, uint16_t y) {
 			_jlc->dl.window.w = x;
 			_jlc->dl.window.h = y / 2.;
 		}
-		_jlc->jlc->smde = 1;
 	}else if(y > x * .75) {
+		_jlc->jlc->smde = 0;
 		offy = y;
 		y = x * .75; //Standard
 		_jlc->dl.shifty += ((float)offy-(float)y)/((float)offy);
 		offy = (offy - y) / 2;
-		_jlc->jlc->smde = 0;
 		_jlc->dl.window.x = 0.;
 		_jlc->dl.window.y = offy;
 		_jlc->dl.window.w = x;
@@ -188,7 +175,14 @@ void _jl_dl_resize(jvct_t *_jlc, uint16_t x, uint16_t y) {
 	}
 	_jlc->dl.current.w = x;
 	_jlc->dl.current.h = y + (x - y);
-	_jlc->dl.currenty = y;
+	// Set GL aspect.
+	_jlc->gl.current_pr.w = _jlc->dl.full_w;
+	_jlc->gl.current_pr.h = _jlc->dl.full_h;
+	_jlc->dl.aspect = ((double)y) / ((double)x);
+	_jlc->gl.current_pr.aspect_y = _jlc->dl.aspect;
+	printf("\n[ %f, %d, %d ]\n", _jlc->gl.current_pr.aspect_y,
+		_jlc->gl.current_pr.w, _jlc->gl.current_pr.h);
+	printf("dly = %f\n", _jlc->dl.window.h);
 }
 
 /**
@@ -221,8 +215,8 @@ void _jl_dl_inita(jvct_t* _jlc) {
 }
 
 void _jl_dl_initb(jvct_t* _jlc) {
-	//Update viewport to fix any rendering glitches
-	_jl_dl_resize(_jlc, _jlc->dl.current.w, _jlc->dl.current.h);
+	//Update screensize to fix any rendering glitches
+	_jl_dl_resz(_jlc, _jlc->dl.current.w, _jlc->dl.current.h);
 	_jl_dl_loop(_jlc);
 }
 

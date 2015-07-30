@@ -114,7 +114,7 @@ void _jl_au_play(jvct_t *_jlc) {
  * "p_secondsOfFadeOut" seconds
  * @param p_secondsOfFadeOut: How many seconds to fade music.
 */
-void jl_au_mus_halt(u08t p_secondsOfFadeOut) {
+void jl_au_mus_halt(u8_t p_secondsOfFadeOut) {
 	Mix_FadeOutMusic(p_secondsOfFadeOut * 1000);
 }
 
@@ -234,7 +234,7 @@ void _jl_au_kill(jvct_t *_jlc) {
 	jl_io_printc(_jlc->jlc, "Quiting....\n");
 	//Free Everything
 	Mix_CloseAudio();
-	u32t i;
+	m_u32_t i;
 	for(i = 0; i < _jlc->au.smax; i++) {
 		Mix_FreeMusic(_jlc->au.jmus[i]._MUS);
 	}

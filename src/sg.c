@@ -8,14 +8,13 @@
  *	It is needed for handling the 2 screens that JL_lib provides.  It also
  *	has support for things called modes.  An example is: your title screen
  *	of a game and the actual game would be on different modes.
-*/
+**/
 
 #include "header/jl_pr.h"
 
 // SG Prototypes
-void jl_gl_prer_use(jvct_t *_jlc, jl_vo* pv);
-void jl_gl_prer_off(jvct_t *_jlc);
-void jl_gl_draw_prerendered(jvct_t *_jlc, jl_vo* pv);
+void jl_gl_pr_off(jvct_t *_jlc);
+void jl_gl_draw_prendered(jvct_t *_jlc, jl_vo* pv);
 
 //Prototypes
 	//LIB INITIALIZATION fn(Context)
@@ -337,17 +336,25 @@ static inline void _jl_sg_init_images(jvct_t * _jlc, uint8_t *data, uint16_t p){
 
 static uint32_t _jl_sg_quit(jvct_t* _jlc, int rc) {
 	jl_io_offset(_jlc->jlc, JL_IO_SIMPLE, "KILL"); // {
-	if(_jlc->has.graphics)
-		jl_gr_draw_msge(_jlc->jlc, "QUITING JLLIB....");
+	if(_jlc->me.status == JL_STATUS_EXIT) {
+		rc = JL_RTN_FAIL_IN_FAIL_EXIT;
+		printf("\n!! double error!\n");
+		printf("!! exiting with return value %d\n", rc);
+		exit(rc);
+	}
+	// Set status to Exiting
+	_jlc->me.status = JL_STATUS_EXIT;
+	if(_jlc->has.graphics) jl_gr_draw_msge(_jlc->jlc, "QUITING JLLIB....");
 	_jl_fl_errf(_jlc, ":Quitting....\n"); //Exited properly
 	_jl_au_kill(_jlc);
 	_jl_dl_kill(_jlc);
 	_jl_fl_kill(_jlc);
 	_jl_sg_kill(_jlc->jlc);
-	_jl_fl_errf(_jlc, ":No Error! YAY!\n"); //Exited properly
+	_jl_fl_errf(_jlc, ":Quit successfully!\n"); //Exited properly
 	_jl_io_kill(_jlc->jlc);
 	_jl_me_kill(_jlc);
-	printf("exiting with return value %d\n", rc);
+	if(!rc) printf("!! No errors ");
+	printf("!! Exiting with return value %d\n", rc);
 	exit(rc);
 	_jl_fl_errf(_jlc, ":What The Hell?  This is an impossible error!\n");
 	return JL_RTN_IMPOSSIBLE;
@@ -379,11 +386,12 @@ void jl_sg_exit(jl_t* jlc) {
 		jlc->loop = JL_SG_WM_EXIT;
 }
 
+// Delete window size data.
 void _jl_sg_kill(jl_t* jlc) {
-	// Delete window size data.
 	jvct_t * _jlc = jlc->_jlc;
-	jl_gr_prer_old(jlc, _jlc->sg.bg.up);
-	jl_gr_prer_old(jlc, _jlc->sg.bg.dn);
+
+	jl_gr_pr_old(jlc, _jlc->sg.bg.up);
+	jl_gr_pr_old(jlc, _jlc->sg.bg.dn);
 }
 
 /**
@@ -393,27 +401,28 @@ void jl_dont(jl_t* jlc) { }
 
 //void sgrp_
 
-static void _sg_time_reset(jvct_t* _jlc) {
-	_jlc->sg.prev_tick = _jlc->sg.this_tick;
+static void _sg_time_reset(jvct_t* _jlc, u32_t this_tick, u8_t on_time) {
+	_jlc->sg.prev_tick = this_tick;
+	if((_jlc->sg.changed = ( _jlc->sg.on_time != on_time)))
+		_jlc->sg.on_time = on_time;
 }
 
-//return how many frames passed since last call
-static inline float _jl_sg_seconds_passed(jvct_t* _jlc) {
-	_jlc->sg.processingTimeMillis=
-		(_jlc->sg.this_tick=SDL_GetTicks())-_jlc->sg.prev_tick;
+//return how many seconds passed since last call
+static inline double _jl_sg_seconds_passed(jvct_t* _jlc) {
+	u32_t this_tick = SDL_GetTicks();
+
+	_jlc->sg.processingTimeMillis = this_tick - _jlc->sg.prev_tick;
 	if(_jlc->sg.processingTimeMillis <= JL_MAIN_SAPT) {
-		SDL_Delay(JL_MAIN_SAPT-_jlc->sg.processingTimeMillis);
-//		printf("[TIMING] fast: 1\n");
-		_sg_time_reset(_jlc);
-		return 1.f / ((float)JL_MAIN_SFPS);
+		u32_t left_over_time = JL_MAIN_SAPT -
+			_jlc->sg.processingTimeMillis;
+
+		if(left_over_time) SDL_Delay(left_over_time);
+		_sg_time_reset(_jlc, this_tick, 1);
+		return 1. / ((float)JL_MAIN_SFPS);
 	}else{
-		float frames =
-			((float)_jlc->sg.processingTimeMillis)/
-			((float)JL_MAIN_SAPT);
-/*		printf("[TIMING] slow: %f, %f, %f\n",
-			(float)_jlc->sg.processingTimeMillis,
-			(float)JL_MAIN_SAPT, frames);*/
-		_sg_time_reset(_jlc);
+		double frames = ((double)_jlc->sg.processingTimeMillis)/1000.;
+
+		_sg_time_reset(_jlc, this_tick, 0);
 		return frames / ((float)JL_MAIN_SFPS);
 	}
 }
@@ -443,21 +452,23 @@ void jl_sg_add_image(jl_t* jlc, char *pzipfile, uint16_t pigid) {
 
 static void _jl_sg_screen_draw(jl_t* jlc, float ytrans, jl_vo* bg, uint8_t lp) {
 	jvct_t * _jlc = jlc->_jlc;
-	jl_vec3_t translate = { 0., ytrans, 0. };
+	jl_vec3_t translate = { _jlc->sg.offsx, _jlc->sg.offsy + ytrans, 0. };
 
 	_jlc->sg.cbg = bg;
 
 	// Draw the vertex object.
 	jl_gr_draw_vo(jlc, bg, &translate);
-	// Use the prerenderer for this screen.
-	jl_gl_prer_use(_jlc, _jlc->sg.cbg);
+	// Use the pr for this screen.
+	jl_gl_pr_use(_jlc, _jlc->sg.cbg);
+	// Clear the screen.
+	jl_gl_clear(jlc, 255, 255, 255, 0);
 	// Run the screen's loop
 	_jlc->sg.mode.tclp[lp](jlc);
 	// If BG is lower screen: Draw Menu Bar & Mouse - on lower screen
 	if(bg == _jlc->sg.bg.dn) _jl_gr_loop(jlc);
-	// Turn off the prerenderer.
-	jl_gl_prer_off(_jlc);
-	// Draw the prerendered texture.
+	// Turn off the pre-renderer.
+	jl_gl_pr_off(_jlc);
+	// Draw the prendered texture.
 	jl_gr_draw_pr(jlc, bg, &translate);
 }
 
@@ -486,52 +497,64 @@ void _jl_sg_loop(jvct_t *_jlc) {
 	_jlc->sg.loop(_jlc->jlc);
 }
 
-void _jl_sg_resize(jl_t* jlc) {
+void _jl_sg_resz(jl_t* jlc) {
 	jvct_t * _jlc = jlc->_jlc;
 	const float isDoubleScreen = (double)jlc->smde;
 	const float shiftx = _jlc->dl.shiftx;
 	const float shifty = _jlc->dl.shifty / (isDoubleScreen+1.);
-	const float rcrdx = shiftx/2.;
-	const float rcrdy = (shifty * (1. + isDoubleScreen))/2.;
 	const float rcrdw = 1. - _jlc->dl.shiftx;
 	const float rcrdh = (1./(1.+isDoubleScreen)) - shifty;
 	jl_rect_t rcrd = {
-		rcrdx, rcrdy * jl_dl_p(jlc),
-		rcrdw, rcrdh * jl_dl_p(jlc)
+		0.f, 0.f,
+		rcrdw, rcrdh * jl_gl_ar(jlc)
 	};
+	printf("%f, %f ( %f )\n", rcrd.w, rcrd.h, rcrdh);
 	uint8_t rclr_up[4] = { 127,	127,	127,	255 };
 	uint8_t rclr_dn[4] = { 0,	127,	0,	255 };
 	uint8_t rclr_bg[4] = { 0,	255,	0,	255 };
 
 	_jlc->sg.screen_height = rcrd.h;
+	_jlc->sg.cbg = NULL;
 	if(jlc->smde) {
 		// Update the rectangle backgrounds.
 		jl_gr_vos_rec(jlc, _jlc->sg.bg.up, rcrd, rclr_up, 0);
-		jl_gr_prer_new(jlc, _jlc->sg.bg.up);
+		jl_gr_pr_new(jlc, _jlc->sg.bg.up);
 		jl_gr_vos_rec(jlc, _jlc->sg.bg.dn, rcrd, rclr_dn, 0);
-		jl_gr_prer_new(jlc, _jlc->sg.bg.dn);
+		jl_gr_pr_new(jlc, _jlc->sg.bg.dn);
 		// Set double screen loop.
 		_jlc->sg.loop = _jl_sg_loop_ds;
 	}else{
 		// Update the rectangle backgrounds.
 		jl_gr_vos_rec(jlc, _jlc->sg.bg.dn, rcrd, rclr_bg, 0);
-		jl_gr_prer_new(jlc, _jlc->sg.bg.dn);
+		jl_gr_pr_new(jlc, _jlc->sg.bg.dn);
 		// Set single screen loop.
 		_jlc->sg.loop = _jl_sg_loop_ss;
 	}
+	_jlc->sg.bg.up->pr->ar = _jlc->dl.aspect / (isDoubleScreen+1.);
+	_jlc->sg.bg.dn->pr->ar = _jlc->dl.aspect / (isDoubleScreen+1.);
+	_jlc->sg.offsx = shiftx/2.;
+	_jlc->sg.offsy = ((shifty * (1. + isDoubleScreen))/2.) * jl_gl_ar(jlc);
 }
 
 static inline void _jl_sg_initb(jvct_t * _jlc) {
-	_jlc->jlc->errf = JL_ERR_NERR; //no error
+	m_u8_t i;
+
+	// No error
+	_jlc->jlc->errf = JL_ERR_NERR;
 	_jlc->jlc->psec = 0.f;
 	_jlc->jlc->mode = 0;
 	_jlc->jlc->mdec = 0;
 	_jlc->sg.mdes = NULL;
-	_jlc->jlc->loop = JL_SG_WM_TERM; //Set Default Window To Terminal
+	// Set Default Window To Terminal
+	_jlc->jlc->loop = JL_SG_WM_TERM;
 	_jlc->sg.prev_tick = 0;
-	_jlc->sg.bg.up = jl_gr_vo_new(_jlc->jlc);
-	_jlc->sg.bg.dn = jl_gr_vo_new(_jlc->jlc);
-	_jl_sg_resize(_jlc->jlc);
+	_jlc->sg.bg.up = jl_gl_vo_make(_jlc->jlc, 1);
+	_jlc->sg.bg.dn = jl_gl_vo_make(_jlc->jlc, 1);
+	for(i = 0; i < 2; i++) {
+		_jlc->jlc->smde = !_jlc->jlc->smde;
+		_jl_sg_resz(_jlc->jlc);
+	}
+	_jlc->sg.cbg = _jlc->sg.bg.dn;
 }
 
 static inline void _jl_sg_inita(jvct_t * _jlc) {
@@ -604,14 +627,16 @@ static inline void _jl_ini(jvct_t *_jlc) {
 }
 
 // Main.c
-// void _jl_sg_resize(jl_t* jlc);
+// void _jl_sg_resz(jl_t* jlc);
 
 void main_resz(jvct_t* _jlc) {
 	// Update the actual window.
-	_jl_dl_resize(_jlc, _jlc->ct.event.window.data1,
+	_jl_dl_resz(_jlc, _jlc->ct.event.window.data1,
 		_jlc->ct.event.window.data2);
 	// Update the size of the background.
-	_jl_sg_resize(_jlc->jlc);
+	_jl_sg_resz(_jlc->jlc);
+	// Update the size of foreground objects.
+	_jl_gr_resz(_jlc->jlc);
 	// Allow the user to update their graphics.
 	_jlc->sg.mode.tclp[JL_SG_WM_RESZ](_jlc->jlc);
 }

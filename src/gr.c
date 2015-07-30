@@ -18,6 +18,23 @@ typedef enum{
 	JLGR_ID_TASK_MAX //how many taskbuttons
 }jlgr_id_t;
 
+typedef enum{
+	JL_GRTP_NOT,
+	JL_GRTP_YES,
+	JL_GRTP_RDR,
+}jl_gr_task_press_t;
+
+typedef struct{
+	// Used for all icons on the taskbar.
+	jl_vo* icon;
+	// Not Pressed & Pressed & Redraw Functions for 10 icons.
+	jl_simple_fnt func[3][10];
+	// Redraw? - 0 = no, 1 = yes
+	m_u8_t redraw;
+	// Cursor
+	m_u8_t cursor;
+}jl_taskbar_t;
+
 /*screen being displayed ( on two screens which one on bottom, if keyboard is
 	being displayed on bottom screen then this will be displayed on top )*/
 float timeTilMessageVanish = 0.f;
@@ -28,49 +45,306 @@ char *GMessage[2] = {
 };
 
 //Upper OpenGL prototypes
-jl_vo *jl_gl_vo_make(jvct_t *_jlc, float *xyzw, uint8_t vertices);
 void jl_gl_vo_free(jvct_t *_jlc, jl_vo *pv);
-void jl_gl_draw_prerendered(jvct_t *_jlc, jl_vo* pv);
-void jl_gl_prer_old(jvct_t *_jlc, jl_vo* pv);
-void jl_gl_prer_new(jvct_t *_jlc, jl_vo* pv, uint16_t w, uint16_t h);
-uint8_t jl_gl_prer_isi(jvct_t *_jlc, jl_vo* pv);
+void jl_gl_draw_pr(jvct_t *_jlc, jl_vo* pv);
+void jl_gl_pr_old(jvct_t *_jlc, jl_vo* pv);
+uint8_t jl_gl_pr_isi(jvct_t *_jlc, jl_vo* pv);
+void jl_gl_pr_new_(jvct_t *_jlc, jl_pr_t **pr, uint16_t cw, uint16_t ch,
+	float rw, float rh);
+void jl_gl_pr_old_(jvct_t *_jlc, jl_pr_t* pr);
 
 //Upper SDL prototype
 void _jl_dl_loop(jvct_t* _jlc);
 
 //Graphics Prototypes
-static void _jl_gr_menubar(jl_t* jlc);
-static void _jl_gr_flipscreen(jl_t* jlc);
-static void _jl_gr_menubar_slow(jl_t* jlc);
-static void _jl_gr_menubar_name(jl_t* jlc);
-static void _jl_gr_draw_icon(jl_t* jlc);
 static void _jl_gr_textbox_rt(jl_t* jlc);
 static void _jl_gr_textbox_lt(jl_t* jlc);
 static void _jl_gr_popup_loop(jl_t* jlc);
-static void _jl_gr_prer_new(jl_t* jlc, jl_vo* pv);
 
-/*EXPORTED FUNCTIONS*/
+/***      @cond       ***/
+/************************/
+/*** Static Functions ***/
+/************************/
 
-	/**
-	 * Delete a prerenderer image for a vertex object.
-	 * @param jlc: The library context.
-	 * @param pv: The prerenderer's vertex object.
-	**/
-	void jl_gr_prer_old(jl_t* jlc, jl_vo* pv) {
-		jl_gl_prer_old(jlc->_jlc, pv);
+	static inline void _jl_gr_init_vos(jvct_t *_jlc) {
+		_jlc->gr.vos.whole_screen = jl_gl_vo_make(_jlc->jlc, 1);
 	}
 	
+	static inline void _jl_gr_flip_scrn(jvct_t *_jlc) {
+		if(_jlc->jlc->loop == JL_SG_WM_UP) {
+			_jlc->jlc->loop = JL_SG_WM_DN;
+			timeTilMessageVanish = 8.5f;
+		}else{
+			_jlc->jlc->loop = JL_SG_WM_UP;
+			timeTilMessageVanish = 8.5f;
+		}
+	}
+
+	static inline void _jl_gr_pr_new(jl_t* jlc, jl_vo* pv) {
+		jvct_t * _jlc = jlc->_jlc;
+		float x = 1.f;
+		float y = jl_gl_ar(jlc);
+		float w = 0.f, h = 0.f;
+		int i;
+
+		// Make the pre-renderer on the screen.
+		if(_jlc->sg.cbg) jl_gl_pr_use(_jlc, _jlc->sg.cbg);
+		// Find the lowest and highest values to make a box.
+		for(i = 0; i < pv->vc*3; i+=3) {
+			float xx = jl_gl_unconv_x_(pv->cv[i]);
+			float yy = jl_gl_unconv_y_(pv->cv[i+1]) * jl_gl_ar(jlc);
+			if(xx < x) x = xx;
+			if(yy < y) y = yy;
+			if(xx > w) w = xx;
+			if(yy > h) h = yy;
+		}
+		printf("_jl_gr_pr_new: %f, %f\n", w - x, h - y);
+		// Create the pre-renderer & Unuse screen pre-renderer.
+		jl_gl_pr_new_(jlc->_jlc, &(pv->pr), _jlc->gl.current_pr.w,
+			_jlc->gl.current_pr.h, w - x, h - y);
+	}
+	
+	static void jl_gr_sprite_draw_to_pr__(jl_t *jlc) {
+		jl_sprite_t *spr = jl_me_tmp_ptr(jlc, 0, NULL);
+
+		spr->draw(jlc, &(spr->data));
+	}
+
+	static void _jl_gr_popup_loop(jl_t* jlc) {
+//		jl_gr_draw_rect(jlc, .1, .1, .8, .2, 127, 127, 255, 255);
+//		jl_gr_draw_rect(jlc, .1, .3, .8, .8, 64, 127, 127, 255);
+	}
+
+	static void _jl_gr_textbox_lt(jl_t* jlc) {
+//		if((int)y != 1) return;
+		jvct_t *_jlc = jlc->_jlc;
+		
+		jl_ct_typing_disable(jlc);
+		if(_jlc->gr.textbox_string->curs)
+			_jlc->gr.textbox_string->curs--;
+	}
+
+	static void _jl_gr_textbox_rt(jl_t* jlc) {
+//		if((int)y != 1) return;
+		jvct_t *_jlc = jlc->_jlc;
+
+		jl_ct_typing_disable(jlc);
+		if(_jlc->gr.textbox_string->curs < _jlc->gr.textbox_string->size)
+			_jlc->gr.textbox_string->curs++;
+	}
+
+	static void jl_gr_draw_icon__(jl_t* jlc, uint16_t g, uint16_t i,
+		uint8_t c)
+	{
+		jvct_t *_jlc = jlc->_jlc;
+		jl_rect_t rc_icon = { 0., 0., jl_gl_ar(jlc), jl_gl_ar(jlc)};
+		jl_taskbar_t* ctx = _jlc->gr.taskbar->data.ctx;
+		jl_vec3_t tr = { .1 * ctx->cursor, 0., 0. };
+
+		jl_gr_vos_image(jlc, &(ctx->icon[1]), rc_icon, g, i, c, 255);
+		jl_gr_draw_vo(jlc, &(ctx->icon[1]), &tr);
+//		printf("drew %d\n", ctx->cursor);
+	}
+	
+	static void jl_gr_menu_flip_draw__(jl_t* jlc) {
+		jl_gr_draw_icon__(jlc, 0, 1, JLGR_ID_FLIP_IMAGE);
+	}
+
+	static void jl_gr_menu_flip_press__(jl_t* jlc) {
+		jvct_t *_jlc = jlc->_jlc;
+
+		_jl_gr_flip_scrn(_jlc);
+	}
+	
+	static void jl_gr_menu_name_draw2__(jl_t* jlc) {
+		jl_gr_draw_icon__(jlc, 0, 1, JLGR_ID_UNKNOWN);
+	}
+
+	static void jl_gr_menu_name_draw__(jl_t* jlc) {
+		jvct_t* _jlc = jlc->_jlc;
+		jl_taskbar_t* ctx = _jlc->gr.taskbar->data.ctx;
+
+		jl_gr_menu_name_draw2__(jlc);
+		jl_gr_draw_text(jlc, _jlc->dl.windowTitle[0],
+			.1 * ctx->cursor, 0., .1, 255);
+		jl_gr_draw_text(jlc, _jlc->dl.windowTitle[1],
+			.1 * ctx->cursor, .1, .1, 255);
+	}
+
+	static void _jl_gr_menu_slow_draw(jl_t* jlc) {
+		jvct_t *_jlc = jlc->_jlc;
+
+		// If not on time report the seconds that passed.
+		if(!_jlc->sg.on_time)
+			sprintf(_jlc->dl.windowTitle[1],"%f",(float)jlc->psec);
+		// Draw the icon based on whether on time or not.
+		jl_gr_draw_icon__(jlc, 0, 1, _jlc->sg.on_time ?
+			JLGR_ID_GOOD_IMAGE : JLGR_ID_SLOW_IMAGE);
+	}
+
+	static void _jl_gr_menu_slow_loop(jl_t* jlc) {
+		jvct_t* _jlc = jlc->_jlc;
+		jl_taskbar_t* ctx = _jlc->gr.taskbar->data.ctx;
+
+		if(_jlc->sg.changed) ctx->redraw = 1;
+	}
+
+	// Run when the taskbar is left alone.
+	static void _jl_gr_taskbar_loop_pass(jl_t* jlc) {
+		jvct_t* _jlc = jlc->_jlc;
+		jl_taskbar_t *ctx = _jlc->gr.taskbar->data.ctx;
+
+		for( ctx->cursor = 0; ctx->cursor < 10; ctx->cursor++) {
+			// If A NULL function then, stop looping taskbar.
+			if( !(ctx->func[0][ctx->cursor]) ) break;
+			// Run the not loop.
+			ctx->func[JL_GRTP_NOT][ctx->cursor](jlc);
+			// If need to redraw run "rdr"
+			if(ctx->redraw) jl_gr_sprite_redraw(jlc, _jlc->gr.taskbar);
+		}
+	}
+	
+	static void _jl_gr_taskbar_loop_resz(jl_t* jlc) {
+		jvct_t* _jlc = jlc->_jlc;
+		jl_taskbar_t *ctx = _jlc->gr.taskbar->data.ctx;
+
+		for( ctx->cursor = 0; ctx->cursor < 10; ctx->cursor++) {
+			// If A NULL function then, stop looping taskbar.
+			if( !(ctx->func[0][ctx->cursor]) ) break;
+			// If need to redraw run "rdr"
+			jl_gr_sprite_redraw(jlc, _jlc->gr.taskbar);
+		}	
+	}
+
+	// Run when the taskbar is clicked/pressed
+	static void _jl_gr_taskbar_loop_run(jl_t* jlc) {
+		jvct_t* _jlc = jlc->_jlc;
+		jl_taskbar_t *ctx;
+		
+		//If mouse is'nt over the taskbar - dont run pressed.
+		if(_jlc->ct.msy >= .1) {
+			_jl_gr_taskbar_loop_pass(jlc);
+			return;
+		}
+		// Set context
+		ctx = _jlc->gr.taskbar->data.ctx;
+		// Figure out what's selected.
+		u8_t selected = (m_u8_t)(_jlc->ct.msy / .1);
+		
+		for( ctx->cursor = 0; ctx->cursor < 10; ctx->cursor++) {
+			// If A NULL function then, stop looping taskbar.
+			if( !(ctx->func[0][ctx->cursor]) ) break;
+			// Run the "not" or "yes" loop.
+			ctx->func[(ctx->cursor == selected) ?
+				JL_GRTP_YES: JL_GRTP_NOT][ctx->cursor](jlc);
+			// If need to redraw run "rdr"
+			if(ctx->redraw) jl_gr_sprite_redraw(jlc, _jlc->gr.taskbar);
+		}
+	}
+
+	// Run whenever a redraw is needed for an icon.
+	static void _jl_gr_taskbar_draw(jl_t* jlc, jl_sprd_t* spr) {
+		jvct_t *_jlc = jlc->_jlc;
+		jl_taskbar_t* ctx = _jlc->gr.taskbar->data.ctx;
+		
+		// Run the selected icon's redraw function
+		if(ctx->func[JL_GRTP_RDR][ctx->cursor])
+			ctx->func[JL_GRTP_RDR][ctx->cursor](jlc);
+	}
+
+	// Runs every frame.
+	static void _jl_gr_taskbar_loop(jl_t* jlc) {
+		jvct_t* _jlc = jlc->_jlc;
+
+		// Draw the pre-rendered taskbar.
+		jl_gr_sprite_draw_pr(jlc, _jlc->gr.taskbar);
+		// Run the proper loops.
+		jl_ct_run_event(jlc, JL_CT_PRESS, _jl_gr_taskbar_loop_run,
+			_jl_gr_taskbar_loop_pass);
+	}
+
+	static void _jl_gr_menu_init(jvct_t* _jlc) {
+		jl_rect_t rc = { 0.f, 0.f, 1.f, .1f };
+		jl_rect_t rc_icon = { 0., 0., .1, .1};
+		jl_rect_t rc_shadow = {-.01, .01, .1, .1 };
+		uint8_t shadow_color[] = { 0, 0, 0, 64 };
+		jl_taskbar_t *ctx;
+		jl_vo *icon = jl_gl_vo_make(_jlc->jlc, 2);
+
+		// Make the taskbar.
+		_jlc->gr.taskbar = jl_gr_sprite_make(
+			_jlc->jlc, rc, _jl_gr_taskbar_draw,
+			_jl_gr_taskbar_loop, sizeof(jl_taskbar_t));
+		// Get the context.
+		ctx = _jlc->gr.taskbar->data.ctx;
+		// Set the icon & Shadow vertex objects
+		ctx->icon = icon;
+		// Make the shadow vertex object.
+		jl_gr_vos_rec(_jlc->jlc, &icon[0], rc_shadow, shadow_color, 0);
+		// Make the icon vertex object.
+		jl_gr_vos_image(_jlc->jlc, &icon[1], rc_icon, 0, 1,
+			JLGR_ID_UNKNOWN, 255);
+		// Clear the taskbar & make pre-renderer.
+		for( ctx->cursor = 0; ctx->cursor < 10; ctx->cursor++) {
+			m_u8_t i;
+
+			for(i = 0; i < 3; i++) ctx->func[i][ctx->cursor] = NULL;
+			jl_gr_sprite_redraw(_jlc->jlc, _jlc->gr.taskbar);
+		}
+	}
+
+	static void _jl_gr_mouse_loop(jl_t* jlc) {
+		jl_sprite_t* mouse = jlc->mouse;
+		jl_vo* mouse_vo = mouse->data.ctx;
+
+	//Update Mouse
+		mouse->data.tr.x = jl_ct_gmousex(jlc);
+		mouse->data.tr.y = jl_ct_gmousey(jlc);
+		mouse->data.cb.x = mouse->data.tr.x;
+		mouse->data.cb.y = mouse->data.tr.y;
+	// Draw mouse
+		jl_gr_draw_vo(jlc, mouse_vo, &(mouse->data.tr));
+	}
+
+	static inline void _jl_gr_mouse_init(jvct_t *_jlc) {
+		jl_rect_t rc = { 0.f, 0.f, .075f, .075f };
+		jl_vo *mouse = jl_gl_vo_make(_jlc->jlc, 1);
+
+		jl_gr_vos_image(_jlc->jlc, &(mouse[0]), rc, 0, 0, 254, 255);
+		_jlc->jlc->mouse = jl_gr_sprite_make(
+			_jlc->jlc, rc, jl_gr_sprdr_dont,
+			_jl_gr_mouse_loop, sizeof(jl_vo*));
+		// Set the context to the vertex object.
+		((jl_sprite_t*)_jlc->jlc->mouse)->data.ctx = mouse;
+	}
+
+/**      @endcond      **/
+/************************/
+/*** Global Functions ***/
+/************************/
+
+	void jl_gr_sprdr_dont(jl_t* jlc, jl_sprd_t* spr) { }
+
 	/**
-	 * Create or replace a prerenderer image for a vertex object based on
+	 * Delete a pr image for a vertex object.
+	 * @param jlc: The library context.
+	 * @param pv: The pr's vertex object.
+	**/
+	void jl_gr_pr_old(jl_t* jlc, jl_vo* pv) {
+		jl_gl_pr_old(jlc->_jlc, pv);
+	}
+
+	/**
+	 * Create or replace a pr image for a vertex object based on
 	 * the current vertex locations.
 	 * @param jlc: The library context.
-	 * @param pv: The vertex object to create/replace a prerenderer for.
+	 * @param pv: The vertex object to create/replace a pr for.
 	**/
-	void jl_gr_prer_new(jl_t* jlc, jl_vo* pv) {
-		// If prerender is already initialized, then delete
-		if(jl_gl_prer_isi(jlc->_jlc, pv)) jl_gr_prer_old(jlc, pv);
-		// Make new prerenderer
-		_jl_gr_prer_new(jlc, pv);
+	void jl_gr_pr_new(jl_t* jlc, jl_vo* pv) {
+		// If prender is already initialized, then delete it.
+		if(jl_gl_pr_isi(jlc->_jlc, pv)) jl_gr_pr_old(jlc, pv);
+		// Make new pr
+		_jl_gr_pr_new(jlc, pv);
 	}
 
 	/**
@@ -87,7 +361,7 @@ static void _jl_gr_prer_new(jl_t* jlc, jl_vo* pv);
 		if(gradient) return jl_gl_clrcg(jlc->_jlc, rgba, vc);
 		else return jl_gl_clrcs(jlc->_jlc, rgba, vc);
 	}
-	
+
 	/**
 	 * Change the coloring scheme for a vertex object.
  	 * @param jlc: The library context.
@@ -110,7 +384,7 @@ static void _jl_gr_prer_new(jl_t* jlc, jl_vo* pv);
 		else jl_gl_translate(jlc->_jlc, pv, vec->x, vec->y, vec->z);
 		jl_gl_draw(jlc->_jlc, pv);
 	}
-	
+
 	/**
 	 * Draw a vertex object's pre-rendered texture.
   	 * @param jlc: The library context.
@@ -118,15 +392,18 @@ static void _jl_gr_prer_new(jl_t* jlc, jl_vo* pv);
   	 * @param vec: The vector of offset/translation.
 	**/
 	void jl_gr_draw_pr(jl_t* jlc, jl_vo* pv, jl_vec3_t* vec) {
+		jvct_t *_jlc = jlc->_jlc;
+
+		if(pv == NULL) pv = _jlc->gl.temp_vo;
 		if(vec == NULL)
-			jl_gl_translate_prerendered(jlc->_jlc, pv,
+			jl_gl_translate(jlc->_jlc, pv,
 				0.f, 0.f, 0.f);
 		else
-			jl_gl_translate_prerendered(jlc->_jlc, pv,
+			jl_gl_translate(jlc->_jlc, pv,
 				vec->x, vec->y, vec->z);
-		jl_gl_draw_prerendered(jlc->_jlc, pv);
+		jl_gl_pr_draw(jlc, pv);
 	}
-	
+
 	/**
 	 * Set a Vertex object to vector graphics.
 	 * 
@@ -140,7 +417,7 @@ static void _jl_gr_prer_new(jl_t* jlc, jl_vo* pv);
 		if(multicolor) jl_gl_clrg(jlc->_jlc, pv, colors);
 		else jl_gl_clrs(jlc->_jlc, pv, colors);
 	}
-	
+
 	/**
 	 * Set a vertex object to a rectangle.
  	 * @param jlc: The library context.
@@ -167,54 +444,33 @@ static void _jl_gr_prer_new(jl_t* jlc, jl_vo* pv);
 	}
 
 	/**
-	 * Draw An Image.
+	 * Set a vertex object to an Image.
 	 *
-	 * @param 'jlc': The library context
-  	 * @param 'g': the image group that the image pointed to by 'i' is in.
-	 * @param 'i':  the ID of the image.
- 	 * @param 'x': the x location of the sprite
- 	 * @param 'y': the y location of the sprite
- 	 * @param 'w': how wide to draw the sprite
- 	 * @param 'h': how tall to draw the sprite.
-	 * @param 'c': is 0 unless you want to use the image as
+	 * @param jlc: The library context
+  	 * @param pv: The vertex object
+ 	 * @param rc: the rectangle to draw the image in.
+   	 * @param g: the image group that the image pointed to by 'i' is in.
+	 * @param i:  the ID of the image.
+	 * @param c: is 0 unless you want to use the image as
 	 * 	a charecter map, then it will zoom into charecter 'chr'.
-	 * @param 'a': the transparency each pixel is multiplied by; 255 is
+	 * @param a: the transparency each pixel is multiplied by; 255 is
 	 *	solid and 0 is totally invisble.
 	**/
-	void jl_gr_draw_image(jl_t* jlc, u16t g, u16t i,
-		float x,float y,float w,float h,
-		u08t c, u08t a)
+	void jl_gr_vos_image(jl_t* jlc, jl_vo *pv, jl_rect_t rc,
+		u16_t g, u16_t i, u8_t c, u8_t a)
 	{
 		//From bottom left & clockwise
 		float Oone[] = {
-			x,	h+y,	0.f,
-			x,	y,	0.f,
-			w+x,	y,	0.f,
-			w+x,	h+y,	0.f };
-		jl_gl_txtr(jlc->_jlc, NULL, c, a, g, i);
-		jl_gl_poly(jlc->_jlc, NULL, 4, Oone);
-		jl_gr_draw_vo(jlc, NULL, NULL);
-	}
-	
-	/**
-	 * 
-	**/
-	void jl_gr_vof_image(jl_t* jlc, jl_vo* pv, u16t g, u16t i,
-		float x,float y,float w,float h,
-		u08t c, u08t a)
-	{
-		
+			rc.x,		rc.h+rc.y,	0.f,
+			rc.x,		rc.y,		0.f,
+			rc.w+rc.x,	rc.y,		0.f,
+			rc.w+rc.x,	rc.h+rc.y,	0.f };
+		// Overwrite the vertex object
+		jl_gl_poly(jlc->_jlc, pv, 4, Oone);
+		// Texture the vertex object
+		jl_gl_txtr(jlc->_jlc, pv, c, a, g, i);
 	}
 
-	/**
-	 * Create an empty vertex object & return it.
-	 * @param jlc: The library context
-	 * @returns: A new vertex object with 0 vertices.
-	**/
-	jl_vo* jl_gr_vo_new(jl_t* jlc) {
-		return jl_gl_vo_make(jlc->_jlc, NULL, 0);
-	}
-	
 	/**
 	 * Free a vertex object.
 	 * @param jlc: The library context
@@ -225,55 +481,87 @@ static void _jl_gr_prer_new(jl_t* jlc, jl_vo* pv);
 	}
 
 	/**
-	 * Draw the sprite.
+	 * Run a sprite's draw routine to draw on it's pre-rendered texture.
 	 *
 	 * @param jlc: The library context
-	 * @param psprite: Which sprite to draw.
+	 * @param spr: Which sprite to draw.
 	**/
-	void jl_gr_sprite_draw(jl_t* jlc, jl_sprite_t *psprite) {
-		jl_gr_draw_image(jlc, psprite->g, psprite->i,
-			psprite->r.x, psprite->r.y, psprite->r.w, psprite->r.h,
-			psprite->c, psprite->a);
+	void jl_gr_sprite_redraw(jl_t* jlc, jl_sprite_t *spr) {
+		jvct_t* _jlc = jlc->_jlc;
+
+		jl_me_tmp_ptr(jlc, 0, spr);
+		if(!spr->pr) {
+			jl_gl_pr_new_(_jlc, &(spr->pr),
+				_jlc->sg.cbg->pr->w, _jlc->sg.cbg->pr->h,
+				spr->data.cb.w, spr->data.cb.h);
+		}
+		jl_gl_pr_(jlc->_jlc, spr->pr, jl_gr_sprite_draw_to_pr__);
 	}
 	
+	void jl_gr_sprite_resz(jl_t* jlc, jl_sprite_t *spr) {
+		// If prender is already initialized, then delete it.
+		if(spr->pr) jl_gl_pr_old_(jlc->_jlc, spr->pr);
+		spr->pr = NULL;
+	}
+
+	/**
+	 * Run a sprite's loop.
+	 * @param jlc: The library context.
+	 * @param spr: Which sprite to loop.
+	**/
+	void jl_gr_sprite_loop(jl_t* jlc, jl_sprite_t *spr) {
+		spr->loop(jlc);
+	}
+
+	/**
+	 * Render a sprite's pre-rendered texture onto the screen.
+	 *
+	 * @param jlc: The library context.
+	 * @param spr: The sprite.
+	**/
+	void jl_gr_sprite_draw_pr(jl_t* jlc, jl_sprite_t *spr) {
+		jl_pr_t *pr = spr->pr;
+
+		jl_gl_translate_pr(jlc->_jlc, pr, spr->data.tr.x,
+			spr->data.tr.y, spr->data.tr.z);
+
+		jl_gl_draw_pr_(jlc, pr);
+	}
+
 	/**
 	 * Create a sprite
 	 *
-	 * @param 'jlc': library context
- 	 * @param 'g': the image group that the image pointed to by 'i' is in.
- 	 * @param 'i': the ID of the image.
- 	 * @param 'c': set to 0 unless you want to use the image as a character
- 	 * 	map, then it will zoom into charecter 'chr'.
- 	 * @param 'a' the transparency each pixel is multiplied by; 255 is
+	 * @param jlc: The library context.
+	 * @param rc: The rectangle bounding box & pr size.
+ 	 * @param a: the transparency each pixel is multiplied by; 255 is
 	 *	solid and 0 is totally invisble.
- 	 * @param 'x': the x location of the sprite
- 	 * @param 'y': the y location of the sprite
- 	 * @param 'w': how wide to draw the sprite
- 	 * @param 'h': how tall to draw the sprite.
- 	 * @param 'loop': the loop function.
- 	 * @param 'ctxs': how many bytes to allocate for the sprite's context.
- 	 * @return x: the new sprite
+	 * @param draw: the draw function.
+ 	 * @param loop: the loop function.
+ 	 * @param ctxs: how many bytes to allocate for the sprite's context.
+ 	 * @returns: the new sprite
 	**/
-	jl_sprite_t * jl_gr_sprite_make(
-		jl_t* jlc, u16t g, u16t i, u08t c, u08t a,
-		float x, float y, float w, float h,
-		jl_simple_fnt loop, u32t ctxs)
+	jl_sprite_t * jl_gr_sprite_make(jl_t* jlc, jl_rect_t rc,
+		jl_gr_sprdr_fnt draw, jl_simple_fnt loop, u32_t ctxs)
 	{
-		jl_sprite_t *rtn;
+		jl_sprite_t *rtn = NULL;
+
 		rtn = malloc(sizeof(jl_sprite_t));
-		rtn->g = g;
-		rtn->i = i;
-		rtn->c = c;
-		rtn->a = a;
-		rtn->r.x = x; rtn->cb.x = x;
-		rtn->r.y = y; rtn->cb.y = y;
-		rtn->r.w = w; rtn->cb.w = w;
-		rtn->r.h = h; rtn->cb.h = h;
+		// Set draw function.
+		rtn->draw = draw;
+		// Set translations
+		rtn->data.tr.x = rc.x; rtn->data.tr.y = rc.y; rtn->data.tr.z = 0.f;
+		// Set collision box.
+		rtn->data.cb.x = rc.x; rtn->data.cb.y = rc.y;
+		rtn->data.cb.w = rc.w; rtn->data.cb.h = rc.h;
+		// Set loop
 		rtn->loop = (void*)loop;
-		if(ctxs) rtn->ctx = malloc(ctxs);
+		// No pr made yet.
+		rtn->pr = NULL;
+		// Allocate context
+		if(ctxs) rtn->data.ctx = malloc(ctxs);
 		return rtn;
 	}
-	
+
 	/**
 	 * test if 2 sprites collide.
 	 *
@@ -283,14 +571,14 @@ static void _jl_gr_prer_new(jl_t* jlc, jl_vo* pv);
 	 * @return 0: if the sprites don't collide in their bounding boxes.
 	 * @return 1: if the sprites do collide in their bounding boxes.
 	**/
-	u08t jl_gr_sprite_collide(jl_t* jlc,
+	u8_t jl_gr_sprite_collide(jl_t* jlc,
 		jl_sprite_t *sprite1, jl_sprite_t *sprite2)
 	{
 		if (
-			(sprite1->cb.y >= (sprite2->cb.y+sprite2->cb.h)) ||
-			(sprite1->cb.x >= (sprite2->cb.x+sprite2->cb.w)) ||
-			(sprite2->cb.y >= (sprite1->cb.y+sprite1->cb.h)) ||
-			(sprite2->cb.x >= (sprite1->cb.x+sprite1->cb.w)) )
+			(sprite1->data.cb.y >= (sprite2->data.cb.y+sprite2->data.cb.h)) ||
+			(sprite1->data.cb.x >= (sprite2->data.cb.x+sprite2->data.cb.w)) ||
+			(sprite2->data.cb.y >= (sprite1->data.cb.y+sprite1->data.cb.h)) ||
+			(sprite2->data.cb.x >= (sprite1->data.cb.x+sprite1->data.cb.w)) )
 		{
 			return 0;
 		}else{
@@ -307,18 +595,22 @@ static void _jl_gr_prer_new(jl_t* jlc, jl_vo* pv);
 	 * @param 'size': how big to draw the text
 	 * @param 'a': transparency of the text, 255=Opaque 0=Transparent
 	**/
-	void jl_gr_draw_text(jl_t* jlc, char *str, float x, float y,
-		float size, uint8_t a)
+	void jl_gr_draw_text(jl_t* jlc, char *str, f32_t x, f32_t y, f32_t size,
+		uint8_t a)
 	{
 		if(str == NULL) return;
 		const void *Str = str;
 		const uint8_t *STr = Str;
 		uint32_t i;
+		
+		jl_rect_t rc = { x, y, size, size };
+		jl_vec3_t tr = { 0., 0., 0. };
+
 		for(i = 0; i < strlen(str); i++) {
-			jl_gr_draw_image(jlc, 0, 0, //Font 0:0
-				x, y, size, size,
-				STr[i], a);
-			x = x + size;
+			//Font 0:0
+			jl_gr_vos_image(jlc, NULL, rc, 0, 0, STr[i], a);
+			jl_gr_draw_vo(jlc, NULL, &tr);
+			tr.x += size;
 		}
 	}
 
@@ -342,26 +634,26 @@ static void _jl_gr_prer_new(jl_t* jlc, jl_vo* pv);
 	/**
 	 * Draw text within the boundary of a sprite
 	 * @param 'jlc': library context
-	 * @param 'psprite': the boundary sprite
+	 * @param 'spr': the boundary sprite
 	 * @param 'txt': the text to draw
 	**/
-	void jl_gr_draw_text_area(jl_t* jlc, jl_sprite_t * psprite, char *txt){
-		float fontsize = (psprite->r.w - .1) / strlen(txt);
+	void jl_gr_draw_text_area(jl_t* jlc, jl_sprite_t * spr, char *txt){
+		float fontsize = (spr->data.cb.w - .1) / strlen(txt);
 		jl_gr_draw_text(jlc, txt,
-			psprite->r.x + .05,
-			psprite->r.y + (.5 * (psprite->r.h - fontsize)),
+			spr->data.cb.x + .05,
+			spr->data.cb.y + (.5 * (spr->data.cb.h - fontsize)),
 			fontsize, 255);
 	}
 
 	/**
 	 * Draw a sprite, then draw text within the boundary of a sprite
  	 * @param 'jlc': library context
-	 * @param 'psprite': the boundary sprite
+	 * @param 'spr': the boundary sprite
 	 * @param 'txt': the text to draw
 	**/
-	void jl_gr_draw_text_sprite(jl_t* jlc,jl_sprite_t * psprite,char *txt){
-		jl_gr_sprite_draw(jlc, psprite);
-		jl_gr_draw_text_area(jlc, psprite, txt);
+	void jl_gr_draw_text_sprite(jl_t* jlc,jl_sprite_t * spr,char *txt){
+		jl_gr_sprite_redraw(jlc, spr);
+		jl_gr_draw_text_area(jlc, spr, txt);
 	}
 
 	/**
@@ -382,7 +674,13 @@ static void _jl_gr_prer_new(jl_t* jlc, jl_vo* pv);
 	 * @param 'message': the message 
 	 */
 	void jl_gr_draw_msge(jl_t* jlc, char * message) {
-		jl_gr_draw_image(jlc, 0, 1, 0., 0., 1., jl_dl_p(jlc), 1, 127);
+		jvct_t *_jlc = jlc->_jlc;
+		//TODO: Make it so this variable is unneeded to change graphics.
+		jl_rect_t rc = { 0., 0., 1., jl_gl_ar(jlc) };
+
+		jl_gr_draw_vo(jlc, _jlc->gr.vos.whole_screen, NULL);
+		jl_gr_vos_image(jlc, _jlc->gr.vos.whole_screen, rc,
+			0, 1, 1, 127);
 		jl_gr_draw_ctxt(jlc, message, (9./16.)/2, 255);
 		_jl_dl_loop(jlc->_jlc); //Update Screen
 	}
@@ -396,7 +694,7 @@ static void _jl_gr_prer_new(jl_t* jlc, jl_vo* pv);
 		jl_gr_draw_msge(jlc, message);
 		jl_sg_kill(jlc, message);
 	}
-	
+
 	/**
 	 * Create a popup window.
 	 */
@@ -413,49 +711,49 @@ static void _jl_gr_prer_new(jl_t* jlc, jl_vo* pv);
 		jl_sg_mode_override(jlc, JL_SG_WM_TERM, jl_dont);
 		jl_sg_mode_override(jlc, JL_SG_WM_RESZ, jl_dont);
 	}
-	
+
 	/**
 	 * Draw a slide button, and activate if it is pressed.
 	 * @param 'jlc': the libary context
- 	 * @param 'psprite': the sprite to draw
+ 	 * @param 'spr': the sprite to draw
  	 * @param 'txt': the text to draw on the button.
  	 * @param 'defaultx': the default x position of the button.
  	 * @param 'slidex': how much the x should change when hovered above.
  	 * @param 'prun': the function to run when pressed.
 	**/
 	void jl_gr_draw_slide_button(
-		jl_t* jlc, jl_sprite_t * psprite, char *txt, float defaultx,
+		jl_t* jlc, jl_sprite_t * spr, char *txt, float defaultx,
 		float slidex, jl_simple_fnt prun)
 	{
-		jl_gr_draw_text_sprite(jlc, psprite, txt);
-		psprite->r.x = defaultx;
-		if(jl_gr_sprite_collide(jlc, jlc->mouse, psprite)) {
+		jl_gr_draw_text_sprite(jlc, spr, txt);
+		spr->data.tr.x = defaultx;
+		if(jl_gr_sprite_collide(jlc, jlc->mouse, spr)) {
 			jl_ct_run_event(jlc, JL_CT_PRESS, prun, jl_dont);
-			psprite->r.x = defaultx + slidex;
+			spr->data.tr.x = defaultx + slidex;
 		}
 	}
-	
+
 	/**
 	 * Draw a glow button, and activate if it is pressed.
 	 * @param 'jlc': the libary context
- 	 * @param 'psprite': the sprite to draw
+ 	 * @param 'spr': the sprite to draw
  	 * @param 'txt': the text to draw on the button.
  	 * @param 'prun': the function to run when pressed.
 	**/
-	void jl_gr_draw_glow_button(jl_t* jlc, jl_sprite_t * psprite,
+	void jl_gr_draw_glow_button(jl_t* jlc, jl_sprite_t * spr,
 		char *txt, jl_simple_fnt prun)
 	{
-		jl_gr_sprite_draw(jlc, psprite);
-		if(jl_gr_sprite_collide(jlc, jlc->mouse, psprite)) {
+		jl_gr_sprite_redraw(jlc, spr);
+		if(jl_gr_sprite_collide(jlc, jlc->mouse, spr)) {
 			jl_ct_run_event(jlc, JL_CT_PRESS, prun, jl_dont);
-//			jl_gr_draw_rect(jlc, psprite->r.x, psprite->r.y,
-//				psprite->r.w, psprite->r.h,
+//			jl_gr_draw_rect(jlc, spr->data.cb.x, spr->data.cb.y,
+//				spr->data.cb.w, spr->data.cb.h,
 //				1., 1., 1., 64);
-			jl_gr_draw_text(jlc, txt, 0, jl_dl_p(jlc) - .0625,
+			jl_gr_draw_text(jlc, txt, 0, jl_gl_ar(jlc) - .0625,
 				.05, 255);
 		}
 	}
-	
+
 	/**
 	 * Draw A Textbox.
 	 * @return 1 if return/enter is pressed.
@@ -467,9 +765,7 @@ static void _jl_gr_prer_new(jl_t* jlc, jl_vo* pv);
 		jvct_t *_jlc = jlc->_jlc;
 		uint8_t bytetoinsert = 0;
 
-		if(*string == NULL) {
-			*string = jl_me_strt_make(1, STRT_KEEP);
-		}
+		if(*string == NULL) *string = jl_me_strt_make(1);
 		_jlc->gr.textbox_string = *string;
 		if((bytetoinsert = jl_ct_typing_get(jlc))) {
 			if(bytetoinsert == '\b') {
@@ -487,13 +783,13 @@ static void _jl_gr_prer_new(jl_t* jlc, jl_vo* pv);
 		}
 		jl_ct_run_event(jlc,JL_CT_MAINLT,_jl_gr_textbox_lt,jl_dont);
 		jl_ct_run_event(jlc,JL_CT_MAINRT,_jl_gr_textbox_rt,jl_dont);
-		jl_gr_draw_image(jlc, 0, 0, x, y, w, h, ' ', 255);
+//		jl_gr_draw_image(jlc, 0, 0, x, y, w, h, ' ', 255);
 		jl_gr_draw_text(jlc, (char*)((*string)->data), x, y, h, 255);
-		jl_gr_draw_image(jlc, 0, 0,
-			x + (h*((float)(*string)->curs-.5)), y, h, h, 252, 255);
+//		jl_gr_draw_image(jlc, 0, 0,
+//			x + (h*((float)(*string)->curs-.5)), y, h, h, 252, 255);
 		return 0;
 	}
-	
+
 	/**
 	 * Toggle whether or not to show the menu bar.
 	 *
@@ -503,35 +799,30 @@ static void _jl_gr_prer_new(jl_t* jlc, jl_vo* pv);
 		jvct_t *_jlc = jlc->_jlc;
 
 		if(_jlc->gr.menuoverlay == jl_dont)
-			_jlc->gr.menuoverlay = _jl_gr_menubar;
+			_jlc->gr.menuoverlay = _jl_gr_taskbar_loop;
 		else
 			_jlc->gr.menuoverlay = jl_dont;
 	}
-	
+
 	/**
 	 * Add an icon to the menubar
 	 *
 	 * @param jlc: the libary context
-	 * @param grp: the image group of the image to display
-	 * @param iid: the id of the image in the image group
-	 * @param chr: the character of the image to display.  0 means stop.
 	 * @param fno: the function to run when the icon isn't pressed.
 	 * @param fnc: the function to run when the icon is pressed.
+	 * @param rdr: the function to run when redraw is called.
 	**/
-	void jl_gr_addicon(jl_t* jlc, uint16_t grp, uint8_t iid,
-		uint8_t chr, jl_simple_fnt fno, jl_simple_fnt fnc)
+	void jl_gr_addicon(jl_t* jlc, jl_simple_fnt fno, jl_simple_fnt fnc,
+		jl_simple_fnt rdr)
 	{
 		jvct_t *_jlc = jlc->_jlc;
+		jl_taskbar_t* ctx = _jlc->gr.taskbar->data.ctx;
 		uint8_t i;
 
-		for(i = 0; i < 10; i++) {
-			if(!_jlc->gr.menubar.chr[i]) break;
-		}
-		_jlc->gr.menubar.grp[i] = grp;
-		_jlc->gr.menubar.iid[i] = iid;
-		_jlc->gr.menubar.chr[i] = chr;
-		_jlc->gr.menubar.func[0][i] = fno;
-		_jlc->gr.menubar.func[1][i] = fnc;
+		for(i = 0; i < 10; i++) { if(!ctx->func[0][i]) break; }
+		ctx->func[JL_GRTP_NOT][i] = fno;
+		ctx->func[JL_GRTP_YES][i] = fnc;
+		ctx->func[JL_GRTP_RDR][i] = rdr;
 	}
 
 	/**
@@ -539,19 +830,19 @@ static void _jl_gr_prer_new(jl_t* jlc, jl_vo* pv);
 	 * @param jlc: the libary context
 	**/
 	void jl_gr_addicon_flip(jl_t* jlc) {
-		jl_gr_addicon(jlc, 0, 1, JLGR_ID_FLIP_IMAGE,
-			_jl_gr_draw_icon, _jl_gr_flipscreen);	
+		jl_gr_addicon(jlc, jl_dont, jl_gr_menu_flip_press__,
+			jl_gr_menu_flip_draw__);	
 	}
-	
+
 	/**
 	 * Add slowness detector to the menubar.
 	 * @param jlc: the libary context
 	**/
 	void jl_gr_addicon_slow(jl_t* jlc) {
-		jl_gr_addicon(jlc, 0, 1, JLGR_ID_GOOD_IMAGE,
-			_jl_gr_menubar_slow, _jl_gr_draw_icon);
+		jl_gr_addicon(jlc, _jl_gr_menu_slow_loop, jl_dont,
+			_jl_gr_menu_slow_draw);
 	}
-	
+
 	/**
 	 * Add program title to the menubar.
 	 * @param jlc: the libary context
@@ -559,155 +850,31 @@ static void _jl_gr_prer_new(jl_t* jlc, jl_vo* pv);
 	void jl_gr_addicon_name(jl_t* jlc) {
 		int i;
 		for(i = 0; i < 4; i++) {
-			jl_gr_addicon(jlc, 0, 1, JLGR_ID_UNKNOWN,
-				_jl_gr_draw_icon, _jl_gr_draw_icon);
+			jl_gr_addicon(jlc, jl_dont, jl_dont,
+				jl_gr_menu_name_draw2__);
 		}
-		jl_gr_addicon(jlc, 0, 1, JLGR_ID_UNKNOWN,
-			_jl_gr_menubar_name, _jl_gr_draw_icon);
+		jl_gr_addicon(jlc, jl_dont, jl_dont,
+			jl_gr_menu_name_draw__);
 	}
 
-/** @cond **/
-/*BACKGROUND FUNCTIONS*/
+/***      @cond       ***/
+/************************/
+/***  ETOM Functions  ***/
+/************************/
 
-	static void _jl_gr_prer_new(jl_t* jlc, jl_vo* pv) {
-		jvct_t * _jlc = jlc->_jlc;
-		int i;
+	void _jl_gr_resz(jl_t* jlc) {
+		jvct_t *_jlc = jlc->_jlc;
+
+		jl_rect_t rc = { 0., 0., 1., jl_gl_ar(jlc)};
+		jl_gr_vos_image(jlc, _jlc->gr.vos.whole_screen, rc, 0, 0, 0, 255);
 		
-		uint16_t x = _jlc->dl.full_w;
-		uint16_t y = _jlc->dl.full_h;
-		uint16_t w = 0, h = 0;
-
-		for(i = 0; i < pv->vc*3; i+=3) {
-			uint16_t xx = ((pv->cv[i] + 1.) / 2.) *
-				((double)_jlc->dl.full_w);
-			uint16_t yy =
-				((pv->cv[i+1] - 1.) / -2.)
-				 * ((double)_jlc->dl.full_h);
-			printf("%f\n", ((pv->cv[i+1] - 1.) / -2.));
-			if(xx < x) x = xx;
-			if(yy < y) y = yy;
-			if(xx > w) w = xx;
-			if(yy > h) h = yy;
-		}
-		jl_gl_prer_new(jlc->_jlc, pv, w - x, h - y);
-	}
-
-	static void _jl_gr_popup_loop(jl_t* jlc) {
-//		jl_gr_draw_rect(jlc, .1, .1, .8, .2, 127, 127, 255, 255);
-//		jl_gr_draw_rect(jlc, .1, .3, .8, .8, 64, 127, 127, 255);
-	}
-
-	static void _jl_gr_textbox_lt(jl_t* jlc) {
-//		if((int)y != 1) return;
-		jvct_t *_jlc = jlc->_jlc;
-		
-		jl_ct_typing_disable(jlc);
-		if(_jlc->gr.textbox_string->curs)
-			_jlc->gr.textbox_string->curs--;
-	}
-	
-	static void _jl_gr_textbox_rt(jl_t* jlc) {
-//		if((int)y != 1) return;
-		jvct_t *_jlc = jlc->_jlc;
-
-		jl_ct_typing_disable(jlc);
-		if(_jlc->gr.textbox_string->curs < _jlc->gr.textbox_string->size)
-			_jlc->gr.textbox_string->curs++;
-	}
-
-	static void _jl_gr_draw_icon(jl_t* jlc) {
-		jvct_t *_jlc = jlc->_jlc;
-
-//		jl_gr_draw_rect(jlc, _jlc->gr.menubar.iconx - .01,
-//			.01,
-//			.1, .1, 0., 0., 0., 64);
-		jl_gr_draw_image(jlc, 0, 1, _jlc->gr.menubar.iconx,
-			0.,
-			.1, .1,
-			_jlc->gr.menubar.chr[_jlc->gr.menubar.cursor],
-			255);
-	}
-
-	void _jl_gr_flip_scrn(jvct_t *_jlc) {
-		if(_jlc->jlc->loop == JL_SG_WM_UP) {
-			_jlc->jlc->loop = JL_SG_WM_DN;
-			timeTilMessageVanish = 8.5f;
-		}else{
-			_jlc->jlc->loop = JL_SG_WM_UP;
-			timeTilMessageVanish = 8.5f;
-		}
-	}
-	
-	static void _jl_gr_flipscreen(jl_t* jlc) {
-		jvct_t *_jlc = jlc->_jlc;
-		_jl_gr_flip_scrn(_jlc);
-		_jl_gr_draw_icon(jlc);
-	}
-	
-	static void _jl_gr_menubar_name(jl_t* jlc) {
-		jvct_t *_jlc = jlc->_jlc;
-
-		_jl_gr_draw_icon(jlc);
-		jl_gr_draw_text(jlc, _jlc->dl.windowTitle[0],
-			_jlc->gr.menubar.iconx, 0., .05, 255);
-		jl_gr_draw_text(jlc, _jlc->dl.windowTitle[1],
-			_jlc->gr.menubar.iconx, .05, .05, 255);
-	}
-	
-	static void _jl_gr_menubar_slow(jl_t* jlc) {
-		jvct_t *_jlc = jlc->_jlc;
-		if(_jlc->sg.processingTimeMillis > JL_MAIN_SAPT) {
-			_jlc->gr.menubar.chr[_jlc->gr.menubar.cursor] =
-				JLGR_ID_SLOW_IMAGE;
-/*			sprintf(_jlc->dl.windowTitle[1], "%d/%d",
-				_jlc->sg.processingTimeMillis, JL_MAIN_SAPT);*/
-			sprintf(_jlc->dl.windowTitle[1], "%f", jlc->psec);
-		}else{
-			_jlc->gr.menubar.chr[_jlc->gr.menubar.cursor] =
-				JLGR_ID_GOOD_IMAGE;
-		}
-		_jl_gr_draw_icon(jlc);
-	}
-	
-	static void _jl_gr_menubar(jl_t* jlc) {
-		jvct_t *_jlc = jlc->_jlc;
-
-		for(_jlc->gr.menubar.cursor = 0; _jlc->gr.menubar.cursor < 10;
-			_jlc->gr.menubar.cursor++)
-		{
-			if(!_jlc->gr.menubar.chr[_jlc->gr.menubar.cursor])break;
-			_jlc->gr.menubar.iconx =.9-(.1*_jlc->gr.menubar.cursor);
-
-			if( (_jlc->ct.msx > _jlc->gr.menubar.iconx) &&
-				(_jlc->ct.msy < .1) &&
-				(_jlc->ct.heldDown == 1))
-			{
-				_jlc->gr.menubar.func
-					[1][_jlc->gr.menubar.cursor](jlc);
-				_jlc->ct.heldDown = 2;
-			}else{
-				_jlc->gr.menubar.func
-					[0][_jlc->gr.menubar.cursor](jlc);
-			}
-		}
-	}
-	
-	static void _jl_gr_mouse_loop(jl_t* jlc) {
-		jvct_t *_jlc = jlc->_jlc;
-	//Update Mouse
-		jlc->mouse->r.x = jl_ct_gmousex(jlc);
-		jlc->mouse->r.y = jl_ct_gmousey(jlc);
-		jlc->mouse->cb.x = jlc->mouse->r.x;
-		jlc->mouse->cb.y = jlc->mouse->r.y;
-	//if computer, draw mouse
-	#if JL_PLAT == JL_PLAT_COMPUTER
-		jl_gr_sprite_draw(jlc, _jlc->jlc->mouse);
-	#endif
+		_jl_gr_taskbar_loop_resz(jlc);
 	}
 
 	void _jl_gr_loop(jl_t* jlc) {
+		jvct_t* _jlc = jlc->_jlc;
+		jl_sprite_t* mouse = jlc->mouse;
 	//Menu Bar
-		jvct_t *_jlc = jlc->_jlc;
 		if(!_jlc->fl.inloop) _jlc->gr.menuoverlay(jlc);
 	//Message Display
 		if(timeTilMessageVanish > 0.f) {
@@ -723,25 +890,26 @@ static void _jl_gr_prer_new(jl_t* jlc, jl_vo* pv);
 			timeTilMessageVanish-=jlc->psec;
 		}
 	//Update mouse
-		jlc->mouse->loop((void*)jlc);
+		jl_gr_sprite_loop(jlc, mouse);
 	}
 
 	void _jl_gr_init(jvct_t *_jlc) {
+		jl_sprite_t* mouse = NULL;
+
 		jl_io_offset(_jlc->jlc, JL_IO_SIMPLE, "GRIN");
-		_jlc->gr.menuoverlay = _jl_gr_menubar;
-		_jlc->jlc->mouse = jl_gr_sprite_make(
-			_jlc->jlc, 0, 0, 254, 255, //G,I,C,A
-			0.f, 0.f, .075f, .075f, //XYWH
-			_jl_gr_mouse_loop, 0);
-		_jlc->jlc->mouse->cb.w = 0.f;
-		_jlc->jlc->mouse->cb.h = 0.f;
-		//Taskbar
-		jl_io_printc(_jlc->jlc, "loading taskbar...\n");
-		int i;
-		for(i = 0; i < 10; i++) {
-			_jlc->gr.menubar.chr[i] = JLGR_ID_NULL;
-		}
-		jl_io_printc(_jlc->jlc, "loaded taskbar!\n");
+		// Create the Mouse
+		_jl_gr_mouse_init(_jlc);
+		mouse = _jlc->jlc->mouse;
+		// Set the mouse's collision width and height to 0
+		mouse->data.cb.w = 0.f;
+		mouse->data.cb.h = 0.f;
+		// Set the menu loop.
+		_jlc->gr.menuoverlay = _jl_gr_taskbar_loop;
+		_jl_gr_menu_init(_jlc);
+
+		_jl_gr_init_vos(_jlc);
 		jl_io_close_block(_jlc->jlc); //Close Block "GRIN"
 	}
-/** @endcond **/
+
+/**      @endcond      **/
+/***   #End of File   ***/

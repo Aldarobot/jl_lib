@@ -60,15 +60,6 @@
 	#include <dirent.h>
 	
 	#include "jl_vm.h" //Variable Map
-	
-// Return Values
-enum {
-	JL_RTN_SUCCESS, // 0
-	JL_RTN_FAIL, // 1
-	JL_RTN_IMPOSSIBLE, // 2
-	JL_RTN_SUPER_IMPOSSIBLE, // 3
-	JL_RTN_COMPLETE_IMPOSSIBLE, // 4
-} JL_RTN;
 
 #define MAXFILELEN 1000 * 100000 //100,000 kb
 
@@ -139,12 +130,17 @@ jl_ccolor_t* jl_gl_clrcs(jvct_t *_jlc, uint8_t *rgba, uint32_t vc);
 jl_ccolor_t* jl_gl_clrcg(jvct_t *_jlc, uint8_t *rgba, uint32_t vc);
 void jl_gl_clrg(jvct_t *_jlc, jl_vo* pv, uint8_t *rgba);
 void jl_gl_clrs(jvct_t *_jlc, jl_vo* pv, uint8_t *rgba);
-void jl_gl_txtr(jvct_t *_jlc, jl_vo* pv, u08t map, u08t a, u16t pgid, u16t pi);
+void jl_gl_txtr(jvct_t *_jlc, jl_vo* pv, u8_t map, u8_t a, u16_t pgid, u16_t pi);
 void jl_gl_translate(jvct_t *_jlc, jl_vo* pv, float x, float y, float z);
-void jl_gl_translate_prerendered(jvct_t *_jlc, jl_vo* pv, float x, float y, float z);
+void jl_gl_translate_pr(jvct_t *_jlc, jl_pr_t* pv, float x, float y, float z);
 void jl_gl_draw(jvct_t *_jlc, jl_vo* pv);
+void jl_gl_pr_(jvct_t *_jlc, jl_pr_t * pr, jl_simple_fnt par__redraw);
+void jl_gl_draw_pr_(jl_t* jlc, jl_pr_t* pr);
+double jl_gl_unconv_x_(double x);
+double jl_gl_unconv_y_(double y);
+uint8_t jl_gl_pr_isi_(jvct_t *_jlc, jl_pr_t* pr);
+void jl_gl_pr_use(jvct_t *_jlc, jl_vo* pv);
 
 //DL
-void _jl_dl_resize(jvct_t *_jlc, uint16_t x, uint16_t y);
-
-void _jl_gr_flip_scrn(jvct_t *pjct);
+void _jl_dl_resz(jvct_t *_jlc, uint16_t x, uint16_t y);
+void _jl_gr_resz(jl_t* jlc);

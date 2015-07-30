@@ -128,11 +128,10 @@ void jl_me_strt_clear(strt pa) {
  * @param type: whether automatic freeing should be allowed or not.
  * @returns: A new initialized "strt".
 */
-strt jl_me_strt_make(u32t size, u08t type) {
+strt jl_me_strt_make(u32_t size) {
 	strt a = malloc(sizeof(strt_t));
 	a->data = malloc(size+1);
 	a->size = size;
-	a->type = type;
 	a->curs = 0;
 	jl_me_strt_clear(a);
 	return a;
@@ -154,7 +153,7 @@ void jl_me_strt_free(strt pstr) {
 */
 strt jl_me_strt_c8ts(const char *string) {
 	uint32_t size = strlen(string);
-	strt a = jl_me_strt_make(size, STRT_TEMP);
+	strt a = jl_me_strt_make(size);
 	int i;
 	for( i = 0; i < size; i++) {
 		a->data[i] = string[i];
@@ -171,7 +170,6 @@ strt jl_me_strt_mkfrom_data(jl_t* jlc, uint32_t size, void *data) {
 	a->data = jl_me_copy(jlc, data, size);
 	a->size = size;
 	a->curs = 0;
-	a->type = STRT_KEEP;
 	a->data[size] = '\0';
 	return a;
 }
@@ -181,7 +179,7 @@ strt jl_me_strt_mkfrom_data(jl_t* jlc, uint32_t size, void *data) {
  * @param pstr: the string to read.
  * @returns: byte at the cursor of "pstr"
 */
-u08t jl_me_strt_byte(strt pstr) {
+u8_t jl_me_strt_byte(strt pstr) {
 	_jl_me_truncate_curs(pstr);
 	return pstr->data[pstr->curs];
 }
@@ -192,7 +190,7 @@ u08t jl_me_strt_byte(strt pstr) {
  * @param pstr: The string to add a byte to.
  * @param pvalue: the byte to add to "pstr".
 */
-void jl_me_strt_add_byte(strt pstr, u08t pvalue) {
+void jl_me_strt_add_byte(strt pstr, u8_t pvalue) {
 	_jl_me_truncate_curs(pstr);
 	pstr->data[pstr->curs] = pvalue;
 	pstr->curs++;
@@ -291,8 +289,8 @@ void jl_me_strt_trunc(jl_t *jlc, strt a, uint32_t size) {
 }
 
 //Print a number out as a string and return it (Type=STRT_TEMP)
-strt jl_me_strt_fnum(s32t a) {
-	strt new = jl_me_strt_make(30, STRT_TEMP);
+strt jl_me_strt_fnum(i32_t a) {
+	strt new = jl_me_strt_make(30);
 	sprintf((void*)new->data, "%d", a);
 	return new;
 }
@@ -328,7 +326,7 @@ char* jl_me_string_fstrt(jl_t* jlc, strt a) {
  * @param a: 1 more than the maximum # to return
  * @returns: a random integer from 0 to "a"
 */
-u32t jl_me_random_int(u32t a) {
+u32_t jl_me_random_int(u32_t a) {
 	return rand()%a;
 }
 
@@ -339,7 +337,7 @@ u32t jl_me_random_int(u32t a) {
  * @return 1: If particle is at the cursor.
  * @return 0: If particle is not at the cursor.
 */
-u08t jl_me_test_next(strt script, strt particle) {
+u8_t jl_me_test_next(strt script, strt particle) {
 	char * point = (void*)script->data + script->curs;//the cursor
 	char * place = strstr(point, (void*)particle->data);//search for partical
 	printf("%s, %s\n", point, particle->data);
@@ -352,14 +350,14 @@ u08t jl_me_test_next(strt script, strt particle) {
 
 /*
  * Returns string "script" truncated to "psize" or to the byte "end" in
- * "script".  It is dependant on which happens first. (Type=STRT_KEEP)
+ * "script".  It is dependant on which happens first.
  * @param script: The array script.
  * @param end: byte to end at if found.
  * @param psize: maximum size of truncated "script" to return.
  * @returns: a "strt" that is a truncated array script.
 */
-strt jl_me_read_upto(strt script, u08t end, u32t psize) {
-	strt compiled = jl_me_strt_make(psize, STRT_KEEP);
+strt jl_me_read_upto(strt script, u8_t end, u32_t psize) {
+	strt compiled = jl_me_strt_make(psize);
 	while((jl_me_strt_byte(script) != end) && (jl_me_strt_byte(script) != 0)) {
 		strncat((void*)compiled->data,
 			(void*)script->data + script->curs, 1);
@@ -369,6 +367,21 @@ strt jl_me_read_upto(strt script, u08t end, u32t psize) {
 	return compiled;
 }
 
+/**
+ * Save a pointer to a buffer and get the previous value of it.
+ * @param jlc: The library context.
+ * @param which: A number from 1-15, specifies which temporary pointer to use.
+ * @param tmp_ptr: The new pointer to save to the buffer.
+ * @returns: The old/previous value of the pointer.
+**/
+void *jl_me_tmp_ptr(jl_t* jlc, uint8_t which, void *tmp_ptr) {
+	jvct_t* _jlc = jlc->_jlc;
+	void *rtn = _jlc->me.tmp_ptr[which];
+
+	_jlc->me.tmp_ptr[which] = tmp_ptr;
+	return rtn;
+}
+
 /************************/
 /***  ETOM Functions  ***/
 /************************/
@@ -376,6 +389,8 @@ strt jl_me_read_upto(strt script, u08t end, u32t psize) {
 jvct_t* _jl_me_init(void) {
 	//Create a context for the currently loaded program
 	jvct_t* _jlc = malloc(sizeof(jvct_t));
+	m_u8_t i;
+
 	//Set the current program ID to 0[RESERVED DEFAULT]
 	_jlc->cprg = 0;
 	//Prepare user data structure
@@ -384,6 +399,9 @@ jvct_t* _jl_me_init(void) {
 	//Make sure that non-initialized things aren't used
 	_jlc->has.graphics = 0;
 	_jlc->has.fileviewer = 0;
+	_jlc->me.status = JL_STATUS_GOOD;
+	// Clear temporary pointer buffer.
+	for(i = 0; i < 16; i++) _jlc->me.tmp_ptr[i] = NULL;
 
 /*	printf("u %p, %p, c %p,%p\n",
 		_jlc->jlc, ((jvct_t *)(_jlc->jlc->_jlc))->sg.usrd,

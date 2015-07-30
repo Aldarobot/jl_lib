@@ -41,7 +41,6 @@ static void _jl_ct_press(jl_t *jlc) {
 	jlc->ctrl.r = 0.;
 	jlc->ctrl.x = jl_ct_gmousex(jlc);
 	jlc->ctrl.y = jl_ct_gmousey(jlc);
-	jl_io_printi(jlc, _jlc->ct.heldDown);
 }
 
 static void _jl_ct_not_down(jl_t* jlc) {
@@ -153,8 +152,8 @@ static void _jl_ct_is_down(jl_t* jlc) {
 	{ //touch center
 		jvct_t* _jlc = jlc->_jlc;
 		_jl_ct_press(jlc); //hrxy
-		if(_jlc->ct.heldDown && (((_jlc->ct.msy>.4f * jl_dl_p(jlc)) &&
-			(_jlc->ct.msy<.6f * jl_dl_p(jlc))) &&
+		if(_jlc->ct.heldDown && (((_jlc->ct.msy>.4f * jl_gl_ar(jlc)) &&
+			(_jlc->ct.msy<.6f * jl_gl_ar(jlc))) &&
 			((_jlc->ct.msx>.4f) && (_jlc->ct.msx<.6f))))
 		{
 			_jl_ct_is_down(jlc); //pk
@@ -171,8 +170,8 @@ static void _jl_ct_is_down(jl_t* jlc) {
 		jvct_t* _jlc = jlc->_jlc;
 		_jl_ct_press(jlc); //hrxy
 		if(_jlc->ct.heldDown && (((_jlc->ct.msx>.6f) && (_jlc->ct.msx<.8f)) &&
-			((_jlc->ct.msy * jl_dl_p(jlc)>.2f) &&
-			(_jlc->ct.msy * jl_dl_p(jlc)<.8f))))
+			((_jlc->ct.msy * jl_gl_ar(jlc)>.2f) &&
+			(_jlc->ct.msy * jl_gl_ar(jlc)<.8f))))
 		{
 			_jl_ct_is_down(jlc); //pk
 			prun(jlc);
@@ -188,8 +187,8 @@ static void _jl_ct_is_down(jl_t* jlc) {
 		jvct_t* _jlc = jlc->_jlc;
 		_jl_ct_press(jlc); //hrxy
 		if(_jlc->ct.heldDown && (((_jlc->ct.msx<.4f) && (_jlc->ct.msx>.2f)) &&
-			((_jlc->ct.msy>.2f * jl_dl_p(jlc)) &&
-			(_jlc->ct.msy<.8f * jl_dl_p(jlc)))))
+			((_jlc->ct.msy>.2f * jl_gl_ar(jlc)) &&
+			(_jlc->ct.msy<.8f * jl_gl_ar(jlc)))))
 		{
 			_jl_ct_is_down(jlc); //pk
 			prun(jlc);
@@ -204,8 +203,8 @@ static void _jl_ct_is_down(jl_t* jlc) {
 	{ //near up
 		jvct_t* _jlc = jlc->_jlc;
 		_jl_ct_press(jlc); //hrxy
-		if(_jlc->ct.heldDown && (((_jlc->ct.msy<.4f * jl_dl_p(jlc)) &&
-			(_jlc->ct.msy>.2f * jl_dl_p(jlc))) &&
+		if(_jlc->ct.heldDown && (((_jlc->ct.msy<.4f * jl_gl_ar(jlc)) &&
+			(_jlc->ct.msy>.2f * jl_gl_ar(jlc))) &&
 			((_jlc->ct.msx>.2f) && (_jlc->ct.msx<.8f))))
 		{
 			_jl_ct_is_down(jlc); //pk
@@ -221,8 +220,8 @@ static void _jl_ct_is_down(jl_t* jlc) {
 	{ //near down
 		jvct_t* _jlc = jlc->_jlc;
 		_jl_ct_press(jlc); //hrxy
-		if(_jlc->ct.heldDown && (((_jlc->ct.msy>.6f * jl_dl_p(jlc)) &&
-			(_jlc->ct.msy<.8f * jl_dl_p(jlc))) &&
+		if(_jlc->ct.heldDown && (((_jlc->ct.msy>.6f * jl_gl_ar(jlc)) &&
+			(_jlc->ct.msy<.8f * jl_gl_ar(jlc))) &&
 			((_jlc->ct.msx>.2f) && (_jlc->ct.msx<.8f))))
 		{
 			_jl_ct_is_down(jlc); //pk
@@ -267,7 +266,7 @@ static void _jl_ct_is_down(jl_t* jlc) {
 	{//far up
 		jvct_t* _jlc = jlc->_jlc;
 		_jl_ct_press(jlc); //hrxy
-		if(_jlc->ct.heldDown && (_jlc->ct.msy<.2f * jl_dl_p(jlc))) {
+		if(_jlc->ct.heldDown && (_jlc->ct.msy<.2f * jl_gl_ar(jlc))) {
 			_jl_ct_is_down(jlc); //pk
 			prun(jlc);
 		}else{
@@ -281,7 +280,7 @@ static void _jl_ct_is_down(jl_t* jlc) {
 	{//far down
 		jvct_t* _jlc = jlc->_jlc;
 		_jl_ct_press(jlc); //hrxy
-		if(_jlc->ct.heldDown && (_jlc->ct.msy>.8f * jl_dl_p(jlc))) {
+		if(_jlc->ct.heldDown && (_jlc->ct.msy>.8f * jl_gl_ar(jlc))) {
 			_jl_ct_is_down(jlc); //pk
 			prun(jlc);
 		}else{
@@ -351,10 +350,10 @@ static inline void _jl_ct_handle_events_platform_dependant(jvct_t *_jlc) {
 	if( _jlc->ct.event.type==SDL_FINGERDOWN ) {
 		_jlc->ct.msx = _jlc->ct.event.tfinger.x;
 		_jlc->ct.input.finger = 1;
-		_jlc->ct.msy = _jlc->ct.event.tfinger.y * jl_dl_p(_jlc->jlc);
+		_jlc->ct.msy = _jlc->ct.event.tfinger.y * jl_gl_ar(_jlc->jlc);
 		if(_jlc->jlc->smde) {
 			_jlc->ct.msy = _jlc->ct.msy * 2.;
-			_jlc->ct.msy -= jl_dl_p(_jlc->jlc);
+			_jlc->ct.msy -= jl_gl_ar(_jlc->jlc);
 			if(_jlc->ct.msy < 0.) _jlc->ct.input.finger = 0;
 		}
 
@@ -397,7 +396,7 @@ static inline void _jl_ct_handle_events_platform_dependant(jvct_t *_jlc) {
 
 static inline void _jl_ct_handle_events(jvct_t *_jlc) {
 	if ( _jlc->ct.event.type == SDL_TEXTINPUT) {
-		printf("%1s\n", &(_jlc->ct.event.text.text[0]));
+//		printf("%1s\n", &(_jlc->ct.event.text.text[0]));
 		int i;
 		for(i = 0; i < 32; i++)
 			_jlc->ct.text_input[i] = _jlc->ct.event.text.text[i];

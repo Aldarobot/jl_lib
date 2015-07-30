@@ -15,14 +15,14 @@
 	}_io_t;
 
 	typedef struct{
-		u32t var_set_count;
+		m_u32_t var_set_count;
 		void **vars;
 	}_sg_sprt_t;
 
 	//Standard Mode Class
 	typedef struct{
 		//Sprites
-		u32t sprite_count;
+		m_u32_t sprite_count;
 		_sg_sprt_t *sprites;
 
 		//Standard Functions
@@ -74,6 +74,8 @@ typedef struct{
 	// Memory
 	struct{
 		uint8_t temp_buff[30];
+		void * tmp_ptr[16];
+		m_u8_t status;
 	}me;
 
 	_io_t io; //Terminal Data
@@ -85,13 +87,17 @@ typedef struct{
 		uint32_t taskbar[5];
 		uint32_t init_image_location;
 		uint32_t prev_tick;
-		uint32_t this_tick;
 		uint32_t processingTimeMillis;
+		uint8_t on_time;
+		uint8_t changed;
 		
 		//For loading images
 		uint16_t image_id;
 		uint16_t igid;
 		void *image_data;
+		
+		// Offset x and y
+		float offsx, offsy;
 		
 		// 1 Background for each screen
 		struct{
@@ -183,6 +189,14 @@ typedef struct{
 		jl_vo *temp_vo;
 		// Default texture coordinates.
 		uint32_t default_tc;
+
+		// The current pre-renderer's info.
+		struct{
+			// The maximum y value.
+			double aspect_y;
+			// Width and Height of the current pre-renderer.
+			uint16_t w, h;
+		}current_pr;
 	}gl;
 	
 	_fl_t fl; //File Manager
@@ -190,19 +204,15 @@ typedef struct{
 	//Graphics
 	struct{
 		jl_simple_fnt menuoverlay;
-		struct{
-			uint16_t grp[10];
-			uint16_t iid[10];
-			uint8_t chr[10];
-			jl_simple_fnt func[2][10];
-			uint8_t cursor;
-			float iconx;
-		}menubar;
+		jl_sprite_t *taskbar;
 		struct{
 			char* window_name;
 			char* message;
 			jl_popup_button_t* btns;
 		}popup;
+		struct{
+			jl_vo *whole_screen;
+		}vos;
 		strt textbox_string;
 	}gr;
 
@@ -217,7 +227,6 @@ typedef struct{
 		SDL_DisplayMode current;
 		SDL_Window *displayWindow;
 
-		uint16_t currenty;
 		float multiplyy;
 		float multiplyx;
 		float shifty;
@@ -227,8 +236,9 @@ typedef struct{
 		
 		// The complete width and height of the window.
 		uint16_t full_w, full_h;
+		double aspect;
+		uint16_t inner_y;
 	}dl;
-
 
 	//in: What's Available
 	struct{

@@ -5,10 +5,11 @@
 
 #include <stdint.h>
 #include <stdlib.h>
-#include "jl_sg.h"
-#include "jl_me.h"
-#include "jl_ct.h"
-#include "clump.h"
+#include "jl_me.h" // Simple CPU info
+#include "jl_en.h" // Enumerations
+#include "jl_ty.h" // Variable Types
+#include "jl_ct.h" // Input Types
+#include "clump.h" // LibClump
 
 	void jl_dont(jl_t* jlc);
 // "me.c"
@@ -18,7 +19,7 @@
 	void jl_me_alloc(jl_t* jlc, void **a, uint32_t size, uint32_t oldsize);
 	#define List(x) jl_me_list_allc(sizeof(void*)*x)
 	void jl_me_strt_clear(strt pa);
-	strt jl_me_strt_make(u32t size, u08t type);
+	strt jl_me_strt_make(u32_t size);
 	void jl_me_strt_free(strt pstr);
 	strt jl_me_strt_c8ts(const char *string);
 	#define Strt(x) jl_me_strt_c8ts((const void*)x)
@@ -26,30 +27,29 @@
 	void jl_me_strt_strt(jl_t*jlc, strt a, strt b, uint64_t p);
 	void jl_me_strt_merg(jl_t *jlc, strt a, strt b);
 	void jl_me_strt_trunc(jl_t *jlc, strt a, uint32_t size);
-	strt jl_me_strt_fnum(s32t a);
+	strt jl_me_strt_fnum(i32_t a);
 	char* jl_me_string_fnum(jl_t* jlc, int32_t a);
 	const char* jl_me_string_fnum_tmp(jl_t* jlc, int32_t a);
 	char* jl_me_string_fstrt(jl_t* jlc, strt a);
-	u08t jl_me_strt_byte(strt pstr);
-	void jl_me_strt_add_byte(strt pstr, u08t pvalue);
+	u8_t jl_me_strt_byte(strt pstr);
+	void jl_me_strt_add_byte(strt pstr, u8_t pvalue);
 	void jl_me_strt_delete_byte(jl_t *jlc, strt pstr);
 	void jl_me_strt_insert_byte(jl_t *jlc, strt pstr, uint8_t pvalue);
-	u32t jl_me_random_int(u32t a);
-	u08t jl_me_test_next(strt script, strt particle);
-	strt jl_me_read_upto(strt script, u08t end, u32t psize);
+	u32_t jl_me_random_int(u32_t a);
+	u8_t jl_me_test_next(strt script, strt particle);
+	strt jl_me_read_upto(strt script, u8_t end, u32_t psize);
+	void *jl_me_tmp_ptr(jl_t* jlc, uint8_t which, void *tmp_ptr);
 // "cl.c"
 	void jl_cl_list_alphabetize(struct cl_list *list);
-// "dl.c"
-	void jl_dl_setfullscreen(jl_t *jlc, uint8_t is);
-	void jl_dl_togglefullscreen(jl_t *jlc);
-	uint16_t jl_dl_getw(jl_t *jlc);
-	uint16_t jl_dl_geth(jl_t *jlc);
-	float jl_dl_p(jl_t *jlc);
 // "gl.c"
+	jl_vo *jl_gl_vo_make(jl_t* jlc, u32_t count);
+	void jl_gl_pr_draw(jl_t* jlc, jl_vo* pv);
 	void jl_gl_maketexture(jl_t* jlc, uint16_t gid, uint16_t id,
 		void *pixels, int width, int height);
+	double jl_gl_ar(jl_t* jlc);
+	void jl_gl_clear(jl_t* jlc, uint8_t r, uint8_t g, uint8_t b, uint8_t a);
 // "sg.c"
-	void jl_sg_mode_init(jl_t* jlc, u08t mdec);
+	void jl_sg_mode_init(jl_t* jlc, u8_t mdec);
 	void jl_sg_mode_set(jl_t* jlc, uint8_t mode, uint8_t wm,
 		jl_simple_fnt loop);
 	void jl_sg_mode_override(jl_t* jlc, uint8_t wm, jl_simple_fnt loop);
@@ -59,10 +59,15 @@
 	void jl_sg_exit(jl_t* jlc);
 	void jl_sg_add_image(jl_t* jlc, char *pzipfile, uint16_t pigid);
 // "dl.c"
+	void jl_dl_setfullscreen(jl_t *jlc, uint8_t is);
+	void jl_dl_togglefullscreen(jl_t *jlc);
+	uint16_t jl_dl_getw(jl_t *jlc);
+	uint16_t jl_dl_geth(jl_t *jlc);
 	void jl_dl_progname(jl_t* jlc, strt name);
 // "gr.c"
-	void jl_gr_prer_old(jl_t* jlc, jl_vo* pv);
-	void jl_gr_prer_new(jl_t* jlc, jl_vo* pv);
+	void jl_gr_sprdr_dont(jl_t* jlc, jl_sprd_t* spr);
+	void jl_gr_pr_old(jl_t* jlc, jl_vo* pv);
+	void jl_gr_pr_new(jl_t* jlc, jl_vo* pv);
 	jl_ccolor_t* jl_gr_convert_color(jl_t* jlc, uint8_t *rgba, uint32_t vc,
 		uint8_t gradient);
 	void jl_gr_vo_color(jl_t* jlc, jl_vo* pv, jl_ccolor_t* cc);
@@ -72,38 +77,35 @@
 		float* triangles, uint8_t* colors, uint8_t multicolor);
 	void jl_gr_vos_rec(jl_t* jlc, jl_vo *pv, jl_rect_t rc, uint8_t* colors,
 		uint8_t multicolor);
-	//Deprecated now;
-	void jl_gr_draw_image(jl_t* jlc, u16t g, u16t i,
-		float x,float y,float w,float h,
-		u08t c, u08t a);
-	jl_vo* jl_gr_vo_new(jl_t* jlc);
+	void jl_gr_vos_image(jl_t* jlc, jl_vo *pv, jl_rect_t rc,
+		u16_t g, u16_t i, u8_t c, u8_t a);
 	void jl_gr_vo_old(jl_t* jlc, jl_vo* pv);
-	void jl_gr_sprite_draw(jl_t* jlc, jl_sprite_t *psprite);
-	jl_sprite_t * jl_gr_sprite_make(
-		jl_t* jlc, u16t g, u16t i, u08t c, u08t a,
-		dect x, dect y, dect w, dect h,
-		jl_simple_fnt loop, u32t ctxs);
-	u08t jl_gr_sprite_collide(jl_t* jlc, jl_sprite_t *sprite1,
+	void jl_gr_sprite_redraw(jl_t* jlc, jl_sprite_t *spr);
+	void jl_gr_sprite_loop(jl_t* jlc, jl_sprite_t *spr);
+	void jl_gr_sprite_draw_pr(jl_t* jlc, jl_sprite_t *spr);
+	jl_sprite_t * jl_gr_sprite_make(jl_t* jlc, jl_rect_t rc,
+		jl_gr_sprdr_fnt draw, jl_simple_fnt loop, u32_t ctxs);
+	u8_t jl_gr_sprite_collide(jl_t* jlc, jl_sprite_t *sprite1,
 		jl_sprite_t *sprite2);
-	void jl_gr_draw_text(jl_t* jlc, char *str, dect x, dect y, dect size,
+	void jl_gr_draw_text(jl_t* jlc, char *str, f32_t x, f32_t y, f32_t size,
 		uint8_t a);
-	void jl_gr_draw_numi(jl_t* jlc, uint32_t num, dect x, dect y, dect size,
+	void jl_gr_draw_numi(jl_t* jlc, uint32_t num, f32_t x, f32_t y, f32_t size,
 		uint8_t a);
-	void jl_gr_draw_text_area(jl_t* jlc, jl_sprite_t * psprite, char *txt);
-	void jl_gr_draw_text_sprite(jl_t* jlc,jl_sprite_t * psprite,char *txt);
-	void jl_gr_draw_ctxt(jl_t* jlc, char *str, dect p_y, uint8_t p_a);
+	void jl_gr_draw_text_area(jl_t* jlc, jl_sprite_t * spr, char *txt);
+	void jl_gr_draw_text_sprite(jl_t* jlc,jl_sprite_t * spr,char *txt);
+	void jl_gr_draw_ctxt(jl_t* jlc, char *str, f32_t p_y, uint8_t p_a);
 	void jl_gr_draw_msge(jl_t* jlc, char* message);
 	void jl_gr_term_msge(jl_t* jlc, char* message);
 	void jl_gr_draw_slide_button(
-		jl_t* jlc, jl_sprite_t * psprite, char *txt, float defaultx,
+		jl_t* jlc, jl_sprite_t * spr, char *txt, float defaultx,
 		float slidex, jl_simple_fnt prun);
-	void jl_gr_draw_glow_button(jl_t* jlc, jl_sprite_t * psprite,
+	void jl_gr_draw_glow_button(jl_t* jlc, jl_sprite_t * spr,
 		char *txt, jl_simple_fnt prun);
 	uint8_t jl_gr_draw_textbox(jl_t*jlc, float x, float y, float w,
 		float h, strt *string);
 	void jl_gr_togglemenubar(jl_t* jlc);
-	void jl_gr_addicon(jl_t* jlc, uint16_t grp, uint8_t iid,
-		uint8_t chr, jl_simple_fnt fno, jl_simple_fnt fnc);
+	void jl_gr_addicon(jl_t* jlc, jl_simple_fnt fno, jl_simple_fnt fnc,
+		jl_simple_fnt rdr);
 	void jl_gr_addicon_flip(jl_t* jlc);
 	void jl_gr_addicon_slow(jl_t* jlc);
 	void jl_gr_addicon_name(jl_t* jlc);
@@ -138,7 +140,7 @@
 // "au.c"
 	void jl_au_mus_play(jl_t* jlc, uint32_t p_IDinStack,
 		uint8_t p_secondsOfFadeOut, uint8_t p_secondsOfFadeIn);
-	void jl_au_mus_halt(u08t p_secondsOfFadeOut);
+	void jl_au_mus_halt(u8_t p_secondsOfFadeOut);
 	uint8_t jl_au_mus_playing(void);
 	void jl_au_panning(uint8_t left, uint8_t toCenter);
 	void jl_au_panning_default(void);

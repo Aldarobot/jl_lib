@@ -121,7 +121,7 @@ void jl_fl_save(jl_t* jlc, const void *file, const char *name, uint32_t bytes) {
  */
 strt jl_fl_load(jl_t* jlc, char *file_name) {
 	_jl_fl_reset_cursor(file_name);
-	u32t i;
+	m_u32_t i;
 	unsigned char *file = malloc(MAXFILELEN);
 	uint8_t offs = (file_name[0] == '!');
 	int fd = open(file_name + offs, O_RDWR);
@@ -142,7 +142,7 @@ strt jl_fl_load(jl_t* jlc, char *file_name) {
 	jl_io_printi(jlc, jlc->info);
 	jl_io_printc(jlc, "bytes\n");
 	close(fd);
-	strt frtn = jl_me_strt_make(jlc->info, STRT_KEEP);
+	strt frtn = jl_me_strt_make(jlc->info);
 	for( i = 0; i < jlc->info; i++) {
 		frtn->data[i] = file[i];
 	}
@@ -373,8 +373,8 @@ char * jl_fl_get_resloc(jl_t* jlc, char* pprg_name, char* pfilename) {
 	int i;
 	char *filebase;
 	char *location;
-	strt filebases = jl_me_strt_make(0, STRT_KEEP);
-	strt errfs = jl_me_strt_make(0, STRT_KEEP);
+	strt filebases = jl_me_strt_make(0);
+	strt errfs = jl_me_strt_make(0);
 	
 	//Open Block "FLBS"
 	jl_io_offset(jlc, JL_IO_SIMPLE, "FLBS");
@@ -434,7 +434,7 @@ char * jl_fl_get_resloc(jl_t* jlc, char* pprg_name, char* pfilename) {
 	jl_fl_mkdir(jlc, Strt(filebase));
 
 	jl_io_printc(jlc, "Merge....\n");
-	strt pvar_pkfl = jl_me_strt_make(0, STRT_KEEP);
+	strt pvar_pkfl = jl_me_strt_make(0);
 	jl_me_strt_merg(jlc, pvar_pkfl, Strt(filebase));
 	jl_me_strt_merg(jlc, pvar_pkfl, Strt(pfilename));
 
@@ -649,11 +649,12 @@ void jl_fl_user_select_loop(jl_t* jlc) {
 	struct cl_list_iterator *iterator;
 	int i;
 	char *stringtoprint;
-	_jlc->fl.drawupto = ((int)(20.f * jl_dl_p(jlc))) - 1;
+	_jlc->fl.drawupto = ((int)(20.f * jl_gl_ar(jlc))) - 1;
 
 	iterator = cl_list_iterator_create(_jlc->fl.filelist);
 
-	jl_gr_draw_image(jlc, 0, 1, 0., 0., 1., jl_dl_p(jlc), 1, 127);
+	jl_gr_draw_vo(jlc, _jlc->gr.vos.whole_screen, NULL);
+//	jl_gr_draw_image(jlc, 0, 1, 0., 0., 1., jl_gl_ar(jlc), 1, 127);
 	jl_gr_draw_text(jlc, "Select File", .02, .02, .04,255);
 
 	jl_ct_run_event(jlc,JL_CT_MAINUP, _jl_fl_user_select_up, jl_dont);
@@ -689,7 +690,7 @@ void jl_fl_user_select_loop(jl_t* jlc) {
 		_jlc->fl.cpage--;
 	}
 	if(_jlc->fl.prompt) {
-		if(jl_gr_draw_textbox(jlc, .02, jl_dl_p(jlc) - .06, .94, .02,
+		if(jl_gr_draw_textbox(jlc, .02, jl_gl_ar(jlc) - .06, .94, .02,
 			&_jlc->fl.promptstring))
 		{
 			char *name = _jl_fl_full_fname(jlc,
@@ -704,7 +705,7 @@ void jl_fl_user_select_loop(jl_t* jlc) {
 	}else{
 		jl_gr_draw_text(jlc, ">", .02, .08 + (.04 * _jlc->fl.cursor),
 			.04,255);
-		jl_gr_draw_text(jlc, _jlc->fl.dirname, .02, jl_dl_p(jlc) - .02, .02, 255);
+		jl_gr_draw_text(jlc, _jlc->fl.dirname, .02, jl_gl_ar(jlc) - .02, .02, 255);
 		jl_ct_run_event(jlc, JL_CT_SELECT, _jl_fl_user_select_do,
 			jl_dont);
 	}
@@ -726,22 +727,34 @@ char *jl_fl_user_select_get(jl_t* jlc) {
 		return NULL;
 }
 
-static void _jl_fl_btn_makefile_action(jl_t* jlc) {
+static void _jl_fl_btn_makefile_press(jl_t* jlc) {
 	jvct_t *_jlc = jlc->_jlc;
 	_jlc->fl.prompt = 1;
 }
 
-static void _jl_fl_btn_makefile(jl_t* jlc) {
-	jvct_t *_jlc = jlc->_jlc;
-	if(_jlc->fl.newfiledata == NULL) return;
-	jl_gr_draw_glow_button(jlc, _jlc->fl.btns[0], "+ New File",
-		_jl_fl_btn_makefile_action);
+static void _jl_fl_btn_makefile_loop(jl_t* jlc) {
+	
 }
 
-static void _jl_fl_btn_makefolder(jl_t* jlc) {
+static void _jl_fl_btn_makefile_draw(jl_t* jlc, jl_sprd_t* spr) {
 	jvct_t *_jlc = jlc->_jlc;
+	
+	//TODO: make graphic: 0, 1, 1, 255
+	if(_jlc->fl.newfiledata == NULL) return;
+	jl_gr_draw_glow_button(jlc, _jlc->fl.btns[0], "+ New File",
+		_jl_fl_btn_makefile_press);
+}
+
+static void _jl_fl_btn_makefolder_loop(jl_t* jlc) {
+	
+}
+
+static void _jl_fl_btn_makefolder_draw(jl_t* jlc, jl_sprd_t* spr) {
+	jvct_t *_jlc = jlc->_jlc;
+	
+	//TODO: make graphic: 0, 1, 2, 255,
 	jl_gr_draw_glow_button(jlc, _jlc->fl.btns[1], "+ New Folder",
-		_jl_fl_btn_makefile_action);
+		_jl_fl_btn_makefile_press);
 }
 
 void _jl_fl_kill(jvct_t * _jlc) {
@@ -753,13 +766,16 @@ void _jl_fl_kill(jvct_t * _jlc) {
 }
 
 void _jl_fl_initb(jvct_t * _jlc) {
+	jl_rect_t rc1 = { .8, 0., .1, .1 };
+	jl_rect_t rc2 = { .9, 0., .1, .1 };
+
 	//Create the variables
 	_jlc->fl.filelist = cl_list_create();
 	_jlc->fl.inloop = 0;
-	_jlc->fl.btns[0] = jl_gr_sprite_make(_jlc->jlc, 0, 1, 1, 255,
-		.8, 0., .1, .1, _jl_fl_btn_makefile, 0);
-	_jlc->fl.btns[1] = jl_gr_sprite_make(_jlc->jlc, 0, 1, 2, 255,
-		.9, 0., .1, .1, _jl_fl_btn_makefolder, 0);
+	_jlc->fl.btns[0] = jl_gr_sprite_make(_jlc->jlc, rc1,
+		_jl_fl_btn_makefile_draw, _jl_fl_btn_makefile_loop, 0);
+	_jlc->fl.btns[1] = jl_gr_sprite_make(_jlc->jlc, rc2,
+		_jl_fl_btn_makefolder_draw, _jl_fl_btn_makefolder_loop, 0);
 	_jlc->has.fileviewer = 1;
 }
 
