@@ -98,7 +98,7 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 			if(xx > w) w = xx;
 			if(yy > h) h = yy;
 		}
-		printf("_jl_gr_pr_new: %f, %f\n", w - x, h - y);
+		//printf("_jl_gr_pr_new: %f, %f\n", w - x, h - y);
 		// Create the pre-renderer & Unuse screen pre-renderer.
 		jl_gl_pr_new_(jlc->_jlc, &(pv->pr), _jlc->gl.current_pr.w,
 			_jlc->gl.current_pr.h, w - x, h - y);
@@ -116,7 +116,6 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 	}
 
 	static void _jl_gr_textbox_lt(jl_t* jlc) {
-//		if((int)y != 1) return;
 		jvct_t *_jlc = jlc->_jlc;
 		
 		jl_ct_typing_disable(jlc);
@@ -125,7 +124,6 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 	}
 
 	static void _jl_gr_textbox_rt(jl_t* jlc) {
-//		if((int)y != 1) return;
 		jvct_t *_jlc = jlc->_jlc;
 
 		jl_ct_typing_disable(jlc);
@@ -139,11 +137,11 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 		jvct_t *_jlc = jlc->_jlc;
 		jl_rect_t rc_icon = { 0., 0., jl_gl_ar(jlc), jl_gl_ar(jlc)};
 		jl_taskbar_t* ctx = _jlc->gr.taskbar->data.ctx;
-		jl_vec3_t tr = { .1 * ctx->cursor, 0., 0. };
+		jl_vec3_t tr = { 1. - (jl_gl_ar(jlc) * (ctx->cursor+1.)),
+			0., 0. };
 
 		jl_gr_vos_image(jlc, &(ctx->icon[1]), rc_icon, g, i, c, 255);
 		jl_gr_draw_vo(jlc, &(ctx->icon[1]), &tr);
-//		printf("drew %d\n", ctx->cursor);
 	}
 	
 	static void jl_gr_menu_flip_draw__(jl_t* jlc) {
@@ -153,6 +151,7 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 	static void jl_gr_menu_flip_press__(jl_t* jlc) {
 		jvct_t *_jlc = jlc->_jlc;
 
+		if(jlc->ctrl.h != 1) return;
 		_jl_gr_flip_scrn(_jlc);
 	}
 	
@@ -163,12 +162,15 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 	static void jl_gr_menu_name_draw__(jl_t* jlc) {
 		jvct_t* _jlc = jlc->_jlc;
 		jl_taskbar_t* ctx = _jlc->gr.taskbar->data.ctx;
+		f32_t text_size = jl_gl_ar(jlc) * .5;
 
 		jl_gr_menu_name_draw2__(jlc);
 		jl_gr_draw_text(jlc, _jlc->dl.windowTitle[0],
-			.1 * ctx->cursor, 0., .1, 255);
+			1. - (jl_gl_ar(jlc) * (ctx->cursor+1.)),
+			0., text_size, 255);
 		jl_gr_draw_text(jlc, _jlc->dl.windowTitle[1],
-			.1 * ctx->cursor, .1, .1, 255);
+			1. - (jl_gl_ar(jlc) * (ctx->cursor+1.)),
+			text_size, text_size, 255);
 	}
 
 	static void _jl_gr_menu_slow_draw(jl_t* jlc) {
@@ -221,7 +223,7 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 	static void _jl_gr_taskbar_loop_run(jl_t* jlc) {
 		jvct_t* _jlc = jlc->_jlc;
 		jl_taskbar_t *ctx;
-		
+
 		//If mouse is'nt over the taskbar - dont run pressed.
 		if(_jlc->ct.msy >= .1) {
 			_jl_gr_taskbar_loop_pass(jlc);
@@ -230,7 +232,7 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 		// Set context
 		ctx = _jlc->gr.taskbar->data.ctx;
 		// Figure out what's selected.
-		u8_t selected = (m_u8_t)(_jlc->ct.msy / .1);
+		u8_t selected = (m_u8_t)((1. - _jlc->ct.msx) / .1);
 		
 		for( ctx->cursor = 0; ctx->cursor < 10; ctx->cursor++) {
 			// If A NULL function then, stop looping taskbar.
@@ -498,7 +500,7 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 		}
 		jl_gl_pr_(jlc->_jlc, spr->pr, jl_gr_sprite_draw_to_pr__);
 	}
-	
+
 	void jl_gr_sprite_resz(jl_t* jlc, jl_sprite_t *spr) {
 		// If prender is already initialized, then delete it.
 		if(spr->pr) jl_gl_pr_old_(jlc->_jlc, &(spr->pr));

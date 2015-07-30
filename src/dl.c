@@ -180,9 +180,6 @@ void _jl_dl_resz(jvct_t *_jlc, uint16_t x, uint16_t y) {
 	_jlc->gl.current_pr.h = _jlc->dl.full_h;
 	_jlc->dl.aspect = ((double)y) / ((double)x);
 	_jlc->gl.current_pr.aspect_y = _jlc->dl.aspect;
-	printf("\n[ %f, %d, %d ]\n", _jlc->gl.current_pr.aspect_y,
-		_jlc->gl.current_pr.w, _jlc->gl.current_pr.h);
-	printf("dly = %f\n", _jlc->dl.window.h);
 }
 
 /**

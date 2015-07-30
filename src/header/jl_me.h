@@ -1,5 +1,5 @@
 // Version Definitions
-#define JL_VERSION "4.0.0-e1"
+#define JL_VERSION "4.0.0"
 
 //Platform Declarations
 #define JL_PLAT_COMPUTER 0 //PC/MAC

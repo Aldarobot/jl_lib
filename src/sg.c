@@ -508,7 +508,6 @@ void _jl_sg_resz(jl_t* jlc) {
 		0.f, 0.f,
 		rcrdw, rcrdh * jl_gl_ar(jlc)
 	};
-	printf("%f, %f ( %f )\n", rcrd.w, rcrd.h, rcrdh);
 	uint8_t rclr_up[4] = { 127,	127,	127,	255 };
 	uint8_t rclr_dn[4] = { 0,	127,	0,	255 };
 	uint8_t rclr_bg[4] = { 0,	255,	0,	255 };
@@ -614,7 +613,7 @@ static inline void _jl_sg_init_libs(jvct_t *_jlc) {
 }
 
 static inline void _jl_ini(jvct_t *_jlc) {
-	jl_io_printc(_jlc->jlc, "STARTING JL_lib Version" JL_VERSION "....\n");
+	jl_io_printc(_jlc->jlc, "STARTING JL_lib Version "JL_VERSION "....\n");
 
 	_jl_sg_init_libs(_jlc);
 	hack_user_init(_jlc->jlc);

@@ -132,9 +132,7 @@ static void _jl_ct_is_down(jl_t* jlc) {
 	{
 		jvct_t* _jlc = jlc->_jlc;
 		_jl_ct_press(jlc); //hrxy
-		if(_jlc->ct.heldDown &&
-			((_jlc->ct.msx <= .9) || (_jlc->ct.msy >= .1)))
-		{
+		if(_jlc->ct.heldDown) {
 			_jl_ct_is_down(jlc); //pk
 			prun(jlc);
 		}else{

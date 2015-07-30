@@ -530,7 +530,6 @@ static void _jl_gl_pr_use(jvct_t *_jlc, uint32_t tex, uint32_t db, uint32_t fb,
 	_jlc->gl.current_pr.aspect_y = ar;
 	_jlc->gl.current_pr.w = w;
 	_jlc->gl.current_pr.h = h;
-//	printf("aspect use %f\n", _jlc->gl.current_pr.aspect_y);
 }
 
 static void _jl_gl_pr_unuse(jvct_t *_jlc) {
@@ -546,13 +545,11 @@ static void _jl_gl_pr_unuse(jvct_t *_jlc) {
 	_jlc->gl.current_pr.aspect_y = _jlc->dl.aspect;
 	_jlc->gl.current_pr.w = _jlc->dl.full_w;
 	_jlc->gl.current_pr.h = _jlc->dl.full_h;
-//	printf("aspect unuse %f\n", _jlc->gl.current_pr.aspect_y);
 }
 
 static void _jl_gl_pr_obj_free(jvct_t *_jlc,
 	uint32_t *tex, uint32_t *db, uint32_t *fb)
 {
-	printf("YOU MUST SEE THIS %d, %d, %d\n", *tex, *db, *fb);
 	_jl_gl_texture_free(_jlc, tex);
 	_jl_gl_framebuffer_free(_jlc, fb);
 	_jl_gl_depthbuffer_free(_jlc, db);
@@ -1118,7 +1115,6 @@ void jl_gl_pr_new_(jvct_t *_jlc, jl_pr_t **pr, uint16_t cw, uint16_t ch,
 	// Resolution ( in pixels )
 	(*pr)->w = rw * ((double)cw);
 	(*pr)->h = rh * ((double)ch);
-	printf("JSDFL:DSJF: %dx%d\n", (*pr)->w, (*pr)->h);
 	(*pr)->ar = ((rh)/(rw));
 	// Nothings made yet.
 	(*pr)->tx = 0;
@@ -1138,8 +1134,6 @@ void jl_gl_pr_new_(jvct_t *_jlc, jl_pr_t **pr, uint16_t cw, uint16_t ch,
 }
 
 void jl_gl_pr_(jvct_t *_jlc, jl_pr_t * pr, jl_simple_fnt par__redraw) {
-	printf("%p\n", _jlc->sg.cbg);
-	printf("%p\n", _jlc->sg.cbg->pr);
 	jl_pr_t * cbg = _jlc->sg.cbg->pr;
 
 	// Use the vo's pr
