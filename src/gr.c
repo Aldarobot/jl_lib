@@ -51,7 +51,7 @@ void jl_gl_pr_old(jvct_t *_jlc, jl_vo* pv);
 uint8_t jl_gl_pr_isi(jvct_t *_jlc, jl_vo* pv);
 void jl_gl_pr_new_(jvct_t *_jlc, jl_pr_t **pr, uint16_t cw, uint16_t ch,
 	float rw, float rh);
-void jl_gl_pr_old_(jvct_t *_jlc, jl_pr_t* pr);
+void jl_gl_pr_old_(jvct_t *_jlc, jl_pr_t** pr);
 
 //Upper SDL prototype
 void _jl_dl_loop(jvct_t* _jlc);
@@ -208,6 +208,7 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 		jvct_t* _jlc = jlc->_jlc;
 		jl_taskbar_t *ctx = _jlc->gr.taskbar->data.ctx;
 
+		jl_gr_sprite_resz(jlc, _jlc->gr.taskbar);
 		for( ctx->cursor = 0; ctx->cursor < 10; ctx->cursor++) {
 			// If A NULL function then, stop looping taskbar.
 			if( !(ctx->func[0][ctx->cursor]) ) break;
@@ -492,7 +493,7 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 		jl_me_tmp_ptr(jlc, 0, spr);
 		if(!spr->pr) {
 			jl_gl_pr_new_(_jlc, &(spr->pr),
-				_jlc->sg.cbg->pr->w, _jlc->sg.cbg->pr->h,
+				_jlc->gl.current_pr.w, _jlc->gl.current_pr.h,
 				spr->data.cb.w, spr->data.cb.h);
 		}
 		jl_gl_pr_(jlc->_jlc, spr->pr, jl_gr_sprite_draw_to_pr__);
@@ -500,7 +501,7 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 	
 	void jl_gr_sprite_resz(jl_t* jlc, jl_sprite_t *spr) {
 		// If prender is already initialized, then delete it.
-		if(spr->pr) jl_gl_pr_old_(jlc->_jlc, spr->pr);
+		if(spr->pr) jl_gl_pr_old_(jlc->_jlc, &(spr->pr));
 		spr->pr = NULL;
 	}
 
@@ -867,8 +868,10 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 
 		jl_rect_t rc = { 0., 0., 1., jl_gl_ar(jlc)};
 		jl_gr_vos_image(jlc, _jlc->gr.vos.whole_screen, rc, 0, 0, 0, 255);
-		
+	//Menu Bar
 		_jl_gr_taskbar_loop_resz(jlc);
+	//Mouse
+		jl_gr_sprite_resz(jlc, jlc->mouse);
 	}
 
 	void _jl_gr_loop(jl_t* jlc) {

@@ -81,6 +81,7 @@
 		u16_t g, u16_t i, u8_t c, u8_t a);
 	void jl_gr_vo_old(jl_t* jlc, jl_vo* pv);
 	void jl_gr_sprite_redraw(jl_t* jlc, jl_sprite_t *spr);
+	void jl_gr_sprite_resz(jl_t* jlc, jl_sprite_t *spr);
 	void jl_gr_sprite_loop(jl_t* jlc, jl_sprite_t *spr);
 	void jl_gr_sprite_draw_pr(jl_t* jlc, jl_sprite_t *spr);
 	jl_sprite_t * jl_gr_sprite_make(jl_t* jlc, jl_rect_t rc,

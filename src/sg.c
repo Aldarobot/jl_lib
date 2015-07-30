@@ -534,6 +534,7 @@ void _jl_sg_resz(jl_t* jlc) {
 	_jlc->sg.bg.dn->pr->ar = _jlc->dl.aspect / (isDoubleScreen+1.);
 	_jlc->sg.offsx = shiftx/2.;
 	_jlc->sg.offsy = ((shifty * (1. + isDoubleScreen))/2.) * jl_gl_ar(jlc);
+	_jlc->sg.cbg = _jlc->sg.bg.dn;
 }
 
 static inline void _jl_sg_initb(jvct_t * _jlc) {
@@ -554,7 +555,6 @@ static inline void _jl_sg_initb(jvct_t * _jlc) {
 		_jlc->jlc->smde = !_jlc->jlc->smde;
 		_jl_sg_resz(_jlc->jlc);
 	}
-	_jlc->sg.cbg = _jlc->sg.bg.dn;
 }
 
 static inline void _jl_sg_inita(jvct_t * _jlc) {

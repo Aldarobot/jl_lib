@@ -552,6 +552,7 @@ static void _jl_gl_pr_unuse(jvct_t *_jlc) {
 static void _jl_gl_pr_obj_free(jvct_t *_jlc,
 	uint32_t *tex, uint32_t *db, uint32_t *fb)
 {
+	printf("YOU MUST SEE THIS %d, %d, %d\n", *tex, *db, *fb);
 	_jl_gl_texture_free(_jlc, tex);
 	_jl_gl_framebuffer_free(_jlc, fb);
 	_jl_gl_depthbuffer_free(_jlc, db);
@@ -622,6 +623,8 @@ static void _jl_gl_pr_obj_make(jvct_t *_jlc,
 	// Always check that our framebuffer is ok
 	if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
 		jl_sg_kill(_jlc->jlc, "Frame buffer not complete!\n");
+//
+	jl_gl_clear(_jlc->jlc, 0, 0, 0, 0);
 // De-activate pre-renderer.
 	_jl_gl_pr_unuse(_jlc);
 }
@@ -1098,11 +1101,12 @@ void jl_gl_clear(jl_t* jlc, uint8_t r, uint8_t g, uint8_t b, uint8_t a) {
 void jl_gl_pr_new_(jvct_t *_jlc, jl_pr_t **pr, uint16_t cw, uint16_t ch,
 	float rw, float rh)
 {
+	float nrh = _jlc->sg.cbg ? rh * (((float)_jlc->jlc->smde)+1.) : rh;
 	float xyzw[] = {
-		0.f,	rh,	0.f,
+		0.f,	nrh,	0.f,
 		0.f,	0.f,	0.f,
 		rw,	0.f,	0.f,
-		rw,	rh,	0.f
+		rw,	nrh,	0.f
 	};
 
 	// Make the pr structure.
@@ -1115,7 +1119,7 @@ void jl_gl_pr_new_(jvct_t *_jlc, jl_pr_t **pr, uint16_t cw, uint16_t ch,
 	(*pr)->w = rw * ((double)cw);
 	(*pr)->h = rh * ((double)ch);
 	printf("JSDFL:DSJF: %dx%d\n", (*pr)->w, (*pr)->h);
-	(*pr)->ar = (rh)/(rw);
+	(*pr)->ar = ((rh)/(rw));
 	// Nothings made yet.
 	(*pr)->tx = 0;
 	(*pr)->db = 0;
@@ -1134,6 +1138,8 @@ void jl_gl_pr_new_(jvct_t *_jlc, jl_pr_t **pr, uint16_t cw, uint16_t ch,
 }
 
 void jl_gl_pr_(jvct_t *_jlc, jl_pr_t * pr, jl_simple_fnt par__redraw) {
+	printf("%p\n", _jlc->sg.cbg);
+	printf("%p\n", _jlc->sg.cbg->pr);
 	jl_pr_t * cbg = _jlc->sg.cbg->pr;
 
 	// Use the vo's pr
