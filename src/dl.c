@@ -122,6 +122,7 @@ void _jl_dl_resz(jvct_t *_jlc, uint16_t x, uint16_t y) {
 	_jlc->dl.full_w = x;
 	_jlc->dl.full_h = y;
 	jl_gl_viewport_screen(_jlc);
+	jl_gl_clear(_jlc->jlc, 2, 5, 255, 255);
 	_jlc->dl.multiplyy = -2.*((float)x)/((float)y);
 	_jlc->dl.multiplyx = 2.;
 	_jlc->dl.shiftx = 0.;
@@ -207,7 +208,7 @@ void _jl_dl_inita(jvct_t* _jlc) {
 	_jlvm_curd_mode(_jlc); //Get Information On How Big To Make Window
 	_jlvm_crea_wind(_jlc); //Create Window With SDL
 	#if JL_PLAT == JL_PLAT_PHONE //If Phone (For Reorientation)
-	_jlvm_curd_mode(_jlc);
+//	_jlvm_curd_mode(_jlc);
 	#endif
 }
 

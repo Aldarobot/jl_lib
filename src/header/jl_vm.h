@@ -7,11 +7,15 @@
 	typedef struct{
 		uint8_t offs;
 		int8_t ofs2;
-		uint8_t newline;
 		char head[16][5];
 		jl_io_print_fnt *printfn;
 		uint16_t maxtag;
 		int16_t tag[16];
+		char buffer[80];
+//		#if JL_IO_DEBUG == 1
+		char stack[50][30];
+		uint8_t level;
+//		#endif
 	}_io_t;
 
 	typedef struct{

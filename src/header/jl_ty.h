@@ -83,6 +83,7 @@ typedef struct{
 typedef struct {
 	jl_vec3_t tr;				// The translate vector.
 	jl_rect_t cb;				// Collision Box
+	float rh, rw;				// Real Height & Width
 	void* ctx;				// The sprite's context.
 }jl_sprd_t;
 

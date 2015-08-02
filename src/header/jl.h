@@ -15,6 +15,7 @@
 // "me.c"
 	uint32_t jl_me_tbiu(void);
 	void jl_me_clr(void *pmem, uint64_t size);
+	void jl_me_copyto(const void *src, void* dest, size_t size);
 	void * jl_me_copy(jl_t* jlc, const void *src, size_t size);
 	void jl_me_alloc(jl_t* jlc, void **a, uint32_t size, uint32_t oldsize);
 	#define List(x) jl_me_list_allc(sizeof(void*)*x)
@@ -31,6 +32,8 @@
 	char* jl_me_string_fnum(jl_t* jlc, int32_t a);
 	const char* jl_me_string_fnum_tmp(jl_t* jlc, int32_t a);
 	char* jl_me_string_fstrt(jl_t* jlc, strt a);
+	uint8_t jl_me_string_print(jl_t* jlc, char *string, const char* format,
+		const char *var, u64_t n);
 	u8_t jl_me_strt_byte(strt pstr);
 	void jl_me_strt_add_byte(strt pstr, u8_t pvalue);
 	void jl_me_strt_delete_byte(jl_t *jlc, strt pstr);
@@ -120,6 +123,9 @@
 	void jl_io_printt(jl_t *jlc, uint8_t a, const char *print);
 	void jl_io_printi(jl_t *jlc, int print);
 	void jl_io_printd(jl_t *jlc, double print);
+	void jl_io_function(jl_t* jlc, const char* fn_name);
+	void jl_io_return(jl_t* jlc, const char* fn_name);
+	void jl_io_stacktrace(jl_t* jlc);
 // "fl.c"
 	void jl_fl_save(jl_t* jlc, const void *file, const char *name,
 		uint32_t bytes);

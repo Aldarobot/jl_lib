@@ -3,7 +3,7 @@
 // Shader Code
 
 #ifdef GL_ES_VERSION_2_0
-	#define GLSL_HEAD "#version 100\nprecision mediump float;\n"
+	#define GLSL_HEAD "#version 100\nprecision highp float;\n"
 #else
 	#define GLSL_HEAD "#version 120\n"
 #endif
@@ -453,10 +453,12 @@ static void _jl_gl_depthbuffer_free(jvct_t *_jlc, uint32_t *db) {
 
 static void _jl_gl_depthbuffer_make(jvct_t *_jlc, uint32_t *db) {
 	glGenRenderbuffers(1, db);
+	if(!(*db)) jl_sg_kill(_jlc->jlc, "_jl_gl_depthbuffer_make: GL buff=0");
 	_jl_gl_cerr(_jlc,*db,"make pr: glGenRenderbuffers");
 }
 
 static void _jl_gl_depthbuffer_bind(jvct_t *_jlc, uint32_t db) {
+	if(db == 0) jl_sg_kill(_jlc->jlc, "_jl_gl_depthbuffer_bind: GL db = 0");
 	glBindRenderbuffer(GL_RENDERBUFFER, db);
 	_jl_gl_cerr(_jlc, db,"_jl_gl_depthbuffer_bind: glBindRenderbuffer");
 }
@@ -474,10 +476,12 @@ static void _jl_gl_framebuffer_free(jvct_t *_jlc, uint32_t *fb) {
 
 static void _jl_gl_framebuffer_make(jvct_t *_jlc, uint32_t *fb) {
 	glGenFramebuffers(1, fb);
+	if(!(*fb)) jl_sg_kill(_jlc->jlc, "_jl_gl_framebuffer_make: GL FB = 0");
 	_jl_gl_cerr(_jlc, *fb,"glGenFramebuffers");
 }
 
 static void _jl_gl_framebuffer_bind(jvct_t *_jlc, uint32_t fb) {
+	if(fb == 0) jl_sg_kill(_jlc->jlc, "_jl_gl_framebuffer_bind: GL FB = 0");
 	glBindFramebuffer(GL_FRAMEBUFFER, fb);
 	_jl_gl_cerr(_jlc, fb,"glBindFramebuffer");
 }
@@ -495,11 +499,13 @@ static void _jl_gl_texture_free(jvct_t *_jlc, uint32_t *tex) {
 
 static void _jl_gl_texture_make(jvct_t *_jlc, uint32_t *tex) {
 	glGenTextures(1, tex);
+	if(!(*tex)) jl_sg_kill(_jlc->jlc, "_jl_gl_texture_make: GL tex = 0");
 	_jl_gl_cerr(_jlc, 0, "_jl_gl_texture_make: glGenTextures");
 }
 
 // Bind a texture.
 static void _jl_gl_texture_bind(jvct_t *_jlc, uint32_t tex) {
+//	if(tex == 0) jl_sg_kill(_jlc->jlc, "_jl_gl_texture_bind: GL tex = 0");
 	glBindTexture(GL_TEXTURE_2D, tex);
 	_jl_gl_cerr(_jlc, tex,"_jl_gl_texture_bind: glBindTexture");
 }
@@ -611,7 +617,7 @@ static void _jl_gl_pr_obj_make(jvct_t *_jlc,
 // The depth buffer
 
 	// Set the depth buffer
-	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, w, h);
+	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT16, w, h);
 	_jl_gl_cerr(_jlc, 0,"make pr: glRenderbufferStorage");
 	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
 		GL_RENDERBUFFER, *db);
@@ -621,7 +627,7 @@ static void _jl_gl_pr_obj_make(jvct_t *_jlc,
 	if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
 		jl_sg_kill(_jlc->jlc, "Frame buffer not complete!\n");
 //
-	jl_gl_clear(_jlc->jlc, 0, 0, 0, 0);
+	jl_gl_clear(_jlc->jlc, 255, 0, 0, 255);
 // De-activate pre-renderer.
 	_jl_gl_pr_unuse(_jlc);
 }
@@ -659,8 +665,7 @@ static void _jl_gl_draw_onts(jvct_t *_jlc, u32_t gl, u8_t rs, u32_t vc) {
 	// Update the clipping pane & position in shader.
 	_jl_gl_updatevectors(_jlc, gl);
 	// Finally, draw the image!
-	_jl_gl_draw_arrays(_jlc, rs ? GL_TRIANGLES : GL_TRIANGLE_FAN,
-		vc);
+	_jl_gl_draw_arrays(_jlc, rs ? GL_TRIANGLES : GL_TRIANGLE_FAN, vc);
 }
 
 /************************/
@@ -726,6 +731,9 @@ uint8_t jl_gl_pr_isi(jvct_t *_jlc, jl_vo* pv) {
 // Use a vertex object's pre-renderer for rendering.
 void jl_gl_pr_use(jvct_t *_jlc, jl_vo* pv) {
 	pv->a = 1.f;
+	if(!pv->pr)
+		jl_sg_kill(_jlc->jlc,
+			"jl_gl_pr_use: pre-renderer not created\n");
 	_jl_gl_pr_use(_jlc, pv->pr->tx, pv->pr->db, pv->pr->fb,
 		pv->pr->w, pv->pr->h, pv->pr->ar);
 }
@@ -802,8 +810,7 @@ jl_ccolor_t* jl_gl_clrcg(jvct_t *_jlc, uint8_t *rgba, uint32_t vc) {
 	jl_ccolor_t* cc = NULL;
 
 	//Allocate memory
-	jl_me_alloc(_jlc->jlc,
-		(void**)&cc, vc * sizeof(float) * 4, 0);
+	jl_me_alloc(_jlc->jlc, (void**)&cc, vc * sizeof(float) * 4, 0);
 	//Set RGBA for each vertex
 	for(i = 0; i < vc; i++) { 
 		cc[(i * 4) + 0] = ((double) rgba[(i * 4) + 0]) / 255.;
@@ -1136,6 +1143,8 @@ void jl_gl_pr_new_(jvct_t *_jlc, jl_pr_t **pr, uint16_t cw, uint16_t ch,
 void jl_gl_pr_(jvct_t *_jlc, jl_pr_t * pr, jl_simple_fnt par__redraw) {
 	jl_pr_t * cbg = _jlc->sg.cbg->pr;
 
+	if(!cbg) jl_sg_kill(_jlc->jlc, "Background's pre-renderer lost.\n");
+	if(!pr) jl_sg_kill(_jlc->jlc, "Drawing on lost pre-renderer.\n");
 	// Use the vo's pr
 	_jl_gl_pr_use(_jlc, pr->tx, pr->db, pr->fb, pr->w, pr->h, pr->ar);
 	// Render to the pr.
