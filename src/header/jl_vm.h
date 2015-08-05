@@ -162,7 +162,7 @@ typedef struct{
 	
 	//Opengl Data
 	struct{
-		GLuint **textures;
+		uint32_t **textures;
 		uint16_t allocatedg;
 		uint16_t allocatedi;
 		uint8_t whichprg;

@@ -40,8 +40,7 @@ char *source_frag_tex =
 	"\n"
 	"void main()\n"
 	"{\n"
-	"	gl_FragColor = texture2D(texture,"
-	"		vec2(texcoord.x - .0039, texcoord.y + .001));"
+	"	gl_FragColor = texture2D(texture, texcoord.st);"
 	"	gl_FragColor.a = gl_FragColor.a * multiply_alpha;"
 //	"	gl_FragColor = mix(\n"
 //	"		texture2D(textures[0], texcoord),\n"
@@ -66,8 +65,8 @@ char *source_vert_tex =
 	"\n"
 	"void main()\n"
 	"{\n"
-	"	gl_Position = transform * vec4(position + translate, 1.0);\n"
 	"	texcoord = texpos;\n"
+	"	gl_Position = transform * vec4(position + translate, 1.0);\n"
 	"}\n\0";
 
 /*static const char source_vert_tex[] = 
@@ -83,6 +82,13 @@ static const char source_frag_tex[] =
 	"void main() {\n"
 	"  gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);\n"
 	"}\n";*/
+	
+static const float DEFAULT_TC[] = {
+	0.f + (1. / 1024.), 0.f + (1. / 1024.),
+	0.f + (1. / 1024.), 1.f - (1. / 1024.),
+	1.f - (1. / 1024.), 1.f - (1. / 1024.),
+	1.f - (1. / 1024.), 0.f + (1. / 1024.)
+};
 
 // Functions:
 
@@ -116,8 +122,8 @@ static void _jl_gl_buff_bind(jvct_t *_jlc, uint32_t buffer) {
 }
 
 // Set the Data for VBO "buffer" to "buffer_data" with "buffer_size"
-static void _jl_gl_buffer_push(jvct_t *_jlc, uint32_t buffer, void *buffer_data,
-	u8_t buffer_size)
+static void _jl_gl_buffer_push(jvct_t *_jlc, uint32_t buffer,
+	const void *buffer_data, u8_t buffer_size)
 {
 	// Check For Deleted Buffer
 	if(buffer == 0) jl_sg_kill(_jlc->jlc, "buffer got deleted!");
@@ -232,19 +238,72 @@ GLuint createProgram(jvct_t *_jlc, const char* pVertexSource,
 	return program;
 }
 
+static void jl_gl_texture_make__(jvct_t* _jlc, uint32_t *tex) {
+	glGenTextures(1, tex);
+	if(!(*tex)) jl_sg_kill(_jlc->jlc, "jl_gl_texture_make__: GL tex = 0");
+	_jl_gl_cerr(_jlc, 0, "jl_gl_texture_make__: glGenTextures");
+}
+
+// Set the bound texture.  pm is the pixels 0 - blank texture.
+static void jl_gl_texture_set__(jvct_t* _jlc, u8_t* pm, u16_t w, u16_t h) {
+	glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA,w,h,0,GL_RGBA,GL_UNSIGNED_BYTE,pm);
+//	glTexImage2D(
+//		GL_TEXTURE_2D, 0,		/* target, level */
+//		GL_RGBA,			/* internal format */
+//		width, height, 0,		/* width, height, border */
+//		GL_RGBA, GL_UNSIGNED_BYTE,	/* external format, type */
+//		pixels				/* pixels */
+//	);
+	_jl_gl_cerr(_jlc, 0,"texture image 2D");
+}
+
+static void jl_gl_texpar_set__(jvct_t* _jlc) {
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	_jl_gl_cerr(_jlc, 0,"glTexParameteri");
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	_jl_gl_cerr(_jlc, 1,"glTexParameteri");
+}
+
+// Bind a texture.
+static void jl_gl_texture_bind__(jvct_t *_jlc, uint32_t tex) {
+	if(tex == 0) jl_sg_kill(_jlc->jlc, "jl_gl_texture_bind__: GL tex = 0");
+	glBindTexture(GL_TEXTURE_2D, tex);
+	_jl_gl_cerr(_jlc, tex,"jl_gl_texture_bind__: glBindTexture");
+}
+
+// Unbind a texture
+static void _jl_gl_texture_unbind(jvct_t *_jlc) {
+	glBindTexture(GL_TEXTURE_2D, 0);
+	_jl_gl_cerr(_jlc, 0,"_jl_gl_texture_unbind: glBindTexture");
+}
+
+// Make a new texture.
+static void jl_gl_texture_new__(jvct_t *_jlc, m_u32_t *tex, u8_t* px,
+	u16_t w, u16_t h)
+{
+	// Make the texture
+	jl_gl_texture_make__(_jlc, tex);
+	// Bind the texture
+	jl_gl_texture_bind__(_jlc, *tex);
+	// Set texture
+	jl_gl_texture_set__(_jlc, px, w, h);
+	// Set the texture parametrs.
+	jl_gl_texpar_set__(_jlc);
+}
+
+// Make a texture - doesn't free "pixels"
 void jl_gl_maketexture(jl_t* jlc, uint16_t gid, uint16_t id,
-	void *pixels, int width, int height)
+	void* pixels, int width, int height)
 {
 	jvct_t *_jlc = jlc->_jlc;
-	char *hstr;
-	char *wstr;
-	
+
 	jl_io_offset(_jlc->jlc, JL_IO_SIMPLE, "MKTX");
 	if (!pixels)
 		jl_sg_kill(jlc, "null pixels");
 	if (_jlc->gl.allocatedg < gid + 1) {
 		_jlc->gl.textures =
-			realloc(_jlc->gl.textures, sizeof(GLuint *) * (gid+1));
+			realloc(_jlc->gl.textures,
+				sizeof(uint32_t *) * (gid+1));
 		_jlc->gl.tex.uniforms.textures =
 			realloc(_jlc->gl.tex.uniforms.textures,
 				sizeof(GLint *) * (gid+1));
@@ -256,52 +315,21 @@ void jl_gl_maketexture(jl_t* jlc, uint16_t gid, uint16_t id,
 	if (_jlc->gl.allocatedi < id + 1) {
 		_jlc->gl.textures[gid] =
 			realloc(_jlc->gl.textures[gid],
-				sizeof(GLuint) * (id+1));
+				sizeof(uint32_t) * (id+1));
 		_jlc->gl.tex.uniforms.textures[gid] =
 			realloc(_jlc->gl.tex.uniforms.textures[gid],
 				sizeof(GLint) * (id+1));
 		_jlc->gl.allocatedi = id + 1;
 	}
-	jl_io_printc(_jlc->jlc, "generating texture...");
-	glGenTextures(1, &_jlc->gl.textures[gid][id]);
-	_jl_gl_cerr(_jlc, 0,"gen textures");
-	glBindTexture(GL_TEXTURE_2D, _jlc->gl.textures[gid][id]);
-	_jl_gl_cerr(_jlc, 0,"bind textures");
-	jl_io_printc(_jlc->jlc, "settings pars...");
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	_jl_gl_cerr(_jlc, 0,"glTexParameteri");
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	_jl_gl_cerr(_jlc, 1,"glTexParameteri");
-	//GL_CLAMP_TO_BORDER GL_REPEAT GL_CLAMP_TO_EDGE
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	_jl_gl_cerr(_jlc, 2,"glTexParameteri");
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	_jl_gl_cerr(_jlc, 3,"glTexParameteri");
-
-	hstr = jl_me_string_fnum(_jlc->jlc, height);
-	wstr = jl_me_string_fnum(_jlc->jlc, width);
-	jl_io_printc(_jlc->jlc, "wh:");
-	jl_io_printc(_jlc->jlc, wstr);
+	jl_io_printc(_jlc->jlc, "generating texture (");
+	jl_io_printi(_jlc->jlc, width);
 	jl_io_printc(_jlc->jlc, ",");
-	jl_io_printc(_jlc->jlc, hstr);
-	jl_io_printc(_jlc->jlc, "\n");
-	free(hstr);
-	free(wstr);
+	jl_io_printi(_jlc->jlc, height);
+	jl_io_printc(_jlc->jlc, ")\n");
+	// Make the texture.
+	jl_gl_texture_new__(_jlc, &_jlc->gl.textures[gid][id], pixels, width,
+		height);
 
-	glTexImage2D(
-		GL_TEXTURE_2D, 0,		/* target, level */
-		GL_RGBA,			/* internal format */
-		width, height, 0,		/* width, height, border */
-		GL_RGBA, GL_UNSIGNED_BYTE,	/* external format, type */
-		pixels				/* pixels */
-	);
-	_jl_gl_cerr(_jlc, 0,"texture image 2D");
-//	free(pixels);
-	if(_jlc->gl.textures[gid][id] == 0) {
-		printf("bad texture:\n");
-		_jl_gl_cerr(_jlc, 0,"BADT");
-		jl_sg_kill(jlc, ":Bad Texture, but no gl error? WHY!?\n");
-	}
 	jl_io_close_block(_jlc->jlc); //Close Block "MKTX"
 }
 
@@ -494,25 +522,6 @@ static void _jl_gl_texture_free(jvct_t *_jlc, uint32_t *tex) {
 	*tex = 0;
 }
 
-static void _jl_gl_texture_make(jvct_t *_jlc, uint32_t *tex) {
-	glGenTextures(1, tex);
-	if(!(*tex)) jl_sg_kill(_jlc->jlc, "_jl_gl_texture_make: GL tex = 0");
-	_jl_gl_cerr(_jlc, 0, "_jl_gl_texture_make: glGenTextures");
-}
-
-// Bind a texture.
-static void _jl_gl_texture_bind(jvct_t *_jlc, uint32_t tex) {
-	if(tex == 0) jl_sg_kill(_jlc->jlc, "_jl_gl_texture_bind: GL tex = 0");
-	glBindTexture(GL_TEXTURE_2D, tex);
-	_jl_gl_cerr(_jlc, tex,"_jl_gl_texture_bind: glBindTexture");
-}
-
-// Unbind a texture
-static void _jl_gl_texture_unbind(jvct_t *_jlc) {
-	glBindTexture(GL_TEXTURE_2D, 0);
-	_jl_gl_cerr(_jlc, 0,"_jl_gl_texture_unbind: glBindTexture");
-}
-
 static void _jl_gl_viewport(jvct_t *_jlc, uint16_t w, uint16_t h) {
 	glViewport(0, 0, w, h);
 	_jl_gl_cerr(_jlc, w * h, "glViewport");
@@ -524,7 +533,7 @@ static void _jl_gl_pr_use(jvct_t *_jlc, uint32_t tex, uint32_t db, uint32_t fb,
 	// Render to our framebuffer
 	_jl_gl_framebuffer_bind(_jlc, fb);
 	// Render on the texture
-	_jl_gl_texture_bind(_jlc, tex);
+	jl_gl_texture_bind__(_jlc, tex);
 	// Render on the depth buffer
 	_jl_gl_depthbuffer_bind(_jlc, db);
 	// Render on the whole framebuffer [ lower left -> upper right ]
@@ -588,34 +597,19 @@ static void _jl_gl_pr_obj_make(jvct_t *_jlc,
 		jl_sg_kill(_jlc->jlc,
 			": texture is too big for graphics card.\n");
 	}
-	// Make the texture for pre-renderering.
-	_jl_gl_texture_make(_jlc, tex);
-	// Make Frame Buffer
-	_jl_gl_framebuffer_make(_jlc, fb);
-	// Make Depth Buffer
-	_jl_gl_depthbuffer_make(_jlc, db);
-	// Use the buffers.
-	_jl_gl_pr_use(_jlc, *tex, *db, *fb, w, h, NULL);
-
-	// Empty texture - the last "0" sets it empty.
-	glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA,w,h,0,GL_RGBA,GL_UNSIGNED_BYTE,0);
-	_jl_gl_cerr(_jlc, w * h,"make pr: glTexImage2D");
-	// 
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	_jl_gl_cerr(_jlc, 0,"make pr: glTexParameteri");
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	_jl_gl_cerr(_jlc, 0,"make pr: glTexParameteri");
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	_jl_gl_cerr(_jlc, 2,"glTexParameteri");
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	_jl_gl_cerr(_jlc, 3,"glTexParameteri");
+	// Create a new texture for pre-renderering.  The "NULL" sets it blank.
+	jl_gl_texture_new__(_jlc, tex, NULL, w, h);
 // Configure the framebuffer.
-
+	// Make & Bind Frame Buffer
+	_jl_gl_framebuffer_make(_jlc, fb);
+	_jl_gl_framebuffer_bind(_jlc, *fb);
 	// Set "renderedTexture" as our colour attachement #0
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
 		GL_TEXTURE_2D, *tex, 0);
 // The depth buffer
-
+	// Make & Bind Depth Buffer
+	_jl_gl_depthbuffer_make(_jlc, db);
+	_jl_gl_depthbuffer_bind(_jlc, *db);
 	// Set the depth buffer
 	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT16, w, h);
 	_jl_gl_cerr(_jlc, 0,"make pr: glRenderbufferStorage");
@@ -626,7 +620,8 @@ static void _jl_gl_pr_obj_make(jvct_t *_jlc,
 	// Always check that our framebuffer is ok
 	if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
 		jl_sg_kill(_jlc->jlc, "Frame buffer not complete!\n");
-//
+// Set Viewport to image and clear.
+	_jl_gl_viewport(_jlc, w, h);
 	jl_gl_clear(_jlc->jlc, 255, 0, 0, 255);
 // De-activate pre-renderer.
 	_jl_gl_pr_unuse(_jlc);
@@ -658,7 +653,7 @@ static void _jl_gl_draw_txtr(jvct_t *_jlc, f32_t a, u32_t tx, uint32_t tc) {
 	// Set Alpha Value In Shader
 	_jl_gl_setalpha(_jlc, a);
 	// Bind the texture
-	_jl_gl_texture_bind(_jlc, tx);
+	jl_gl_texture_bind__(_jlc, tx);
 }
 
 static void _jl_gl_draw_onts(jvct_t *_jlc, u32_t gl, u8_t rs, u32_t vc) {
@@ -846,25 +841,18 @@ void jl_gl_txtr(jvct_t *_jlc, jl_vo* pv, u8_t map, u8_t a, u16_t pgid, u16_t pi)
 	if(map) {
 		int32_t cX = map%16;
 		int32_t cY = map/16;
-		double CX = (((double)cX)/16.);
-		double CY = 1.-((double)cY)/16.;
+		double CX = -.0039 + ((double)cX)/16.;
+		double CY = .001 + ((double)(15-cY))/16.;
 		float tex1[] =
 		{
-			CX, CY - (1./16.),
-			CX, CY,
-			(1./16.)+CX, CY,
-			(1./16.)+CX, CY - (1./16.)
+			(DEFAULT_TC[0]/16.) + CX, (DEFAULT_TC[1]/16.) + CY,
+			(DEFAULT_TC[2]/16.) + CX, (DEFAULT_TC[3]/16.) + CY,
+			(DEFAULT_TC[4]/16.) + CX, (DEFAULT_TC[5]/16.) + CY,
+			(DEFAULT_TC[6]/16.) + CX, (DEFAULT_TC[7]/16.) + CY
 		};
 		_jl_gl_buffer_push(_jlc, pv->bt, tex1, 8);
 	}else{
-		float tex2[] =
-		{	
-			0. + (2./1024.), 0.,
-			0. + (2./1024.), 1.,
-			1., 1.,
-			1., 0.
-		};
-		_jl_gl_buffer_push(_jlc, pv->bt, tex2, 8);
+		_jl_gl_buffer_push(_jlc, pv->bt, DEFAULT_TC, 8);
 	}
 }
 
@@ -1033,12 +1021,7 @@ static inline void _jl_gl_init_shaders(jvct_t *_jlc) {
 
 //Load and create all resources
 static inline void _jl_gl_make_res(jvct_t *_jlc) {
-	float tex2[] = {
-		0. + (2./1024.), 0.,
-		0. + (2./1024.), 1.,
-		1., 1.,
-		1., 0.
-	};
+
 
 	jl_io_offset(_jlc->jlc, JL_IO_SIMPLE, "GLIN");
 	//Setup opengl properties
@@ -1051,7 +1034,7 @@ static inline void _jl_gl_make_res(jvct_t *_jlc) {
 	jl_io_printc(_jlc->jlc, "making default texc buff!\n");
 	// Default GL Texture Coordinate Buffer
 	_jl_gl_buffer_make(_jlc, &(_jlc->gl.default_tc));
-	_jl_gl_buffer_push(_jlc, _jlc->gl.default_tc, tex2, 8);
+	_jl_gl_buffer_push(_jlc, _jlc->gl.default_tc, DEFAULT_TC, 8);
 	jl_io_printc(_jlc->jlc, "made temp vo & default tex. c. buff!\n");
 	jl_io_close_block(_jlc->jlc); //Close Block "GLIN"
 }

@@ -88,6 +88,7 @@ void _jl_fl_errf(jvct_t * _jlc, const char *msg) {
 	jl_io_offset(_jlc->jlc, JL_IO_SIMPLE, "ERRF");
 	jl_io_printc(_jlc->jlc, "saving to errf: ");
 	jl_io_printc(_jlc->jlc, _jlc->fl.errf_filename);
+	jl_io_printc(_jlc->jlc, "\n");
 	jl_io_offset(_jlc->jlc, JL_IO_MINIMAL, "ERRF");
 	jl_io_printc(_jlc->jlc, msg);
 	jl_io_offset(_jlc->jlc, JL_IO_SIMPLE, "ERRF");
