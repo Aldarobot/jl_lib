@@ -68,7 +68,8 @@ typedef struct{
 	// Texturing:
 	uint32_t tx;	// ID to texture.
 	float a;	// Converted Alpha.
-	jl_pr_t *pr; // Pre-renderer.
+	jl_pr_t *pr;	// Pre-renderer.
+	jl_pr_t *cp;	// Container Pre-Renderer.
 }jl_vo;
 
 // Coordinate Structures

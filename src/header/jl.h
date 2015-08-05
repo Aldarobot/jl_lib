@@ -51,6 +51,7 @@
 		void *pixels, int width, int height);
 	double jl_gl_ar(jl_t* jlc);
 	void jl_gl_clear(jl_t* jlc, uint8_t r, uint8_t g, uint8_t b, uint8_t a);
+	jl_pr_t * jl_gl_pr_new(jl_t* jlc, float w, float h, uint16_t w_px);
 // "sg.c"
 	void jl_sg_mode_init(jl_t* jlc, u8_t mdec);
 	void jl_sg_mode_set(jl_t* jlc, uint8_t mode, uint8_t wm,
@@ -70,7 +71,7 @@
 // "gr.c"
 	void jl_gr_sprdr_dont(jl_t* jlc, jl_sprd_t* spr);
 	void jl_gr_pr_old(jl_t* jlc, jl_vo* pv);
-	void jl_gr_pr_new(jl_t* jlc, jl_vo* pv);
+	void jl_gr_pr_new(jl_t* jlc, jl_vo* pv, u16_t xres);
 	jl_ccolor_t* jl_gr_convert_color(jl_t* jlc, uint8_t *rgba, uint32_t vc,
 		uint8_t gradient);
 	void jl_gr_vo_color(jl_t* jlc, jl_vo* pv, jl_ccolor_t* cc);

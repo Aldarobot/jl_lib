@@ -28,7 +28,6 @@ void jl_gl_draw_prendered(jvct_t *_jlc, jl_vo* pv);
 	void _jl_gl_init(jvct_t* _jlc);
 	void _jl_io_init(jvct_t* _jlc);
 	void _jl_dl_inita(jvct_t* _jlc);
-	void _jl_dl_initb(jvct_t* _jlc);
 	jvct_t* _jl_me_init(void);
 
 	//LIB LOOPS: parameter is context
@@ -510,54 +509,76 @@ void _jl_sg_loop(jvct_t *_jlc) {
 	_jlc->sg.loop(_jlc->jlc);
 }
 
-void _jl_sg_resz(jl_t* jlc) {
+static void jl_sg_init_ds_(jl_t* jlc) {
 	jvct_t * _jlc = jlc->_jlc;
-	const float isDoubleScreen = (double)(jlc->smde);
-	const float shiftx = _jlc->dl.shiftx;
-	const float shifty = _jlc->dl.shifty / (isDoubleScreen+1.);
+	const float shifty = _jlc->dl.shifty / 2.;
 	const float rcrdw = 1. - _jlc->dl.shiftx;
-	const float rcrdh = (1./(1.+isDoubleScreen)) - shifty;
-	jl_io_printc(_jlc->jlc, "RCRD\n");
+	const float rcrdh = .5 - shifty;
 	jl_rect_t rcrd = {
 		0.f, 0.f,
 		rcrdw, rcrdh * jl_gl_ar(jlc)
 	};
 	uint8_t rclr_up[4] = { 127,	127,	127,	255 };
 	uint8_t rclr_dn[4] = { 0,	127,	0,	255 };
+	
+	jl_io_printc(_jlc->jlc, "{{{ 2 Screen init\n");
+	// Update the rectangle backgrounds.
+	jl_gr_vos_rec(jlc, _jlc->sg.bg.up, rcrd, rclr_up, 0);
+	jl_gr_pr_new(jlc, _jlc->sg.bg.up, _jlc->dl.current.w);
+	jl_gr_vos_rec(jlc, _jlc->sg.bg.dn, rcrd, rclr_dn, 0);
+	jl_gr_pr_new(jlc, _jlc->sg.bg.dn, _jlc->dl.current.w);
+	// Set double screen loop.
+	_jlc->sg.loop = _jl_sg_loop_ds;
+	//
+	_jlc->sg.bg.up->pr->ar = _jlc->dl.aspect / 2.;
+	_jlc->sg.bg.dn->pr->ar = _jlc->dl.aspect / 2.;
+	
+	_jlc->sg.screen_height = rcrd.h;
+}
+
+static void jl_sg_init_ss_(jl_t* jlc) {
+	jvct_t * _jlc = jlc->_jlc;
+	const float shifty = _jlc->dl.shifty;
+	const float rcrdw = 1. - _jlc->dl.shiftx;
+	const float rcrdh = 1. - shifty;
+	jl_rect_t rcrd = {
+		0.f, 0.f,
+		rcrdw, rcrdh * jl_gl_ar(jlc)
+	};
 	uint8_t rclr_bg[4] = { 0,	255,	0,	255 };
+	
+	jl_io_printc(jlc, "{{{ 1 Screen init\n");
+	// Update the rectangle backgrounds.
+	jl_gr_vos_rec(jlc, _jlc->sg.bg.dn, rcrd, rclr_bg, 0);
+	printf("ye got %d\n", _jlc->dl.current.w);
+	jl_gr_pr_new(jlc, _jlc->sg.bg.dn, _jlc->dl.current.w);
+	// Set single screen loop.
+	_jlc->sg.loop = _jl_sg_loop_ss;
+	//
+	_jlc->sg.bg.dn->pr->ar = _jlc->dl.aspect;
+	
+	_jlc->sg.screen_height = rcrd.h;
+}
+
+void _jl_sg_resz(jl_t* jlc) {
+	jvct_t * _jlc = jlc->_jlc;
+	const float isDoubleScreen = (double)(jlc->smde);
+
 	jl_io_printc(_jlc->jlc, "VARS DON\n");
 
-	_jlc->sg.screen_height = rcrd.h;
 	_jlc->sg.cbg = NULL;
-	if(jlc->smde) {
-		jl_io_printc(_jlc->jlc, "{{{ 2 Screen init\n");
-		// Update the rectangle backgrounds.
-		jl_gr_vos_rec(jlc, _jlc->sg.bg.up, rcrd, rclr_up, 0);
-		jl_gr_pr_new(jlc, _jlc->sg.bg.up);
-		jl_gr_vos_rec(jlc, _jlc->sg.bg.dn, rcrd, rclr_dn, 0);
-		jl_gr_pr_new(jlc, _jlc->sg.bg.dn);
-		// Set double screen loop.
-		_jlc->sg.loop = _jl_sg_loop_ds;
-		//
-		_jlc->sg.bg.up->pr->ar = _jlc->dl.aspect / (isDoubleScreen+1.);
-		_jlc->sg.bg.dn->pr->ar = _jlc->dl.aspect / (isDoubleScreen+1.);
-	}else{
-		jl_io_printc(_jlc->jlc, "{{{ 1 Screen init\n");
-		// Update the rectangle backgrounds.
-		jl_gr_vos_rec(jlc, _jlc->sg.bg.dn, rcrd, rclr_bg, 0);
-		jl_gr_pr_new(jlc, _jlc->sg.bg.dn);
-		// Set single screen loop.
-		_jlc->sg.loop = _jl_sg_loop_ss;
-		//
-		_jlc->sg.bg.dn->pr->ar = _jlc->dl.aspect / (isDoubleScreen+1.);
-	}
-	_jlc->sg.offsx = shiftx/2.;
-	_jlc->sg.offsy = ((shifty * (1. + isDoubleScreen))/2.) * jl_gl_ar(jlc);
+	if(jlc->smde)
+		jl_sg_init_ds_(jlc);
+	else
+		jl_sg_init_ss_(jlc);
+	_jlc->sg.offsx = _jlc->dl.shiftx/2.;
+	_jlc->sg.offsy = (((_jlc->dl.shifty / (1. + isDoubleScreen)) *
+		(1. + isDoubleScreen))/2.) * jl_gl_ar(jlc);
 	_jlc->sg.cbg = _jlc->sg.bg.dn;
 	jl_io_printc(_jlc->jlc, "VARS DONE\n");
 }
 
-static inline void _jl_sg_initb(jvct_t * _jlc) {
+static inline void _jl_sg_initc(jvct_t * _jlc) {
 	// No error
 	_jlc->jlc->errf = JL_ERR_NERR;
 	_jlc->jlc->psec = 0.f;
@@ -567,14 +588,11 @@ static inline void _jl_sg_initb(jvct_t * _jlc) {
 	// Set Default Window To Terminal
 	_jlc->jlc->loop = JL_SG_WM_TERM;
 	_jlc->sg.prev_tick = 0;
-	_jlc->sg.bg.up = jl_gl_vo_make(_jlc->jlc, 1);
-	_jlc->sg.bg.dn = jl_gl_vo_make(_jlc->jlc, 1);
-	// Resize for 2 screen Default - so they initialize.
-	_jlc->jlc->smde = 1;
-	_jl_sg_resz(_jlc->jlc);
 }
 
 static inline void _jl_sg_inita(jvct_t * _jlc) {
+	m_u16_t i;
+
 	//Set Up Variables
 	_jlc->gl.textures = NULL;
 	_jlc->gl.tex.uniforms.textures = NULL;
@@ -585,6 +603,17 @@ static inline void _jl_sg_inita(jvct_t * _jlc) {
 	_jlc->gl.allocatedi = 0;
 	jl_sg_add_image(_jlc->jlc,
 		(void*)jl_fl_get_resloc(_jlc->jlc, "JLLB", "media.zip"), 0);
+	// Clear User Loops
+	for(i = 0; i < JL_SG_WM_MAX; i++) _jlc->sg.mode.tclp[i] = jl_dont;
+}
+
+static inline void _jl_sg_initb(jvct_t * _jlc) {
+	_jlc->sg.bg.up = jl_gl_vo_make(_jlc->jlc, 1);
+	_jlc->sg.bg.dn = jl_gl_vo_make(_jlc->jlc, 1);
+	_jlc->sg.cbg = _jlc->sg.bg.dn;
+	// Resize for 2 screen Default - so they initialize.
+	_jlc->jlc->smde = 1;
+	jl_sg_init_ds_(_jlc->jlc);
 }
 
 /*
@@ -610,6 +639,9 @@ static inline void _jl_sg_init_done(jvct_t *_jlc) {
 	jl_io_printc(_jlc->jlc, "\n");
 }
 
+// Main.c
+// void _jl_sg_resz(jl_t* jlc);
+
 //Initialize The Libraries Needed At Very Beginning: The Base Of It All
 static inline jvct_t* _jl_sg_init_blib(void) {
 	// Memory
@@ -617,6 +649,17 @@ static inline jvct_t* _jl_sg_init_blib(void) {
 	// Other
 	_jl_io_init(_jlc); // Allow Printing
 	return _jlc;
+}
+
+void main_resz(jvct_t* _jlc, u16_t x, u16_t y) {
+	// Update the actual window.
+	_jl_dl_resz(_jlc, x, y);
+	// Update the size of the background.
+	_jl_sg_resz(_jlc->jlc);
+	// Update the size of foreground objects.
+	_jl_gr_resz(_jlc->jlc);
+	// Allow the user to update their graphics.
+	_jlc->sg.mode.tclp[JL_SG_WM_RESZ](_jlc->jlc);
 }
 
 static inline void _jl_sg_init_libs(jvct_t *_jlc) {
@@ -629,23 +672,24 @@ static inline void _jl_sg_init_libs(jvct_t *_jlc) {
 	jl_io_printc(_jlc->jlc, "Initializing GL...\n");
 	_jl_gl_init(_jlc); //Drawing Set-up
 	jl_io_printc(_jlc->jlc, "Initialized GL!\n");
-	_jl_dl_initb(_jlc); //update viewport.
 	jl_io_printc(_jlc->jlc, "Initializing GR....\n");
-	jl_gr_inita_(_jlc); //
-	jl_io_printc(_jlc->jlc, "Initialized DL!\n");
+	jl_gr_inita_(_jlc); //Set-up sprites & menubar
+	_jl_sg_initb(_jlc);
+	jl_gr_initb_(_jlc);
+	jl_io_printc(_jlc->jlc, "Initialized GR!\n");
+	main_resz(_jlc, _jlc->dl.full_w, _jlc->dl.full_h);
+	jl_io_printc(_jlc->jlc, "Completed First Frame!\n");
 	_jl_sg_init_done(_jlc); //Draw "loading jl_lib" on the screen.
 	jl_io_printc(_jlc->jlc, "Initializing CT...\n");
 	_jl_ct_init(_jlc); //Prepare to read input.
 	jl_io_printc(_jlc->jlc, "Initialized CT!\n");
-	_jl_sg_initb(_jlc);
+	_jl_sg_initc(_jlc);
 	jl_io_printc(_jlc->jlc, "Initialized SG!\n");
 	_jl_fl_initb(_jlc);
 	jl_io_printc(_jlc->jlc, "Initialized FL!\n");
 	jl_io_printc(_jlc->jlc, "Initializing AU....\n");
 	_jl_au_init(_jlc); //Load audiostuffs from packages
 	jl_io_printc(_jlc->jlc, "Initialized AU!\n");
-	jl_gr_initb_(_jlc); //Set-up sprites & menubar
-	jl_io_printc(_jlc->jlc, "Initialized GR!\n");
 }
 
 static inline void _jl_ini(jvct_t *_jlc) {
@@ -659,21 +703,6 @@ static inline void _jl_ini(jvct_t *_jlc) {
 	
 	jl_io_offset(_jlc->jlc, JL_IO_MINIMAL, "JLLB"); //"JLLB" to MINIMAL
 	jl_io_printc(_jlc->jlc, "Initialized!\n");
-}
-
-// Main.c
-// void _jl_sg_resz(jl_t* jlc);
-
-void main_resz(jvct_t* _jlc) {
-	// Update the actual window.
-	_jl_dl_resz(_jlc, _jlc->ct.event.window.data1,
-		_jlc->ct.event.window.data2);
-	// Update the size of the background.
-	_jl_sg_resz(_jlc->jlc);
-	// Update the size of foreground objects.
-	_jl_gr_resz(_jlc->jlc);
-	// Allow the user to update their graphics.
-	_jlc->sg.mode.tclp[JL_SG_WM_RESZ](_jlc->jlc);
 }
 
 static inline void _main_loop(jvct_t* _jlc) {

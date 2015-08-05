@@ -131,8 +131,10 @@ jl_ccolor_t* jl_gl_clrcg(jvct_t *_jlc, uint8_t *rgba, uint32_t vc);
 void jl_gl_clrg(jvct_t *_jlc, jl_vo* pv, uint8_t *rgba);
 void jl_gl_clrs(jvct_t *_jlc, jl_vo* pv, uint8_t *rgba);
 void jl_gl_txtr(jvct_t *_jlc, jl_vo* pv, u8_t map, u8_t a, u16_t pgid, u16_t pi);
-void jl_gl_translate(jvct_t *_jlc, jl_vo* pv, float x, float y, float z);
-void jl_gl_translate_pr(jvct_t *_jlc, jl_pr_t* pv, float x, float y, float z);
+void jl_gl_transform_pr_(jvct_t *_jlc, jl_pr_t* pr, float x, float y, float z,
+	float xm, float ym, float zm);
+void jl_gl_transform_vo_(jvct_t *_jlc, jl_vo* vo, float x, float y, float z,
+	float xm, float ym, float zm);
 void jl_gl_draw(jvct_t *_jlc, jl_vo* pv);
 void jl_gl_pr_(jvct_t *_jlc, jl_pr_t * pr, jl_simple_fnt par__redraw);
 void jl_gl_draw_pr_(jl_t* jlc, jl_pr_t* pr);

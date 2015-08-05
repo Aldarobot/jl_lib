@@ -49,8 +49,6 @@ void jl_gl_vo_free(jvct_t *_jlc, jl_vo *pv);
 void jl_gl_draw_pr(jvct_t *_jlc, jl_vo* pv);
 void jl_gl_pr_old(jvct_t *_jlc, jl_vo* pv);
 uint8_t jl_gl_pr_isi(jvct_t *_jlc, jl_vo* pv);
-void jl_gl_pr_new_(jvct_t *_jlc, jl_pr_t **pr, uint16_t cw, uint16_t ch,
-	float rw, float rh);
 void jl_gl_pr_old_(jvct_t *_jlc, jl_pr_t** pr);
 
 //Upper SDL prototype
@@ -80,19 +78,18 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 		}
 	}
 
-	static inline void _jl_gr_pr_new(jl_t* jlc, jl_vo* pv) {
-		jvct_t * _jlc = jlc->_jlc;
+	static inline void _jl_gr_pr_new(jl_t* jlc, jl_vo* pv, uint16_t xres) {
 		float x = 1.f;
 		float y = jl_gl_ar(jlc);
 		float w = 0.f, h = 0.f;
 		int i;
 
 		// Make the pre-renderer on the screen.
-		if(_jlc->sg.cbg) jl_gl_pr_use(_jlc, _jlc->sg.cbg);
+		//if(_jlc->sg.cbg) jl_gl_pr_use(_jlc, _jlc->sg.cbg);
 		// Find the lowest and highest values to make a box.
 		for(i = 0; i < pv->vc*3; i+=3) {
 			float xx = jl_gl_unconv_x_(pv->cv[i]);
-			float yy = jl_gl_unconv_y_(pv->cv[i+1]) * jl_gl_ar(jlc);
+			float yy = jl_gl_unconv_y_(pv->cv[i+1]);
 			if(xx < x) x = xx;
 			if(yy < y) y = yy;
 			if(xx > w) w = xx;
@@ -100,8 +97,7 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 		}
 		//printf("_jl_gr_pr_new: %f, %f\n", w - x, h - y);
 		// Create the pre-renderer & Unuse screen pre-renderer.
-		jl_gl_pr_new_(jlc->_jlc, &(pv->pr), _jlc->gl.current_pr.w,
-			_jlc->gl.current_pr.h, w - x, h - y);
+		pv->pr = jl_gl_pr_new(jlc, w - x, h - y, xres);
 		if(pv->pr) jl_io_printc(jlc, "got pr\n");
 		else jl_io_printc(jlc, "NULL pr\n");
 	}
@@ -143,6 +139,7 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 			0., 0. };
 
 		jl_gr_vos_image(jlc, &(ctx->icon[1]), rc_icon, g, i, c, 255);
+		printf("draw icon\n");
 		jl_gr_draw_vo(jlc, &(ctx->icon[1]), &tr);
 	}
 	
@@ -309,30 +306,31 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 		mouse->data.cb.x = mouse->data.tr.x;
 		mouse->data.cb.y = mouse->data.tr.y;
 	// Draw mouse
-		#if JL_PLAT == JL_PLAT_COMPUTER //if computer
+//		#if JL_PLAT == JL_PLAT_COMPUTER //if computer
+		printf("draw mouse\n");
 			jl_gr_draw_vo(jlc, mouse_vo, &(mouse->data.tr));
-		#endif
+//		#endif
 	}
 
 	static inline void _jl_gr_mouse_init(jvct_t *_jlc) {
 		jl_rect_t rc = { 0.f, 0.f, .075f, .075f };
-		#if JL_PLAT == JL_PLAT_COMPUTER //if computer
+//		#if JL_PLAT == JL_PLAT_COMPUTER //if computer
 		jl_vo *mouse = jl_gl_vo_make(_jlc->jlc, 1);
 
 		jl_gr_vos_image(_jlc->jlc, &(mouse[0]), rc, 0, 0, 254, 255);
-		#endif
+//		#endif
 		_jlc->jlc->mouse = jl_gr_sprite_make(
 			_jlc->jlc, rc, jl_gr_sprdr_dont,
 			_jl_gr_mouse_loop,
-		#if JL_PLAT == JL_PLAT_COMPUTER //if computer
+//		#if JL_PLAT == JL_PLAT_COMPUTER //if computer
 			sizeof(jl_vo*));
 		// Set the context to the vertex object.
 		((jl_sprite_t*)_jlc->jlc->mouse)->data.ctx = mouse;
-		#elif JL_PLAT == JL_PLAT_PHONE // if phone
-			0);
+//		#elif JL_PLAT == JL_PLAT_PHONE // if phone
+//			0);
 		// Set the context to the vertex object.
-		((jl_sprite_t*)_jlc->jlc->mouse)->data.ctx = NULL;
-		#endif
+//		((jl_sprite_t*)_jlc->jlc->mouse)->data.ctx = NULL;
+//		#endif
 	}
 
 /**      @endcond      **/
@@ -356,12 +354,15 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 	 * the current vertex locations.
 	 * @param jlc: The library context.
 	 * @param pv: The vertex object to create/replace a pr for.
+	 * @param xres: The resolution across the x axis for the pre-renderer.
 	**/
-	void jl_gr_pr_new(jl_t* jlc, jl_vo* pv) {
+	void jl_gr_pr_new(jl_t* jlc, jl_vo* pv, u16_t xres) {
+		uint8_t isi = jl_gl_pr_isi(jlc->_jlc, pv);
+		if(isi == 2) jl_sg_kill(jlc, "jl_gr_pr_new: VO is NULL");
 		// If prender is already initialized, then delete it.
-		if(jl_gl_pr_isi(jlc->_jlc, pv)) jl_gr_pr_old(jlc, pv);
+		if(isi) jl_gr_pr_old(jlc, pv);
 		// Make new pr
-		_jl_gr_pr_new(jlc, pv);
+		_jl_gr_pr_new(jlc, pv, xres);
 		if(!pv->pr) jl_sg_kill(jlc, "Prerender Failed Allocation.\n");
 		if(!pv->pr->tx) jl_sg_kill(jlc, "Prerender Make Texture = 0\n");
 	}
@@ -399,8 +400,13 @@ static void _jl_gr_popup_loop(jl_t* jlc);
   	 * @param vec: The vector of offset/translation.
 	**/
 	void jl_gr_draw_vo(jl_t* jlc, jl_vo* pv, jl_vec3_t* vec) {
-		if(vec == NULL) jl_gl_translate(jlc->_jlc, pv, 0.f, 0.f, 0.f);
-		else jl_gl_translate(jlc->_jlc, pv, vec->x, vec->y, vec->z);
+		if(vec == NULL) {
+			jl_gl_transform_vo_(jlc->_jlc, pv,
+				0.f, 0.f, 0.f, 1., 1., 1.);
+		}else{
+			jl_gl_transform_vo_(jlc->_jlc, pv,
+				vec->x, vec->y, vec->z, 1., 1., 1.);
+		}
 		jl_gl_draw(jlc->_jlc, pv);
 	}
 
@@ -415,11 +421,11 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 
 		if(pv == NULL) pv = _jlc->gl.temp_vo;
 		if(vec == NULL)
-			jl_gl_translate(jlc->_jlc, pv,
-				0.f, 0.f, 0.f);
+			jl_gl_transform_vo_(jlc->_jlc, pv,
+				0.f, 0.f, 0.f, 1., 1., 1.);
 		else
-			jl_gl_translate(jlc->_jlc, pv,
-				vec->x, vec->y, vec->z);
+			jl_gl_transform_vo_(jlc->_jlc, pv,
+				vec->x, vec->y, vec->z, 1., 1., 1.);
 		jl_gl_pr_draw(jlc, pv);
 	}
 
@@ -511,11 +517,9 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 		jl_me_tmp_ptr(jlc, 0, spr);
 		if(!spr->pr) {
 			jl_io_printc(jlc, "hi\n");
-			printf("%d %d %f %f\n", _jlc->gl.current_pr.w, _jlc->gl.current_pr.h,
-				spr->data.rw, spr->data.rh);
-			jl_gl_pr_new_(_jlc, &(spr->pr),
-				_jlc->gl.current_pr.w, _jlc->gl.current_pr.h,
-				spr->data.rw, spr->data.rh);
+			spr->pr = jl_gl_pr_new(jlc, spr->data.rw, spr->data.rh,
+				(_jlc->gl.cp ? _jlc->gl.cp->w : _jlc->dl.full_w)
+				* spr->data.rw);
 			jl_io_printc(jlc, "bye\n");
 		}
 		jl_gl_pr_(jlc->_jlc, spr->pr, jl_gr_sprite_draw_to_pr__);
@@ -547,8 +551,8 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 		jl_pr_t *pr = spr->pr;
 
 		if(!pr) jl_sg_kill(jlc, "jl_gr_sprite_draw_pr: not init'd!");
-		jl_gl_translate_pr(jlc->_jlc, pr, spr->data.tr.x,
-			spr->data.tr.y, spr->data.tr.z);
+		jl_gl_transform_pr_(jlc->_jlc, pr, spr->data.tr.x,
+			spr->data.tr.y, spr->data.tr.z, 1., 1., 1.);
 
 		jl_gl_draw_pr_(jlc, pr);
 	}
@@ -637,6 +641,7 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 		for(i = 0; i < strlen(str); i++) {
 			//Font 0:0
 			jl_gr_vos_image(jlc, NULL, rc, 0, 0, STr[i], a);
+			printf("draw txt\n");
 			jl_gr_draw_vo(jlc, NULL, &tr);
 			tr.x += size;
 		}
@@ -707,6 +712,7 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 		jl_io_printc(_jlc->jlc, "MKIng RC....\n");
 		jl_rect_t rc = { 0., 0., 1., jl_gl_ar(jlc) };
 		jl_io_printc(_jlc->jlc, "MKIng VO....\n");
+		printf("draw msge\n");
 		jl_gr_draw_vo(jlc, _jlc->gr.vos.whole_screen, NULL);
 		jl_io_printc(_jlc->jlc, "DRing VO....\n");
 		jl_gr_vos_image(jlc, _jlc->gr.vos.whole_screen, rc,
@@ -898,6 +904,7 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 		jvct_t *_jlc = jlc->_jlc;
 
 		jl_rect_t rc = { 0., 0., 1., jl_gl_ar(jlc)};
+		printf("resz\n");
 		jl_gr_vos_image(jlc, _jlc->gr.vos.whole_screen, rc, 0, 0, 0, 255);
 	//Menu Bar
 		_jl_gr_taskbar_loop_resz(jlc);

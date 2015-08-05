@@ -11,7 +11,7 @@
 	// ct.c
 	uint8_t jl_ct_key_pressed(jl_t *jlc, uint8_t key);
 	// main.c
-	void main_resz(jvct_t* _jlc);
+	void main_resz(jvct_t* _jlc, u16_t x, u16_t y);
 
 /*
  * Returns 0 if key isn't pressed
@@ -400,8 +400,10 @@ static inline void _jl_ct_handle_events(jvct_t *_jlc) {
 			_jlc->ct.text_input[i] = _jlc->ct.event.text.text[i];
 		_jlc->ct.read_cursor = 0;
 	}else if(_jlc->ct.event.type==SDL_WINDOWEVENT) { //Resize
-		if(_jlc->ct.event.window.event == SDL_WINDOWEVENT_RESIZED)
-			main_resz(_jlc);
+		if(_jlc->ct.event.window.event == SDL_WINDOWEVENT_RESIZED) {
+			main_resz(_jlc, _jlc->ct.event.window.data1,
+				_jlc->ct.event.window.data2);
+		}
 	}
 	_jl_ct_handle_events_platform_dependant(_jlc);
 }

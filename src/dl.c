@@ -177,10 +177,8 @@ void _jl_dl_resz(jvct_t *_jlc, uint16_t x, uint16_t y) {
 	_jlc->dl.current.w = x;
 	_jlc->dl.current.h = y + (x - y);
 	// Set GL aspect.
-	_jlc->gl.current_pr.w = _jlc->dl.full_w;
-	_jlc->gl.current_pr.h = _jlc->dl.full_h;
 	_jlc->dl.aspect = ((double)y) / ((double)x);
-	_jlc->gl.current_pr.aspect_y = _jlc->dl.aspect;
+	printf("DL RESZ = %d\n", _jlc->dl.current.w);
 }
 
 /**
@@ -205,16 +203,17 @@ void jl_dl_progname(jl_t* jlc, strt name) {
 
 void _jl_dl_inita(jvct_t* _jlc) {
 	jlvmpi_ini_sdl(_jlc);
-	_jlvm_curd_mode(_jlc); //Get Information On How Big To Make Window
-	_jlvm_crea_wind(_jlc); //Create Window With SDL
-	#if JL_PLAT == JL_PLAT_PHONE //If Phone (For Reorientation)
-//	_jlvm_curd_mode(_jlc);
-	#endif
-}
-
-void _jl_dl_initb(jvct_t* _jlc) {
+	//Get Information On How Big To Make Window
+	_jlvm_curd_mode(_jlc);
+	//Create Window With SDL
+	_jlvm_crea_wind(_jlc);
+	//Get Window Size
+	_jlvm_curd_mode(_jlc);
 	//Update screensize to fix any rendering glitches
 	_jl_dl_resz(_jlc, _jlc->dl.current.w, _jlc->dl.current.h);
+	// Clear the screen of anything wierd.
+	jl_gl_clear(_jlc->jlc, 2, 5, 255, 255);
+	// Update The Screen
 	_jl_dl_loop(_jlc);
 }
 

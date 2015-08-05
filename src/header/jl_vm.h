@@ -178,6 +178,7 @@ typedef struct{
 				GLint **textures;
 				GLint multiply_alpha;
 				GLint translate;
+				GLint transform;
 			} uniforms;
 		} tex;
 		//PRG: CLR
@@ -188,19 +189,14 @@ typedef struct{
 			} attr;
 			struct {
 				GLint translate;
+				GLint transform;
 			} uniforms;
 		} clr;
 		jl_vo *temp_vo;
 		// Default texture coordinates.
 		uint32_t default_tc;
-
-		// The current pre-renderer's info.
-		struct{
-			// The maximum y value.
-			double aspect_y;
-			// Width and Height of the current pre-renderer.
-			uint16_t w, h;
-		}current_pr;
+		
+		jl_pr_t* cp;
 	}gl;
 	
 	_fl_t fl; //File Manager
