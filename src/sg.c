@@ -15,6 +15,7 @@
 // SG Prototypes
 void jl_gl_pr_off(jvct_t *_jlc);
 void jl_gl_draw_prendered(jvct_t *_jlc, jl_vo* pv);
+void jl_gl_pr_scr_set(jvct_t *_jlc, jl_vo* vo);
 
 //Prototypes
 	//LIB INITIALIZATION fn(Context)
@@ -455,33 +456,21 @@ static void _jl_sg_screen_draw(jl_t* jlc, float ytrans, jl_vo* bg, uint8_t lp) {
 	jvct_t * _jlc = jlc->_jlc;
 	jl_vec3_t translate = { _jlc->sg.offsx, _jlc->sg.offsy + ytrans, 0. };
 
-	_jlc->sg.cbg = bg;
-	
-	if(!_jlc->sg.cbg->pr) jl_sg_kill(jlc, "null pr\n");
-	if(!_jlc->sg.cbg->pr->tx) jl_sg_kill(jlc, "null pr->tx\n");
-
-	printf("draw vo\n");
 	// Draw the vertex object.
 	jl_gr_draw_vo(jlc, bg, &translate);
-	printf("use vo\n");
 	// Use the pr for this screen.
-	jl_gl_pr_use(_jlc, _jlc->sg.cbg);
-	printf("clear\n");
+	jl_gl_pr_scr_set(_jlc, bg);
+	jl_gl_pr_scr(_jlc);
 	// Clear the screen.
-	jl_gl_clear(jlc, 0, 255, 255, 255);
-	printf("loop\n");
+	jl_gl_clear(jlc, 0, 255, 128, 255);
 	// Run the screen's loop
 	_jlc->sg.mode.tclp[lp](jlc);
-	printf("test\n");
 	// If BG is lower screen: Draw Menu Bar & Mouse - on lower screen
 	if(bg == _jlc->sg.bg.dn) _jl_gr_loop(jlc);
-	printf("off\n");
 	// Turn off the pre-renderer.
 	jl_gl_pr_off(_jlc);
-	printf("ye\n");
 	// Draw the prendered texture.
 	jl_gr_draw_pr(jlc, bg, &translate);
-	printf("yeg\n");
 }
 
 // Double screen loop
@@ -534,6 +523,7 @@ static void jl_sg_init_ds_(jl_t* jlc) {
 	_jlc->sg.bg.dn->pr->ar = _jlc->dl.aspect / 2.;
 	
 	_jlc->sg.screen_height = rcrd.h;
+	jl_io_printc(_jlc->jlc, "{{{ 2 Screen init'd\n");
 }
 
 static void jl_sg_init_ss_(jl_t* jlc) {
@@ -564,9 +554,9 @@ void _jl_sg_resz(jl_t* jlc) {
 	jvct_t * _jlc = jlc->_jlc;
 	const float isDoubleScreen = (double)(jlc->smde);
 
-	jl_io_printc(_jlc->jlc, "VARS DON\n");
+	jl_io_printc(jlc, "VARS DON\n");
 
-	_jlc->sg.cbg = NULL;
+	jl_gl_pr_off(_jlc);
 	if(jlc->smde)
 		jl_sg_init_ds_(jlc);
 	else
@@ -574,7 +564,7 @@ void _jl_sg_resz(jl_t* jlc) {
 	_jlc->sg.offsx = _jlc->dl.shiftx/2.;
 	_jlc->sg.offsy = (((_jlc->dl.shifty / (1. + isDoubleScreen)) *
 		(1. + isDoubleScreen))/2.) * jl_gl_ar(jlc);
-	_jlc->sg.cbg = _jlc->sg.bg.dn;
+	jl_gl_pr_use(_jlc, _jlc->sg.bg.dn);
 	jl_io_printc(_jlc->jlc, "VARS DONE\n");
 }
 
@@ -610,10 +600,13 @@ static inline void _jl_sg_inita(jvct_t * _jlc) {
 static inline void _jl_sg_initb(jvct_t * _jlc) {
 	_jlc->sg.bg.up = jl_gl_vo_make(_jlc->jlc, 1);
 	_jlc->sg.bg.dn = jl_gl_vo_make(_jlc->jlc, 1);
-	_jlc->sg.cbg = _jlc->sg.bg.dn;
+	jl_gl_pr_off(_jlc);
 	// Resize for 2 screen Default - so they initialize.
 	_jlc->jlc->smde = 1;
 	jl_sg_init_ds_(_jlc->jlc);
+	// Default to lower screen
+	jl_gl_pr_scr_set(_jlc, _jlc->sg.bg.dn);
+	jl_gl_pr_scr(_jlc);
 }
 
 /*
@@ -652,6 +645,8 @@ static inline jvct_t* _jl_sg_init_blib(void) {
 }
 
 void main_resz(jvct_t* _jlc, u16_t x, u16_t y) {
+	// Deselect any pre-renderer.
+	_jlc->gl.cp = NULL;
 	// Update the actual window.
 	_jl_dl_resz(_jlc, x, y);
 	// Update the size of the background.
@@ -674,7 +669,9 @@ static inline void _jl_sg_init_libs(jvct_t *_jlc) {
 	jl_io_printc(_jlc->jlc, "Initialized GL!\n");
 	jl_io_printc(_jlc->jlc, "Initializing GR....\n");
 	jl_gr_inita_(_jlc); //Set-up sprites & menubar
+	jl_io_printc(_jlc->jlc, "Initializing SG....\n");
 	_jl_sg_initb(_jlc);
+	jl_io_printc(_jlc->jlc, "Still Initializing GR....\n");
 	jl_gr_initb_(_jlc);
 	jl_io_printc(_jlc->jlc, "Initialized GR!\n");
 	main_resz(_jlc, _jlc->dl.full_w, _jlc->dl.full_h);
@@ -710,6 +707,8 @@ static inline void _main_loop(jvct_t* _jlc) {
 	while(1) {
 		//Update events.
 		_jl_ct_loop(_jlc);
+		// Deselect any pre-renderer.
+		_jlc->gl.cp = NULL;
 		//Check the amount of time passed since last frame.
 		_jlc->jlc->psec = _jl_sg_seconds_passed(_jlc);
 		//Redraw screen.

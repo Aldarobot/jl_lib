@@ -251,7 +251,11 @@ void jl_io_offset(jl_t* jlc, int16_t tag, char * this) {
 	if(this == NULL) {
 		return;
 	}
-	if(strncmp(this, _jlc->io.head[_jlc->io.offs], 4) != 0) {
+	if(strncmp(this,
+		_jlc->io.head[
+		_jlc->io.offs],
+		4) != 0)
+	{
 		//extend
 		_jlc->io.offs++;
 		_jlc->io.ofs2++;

@@ -33,6 +33,19 @@ static inline void _jlvm_jl_me_resz(jvct_t* _jlc, uint32_t kb) {
 	malloc_trim(0); //Remove Free Memory
 }
 
+static void _jl_me_init_alloc(void **a, uint32_t size) {
+	if(size == 0) {
+		printf("mina: Double Free or free on NULL pointer!\n");
+		exit(-1);
+	}
+	*a = malloc(size);
+	if(*a == NULL) {
+		printf("mina: jl_me_alloc: Out Of Memory!");
+		exit(-1);
+	}
+	jl_me_clr(*a, size);
+}
+
 static void _jl_me_alloc_malloc(jl_t* jlc, void **a, uint32_t size) {
 	if(size == 0)
 		jl_sg_kill(jlc, "Double Free or free on NULL pointer");
@@ -412,13 +425,15 @@ void *jl_me_tmp_ptr(jl_t* jlc, uint8_t which, void *tmp_ptr) {
 
 jvct_t* _jl_me_init(void) {
 	//Create a context for the currently loaded program
-	jvct_t* _jlc = malloc(sizeof(jvct_t));
+	jvct_t* _jlc = NULL;
+	_jl_me_init_alloc((void**)&_jlc, sizeof(jvct_t));
 	m_u8_t i;
 
 	//Set the current program ID to 0[RESERVED DEFAULT]
 	_jlc->cprg = 0;
 	//Prepare user data structure
-	_jlc->jlc = malloc(sizeof(jl_t));
+	_jlc->jlc = NULL;
+	_jl_me_init_alloc((void**)&(_jlc->jlc), sizeof(jl_t));
 	_jlc->jlc->_jlc = _jlc;
 	//Make sure that non-initialized things aren't used
 	_jlc->has.graphics = 0;

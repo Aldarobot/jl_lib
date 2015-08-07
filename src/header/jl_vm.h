@@ -108,10 +108,9 @@ typedef struct{
 			jl_vo* up;
 			jl_vo* dn;
 		}bg;
-		
-		jl_vo* cbg;
+
 		float screen_height;
-		
+
 		jl_simple_fnt loop;
 	}sg;
 	
@@ -196,7 +195,8 @@ typedef struct{
 		// Default texture coordinates.
 		uint32_t default_tc;
 		
-		jl_pr_t* cp;
+		jl_pr_t* cp; // Renderer currently being drawn on.
+		jl_pr_t* bg; // Screen currently being drawn on.
 	}gl;
 	
 	_fl_t fl; //File Manager

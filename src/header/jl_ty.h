@@ -53,6 +53,12 @@ typedef struct{
 	float* cv;	// Converted Vertices
 }jl_pr_t;
 
+// Collision Box.
+typedef struct{
+	m_f32_t x, y, z;
+	m_f32_t w, h, d; // Width, Height, Depth.
+}jl_cb_t;
+
 //Vertex Object
 typedef struct{
 	// Other vo's
@@ -69,7 +75,8 @@ typedef struct{
 	uint32_t tx;	// ID to texture.
 	float a;	// Converted Alpha.
 	jl_pr_t *pr;	// Pre-renderer.
-	jl_pr_t *cp;	// Container Pre-Renderer.
+	// Collision Box
+	jl_cb_t cb;	// 2D/3D collision box.
 }jl_vo;
 
 // Coordinate Structures

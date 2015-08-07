@@ -84,8 +84,6 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 		float w = 0.f, h = 0.f;
 		int i;
 
-		// Make the pre-renderer on the screen.
-		//if(_jlc->sg.cbg) jl_gl_pr_use(_jlc, _jlc->sg.cbg);
 		// Find the lowest and highest values to make a box.
 		for(i = 0; i < pv->vc*3; i+=3) {
 			float xx = jl_gl_unconv_x_(pv->cv[i]);
@@ -139,7 +137,6 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 			0., 0. };
 
 		jl_gr_vos_image(jlc, &(ctx->icon[1]), rc_icon, g, i, c, 255);
-		printf("draw icon\n");
 		jl_gr_draw_vo(jlc, &(ctx->icon[1]), &tr);
 	}
 	
@@ -306,10 +303,9 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 		mouse->data.cb.x = mouse->data.tr.x;
 		mouse->data.cb.y = mouse->data.tr.y;
 	// Draw mouse
-//		#if JL_PLAT == JL_PLAT_COMPUTER //if computer
-		printf("draw mouse\n");
+		#if JL_PLAT == JL_PLAT_COMPUTER //if computer
 			jl_gr_draw_vo(jlc, mouse_vo, &(mouse->data.tr));
-//		#endif
+		#endif
 	}
 
 	static inline void _jl_gr_mouse_init(jvct_t *_jlc) {
@@ -351,7 +347,7 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 
 	/**
 	 * Create or replace a pr image for a vertex object based on
-	 * the current vertex locations.
+	 * the bounding box.
 	 * @param jlc: The library context.
 	 * @param pv: The vertex object to create/replace a pr for.
 	 * @param xres: The resolution across the x axis for the pre-renderer.
@@ -359,12 +355,13 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 	void jl_gr_pr_new(jl_t* jlc, jl_vo* pv, u16_t xres) {
 		uint8_t isi = jl_gl_pr_isi(jlc->_jlc, pv);
 		if(isi == 2) jl_sg_kill(jlc, "jl_gr_pr_new: VO is NULL");
-		// If prender is already initialized, then delete it.
-		if(isi) jl_gr_pr_old(jlc, pv);
-		// Make new pr
-		_jl_gr_pr_new(jlc, pv, xres);
+		// If prender is already initialized, resize, otherwise init.
+		if(isi) jl_gl_pr_rsz(jlc, pv->pr, pv->cb.w, pv->cb.h, xres);
+		else pv->pr = jl_gl_pr_new(jlc, pv->cb.w, pv->cb.h, xres);
+		// Check if pre-renderer is initialized.
 		if(!pv->pr) jl_sg_kill(jlc, "Prerender Failed Allocation.\n");
-		if(!pv->pr->tx) jl_sg_kill(jlc, "Prerender Make Texture = 0\n");
+		if(!jl_gl_pr_isi(jlc->_jlc, pv))
+			jl_sg_kill(jlc, "jl_gr_pr_new: didn't make!\n");
 	}
 
 	/**
@@ -441,6 +438,8 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 		// Texture the vertex object
 		if(multicolor) jl_gl_clrg(jlc->_jlc, pv, colors);
 		else jl_gl_clrs(jlc->_jlc, pv, colors);
+		// Set collision box.
+		
 	}
 
 	/**
@@ -466,6 +465,9 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 		// Texture the vertex object
 		if(multicolor) jl_gl_clrg(jlc->_jlc, pv, colors);
 		else jl_gl_clrs(jlc->_jlc, pv, colors);
+		// Set collision box.
+		pv->cb.x = rc.x, pv->cb.y = rc.y, pv->cb.z = 0.f;
+		pv->cb.w = rc.w, pv->cb.h = rc.h, pv->cb.d = 0.f;
 	}
 
 	/**
@@ -494,6 +496,9 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 		jl_gl_poly(jlc->_jlc, pv, 4, Oone);
 		// Texture the vertex object
 		jl_gl_txtr(jlc->_jlc, pv, c, a, g, i);
+		// Set collision box.
+		pv->cb.x = rc.x, pv->cb.y = rc.y, pv->cb.z = 0.f;
+		pv->cb.w = rc.w, pv->cb.h = rc.h, pv->cb.d = 0.f;
 	}
 
 	/**
@@ -504,6 +509,16 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 	void jl_gr_vo_old(jl_t* jlc, jl_vo* pv) {
 		jl_gl_vo_free(jlc->_jlc, pv);
 	}
+	
+	void jl_gr_sprite_resz(jl_t* jlc, jl_sprite_t *spr) {
+		jvct_t* _jlc = jlc->_jlc;
+		u16_t res = (_jlc->gl.cp ? _jlc->gl.cp->w : _jlc->dl.full_w)
+			* spr->data.rw;
+		u8_t isi = jl_gl_pr_isi_(_jlc, spr->pr);
+		
+		if(isi) jl_gl_pr_rsz(jlc,spr->pr,spr->data.rw,spr->data.rh,res);
+		else spr->pr = jl_gl_pr_new(jlc, spr->data.rw,spr->data.rh,res);
+	}
 
 	/**
 	 * Run a sprite's draw routine to draw on it's pre-rendered texture.
@@ -512,24 +527,13 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 	 * @param spr: Which sprite to draw.
 	**/
 	void jl_gr_sprite_redraw(jl_t* jlc, jl_sprite_t *spr) {
-		jvct_t* _jlc = jlc->_jlc;
-
 		jl_me_tmp_ptr(jlc, 0, spr);
 		if(!spr->pr) {
 			jl_io_printc(jlc, "hi\n");
-			spr->pr = jl_gl_pr_new(jlc, spr->data.rw, spr->data.rh,
-				(_jlc->gl.cp ? _jlc->gl.cp->w : _jlc->dl.full_w)
-				* spr->data.rw);
+			jl_gr_sprite_resz(jlc, spr);
 			jl_io_printc(jlc, "bye\n");
 		}
 		jl_gl_pr_(jlc->_jlc, spr->pr, jl_gr_sprite_draw_to_pr__);
-	}
-
-	void jl_gr_sprite_resz(jl_t* jlc, jl_sprite_t *spr) {
-		// If prender is already initialized, then delete it.
-		if(spr->pr) jl_gl_pr_old_(jlc->_jlc, &(spr->pr));
-		spr->pr = NULL;
-		jl_gr_sprite_redraw(jlc, spr);
 	}
 
 	/**
@@ -630,19 +634,19 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 	void jl_gr_draw_text(jl_t* jlc, char *str, f32_t x, f32_t y, f32_t size,
 		uint8_t a)
 	{
-		if(str == NULL) return;
+		jvct_t* _jlc = jlc->_jlc;
 		const void *Str = str;
 		const uint8_t *STr = Str;
 		uint32_t i;
-		
 		jl_rect_t rc = { x, y, size, size };
 		jl_vec3_t tr = { 0., 0., 0. };
+		jl_vo* vo = _jlc->gl.temp_vo;
 
+		if(str == NULL) return;
 		for(i = 0; i < strlen(str); i++) {
 			//Font 0:0
-			jl_gr_vos_image(jlc, NULL, rc, 0, 0, STr[i], a);
-			printf("draw txt\n");
-			jl_gr_draw_vo(jlc, NULL, &tr);
+			jl_gr_vos_image(jlc, vo, rc, 0, 0, STr[i], a);
+			jl_gr_draw_vo(jlc, vo, &tr);
 			tr.x += size;
 		}
 	}
@@ -913,14 +917,11 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 	}
 
 	void _jl_gr_loop(jl_t* jlc) {
-		jl_io_printc(jlc, "gr_loop\n");
 		jvct_t* _jlc = jlc->_jlc;
 		jl_sprite_t* mouse = jlc->mouse;
 		
-		jl_io_printc(jlc, "menubar\n");
 	//Menu Bar
 		if(!_jlc->fl.inloop) _jlc->gr.menuoverlay(jlc);
-		jl_io_printc(jlc, "message display\n");
 	//Message Display
 		if(timeTilMessageVanish > 0.f) {
 			if(timeTilMessageVanish > 4.25)
@@ -934,10 +935,8 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 					(timeTilMessageVanish * 255.f / 4.25));	
 			timeTilMessageVanish-=jlc->psec;
 		}
-		jl_io_printc(jlc, "update mouse\n");
 	//Update mouse
 		jl_gr_sprite_loop(jlc, mouse);
-		jl_io_printc(jlc, "return\n");
 	}
 	
 	void jl_gr_inita_(jvct_t *_jlc) {

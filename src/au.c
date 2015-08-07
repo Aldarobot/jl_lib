@@ -222,7 +222,10 @@ void _jl_au_init(jvct_t *_jlc) {
 	//Load Sound Effects & Music
 	jl_au_add_audio(_jlc->jlc, 
 		jl_fl_get_resloc(_jlc->jlc, "JLLB", "media.zip"), 0);
-	_jlc->au.idis = UINT32_MAX; //audio by default is disabled
+	//audio by default is disabled
+	_jlc->au.smax = 0;
+	_jlc->au.idis = UINT32_MAX; 
+	//
 	jl_io_printc(_jlc->jlc, "Loaded audiostuffs!\n");
 	//Close Block AUDI
 	jl_io_close_block(_jlc->jlc);

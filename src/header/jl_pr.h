@@ -146,6 +146,7 @@ double jl_gl_unconv_x_(double x);
 double jl_gl_unconv_y_(double y);
 uint8_t jl_gl_pr_isi_(jvct_t *_jlc, jl_pr_t* pr);
 void jl_gl_pr_use(jvct_t *_jlc, jl_vo* pv);
+void jl_gl_pr_scr(jvct_t *_jlc);
 
 //DL
 void _jl_dl_resz(jvct_t *_jlc, uint16_t x, uint16_t y);
