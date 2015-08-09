@@ -142,8 +142,6 @@ void jl_gl_transform_vo_(jvct_t *_jlc, jl_vo* vo, float x, float y, float z,
 void jl_gl_draw(jvct_t *_jlc, jl_vo* pv);
 void jl_gl_pr_(jvct_t *_jlc, jl_pr_t * pr, jl_simple_fnt par__redraw);
 void jl_gl_draw_pr_(jl_t* jlc, jl_pr_t* pr);
-double jl_gl_unconv_x_(double x);
-double jl_gl_unconv_y_(double y);
 uint8_t jl_gl_pr_isi_(jvct_t *_jlc, jl_pr_t* pr);
 void jl_gl_pr_use(jvct_t *_jlc, jl_vo* pv);
 void jl_gl_pr_scr(jvct_t *_jlc);

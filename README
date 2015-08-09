@@ -72,3 +72,18 @@ opengl and opengles and sdl for android and sdl for PC.
 		
 		/**      @endcond      **/
 		/***   #End of File   ***/
+	- Function naming:
+		- Whenever there's an object being modified by functions use:
+			new	create the object.
+			old	delete the object.
+			set	set the object's data.
+			get	get the object's data
+			use	start using the object.
+			off	stop using the object.
+			rsz	resize the object.
+			ist	get whether it's initialized/active.
+		- Subsystems Functions:
+			init	run when subsystem is initialized.
+			loop	run every frame.
+			resz	run when window is resized.
+			kill	run when subsystem is ready to be shutdown.

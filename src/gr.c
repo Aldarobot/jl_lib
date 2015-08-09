@@ -77,28 +77,6 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 			timeTilMessageVanish = 8.5f;
 		}
 	}
-
-	static inline void _jl_gr_pr_new(jl_t* jlc, jl_vo* pv, uint16_t xres) {
-		float x = 1.f;
-		float y = jl_gl_ar(jlc);
-		float w = 0.f, h = 0.f;
-		int i;
-
-		// Find the lowest and highest values to make a box.
-		for(i = 0; i < pv->vc*3; i+=3) {
-			float xx = jl_gl_unconv_x_(pv->cv[i]);
-			float yy = jl_gl_unconv_y_(pv->cv[i+1]);
-			if(xx < x) x = xx;
-			if(yy < y) y = yy;
-			if(xx > w) w = xx;
-			if(yy > h) h = yy;
-		}
-		//printf("_jl_gr_pr_new: %f, %f\n", w - x, h - y);
-		// Create the pre-renderer & Unuse screen pre-renderer.
-		pv->pr = jl_gl_pr_new(jlc, w - x, h - y, xres);
-		if(pv->pr) jl_io_printc(jlc, "got pr\n");
-		else jl_io_printc(jlc, "NULL pr\n");
-	}
 	
 	static void jl_gr_sprite_draw_to_pr__(jl_t *jlc) {
 		jl_sprite_t *spr = jl_me_tmp_ptr(jlc, 0, NULL);
@@ -303,9 +281,9 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 		mouse->data.cb.x = mouse->data.tr.x;
 		mouse->data.cb.y = mouse->data.tr.y;
 	// Draw mouse
-		#if JL_PLAT == JL_PLAT_COMPUTER //if computer
+//		#if JL_PLAT == JL_PLAT_COMPUTER //if computer
 			jl_gr_draw_vo(jlc, mouse_vo, &(mouse->data.tr));
-		#endif
+//		#endif
 	}
 
 	static inline void _jl_gr_mouse_init(jvct_t *_jlc) {
@@ -433,13 +411,26 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 	void jl_gr_vos_vec(jl_t* jlc, jl_vo *pv, uint16_t tricount,
 		float* triangles, uint8_t* colors, uint8_t multicolor)
 	{
+		int i;
+
 		// Overwrite the vertex object
 		jl_gl_vect(jlc->_jlc, pv, tricount * 3, triangles);
 		// Texture the vertex object
 		if(multicolor) jl_gl_clrg(jlc->_jlc, pv, colors);
 		else jl_gl_clrs(jlc->_jlc, pv, colors);
 		// Set collision box.
-		
+		pv->cb.x = 1.f, pv->cb.y = jl_gl_ar(jlc);
+		pv->cb.w = 0.f, pv->cb.h = 0.f;
+		// Find the lowest and highest values to make a box.
+		for(i = 0; i < tricount*9; i+=3) {
+			float xx = triangles[i];
+			float yy = triangles[i+1];
+			if(xx < pv->cb.x) pv->cb.x = xx;
+			if(yy < pv->cb.y) pv->cb.y = yy;
+			if(xx > pv->cb.w) pv->cb.w = xx;
+			if(yy > pv->cb.h) pv->cb.h = yy;
+		}
+		pv->cb.w -= pv->cb.x, pv->cb.h -= pv->cb.y;
 	}
 
 	/**

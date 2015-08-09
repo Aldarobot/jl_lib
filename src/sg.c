@@ -43,8 +43,11 @@ void jl_gl_pr_scr_set(jvct_t *_jlc, jl_vo* vo);
 	void _jl_me_kill(jvct_t* jprg);
 	void _jl_fl_kill(jvct_t* _jlc);
 	void _jl_io_kill(jl_t* jlc);
-	void _jl_au_kill(jvct_t *_jlc);
+	void _jl_au_kill(jvct_t* _jlc);
 	void _jl_sg_kill(jl_t* jlc);
+	
+	//LIB RESIZES
+	void jl_gl_resz_(jvct_t* _jlc);
 
 // Constants
 	//ALL IMAGES: 1024x1024
@@ -554,18 +557,20 @@ void _jl_sg_resz(jl_t* jlc) {
 	jvct_t * _jlc = jlc->_jlc;
 	const float isDoubleScreen = (double)(jlc->smde);
 
-	jl_io_printc(jlc, "VARS DON\n");
-
+	// Turn Off Pre-renderer.
 	jl_gl_pr_off(_jlc);
+	// Check screen count.
 	if(jlc->smde)
 		jl_sg_init_ds_(jlc);
 	else
 		jl_sg_init_ss_(jlc);
+	// Set screen buffer space
 	_jlc->sg.offsx = _jlc->dl.shiftx/2.;
 	_jlc->sg.offsy = (((_jlc->dl.shifty / (1. + isDoubleScreen)) *
 		(1. + isDoubleScreen))/2.) * jl_gl_ar(jlc);
-	jl_gl_pr_use(_jlc, _jlc->sg.bg.dn);
-	jl_io_printc(_jlc->jlc, "VARS DONE\n");
+	// Use the screen's pre-renderer
+	jl_gl_pr_scr_set(_jlc, _jlc->sg.bg.dn);
+	jl_gl_pr_scr(_jlc);
 }
 
 static inline void _jl_sg_initc(jvct_t * _jlc) {
@@ -644,15 +649,20 @@ static inline jvct_t* _jl_sg_init_blib(void) {
 	return _jlc;
 }
 
-void main_resz(jvct_t* _jlc, u16_t x, u16_t y) {
-	// Deselect any pre-renderer.
-	_jlc->gl.cp = NULL;
+static void jl_main_resz_jl(jvct_t* _jlc, u16_t x, u16_t y) {
+	// Reset aspect ratio stuff.
+	jl_gl_resz_(_jlc);
 	// Update the actual window.
 	_jl_dl_resz(_jlc, x, y);
 	// Update the size of the background.
 	_jl_sg_resz(_jlc->jlc);
 	// Update the size of foreground objects.
-	_jl_gr_resz(_jlc->jlc);
+	_jl_gr_resz(_jlc->jlc);	
+}
+
+void main_resz(jvct_t* _jlc, u16_t x, u16_t y) {
+	// Allow subsystems to adjust to the new window.
+	jl_main_resz_jl(_jlc, x, y);
 	// Allow the user to update their graphics.
 	_jlc->sg.mode.tclp[JL_SG_WM_RESZ](_jlc->jlc);
 }
@@ -674,7 +684,7 @@ static inline void _jl_sg_init_libs(jvct_t *_jlc) {
 	jl_io_printc(_jlc->jlc, "Still Initializing GR....\n");
 	jl_gr_initb_(_jlc);
 	jl_io_printc(_jlc->jlc, "Initialized GR!\n");
-	main_resz(_jlc, _jlc->dl.full_w, _jlc->dl.full_h);
+	jl_main_resz_jl(_jlc, _jlc->dl.full_w, _jlc->dl.full_h);
 	jl_io_printc(_jlc->jlc, "Completed First Frame!\n");
 	_jl_sg_init_done(_jlc); //Draw "loading jl_lib" on the screen.
 	jl_io_printc(_jlc->jlc, "Initializing CT...\n");
@@ -694,6 +704,7 @@ static inline void _jl_ini(jvct_t *_jlc) {
 
 	_jl_sg_init_libs(_jlc);
 	hack_user_init(_jlc->jlc);
+	_jlc->sg.mode.tclp[JL_SG_WM_RESZ](_jlc->jlc);
 
 	jl_io_offset(_jlc->jlc, JL_IO_SIMPLE, "JLLB"); //"JLLB" to SIMPLE
 	jl_io_printc(_jlc->jlc, "Init5...\n");
