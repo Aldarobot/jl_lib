@@ -465,7 +465,7 @@ static void _jl_sg_screen_draw(jl_t* jlc, float ytrans, jl_vo* bg, uint8_t lp) {
 	jl_gl_pr_scr_set(_jlc, bg);
 	jl_gl_pr_scr(_jlc);
 	// Clear the screen.
-	jl_gl_clear(jlc, 0, 255, 128, 255);
+	jl_gl_clear(jlc, (ytrans > 0.1 ) * 255, (ytrans > 0.1 ) * 255, (ytrans > 0.1 ) * 255, 255);
 	// Run the screen's loop
 	_jlc->sg.mode.tclp[lp](jlc);
 	// If BG is lower screen: Draw Menu Bar & Mouse - on lower screen
@@ -700,7 +700,7 @@ static inline void _jl_sg_init_libs(jvct_t *_jlc) {
 }
 
 static inline void _jl_ini(jvct_t *_jlc) {
-	jl_io_printc(_jlc->jlc, "STARTING JL_lib Version "JL_VERSION "....\n");
+	jl_io_printc(_jlc->jlc, "STARTING JL_lib Version "JL_VERSION"....\n");
 
 	_jl_sg_init_libs(_jlc);
 	hack_user_init(_jlc->jlc);

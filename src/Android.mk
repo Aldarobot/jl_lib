@@ -253,7 +253,7 @@ LOCAL_CFLAGS += -DGL_GLEXT_PROTOTYPES -DNDEBUG -O3
 
 LOCAL_STATIC_LIBRARIES := 
 
-LOCAL_LDLIBS := -lz -ldl -lGLESv2 -llog -landroid
+LOCAL_LDLIBS := -lz -ldl -lEGL -lGLESv2 -llog -landroid
 
 APP_OPTIM := release
 

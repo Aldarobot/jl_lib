@@ -165,30 +165,30 @@ typedef struct{
 		uint16_t allocatedg;
 		uint16_t allocatedi;
 		uint8_t whichprg;
-		GLuint prgs[JL_GL_SLPR_MAX];
+		m_u32_t prgs[JL_GL_SLPR_MAX];
 		//PRG: TEX
 		struct{
 			struct {
-				GLint position;
-				GLint texpos;
+				m_i32_t position;
+				m_i32_t texpos;
 			} attr;
 			struct {
 				//PRG: TEX
-				GLint **textures;
-				GLint multiply_alpha;
-				GLint translate;
-				GLint transform;
+				m_i32_t **textures;
+				m_i32_t multiply_alpha;
+				m_i32_t translate;
+				m_i32_t transform;
 			} uniforms;
 		} tex;
 		//PRG: CLR
 		struct{
 			struct {
-				GLint position;
-				GLint acolor;
+				m_i32_t position;
+				m_i32_t acolor;
 			} attr;
 			struct {
-				GLint translate;
-				GLint transform;
+				m_i32_t translate;
+				m_i32_t transform;
 			} uniforms;
 		} clr;
 		jl_vo *temp_vo;

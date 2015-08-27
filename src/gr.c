@@ -281,30 +281,31 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 		mouse->data.cb.x = mouse->data.tr.x;
 		mouse->data.cb.y = mouse->data.tr.y;
 	// Draw mouse
-//		#if JL_PLAT == JL_PLAT_COMPUTER //if computer
+		#if JL_PLAT == JL_PLAT_COMPUTER //if computer
 			jl_gr_draw_vo(jlc, mouse_vo, &(mouse->data.tr));
-//		#endif
+		#endif
 	}
 
 	static inline void _jl_gr_mouse_init(jvct_t *_jlc) {
 		jl_rect_t rc = { 0.f, 0.f, .075f, .075f };
-//		#if JL_PLAT == JL_PLAT_COMPUTER //if computer
 		jl_vo *mouse = jl_gl_vo_make(_jlc->jlc, 1);
 
-		jl_gr_vos_image(_jlc->jlc, &(mouse[0]), rc, 0, 0, 254, 255);
-//		#endif
+		#if JL_PLAT == JL_PLAT_COMPUTER //if computer
+			jl_gr_vos_image(_jlc->jlc, &(mouse[0]), rc, 0, 0, 254,
+				255);
+		#endif
 		_jlc->jlc->mouse = jl_gr_sprite_make(
 			_jlc->jlc, rc, jl_gr_sprdr_dont,
 			_jl_gr_mouse_loop,
-//		#if JL_PLAT == JL_PLAT_COMPUTER //if computer
-			sizeof(jl_vo*));
-		// Set the context to the vertex object.
-		((jl_sprite_t*)_jlc->jlc->mouse)->data.ctx = mouse;
-//		#elif JL_PLAT == JL_PLAT_PHONE // if phone
-//			0);
-		// Set the context to the vertex object.
-//		((jl_sprite_t*)_jlc->jlc->mouse)->data.ctx = NULL;
-//		#endif
+		#if JL_PLAT == JL_PLAT_COMPUTER //if computer
+				sizeof(jl_vo*));
+			// Set the context to the vertex object.
+			((jl_sprite_t*)_jlc->jlc->mouse)->data.ctx = mouse;
+		#elif JL_PLAT == JL_PLAT_PHONE // if phone
+				0);
+			// Set the context to NULL.
+			((jl_sprite_t*)_jlc->jlc->mouse)->data.ctx = NULL;
+		#endif
 	}
 
 /**      @endcond      **/
@@ -419,8 +420,8 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 		if(multicolor) jl_gl_clrg(jlc->_jlc, pv, colors);
 		else jl_gl_clrs(jlc->_jlc, pv, colors);
 		// Set collision box.
-		pv->cb.x = 1.f, pv->cb.y = jl_gl_ar(jlc);
-		pv->cb.w = 0.f, pv->cb.h = 0.f;
+		pv->cb.x = 1.f, pv->cb.y = jl_gl_ar(jlc), pv->cb.z = 0.f;
+		pv->cb.w = 0.f, pv->cb.h = 0.f, pv->cb.d = 0.f;
 		// Find the lowest and highest values to make a box.
 		for(i = 0; i < tricount*9; i+=3) {
 			float xx = triangles[i];
@@ -442,7 +443,7 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 	 * @param multicolor: If 0: Then 1 color is used.
 	 *	If 1: Then 1 color per each vertex is used.
 	**/
-	void jl_gr_vos_rec(jl_t* jlc, jl_vo *pv, jl_rect_t rc, uint8_t* colors,
+	void jl_gr_vos_rec(jl_t* jlc, jl_vo *pv, jl_rect_t rc, u8_t* colors,
 		uint8_t multicolor)
 	{
 		float rectangle_coords[] = {

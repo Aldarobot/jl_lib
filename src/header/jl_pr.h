@@ -1,57 +1,23 @@
-//Jal5 Standard Libraries
+// JL_LIB
 	#include "jl.h"
-	#if JL_PLAT == JL_PLAT_COMPUTER
-		//#define JLVM_USEL_COGL
-		#define JLVM_USEL_GLES
-	#elif JL_PLAT == JL_PLAT_PHONE
-		#define JLVM_USEL_GLES
-	#else
-	#endif
-	
-//SDL
-	#ifdef JLVM_USEL_GLES
-		#if JL_PLAT == JL_PLAT_COMPUTER
-			#include <SDL2/SDL_opengles2.h>
-		#else
-			#include "../lib/sdl/header/SDL_opengles2.h"
-		#endif
-	#endif
+// SDL
 	#if JL_PLAT == JL_PLAT_COMPUTER
 //		#include "../lib/SDL/header/SDL.h"
 		#include <SDL2/SDL.h>
-		#ifdef JLVM_USEL_COGL
-//			#include "../lib/SDL/header/SDL_opengl.h"
-			#include "../lib/glew/glew.h"
-		#endif
-
 	#elif JL_PLAT == JL_PLAT_PHONE
 		#include "../lib/sdl/header/SDL_test_common.h"
 		#include "../lib/sdl/header/SDL_main.h"
 	#endif
 	#include "../lib/SDL_mixer.h"
-//LIBZIP
+// LIBZIP
 	#define ZIP_DISABLE_DEPRECATED //Don't allow the old functions.
 	#if JL_PLAT == JL_PLAT_COMPUTER
 		#include "../../../../obj/lb/zip.h"
 	#elif JL_PLAT == JL_PLAT_PHONE
 		#include "../lib/libzip-0.11.2/lib/zip.h"
 	#endif
-//OPENGL
-	#ifdef JLVM_USEL_COGL
-		#ifdef APPLE
-			#include <OpenGL/glext.h>
-		#elif JL_PLAT == JL_PLAT_COMPUTER
-//			#include <GL/glext.h>
-			#include "../lib/glext.h"
-		#else
-			#error "cogl ain't supported by non-pc comps, man!"
-		#endif
-	#endif
-	#ifdef JLVM_USEL_GLES
-		#include <GLES2/gl2.h>
-		#include <GLES2/gl2ext.h>
-	#endif
-//Standard Libraries
+
+// Standard Libraries
 	#include <sys/types.h>
 	#include <sys/stat.h>
 	#include <fcntl.h>
@@ -130,10 +96,10 @@ void jl_gl_viewport_screen(jvct_t *_jlc);
 void jl_gl_poly(jvct_t *_jlc, jl_vo* pv, uint8_t vertices, const float *xyzw);
 void jl_gl_vect(jvct_t *_jlc, jl_vo* pv, uint8_t vertices, const float *xyzw);
 void jl_gl_clrc(jvct_t *_jlc, jl_vo* pv, jl_ccolor_t* cc);
-jl_ccolor_t* jl_gl_clrcs(jvct_t *_jlc, uint8_t *rgba, uint32_t vc);
-jl_ccolor_t* jl_gl_clrcg(jvct_t *_jlc, uint8_t *rgba, uint32_t vc);
-void jl_gl_clrg(jvct_t *_jlc, jl_vo* pv, uint8_t *rgba);
-void jl_gl_clrs(jvct_t *_jlc, jl_vo* pv, uint8_t *rgba);
+jl_ccolor_t* jl_gl_clrcs(jvct_t *_jlc, u8_t *rgba, uint32_t vc);
+jl_ccolor_t* jl_gl_clrcg(jvct_t *_jlc, u8_t *rgba, uint32_t vc);
+void jl_gl_clrg(jvct_t *_jlc, jl_vo* pv, u8_t *rgba);
+void jl_gl_clrs(jvct_t *_jlc, jl_vo* pv, u8_t *rgba);
 void jl_gl_txtr(jvct_t *_jlc, jl_vo* pv, u8_t map, u8_t a, u16_t pgid, u16_t pi);
 void jl_gl_transform_pr_(jvct_t *_jlc, jl_pr_t* pr, float x, float y, float z,
 	float xm, float ym, float zm);

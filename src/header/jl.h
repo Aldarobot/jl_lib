@@ -80,7 +80,7 @@
 	void jl_gr_draw_pr(jl_t* jlc, jl_vo* pv, jl_vec3_t* vec);
 	void jl_gr_vos_vec(jl_t* jlc, jl_vo *pv, uint16_t tricount,
 		float* triangles, uint8_t* colors, uint8_t multicolor);
-	void jl_gr_vos_rec(jl_t* jlc, jl_vo *pv, jl_rect_t rc, uint8_t* colors,
+	void jl_gr_vos_rec(jl_t* jlc, jl_vo *pv, jl_rect_t rc, u8_t* colors,
 		uint8_t multicolor);
 	void jl_gr_vos_image(jl_t* jlc, jl_vo *pv, jl_rect_t rc,
 		u16_t g, u16_t i, u8_t c, u8_t a);
