@@ -1,5 +1,5 @@
 // Version Definitions
-#define JL_VERSION "4.0.0e6"
+#define JL_VERSION "4.0.0e7"
 /*
  * Version System:
  * 	major version "." minor version "." debug version "."
@@ -34,15 +34,23 @@
 
 #define JL_GLTYPE JL_GLTYPE_NO_SPRT
 
+// Determine How OpenGL renders to texture.
+#define JL_GLRTEX_FBO 1
+#define JL_GLRTEX_EGL 2 // NYI
+#define JL_GLRTEX_SDL 3 // NYI
+
+// Platform Capabilities.
 #if JL_PLAT == JL_PLAT_COMPUTER
 	// All Linux Platforms
 	#undef JL_GLTYPE
 	#define JL_GLTYPE JL_GLTYPE_SDL_ES2
+	#define JL_GLRTEX JL_GLRTEX_FBO
 	// Windows
 	// #define JL_GLTYPE JL_GLTYPE_SDL_GL2
 #elif JL_PLAT == JL_PLAT_PHONE
 	#undef JL_GLTYPE
 	#define JL_GLTYPE JL_GLTYPE_SDL_ES2
+	#define JL_GLRTEX JL_GLRTEX_FBO
 #else
 	#error "NO OpenGL support for this platform!"
 #endif

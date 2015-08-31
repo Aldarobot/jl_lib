@@ -40,7 +40,8 @@ void jl_au_load(jvct_t *_jlc, int IDinStack, void *data, int dataSize,
 	if(_jlc->au.jmus[IDinStack]._MUS == NULL) {
 		_jl_fl_errf(_jlc, ":Couldn't load music because:");
 		_jl_fl_errf(_jlc, (char *)SDL_GetError());
-		jl_sg_kill(_jlc->jlc, "\n");
+		_jl_fl_errf(_jlc, "\n");
+		jl_sg_kill(_jlc->jlc);
 	}else{
 		jl_io_printc(_jlc->jlc, "loaded music ");
 		jl_io_printi(_jlc->jlc, IDinStack);
@@ -215,7 +216,8 @@ void _jl_au_init(jvct_t *_jlc) {
 	if ( Mix_OpenAudio(11025, AUDIO_S16, 1, 2048) < 0 ) {
 		_jl_fl_errf(_jlc, ":Couldn't set 11025 Hz 16-bit audio because:");
 		_jl_fl_errf(_jlc, (char *)SDL_GetError());
-		jl_sg_kill(_jlc->jlc, "\n");
+		_jl_fl_errf(_jlc, "\n");
+		jl_sg_kill(_jlc->jlc);
 	}else{
 		jl_io_printc(_jlc->jlc, "audio has been set.\n");
 	}

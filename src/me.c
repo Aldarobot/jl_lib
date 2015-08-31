@@ -16,7 +16,8 @@
 // TODO: Remove dependencies on this function.  jl_me_alloc() should replace.
 static void *_jl_me_hydd_allc(jvct_t* _jlc, void *a, uint32_t size) {
 	if((a = realloc(a, size)) == NULL) {
-		jl_sg_kill(_jlc->jlc, "realloc() memory error!");
+		_jl_fl_errf(_jlc, "realloc() memory error!\n");
+		jl_sg_kill(_jlc->jlc);
 	}
 	return a;
 }
@@ -47,11 +48,15 @@ static void _jl_me_init_alloc(void **a, uint32_t size) {
 }
 
 static void _jl_me_alloc_malloc(jl_t* jlc, void **a, uint32_t size) {
-	if(size == 0)
-		jl_sg_kill(jlc, "Double Free or free on NULL pointer");
+	if(size == 0) {
+		_jl_fl_errf(jlc->_jlc, "Double Free or free on NULL pointer\n");
+		jl_sg_kill(jlc);
+	}
 	*a = malloc(size);
-	if(*a == NULL)
-		jl_sg_kill(jlc, "jl_me_alloc: Out Of Memory!");
+	if(*a == NULL) {
+		_jl_fl_errf(jlc->_jlc, "jl_me_alloc: Out Of Memory!\n");
+		jl_sg_kill(jlc);
+	}
 	jl_me_clr(*a, size);
 }
 
@@ -270,9 +275,11 @@ void jl_me_strt_strt(jl_t *jlc, strt a, strt b, uint64_t bytes) {
 	uint32_t sizeb = a->curs + bytes;
 
 	if(a == NULL) {
-		jl_sg_kill(jlc, "NULL A STRING");
+		_jl_fl_errf(jlc->_jlc, "NULL A STRING");
+		jl_sg_kill(jlc);
 	}else if(b == NULL) {
-		jl_sg_kill(jlc, "NULL B STRING");
+		_jl_fl_errf(jlc->_jlc, "NULL B STRING");
+		jl_sg_kill(jlc);
 	}
 	if(sizeb > size) size = sizeb;
 	a->data = _jl_me_hydd_allc(jlc->_jlc, a->data, size + 1);
@@ -352,6 +359,7 @@ uint8_t jl_me_string_print(jl_t* jlc, char *string, const char* format,
 {
 	jvct_t * _jlc = jlc->_jlc;
 
+	if((!format) || (!format[0])) return 0;
 	jl_me_clr((void*)_jlc->me.temp_buff, 30);
 	sprintf((void*)_jlc->me.temp_buff, format, var);
 	strncat(string, (void*)_jlc->me.temp_buff, n - strlen(string));

@@ -110,10 +110,25 @@ static void jl_io_add_to_buffer2_(jl_t* jlc, const char* x, const char* y) {
 	jl_io_test_if_newline(_jlc, x);
 }
 
+static void jl_io_test_overreach(jl_t* jlc) {
+	jvct_t *_jlc = jlc->_jlc;
+	
+	if(_jlc->io.offs > 15) {
+		JL_IO_PRINTF2("\nOverreached block count %d!!!\n", _jlc->io.offs);
+		_jlc->io.offs = 15;
+		_jl_io_current(jlc);
+		JL_IO_PRINTF1("\nQuitting...\n");
+		exit(0);
+	}
+}
+
 static void _jl_io_indt(jl_t* jlc) {
 	jvct_t* _jlc = jlc->_jlc;
 	int i;
 
+	// Check to see if too many blocks are open.
+	jl_io_test_overreach(jlc);
+	// Print enough spaces for the open blocks.
 	for(i = 0; i < _jlc->io.offs; i++)
 		jl_me_string_print(jlc, _jlc->io.buffer, " ", NULL, 80);
 }
@@ -171,14 +186,9 @@ void jl_io_tag_set(jl_t* jlc,
 void jl_io_printc(jl_t* jlc, const char * print) {
 	jvct_t *_jlc = jlc->_jlc;
 
-	if(_jlc->io.offs > 15) {
-		JL_IO_PRINTF2("\nOverreached block count %d!!!\n", _jlc->io.offs);
-		_jlc->io.offs = 15;
-		_jl_io_current(jlc);
-		JL_IO_PRINTF1("\nQuitting...\n");
-		exit(0);
-	}
-	//Skip over hidden values
+	// Check to see if too many blocks are open.
+	jl_io_test_overreach(jlc);
+	// Skip over hidden values
 	_jlc->io.printfn[_jlc->io.tag[_jlc->io.offs] + _JL_IO_MAX]
 		(jlc, print);
 }
@@ -284,7 +294,8 @@ void jl_io_return(jl_t* jlc, const char* fn_name) {
 	if(strcmp(fn_name, _jlc->io.stack[_jlc->io.level])) {
 		_jl_fl_errf(jlc->_jlc, "Function \"");
 		_jl_fl_errf(jlc->_jlc, _jlc->io.stack[_jlc->io.level]);
-		jl_sg_kill(jlc, "\" didn't return.");
+		_jl_fl_errf(jlc->_jlc, "\" didn't return.");
+		jl_sg_kill(jlc);
 	}
 	jl_me_clr(_jlc->io.stack[_jlc->io.level], 30);
 	_jlc->io.level--;

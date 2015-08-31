@@ -4,7 +4,7 @@
 
 //IO:
 
-	typedef struct{
+	typedef struct {
 		uint8_t offs;
 		int8_t ofs2;
 		char head[16][5];
@@ -18,13 +18,13 @@
 //		#endif
 	}_io_t;
 
-	typedef struct{
+	typedef struct {
 		m_u32_t var_set_count;
 		void **vars;
 	}_sg_sprt_t;
 
 	//Standard Mode Class
-	typedef struct{
+	typedef struct {
 		//Sprites
 		m_u32_t sprite_count;
 		_sg_sprt_t *sprites;
@@ -34,12 +34,12 @@
 	}__sg_mode_t;
 
 //AU:
-	typedef struct{
+	typedef struct {
 		Mix_Music *_MUS;
 		char _VOL;
 	}__mixr_jmus;
 
-	typedef struct{
+	typedef struct {
 		uint32_t idis; //Which music to play next
 		uint8_t sofi; //Seconds Of Fade In
 		uint8_t sofo; //Seconds Of Fade Out
@@ -67,16 +67,16 @@
 	}_fl_t;
 
 //OTHER:
-typedef struct{
+typedef struct {
 	void (*duu)(void *param);
 }jlvm_t;
 
 //JLVM Context Structure
-typedef struct{
+typedef struct {
 	jl_t * jlc; // JL_Lib context
 	
 	// Memory
-	struct{
+	struct {
 		uint8_t temp_buff[30];
 		void * tmp_ptr[16];
 		m_u8_t status;
@@ -84,7 +84,7 @@ typedef struct{
 
 	_io_t io; //Terminal Data
 	//Window Info
-	struct{
+	struct {
 		__sg_mode_t *mdes; // Array Sizof Number Of Modes
 		__sg_mode_t mode; // Current Mode Data
 		
@@ -104,7 +104,7 @@ typedef struct{
 		float offsx, offsy;
 		
 		// 1 Background for each screen
-		struct{
+		struct {
 			jl_vo* up;
 			jl_vo* dn;
 		}bg;
@@ -115,7 +115,7 @@ typedef struct{
 	}sg;
 	
 	//Input Information
-	struct{
+	struct {
 		jl_ct_event_fnt getEvents[JL_CT_MAXX];
 
 		float msx, msy;
@@ -130,7 +130,7 @@ typedef struct{
 		const Uint8 *keys;
 		#endif
 		
-		struct{
+		struct {
 			#if JL_PLAT == JL_PLAT_PHONE
 			uint8_t finger;
 			uint8_t menu;
@@ -160,14 +160,14 @@ typedef struct{
 	_au_t au; //Audio Info
 	
 	//Opengl Data
-	struct{
+	struct {
 		uint32_t **textures;
 		uint16_t allocatedg;
 		uint16_t allocatedi;
 		uint8_t whichprg;
 		m_u32_t prgs[JL_GL_SLPR_MAX];
 		//PRG: TEX
-		struct{
+		struct {
 			struct {
 				m_i32_t position;
 				m_i32_t texpos;
@@ -181,7 +181,7 @@ typedef struct{
 			} uniforms;
 		} tex;
 		//PRG: CLR
-		struct{
+		struct {
 			struct {
 				m_i32_t position;
 				m_i32_t acolor;
@@ -202,15 +202,15 @@ typedef struct{
 	_fl_t fl; //File Manager
 	
 	//Graphics
-	struct{
+	struct {
 		jl_simple_fnt menuoverlay;
 		jl_sprite_t *taskbar;
-		struct{
+		struct {
 			char* window_name;
 			char* message;
 			jl_popup_button_t* btns;
 		}popup;
-		struct{
+		struct {
 			jl_vo *whole_screen;
 		}vos;
 		strt textbox_string;
@@ -241,7 +241,7 @@ typedef struct{
 	}dl;
 
 	//in: What's Available
-	struct{
+	struct {
 		uint8_t graphics; //graphics are enabled
 		uint8_t fileviewer; //Fileviewer is enabled
 	}has;

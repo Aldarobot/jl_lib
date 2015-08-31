@@ -11,8 +11,8 @@
 #define PKFMAX 10000000
 
 /** @cond **/
-//Static Functions 
-static void _jl_fl_save(jl_t* jlc, const void *file, const char *name,
+// Static Functions 
+static void _jl_fl_save(jl_t* jlc, const void *file_data, const char *file_name,
 	uint32_t bytes)
 {
 	jvct_t * _jlc = jlc->_jlc;
@@ -22,12 +22,18 @@ static void _jl_fl_save(jl_t* jlc, const void *file, const char *name,
 	char * bytecount;
 	char * atplace;
 	
-	if(name == NULL) {
-		jl_sg_kill(jlc, "Save: Name is Null");
+	if(file_name == NULL) {
+		_jl_fl_errf(_jlc, "Save[==]: file_name is Null\n");
+		jl_sg_kill(jlc);
 		return;
-	}else if(strlen(name) == 0) {
-		jl_sg_kill(jlc, "Save: Name is Empty String");
+	}else if(strlen(file_name) == 0) {
+		_jl_fl_errf(_jlc, "Save[strlen]: file_name is Empty String\n");
+		jl_sg_kill(jlc);
 		return;
+	}else if(!file_data) {
+		_jl_fl_errf(_jlc, "Save[file_data]: file_data is NULL\n");
+		jl_sg_kill(jlc);
+		return;	
 	}
 
 	jl_io_offset(jlc, JL_IO_SIMPLE, "FLSV"); // { : FLSV
@@ -37,30 +43,36 @@ static void _jl_fl_save(jl_t* jlc, const void *file, const char *name,
 	jl_io_printc(jlc, bytecount);
 	free(bytecount);
 
-	uint8_t offs = (name[0] == '!');
-	fd = open(name + offs, O_RDWR | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
+	uint8_t offs = (file_name[0] == '!');
+	fd = open(file_name + offs, O_RDWR | O_CREAT,
+		S_IRWXU | S_IRWXG | S_IRWXO);
 
 	if(fd <= 0) {
 		errsv = errno;
 
 		jl_io_offset(jlc, JL_IO_MINIMAL, "FLSV"); // =
-		jl_io_printc(jlc, "jl_fl_save: Failed to open file: \"");
-		jl_io_printc(jlc, name);
-		jl_io_printc(jlc, "\" Write failed: ");
-		jl_io_printc(jlc, strerror(errsv));
-		jl_io_printc(jlc, "\n");
-		exit(-1);
+		_jl_fl_errf(_jlc, "Save[open]: Failed to open file: \"");
+		_jl_fl_errf(_jlc, file_name);
+		_jl_fl_errf(_jlc, "\" Write failed: ");
+		_jl_fl_errf(_jlc, strerror(errsv));
+		_jl_fl_errf(_jlc, "\n");
+		jl_io_close_block(jlc); // !}
+		jl_sg_kill(jlc);
 	}
 	int at = lseek(fd, 0, SEEK_END);
 	jl_io_offset(jlc, JL_IO_SIMPLE, "FLSV");
 	jl_io_printc(jlc, "Writing....");
-	n_bytes = write(fd, file, bytes);
+	n_bytes = write(fd, file_data, bytes);
 	if(n_bytes <= 0) {
 		errsv = errno;
 		close(fd);
-		_jl_fl_errf(_jlc, ":Write failed: ");
+		_jl_fl_errf(_jlc, ":Save[write]: Write to \"");
+		_jl_fl_errf(_jlc, file_name);
+		_jl_fl_errf(_jlc, "\" failed:\n:\"");
 		_jl_fl_errf(_jlc, strerror(errsv));
-		jl_sg_kill(jlc, "\n");
+		_jl_fl_errf(_jlc, "\"\n");
+		jl_io_close_block(jlc); // !}
+		jl_sg_kill(jlc);
 	}
 	bytecount = jl_me_string_fnum(jlc, (int)n_bytes);
 	atplace = jl_me_string_fnum(jlc, at);
@@ -73,17 +85,17 @@ static void _jl_fl_save(jl_t* jlc, const void *file, const char *name,
 	free(atplace);
 	close(fd);
 	jl_io_printc(jlc, "Saved!");
-	jl_io_close_block(_jlc->jlc); // } : Close Block "FLSV"
+	jl_io_close_block(jlc); // } : Close Block "FLSV"
 	return;
 }
 
-static inline void _jl_fl_reset_cursor(char *file_name) {
+static inline void jl_fl_reset_cursor__(str_t file_name) {
 	int fd = open(file_name, O_RDWR);
 	lseek(fd, 0, SEEK_SET);
 	close(fd);
 }
 
-//NON-STATIC Library Dependent Functions
+// NON-STATIC Library Dependent Functions
 void _jl_fl_errf(jvct_t * _jlc, const char *msg) {
 	jl_io_offset(_jlc->jlc, JL_IO_SIMPLE, "ERRF");
 	jl_io_printc(_jlc->jlc, "saving to errf: ");
@@ -92,7 +104,7 @@ void _jl_fl_errf(jvct_t * _jlc, const char *msg) {
 	jl_io_offset(_jlc->jlc, JL_IO_MINIMAL, "ERRF");
 	jl_io_printc(_jlc->jlc, msg);
 	jl_io_offset(_jlc->jlc, JL_IO_SIMPLE, "ERRF");
-	//Write to the errf file
+	// Write to the errf file
 	_jl_fl_save(_jlc->jlc, msg, _jlc->fl.errf_filename, strlen(msg));
 	jl_io_printc(_jlc->jlc, "saved to errf!\n");
 	
@@ -120,8 +132,8 @@ void jl_fl_save(jl_t* jlc, const void *file, const char *name, uint32_t bytes) {
  * @param file_name: file to load
  * @returns A readable "strt" containing the bytes from the file.
  */
-strt jl_fl_load(jl_t* jlc, char *file_name) {
-	_jl_fl_reset_cursor(file_name);
+strt jl_fl_load(jl_t* jlc, str_t file_name) {
+	jl_fl_reset_cursor__(file_name);
 	m_u32_t i;
 	unsigned char *file = malloc(MAXFILELEN);
 	uint8_t offs = (file_name[0] == '!');
@@ -134,14 +146,15 @@ strt jl_fl_load(jl_t* jlc, char *file_name) {
 		jl_io_printc(jlc, "failed to open: \"");
 		jl_io_printc(jlc, file_name);
 		jl_io_printc(jlc, "\"\n");
-		jl_sg_kill(jlc, "file_file_load: Failed to open file");
+		jl_io_printc(jlc, "file_file_load: Failed to open file\n");
+		jl_sg_kill(jlc);
 	}
 	int Read = read(fd, file, MAXFILELEN + 1);
 	jlc->info = Read;
 
-	jl_io_printc(jlc, "read ");
+	jl_io_printc(jlc, "jl_fl_load(): read ");
 	jl_io_printi(jlc, jlc->info);
-	jl_io_printc(jlc, "bytes\n");
+	jl_io_printc(jlc, " bytes\n");
 	close(fd);
 	strt frtn = jl_me_strt_make(jlc->info);
 	for( i = 0; i < jlc->info; i++) {
@@ -187,7 +200,8 @@ char jl_fl_pk_save(jl_t* jlc, char *packageFileName, char *fileName,
 		zip_source_free(s);
 		_jl_fl_errf(jlc->_jlc, "[JLVM/FILE/PKDJ/SAVE] src null error[replace]: ");
 		_jl_fl_errf(jlc->_jlc, (char *)zip_strerror(archive));
-		jl_sg_kill(jlc, "\n");
+		_jl_fl_errf(jlc->_jlc, "\n");
+		jl_sg_kill(jlc);
 	}
 //	printf("%d,%d,%d\n",archive,sb.index,s);
 	if(zip_file_add(archive, fileName, s, ZIP_FL_OVERWRITE)) {
@@ -241,7 +255,8 @@ uint8_t *jl_fl_pk_load(jl_t* jlc, const char *packageFileName,
 	}
 	jl_io_printc(jlc, "error check 3.\n");
 	if(zipfile == NULL) {
-		jl_sg_kill(jlc, ":couldn't load pckg!\n");
+		_jl_fl_errf(jlc->_jlc, ":couldn't load pckg!\n");
+		jl_sg_kill(jlc);
 	}
 	jl_io_printc(jlc, "error check 4.\n");
 	jl_io_printc(jlc, (char *)zip_strerror(zipfile));
@@ -265,9 +280,9 @@ uint8_t *jl_fl_pk_load(jl_t* jlc, const char *packageFileName,
 	jl_io_printc(jlc, "opened file in package\n");
 	jl_io_printc(jlc, "reading opened file....\n");
 	if((jlc->info = zip_fread(file, fileToLoad, PKFMAX)) == -1) {
-		jl_sg_kill(jlc, "file reading failed");
+		_jl_fl_errf(jlc->_jlc, "file reading failed");
+		jl_sg_kill(jlc);
 	}
-	jl_io_offset(jlc, JL_IO_MINIMAL, "PKLD"); // = : PKLD TODO: REMOVE
 	if(jlc->info == 0) {
 		jl_io_printc(jlc, "empty file, returning NULL.");
 		return NULL;
@@ -297,7 +312,8 @@ void jl_fl_mkdir(jl_t* jlc, strt pfilebase) {
 		}else{
 			_jl_fl_errf(jlc->_jlc, ":Directory: Uh oh...:\n:");
 			_jl_fl_errf(jlc->_jlc, strerror(errsv));
-			jl_sg_kill(jlc, "\n");
+			_jl_fl_errf(jlc->_jlc, "\n");
+			jl_sg_kill(jlc);
 		}
 	}else{
 		jl_io_printc(jlc, "Created Directory!\n");
@@ -333,7 +349,8 @@ uint8_t * jl_fl_mkfile(jl_t* jlc, char *pzipfile, char *pfilebase,
 		((freturn = jl_fl_pk_load(jlc, pzipfile, pfilebase))== NULL) &&
 		(jlc->errf == JL_ERR_FIND) )//Package still doesn't exist!!
 	{
-		jl_sg_kill(jlc, ":Failed To Create file\n");
+		_jl_fl_errf(jlc->_jlc, ":Failed To Create file\n");
+		jl_sg_kill(jlc);
 	}
 	jl_io_printc(jlc, "Good loading!\n");
 	//Close Block "MKFL"
@@ -506,11 +523,13 @@ static uint8_t _jl_fl_user_select_open_dir(jl_t* jlc, char *dirname) {
 		}else if((errsv == EMFILE) || (errsv == ENFILE) ||
 			(errsv == ENOMEM)) //Not enough memory!
 		{
-			jl_sg_kill(jlc, "FileViewer Can't Open Directory:"
-				"Not Enough Memory!");
+			_jl_fl_errf(_jlc, "FileViewer Can't Open Directory:"
+				"Not Enough Memory!\n");
+			jl_sg_kill(jlc);
 		}else{ //Unknown error
-			jl_sg_kill(jlc, "FileViewer Can't Open Directory:"
+			_jl_fl_errf(_jlc, "FileViewer Can't Open Directory:"
 				"Unknown Error!");
+			jl_sg_kill(jlc);
 		}
 	}
 	return 1;

@@ -425,7 +425,8 @@ static void _jl_ct_run_event(jvct_t * _jlc, uint8_t pevent,
 		_jl_fl_errf(_jlc, ":[INPT/ERR] Null Pointer: _jlc\
 				->ct.getEvents.Event:\n:");
 		_jl_fl_errf(_jlc, (void*)jl_me_strt_fnum(pevent)->data);
-		jl_sg_kill(_jlc->jlc, "\n");
+		_jl_fl_errf(_jlc, "\n");
+		jl_sg_kill(_jlc->jlc);
 	}
 	_jlc->ct.getEvents[pevent](_jlc->jlc, prun, pno);
 }

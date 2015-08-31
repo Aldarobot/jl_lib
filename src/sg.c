@@ -174,7 +174,8 @@ void jl_sg_mode_switch(jl_t* jlc, uint8_t mode, jl_sg_wm_t loop) {
 
 void _jl_sg_load_jlpx(jvct_t* _jlc,uint8_t *data,void **pixels,int *w,int *h) {
 	if(data == NULL) {
-		jl_sg_kill(_jlc->jlc, ":NULL DATA!\n");
+		_jl_fl_errf(_jlc, ":NULL DATA!\n");
+		jl_sg_kill(_jlc->jlc);
 	}else if(data[_jlc->sg.init_image_location] == 0) {
 		return;
 	}
@@ -188,8 +189,7 @@ void _jl_sg_load_jlpx(jvct_t* _jlc,uint8_t *data,void **pixels,int *w,int *h) {
 	jl_io_printc(_jlc->jlc, "loading image - header@");
 	jl_io_printi(_jlc->jlc, _jlc->sg.init_image_location);
 	jl_io_printc(_jlc->jlc,":");
-	jl_io_printt(_jlc->jlc, 8, (char *)data
-		+_jlc->sg.init_image_location);
+	jl_io_printt(_jlc->jlc, 8, (char *)data + _jlc->sg.init_image_location);
 	jl_io_printc(_jlc->jlc,"\n");
 
 	char *testing = malloc(strlen(JL_IMG_HEADER)+1);
@@ -209,7 +209,8 @@ void _jl_sg_load_jlpx(jvct_t* _jlc,uint8_t *data,void **pixels,int *w,int *h) {
 		_jl_fl_errf(_jlc, testing);
 		_jl_fl_errf(_jlc, "\n:!=\n:");
 		_jl_fl_errf(_jlc, JL_IMG_HEADER);
-		jl_sg_kill(_jlc->jlc, "\n");
+		_jl_fl_errf(_jlc, "\n");
+		jl_sg_kill(_jlc->jlc);
 	}
 	uint8_t tester = data[_jlc->sg.init_image_location+strlen(JL_IMG_HEADER)];
 	int FSIZE; //The size of the file.
@@ -227,7 +228,8 @@ void _jl_sg_load_jlpx(jvct_t* _jlc,uint8_t *data,void **pixels,int *w,int *h) {
 		jl_io_printc(_jlc->jlc, "bad file type(must be 1,2 or 3) is: ");
 		jl_io_printi(_jlc->jlc, tester);
 		jl_io_printc(_jlc->jlc, "\n");
-		jl_sg_kill(_jlc->jlc, ":bad file type(must be 1,2 or 3)\n");
+		_jl_fl_errf(_jlc, ":bad file type(must be 1,2 or 3)\n");
+		jl_sg_kill(_jlc->jlc);
 	}
 	uint32_t ki;
 	ki = strlen(JL_IMG_HEADER)+1;
@@ -368,14 +370,16 @@ static uint32_t _jl_sg_quit(jvct_t* _jlc, int rc) {
  * Show Error On Screen if screen is available.  Also store error in errf.txt.
  * Quit, And Return -1 to show there was an error.
 */
-void jl_sg_kill(jl_t* jlc, char * msg) {
+void jl_sg_kill(jl_t* jlc) {
 	//TODO: Make Screen With Window Saying Error Message Followed By Prompt.
 	//	Also, don't automatically quit, like it does now!  ERQT can be
 	//	inline at that point.
+	jvct_t * _jlc = jlc->_jlc;
+	
 	_jl_fl_errf(jlc->_jlc, ":Quitting On Error...\n");
 	jl_io_offset(jlc, JL_IO_INTENSE, "ERQT");
-	jl_io_printc(jlc, msg);
-	_jl_fl_errf(jlc->_jlc, msg);
+	strt error_string = jl_fl_load(jlc, _jlc->fl.errf_filename);
+	jl_io_printc(jlc, (void*)error_string->data);
 //	jl_io_stacktrace(jlc);
 	_jl_sg_quit(jlc->_jlc, JL_RTN_FAIL);
 	jl_io_close_block(jlc); //Close Block "ERQT"

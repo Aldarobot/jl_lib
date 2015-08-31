@@ -3,13 +3,18 @@
  * 	Variable Types.
 **/
 
+// Get EGL types.
+	#if JL_GLRTEX == JL_GLRTEX_EGL
+		#include <EGL/egl.h>
+	#endif
+
 typedef float jl_ccolor_t;
 
 //Rust-like Variable Types
 typedef const uint8_t u8_t;	//8-bit Unsigned Constant
 typedef const int8_t i8_t;	//8-bit Signed Constant
-typedef uint8_t m_u8_t;	//8-bit Unsigned Modifiable
-typedef int8_t m_i8_t;	//8-bit Signed Modifiable
+typedef uint8_t m_u8_t;		//8-bit Unsigned Modifiable
+typedef int8_t m_i8_t;		//8-bit Signed Modifiable
 
 typedef const uint16_t u16_t;	//16-bit Short int
 typedef const int16_t i16_t;	//16-bit Short int
@@ -31,6 +36,11 @@ typedef const float f32_t;	//floating point decimal
 typedef double m_f64_t;		//floating point decimal
 typedef float m_f32_t;		//floating point decimal
 
+typedef const char chr_t;	// Character Constant
+typedef const char* str_t;	// String Constant
+typedef char m_chr_t;		// Character Modifiable
+typedef char* m_str_t;		// String Modifiable
+
 //4 bytes of information about the string are included
 typedef struct{
 	uint8_t* data; //Actual String
@@ -44,8 +54,12 @@ typedef strt* strl;
 typedef struct{
 	// What to render
 	uint32_t tx;	// ID to texture.
+#if JL_GLRTEX == JL_GLRTEX_EGL
+	EGLSurface pb;	// The PixelBuffer.
+#else
 	uint32_t db;	// ID to Depth Buffer
 	uint32_t fb;	// ID to Frame Buffer
+#endif
 	uint16_t w, h;	// Width and hieght of texture
 	// Render Area
 	uint32_t gl;	// GL Vertex Buffer Object [ 0 = Not Enabled ]

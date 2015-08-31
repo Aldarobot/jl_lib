@@ -43,7 +43,8 @@ static void _jl_dl_fscreen(jvct_t* _jlc, uint8_t a) {
 		JL_DL_FULLSCREEN * _jlc->dl.fullscreen))
 	{
 		_jl_fl_errf(_jlc, SDL_GetError());
-		jl_sg_kill(_jlc->jlc, "\n");
+		_jl_fl_errf(_jlc, "\n");
+		jl_sg_kill(_jlc->jlc);
 	}
 }
 
@@ -65,7 +66,8 @@ static void _jlvm_curd_mode(jvct_t *_jlc) {
 	if(SDL_GetCurrentDisplayMode(0, &_jlc->dl.current)) {
 		_jl_fl_errf(_jlc, ":failed to get current display mode:\n:");
 		_jl_fl_errf(_jlc, (char *)SDL_GetError());
-		jl_sg_kill(_jlc->jlc, "\n");
+		_jl_fl_errf(_jlc, "\n");
+		jl_sg_kill(_jlc->jlc);
 	}
 	jl_io_offset(_jlc->jlc, JL_IO_SIMPLE, "CURD"); // {
 	jl_io_printc(_jlc->jlc,
@@ -87,6 +89,15 @@ static inline void _jlvm_crea_wind(jvct_t *_jlc) {
 	_jlc->dl.current.h = 272;
 	#endif
 
+	// Set attributes
+/*	SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
+	SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
+	SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
+	SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8);
+	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+	SDL_GL_SetAttribute(SDL_GL_SHARE_WITH_CURRENT_CONTEXT, 1);*/
+	
+	// Create window.
 	_jlc->dl.displayWindow = SDL_CreateWindow(
 		"¡SDL2 Window!",		// window title
 		SDL_WINDOWPOS_UNDEFINED,// initial x position
@@ -100,10 +111,11 @@ static inline void _jlvm_crea_wind(jvct_t *_jlc) {
 	{
 		_jl_fl_errf(_jlc, ":Failed to create display window:\n:");
 		_jl_fl_errf(_jlc, (char *)SDL_GetError());
-		jl_sg_kill(_jlc->jlc, "\n");
+		_jl_fl_errf(_jlc, "\n");
+		jl_sg_kill(_jlc->jlc);
 	}
-	_jlc->dl.glcontext = SDL_GL_CreateContext(_jlc->dl.displayWindow);
 	_jlc->dl.fullscreen = 1;
+	_jlc->dl.glcontext = SDL_GL_CreateContext(_jlc->dl.displayWindow);
 }
 
 //NON-STATIC FUNCTIONS

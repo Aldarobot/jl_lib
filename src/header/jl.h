@@ -60,7 +60,7 @@
 	void jl_sg_mode_override(jl_t* jlc, uint8_t wm, jl_simple_fnt loop);
 	void jl_sg_mode_reset(jl_t* jlc);
 	void jl_sg_mode_switch(jl_t* jlc, uint8_t mode, jl_sg_wm_t loop);
-	void jl_sg_kill(jl_t* jlc, char * msg);
+	void jl_sg_kill(jl_t* jlc);
 	void jl_sg_exit(jl_t* jlc);
 	void jl_sg_add_image(jl_t* jlc, char *pzipfile, uint16_t pigid);
 // "dl.c"
@@ -131,7 +131,7 @@
 // "fl.c"
 	void jl_fl_save(jl_t* jlc, const void *file, const char *name,
 		uint32_t bytes);
-	strt jl_fl_load(jl_t* jlc, char *file_name);
+	strt jl_fl_load(jl_t* jlc, str_t file_name);
 	char jl_fl_pk_save(jl_t* jlc, char *packageFileName,
 		char *fileName,	void *data, uint64_t dataSize);
 	uint8_t *jl_fl_pk_load(jl_t* jlc, const char *packageFileName,
