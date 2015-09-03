@@ -400,7 +400,10 @@ static inline void _jl_ct_handle_events(jvct_t *_jlc) {
 			_jlc->ct.text_input[i] = _jlc->ct.event.text.text[i];
 		_jlc->ct.read_cursor = 0;
 	}else if(_jlc->ct.event.type==SDL_WINDOWEVENT) { //Resize
-		if(_jlc->ct.event.window.event == SDL_WINDOWEVENT_RESIZED) {
+		if((_jlc->ct.event.window.event == SDL_WINDOWEVENT_RESIZED) &&
+			(SDL_GetWindowFromID(_jlc->ct.event.window.windowID) ==
+				_jlc->dl.displayWindow))
+		{
 			main_resz(_jlc, _jlc->ct.event.window.data1,
 				_jlc->ct.event.window.data2);
 		}

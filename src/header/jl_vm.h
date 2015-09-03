@@ -226,6 +226,9 @@ typedef struct {
 		SDL_GLContext *glcontext;
 		SDL_DisplayMode current;
 		SDL_Window *displayWindow;
+	#if JL_GLRTEX == JL_GLRTEX_SDL
+		SDL_Window* whichwindow;
+	#endif
 
 		float multiplyy;
 		float multiplyx;

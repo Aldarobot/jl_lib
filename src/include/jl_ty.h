@@ -6,6 +6,8 @@
 // Get EGL types.
 	#if JL_GLRTEX == JL_GLRTEX_EGL
 		#include <EGL/egl.h>
+	#elif JL_GLRTEX == JL_GLRTEX_SDL
+		#include "jl_sdl.h"
 	#endif
 
 typedef float jl_ccolor_t;
@@ -56,6 +58,8 @@ typedef struct{
 	uint32_t tx;	// ID to texture.
 #if JL_GLRTEX == JL_GLRTEX_EGL
 	EGLSurface pb;	// The PixelBuffer.
+#elif JL_GLRTEX == JL_GLRTEX_SDL
+	SDL_Window *sw; // The hidden SDL_Window.
 #else
 	uint32_t db;	// ID to Depth Buffer
 	uint32_t fb;	// ID to Frame Buffer

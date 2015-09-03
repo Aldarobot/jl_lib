@@ -1,14 +1,8 @@
 // JL_LIB
-	#include "jl.h"
+	#include "../include/jl.h"
 // SDL
-	#if JL_PLAT == JL_PLAT_COMPUTER
-//		#include "../lib/SDL/header/SDL.h"
-		#include <SDL2/SDL.h>
-	#elif JL_PLAT == JL_PLAT_PHONE
-		#include "../lib/sdl/header/SDL_test_common.h"
-		#include "../lib/sdl/header/SDL_main.h"
-	#endif
-	#include "../lib/SDL_mixer.h"
+	#include "../include/jl_sdl.h" // Include SDL 2.0.3 headers.
+	#include "../lib/SDL_mixer.h" // Include SDL Mixer Headers
 // LIBZIP
 	#define ZIP_DISABLE_DEPRECATED //Don't allow the old functions.
 	#if JL_PLAT == JL_PLAT_COMPUTER

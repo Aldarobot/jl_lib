@@ -5,6 +5,7 @@
 */
 
 #include "header/jl_pr.h"
+#include "header/jl_opengl.h"
 
 #define JL_DL_INIT SDL_INIT_AUDIO|SDL_INIT_VIDEO
 #define JL_DL_FULLSCREEN SDL_WINDOW_FULLSCREEN_DESKTOP
@@ -94,18 +95,16 @@ static inline void _jlvm_crea_wind(jvct_t *_jlc) {
 	SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
 	SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
 	SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8);
-	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
-	SDL_GL_SetAttribute(SDL_GL_SHARE_WITH_CURRENT_CONTEXT, 1);*/
+	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);*/
 	
 	// Create window.
 	_jlc->dl.displayWindow = SDL_CreateWindow(
-		"¡SDL2 Window!",		// window title
-		SDL_WINDOWPOS_UNDEFINED,// initial x position
-		SDL_WINDOWPOS_UNDEFINED,// initial y position
-		_jlc->dl.current.w, _jlc->dl.current.h, //width and height
-		SDL_WINDOW_OPENGL | SDL_WINDOW_FULLSCREEN |
-			SDL_WINDOW_RESIZABLE
-    		);
+		"¡SDL2 Window!",			// window title
+		SDL_WINDOWPOS_UNDEFINED,		// initial x position
+		SDL_WINDOWPOS_UNDEFINED,		// initial y position
+		_jlc->dl.current.w, _jlc->dl.current.h,	//width and height
+		SDL_WINDOW_OPENGL | SDL_WINDOW_FULLSCREEN | SDL_WINDOW_RESIZABLE
+    	);
 
 	if(_jlc->dl.displayWindow == NULL)
 	{
@@ -116,9 +115,39 @@ static inline void _jlvm_crea_wind(jvct_t *_jlc) {
 	}
 	_jlc->dl.fullscreen = 1;
 	_jlc->dl.glcontext = SDL_GL_CreateContext(_jlc->dl.displayWindow);
+#if JL_GLRTEX == JL_GLRTEX_SDL
+	_jlc->dl.whichwindow = 0;
+#endif
 }
 
 //NON-STATIC FUNCTIONS
+// ETOM FUNCTIONS
+
+#if JL_GLRTEX == JL_GLRTEX_SDL
+
+void jl_dl_screen_(jvct_t* _jlc, SDL_Window *which) {
+	if(_jlc->dl.whichwindow != which) {
+		SDL_GL_MakeCurrent(which, _jlc->dl.glcontext);
+		_jlc->dl.whichwindow = which;
+	}
+}
+
+SDL_Window* jl_dl_screen_new_(jvct_t* _jlc, u16_t w, u16_t h) {
+	SDL_Window* hiddenWindow = SDL_CreateWindow(
+		"¡Hidden!",				// window title
+		10, 10,					// initial (x,y)
+		w, h,					// width & height
+		SDL_WINDOW_OPENGL | SDL_WINDOW_HIDDEN
+	);
+    	// Set display window as default.
+	SDL_RaiseWindow(_jlc->dl.displayWindow);
+	// Create Shared Context
+	SDL_GL_SetAttribute(SDL_GL_SHARE_WITH_CURRENT_CONTEXT, 1);
+	SDL_GL_CreateContext(hiddenWindow);
+	return hiddenWindow;
+}
+
+#endif
 
 void _jl_dl_loop(jvct_t* _jlc) {
 	//Update Screen

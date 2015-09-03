@@ -44,13 +44,13 @@
 	// All Linux Platforms
 	#undef JL_GLTYPE
 	#define JL_GLTYPE JL_GLTYPE_SDL_ES2
-	#define JL_GLRTEX JL_GLRTEX_FBO
+	#define JL_GLRTEX JL_GLRTEX_SDL
 	// Windows
 	// #define JL_GLTYPE JL_GLTYPE_SDL_GL2
 #elif JL_PLAT == JL_PLAT_PHONE
 	#undef JL_GLTYPE
 	#define JL_GLTYPE JL_GLTYPE_SDL_ES2
-	#define JL_GLRTEX JL_GLRTEX_FBO
+	#define JL_GLRTEX JL_GLRTEX_SDL
 #else
 	#error "NO OpenGL support for this platform!"
 #endif

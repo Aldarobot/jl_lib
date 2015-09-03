@@ -30,14 +30,10 @@ gcc src/Main.c -c -o build/obj/Main.o $(sdl2-config --cflags) -Wall -g
 # Make "jl.o"
 printf "[COMP] compiling singular jl_lib object file....\n"
 ar csr ../../bin/jl_lib/jlib/jl.o build/obj/*.o
-# Re-add header files.
+# Add include files.
 printf "[COMP] updating jl_lib's bin folder....\n"
-cp src/header/jl.h ../../bin/jl_lib/jlib/jl.h
-cp src/header/jl_ty.h ../../bin/jl_lib/jlib/jl_ty.h
-cp src/header/jl_en.h ../../bin/jl_lib/jlib/jl_en.h
-cp src/header/jl_ct.h ../../bin/jl_lib/jlib/jl_ct.h
-cp src/header/jl_me.h ../../bin/jl_lib/jlib/jl_me.h
-cp src/header/clump.h ../../bin/jl_lib/jlib/clump.h
+cp --recursive -u -t ../../bin/jl_lib/jlib/ src/include/*
+# Copy Object Files
 cp ../../obj/lb/lib_zip.o ../../bin/jl_lib/jlib/lib_zip.o
 cp ../../obj/lb/lib_SDL_image.o ../../bin/jl_lib/jlib/lib_SDL_image.o
 # Update the android directory

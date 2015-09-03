@@ -1,39 +1,5 @@
 #include "header/jl_pr.h"
-
-// SDL OpenGL 2
-#if JL_GLTYPE == JL_GLTYPE_SDL_GL2
-	#include "lib/SDL/header/SDL_opengl.h"
-	#include "lib/glext.h"
-#endif
-
-// OpenGL 2
-#if JL_GLTYPE == JL_GLTYPE_OPENGL2
-	#ifdef APPLE
-		#include <OpenGL/glext.h>
-	#elif JL_PLAT == JL_PLAT_COMPUTER
-//		#include <GL/glext.h>
-		#include "../lib/glext.h"
-	#else
-		#error "cogl ain't supported by non-pc comps, man!"
-	#endif
-	#include "lib/glew/glew.h"
-	#define JL_GLTYPE_HAS_GLEW
-#endif
-
-// SDL OpenGLES 2
-#if JL_GLTYPE == JL_GLTYPE_SDL_ES2
-	#if JL_PLAT == JL_PLAT_COMPUTER
-		#include <SDL2/SDL_opengles2.h>
-	#else
-		#include "lib/sdl/header/SDL_opengles2.h"
-	#endif
-#endif
-	
-// OpenGLES 2
-#if JL_GLTYPE == JL_GLTYPE_OPENES2
-	#include <GLES2/gl2.h>
-	#include <GLES2/gl2ext.h>
-#endif
+#include "header/jl_opengl.h"
 
 // Shader Code
 
@@ -135,6 +101,9 @@ static const float DEFAULT_TC[] = {
 
 // Prototypes:
 #if JL_GLRTEX == JL_GLRTEX_EGL
+#elif JL_GLRTEX == JL_GLRTEX_SDL
+void jl_dl_screen_(jvct_t* _jlc, SDL_Window *which);
+SDL_Window* jl_dl_screen_new_(jvct_t* _jlc, u16_t w, u16_t h);
 #else
 static void jl_gl_depthbuffer_set__(jvct_t *_jlc, u16_t w, u16_t h);
 static void _jl_gl_depthbuffer_bind(jvct_t *_jlc, uint32_t db);
@@ -220,6 +189,7 @@ static void jl_gl_buffer_new__(jvct_t *_jlc, uint32_t *buffer) {
 static void jl_gl_buffer_old__(jvct_t *_jlc, uint32_t *buffer) {
 	glDeleteBuffers(1, buffer);
 	JL_GL_ERROR(_jlc, 0,"buffer free");
+	*buffer = 0;
 }
 
 GLuint jl_gl_load_shader(jvct_t *_jlc, GLenum shaderType, const char* pSource) {
@@ -388,6 +358,7 @@ static void jl_gl_texture_new__(jvct_t *_jlc, m_u32_t *tex, u8_t* px,
 }
 
 #if JL_GLRTEX == JL_GLRTEX_EGL
+#elif JL_GLRTEX == JL_GLRTEX_SDL
 #else
 // Make & Bind a new depth buffer.
 static void jl_gl_depthbuffer_new__(jvct_t* _jlc,m_u32_t*db ,u16_t w,u16_t h) {
@@ -572,6 +543,38 @@ static void _jl_gl_col_begin(jvct_t *_jlc, jl_vo* pv) {
 }
 
 #if JL_GLRTEX == JL_GLRTEX_EGL
+
+#elif JL_GLRTEX == JL_GLRTEX_SDL
+
+static void jl_gl_pbo_tex__(jvct_t *_jlc) {
+	if(_jlc->gl.cp) {
+		// Bind Texture &
+		jl_gl_texture_bind__(_jlc, _jlc->gl.cp->tx);
+		// Copy to texture.
+		glCopyTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 0, 0,
+			_jlc->gl.cp->w, _jlc->gl.cp->h, 0);
+		JL_GL_ERROR(_jlc, 0, "jl_gl_pbo_tex__: glCopyTexImage2D");
+	}
+}
+
+static void jl_gl_pbo_off__(jvct_t *_jlc) {
+	// Write to texture if There is a current pre-renderer enabled.
+	jl_gl_pbo_tex__(_jlc);
+	// Select shown screen.
+	jl_dl_screen_(_jlc, _jlc->dl.displayWindow);
+	// Set the viewport.
+	jl_gl_viewport_screen(_jlc);
+}
+
+static void jl_gl_pbo_use__(jvct_t *_jlc, jl_pr_t *pr) {
+	// Write to texture if There is a current pre-renderer enabled.
+	jl_gl_pbo_tex__(_jlc);
+	// Select pr's hidden screen.
+	jl_dl_screen_(_jlc, pr->sw);
+	// Set the viewport.
+	_jl_gl_viewport(_jlc, pr->w, pr->h);
+}
+
 #else
 static void _jl_gl_framebuffer_free(jvct_t *_jlc, uint32_t *fb) {
 	glDeleteFramebuffers(1, fb);
@@ -738,6 +741,7 @@ static void jl_gl_pixelbuffer_off__(jvct_t *_jlc) {
 	JL_EGL_ERROR(_jlc, 0, "jl_gl_pixelbuffer_off__()");
 }
 
+#elif JL_GLRTEX == JL_GLRTEX_SDL
 #else // !JL_GLRTEX
 
 static void _jl_gl_depthbuffer_free(jvct_t *_jlc, uint32_t *db) {
@@ -793,6 +797,8 @@ static void _jl_gl_pr_unuse(jvct_t *_jlc) {
 	// Render to the screen
 	#if JL_GLRTEX == JL_GLRTEX_EGL
 		jl_gl_pixelbuffer_off__(_jlc);
+	#elif JL_GLRTEX == JL_GLRTEX_SDL
+		jl_gl_pbo_off__(_jlc);
 	#else
 		jl_gl_framebuffer_off__(_jlc);
 	#endif
@@ -804,6 +810,7 @@ static void _jl_gl_pr_obj_free(jvct_t *_jlc, jl_pr_t *pr) {
 	_jl_gl_texture_free(_jlc, &(pr->tx));
 #if JL_GLRTEX == JL_GLRTEX_EGL
 	jl_gl_pixelbuffer_old__(_jlc, pr->pb);
+#elif JL_GLRTEX == JL_GLRTEX_SDL
 #else
 	_jl_gl_framebuffer_free(_jlc, &(pr->fb));
 	_jl_gl_depthbuffer_free(_jlc, &(pr->db));
@@ -813,6 +820,7 @@ static void _jl_gl_pr_obj_free(jvct_t *_jlc, jl_pr_t *pr) {
 // Initialize an already allocated pr object with width and hieght of "pr->w" &
 // "pr->h".
 static void _jl_gl_pr_obj_make(jvct_t *_jlc, jl_pr_t *pr) {
+	_jlc->gl.cp = NULL;
 	if(pr->w < 1) {
 		_jl_fl_errf(_jlc, ":_jl_gl_pr_obj_make() failed:\n:");
 		_jl_fl_errf(_jlc, ": 'w' must be more than 1\n");
@@ -841,6 +849,12 @@ static void _jl_gl_pr_obj_make(jvct_t *_jlc, jl_pr_t *pr) {
 #if JL_GLRTEX == JL_GLRTEX_EGL
 	// Make a new Pixelbuffer.
 	pr->pb = jl_gl_pixelbuffer_new__(_jlc, pr->w, pr->h);
+#elif JL_GLRTEX == JL_GLRTEX_SDL
+	// Make a new Hidden Window.
+	pr->sw = jl_dl_screen_new_(_jlc, pr->w, pr->h);
+	// Use the Pre-renderer.
+	printf("jl_gl_pbo_use__: %dx%d\n", pr->w, pr->h);
+	jl_gl_pbo_use__(_jlc, pr);
 #else
 	// Make a new Depthbuffer.
 	jl_gl_depthbuffer_new__(_jlc, &(pr->db), pr->w, pr->h);
@@ -850,13 +864,17 @@ static void _jl_gl_pr_obj_make(jvct_t *_jlc, jl_pr_t *pr) {
 	// Set Viewport to image and clear.
 	_jl_gl_viewport(_jlc, pr->w, pr->h);
 #endif
+	// Clear the pre-renderer.
 	jl_gl_clear(_jlc->jlc, 255, 0, 0, 255);
 	// Unbind Pixelbuffer or Framebuffer.
-	#if JL_GLRTEX == JL_GLRTEX_EGL
-		jl_gl_pixelbuffer_off__(_jlc);
-	#else
-		jl_gl_framebuffer_off__(_jlc);
-	#endif
+#if JL_GLRTEX == JL_GLRTEX_EGL
+	jl_gl_pixelbuffer_off__(_jlc);
+#elif JL_GLRTEX == JL_GLRTEX_SDL
+	jl_gl_pbo_off__(_jlc);
+#else
+	jl_gl_framebuffer_off__(_jlc);
+#endif
+	printf("jl_gl_pr_scr: %dx%d\n", pr->w, pr->h);
 	// De-activate pre-renderer.
 	jl_gl_pr_scr(_jlc);
 }
@@ -903,6 +921,10 @@ static void _jl_gl_draw_onts(jvct_t *_jlc, u32_t gl, u8_t rs, u32_t vc) {
 
 // Set the viewport to the screen size.
 void jl_gl_viewport_screen(jvct_t *_jlc) {
+//SDL_GL_GetDrawableSize(SDL_Window* window,
+//                          int*        w,
+//                        int*        h)
+
 	_jl_gl_viewport(_jlc, _jlc->dl.full_w, _jlc->dl.full_h);
 }
 
@@ -926,6 +948,8 @@ uint8_t jl_gl_pr_isi_(jvct_t *_jlc, jl_pr_t* pr) {
 	if(pr) {
 #if JL_GLRTEX == JL_GLRTEX_EGL
 		return !!pr->tx; // Return 0 if 0, 1 if nonzero
+#elif JL_GLRTEX == JL_GLRTEX_SDL
+		return !!pr->tx;
 #else
 		if(pr->tx && pr->db && pr->fb) {
 			return 1;
@@ -964,6 +988,8 @@ void jl_gl_pr_use_(jvct_t *_jlc, jl_pr_t* pr) {
 // Render to the framebuffer.
 #if JL_GLRTEX == JL_GLRTEX_EGL
 	jl_gl_pixelbuffer_use__(_jlc, pr->pb);
+#elif JL_GLRTEX == JL_GLRTEX_SDL
+	jl_gl_pbo_use__(_jlc, pr);
 #else
 	jl_gl_framebuffer_use__(_jlc, pr->fb, pr->db, pr->tx, pr->w, pr->h);
 #endif
@@ -1241,6 +1267,8 @@ static inline void _jl_gl_init_setup_gl(jvct_t *_jlc) {
 	_jl_gl_init_disable_extras(_jlc);
 	//Set alpha=0 to transparent
 	_jl_gl_init_enable_alpha(_jlc);
+	glPixelStorei(GL_PACK_ALIGNMENT, 1);
+	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 	jl_io_printc(_jlc->jlc, "set glproperties.\n");
 }
 
@@ -1477,6 +1505,8 @@ jl_pr_t * jl_gl_pr_new(jl_t* jlc, f32_t w, f32_t h, u16_t w_px) {
 	pr->tx = 0;
 	#if JL_GLRTEX == JL_GLRTEX_EGL
 	pr->pb = (EGLSurface)0;
+	#elif JL_GLRTEX == JL_GLRTEX_SDL
+	pr->sw = 0;
 	#else
 	pr->db = 0;
 	pr->fb = 0;
@@ -1535,6 +1565,7 @@ void _jl_gl_init(jvct_t *_jlc) {
 		jl_sg_kill(_jlc->jlc);
 	}
 #endif
+	SDL_Log("GL_MAX_TEXTURE_SIZE: %d\n", GL_MAX_TEXTURE_SIZE);
 	_jlc->gl.cp = NULL;
 	_jlc->gl.bg = NULL;
 	_jl_gl_make_res(_jlc);
