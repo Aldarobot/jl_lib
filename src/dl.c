@@ -40,7 +40,7 @@ static void _jl_dl_fscreen(jvct_t* _jlc, uint8_t a) {
 	// Make sure the fullscreen value is either a 1 or a 0.
 	_jlc->dl.fullscreen = !!a;
 	// Actually set whether fullscreen or not.
-	if(SDL_SetWindowFullscreen(_jlc->dl.displayWindow,
+	if(SDL_SetWindowFullscreen(_jlc->dl.displayWindow->w,
 		JL_DL_FULLSCREEN * _jlc->dl.fullscreen))
 	{
 		_jl_fl_errf(_jlc, SDL_GetError());
@@ -97,8 +97,11 @@ static inline void _jlvm_crea_wind(jvct_t *_jlc) {
 	SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8);
 	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);*/
 	
+	// Allocate space for "displayWindow"
+	jl_me_alloc(_jlc->jlc, (void**)&_jlc->dl.displayWindow,
+		sizeof(jl_window_t), 0);
 	// Create window.
-	_jlc->dl.displayWindow = SDL_CreateWindow(
+	_jlc->dl.displayWindow->w = SDL_CreateWindow(
 		"¡SDL2 Window!",			// window title
 		SDL_WINDOWPOS_UNDEFINED,		// initial x position
 		SDL_WINDOWPOS_UNDEFINED,		// initial y position
@@ -114,7 +117,9 @@ static inline void _jlvm_crea_wind(jvct_t *_jlc) {
 		jl_sg_kill(_jlc->jlc);
 	}
 	_jlc->dl.fullscreen = 1;
-	_jlc->dl.glcontext = SDL_GL_CreateContext(_jlc->dl.displayWindow);
+	SDL_GL_SetAttribute(SDL_GL_SHARE_WITH_CURRENT_CONTEXT, 0);
+	_jlc->dl.displayWindow->c =
+		SDL_GL_CreateContext(_jlc->dl.displayWindow->w);
 #if JL_GLRTEX == JL_GLRTEX_SDL
 	_jlc->dl.whichwindow = 0;
 #endif
@@ -125,33 +130,39 @@ static inline void _jlvm_crea_wind(jvct_t *_jlc) {
 
 #if JL_GLRTEX == JL_GLRTEX_SDL
 
-void jl_dl_screen_(jvct_t* _jlc, SDL_Window *which) {
+void jl_dl_screen_(jvct_t* _jlc, jl_window_t* which) {
 	if(_jlc->dl.whichwindow != which) {
-		SDL_GL_MakeCurrent(which, _jlc->dl.glcontext);
+		SDL_GL_MakeCurrent(which->w, _jlc->dl.displayWindow->c);
 		_jlc->dl.whichwindow = which;
 	}
 }
 
-SDL_Window* jl_dl_screen_new_(jvct_t* _jlc, u16_t w, u16_t h) {
-	SDL_Window* hiddenWindow = SDL_CreateWindow(
+jl_window_t* jl_dl_screen_new_(jvct_t* _jlc, u16_t w, u16_t h) {
+	jl_window_t* window = NULL;
+
+	// Allocate space for "window"
+	jl_me_alloc(_jlc->jlc, (void**)&window, sizeof(jl_window_t), 0);
+	// Create the window.
+	window->w = SDL_CreateWindow(
 		"¡Hidden!",				// window title
 		10, 10,					// initial (x,y)
 		w, h,					// width & height
 		SDL_WINDOW_OPENGL | SDL_WINDOW_HIDDEN
 	);
-    	// Set display window as default.
-	SDL_RaiseWindow(_jlc->dl.displayWindow);
 	// Create Shared Context
 	SDL_GL_SetAttribute(SDL_GL_SHARE_WITH_CURRENT_CONTEXT, 1);
-	SDL_GL_CreateContext(hiddenWindow);
-	return hiddenWindow;
+	window->c = SDL_GL_CreateContext(window->w);
+	// Set display window as default.
+	SDL_RaiseWindow(_jlc->dl.displayWindow->w);
+	// Return the new window.
+	return window;
 }
 
 #endif
 
 void _jl_dl_loop(jvct_t* _jlc) {
 	//Update Screen
-	SDL_GL_SwapWindow(_jlc->dl.displayWindow); //end current draw
+	SDL_GL_SwapWindow(_jlc->dl.displayWindow->w); //end current draw
 	// Clear the screen of anything wierd.
 	jl_gl_clear(_jlc->jlc, 2, 5, 255, 255);
 }
@@ -238,7 +249,7 @@ void jl_dl_progname(jl_t* jlc, strt name) {
 	_jlc->dl.windowTitle[0][15] = '\0';
 #if JL_PLAT == JL_PLAT_COMPUTER
 	if(_jlc->dl.displayWindow)
-	 SDL_SetWindowTitle(_jlc->dl.displayWindow, _jlc->dl.windowTitle[0]);
+	 SDL_SetWindowTitle(_jlc->dl.displayWindow->w, _jlc->dl.windowTitle[0]);
 #endif
 }
 
@@ -260,8 +271,8 @@ void _jl_dl_inita(jvct_t* _jlc) {
 
 void _jl_dl_kill(jvct_t* _jlc) {
 	jl_io_printc(_jlc->jlc, "killing SDL...\n");
-	if (_jlc->dl.glcontext != NULL) {
+/*	if (_jlc->dl.glcontext != NULL) {
 		SDL_free(_jlc->dl.glcontext);
-	}
+	}*/
 	jl_io_printc(_jlc->jlc, "killed SDL!\n");
 }

@@ -48,23 +48,6 @@
 		__mixr_jmus *jmus; //Pointer Of "smax" Music Pieces
 		double pofr; //Point Of Return (Where Music Should Start)
 	}_au_t;
-	
-	typedef struct {
-		struct cl_list *filelist; //List of all files in working dir.
-		int8_t cursor;
-		uint8_t cpage;
-		char *dirname;
-		char *selecteditem;
-		uint8_t returnit;
-		uint8_t drawupto;
-		uint8_t inloop;
-		jl_sprite_t * btns[2];
-		void *newfiledata;
-		uint64_t newfilesize;
-		uint8_t prompt;
-		strt promptstring;
-		char *errf_filename;
-	}_fl_t;
 
 //OTHER:
 typedef struct {
@@ -199,7 +182,27 @@ typedef struct {
 		jl_pr_t* bg; // Screen currently being drawn on.
 	}gl;
 	
-	_fl_t fl; //File Manager
+	struct {
+		struct cl_list *filelist; //List of all files in working dir.
+		int8_t cursor;
+		uint8_t cpage;
+		char *dirname;
+		char *selecteditem;
+		uint8_t returnit;
+		uint8_t drawupto;
+		uint8_t inloop;
+		jl_sprite_t * btns[2];
+		void *newfiledata;
+		uint64_t newfilesize;
+		uint8_t prompt;
+		strt promptstring;
+
+		struct{
+			char* root; // The root directory "-- JL_Lib/"
+			char* cprg; // The current program "-- JL_Lib/program"
+			char* errf; // The error file "-- JL_Lib/errf.txt"
+		}paths; // Paths to different files.
+	}fl; //File Manager
 	
 	//Graphics
 	struct {
@@ -222,12 +225,10 @@ typedef struct {
 
 		char windowTitle[2][16];
 
-		//where everything is blitted to
-		SDL_GLContext *glcontext;
 		SDL_DisplayMode current;
-		SDL_Window *displayWindow;
+		jl_window_t* displayWindow;
 	#if JL_GLRTEX == JL_GLRTEX_SDL
-		SDL_Window* whichwindow;
+		jl_window_t* whichwindow;
 	#endif
 
 		float multiplyy;
@@ -247,6 +248,7 @@ typedef struct {
 	struct {
 		uint8_t graphics; //graphics are enabled
 		uint8_t fileviewer; //Fileviewer is enabled
+		uint8_t filesys; // Filesystem is enabled.
 	}has;
 
 	uint64_t cprg; //current program ID

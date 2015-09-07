@@ -6,9 +6,8 @@
 // Get EGL types.
 	#if JL_GLRTEX == JL_GLRTEX_EGL
 		#include <EGL/egl.h>
-	#elif JL_GLRTEX == JL_GLRTEX_SDL
-		#include "jl_sdl.h"
 	#endif
+#include "jl_sdl.h"
 
 typedef float jl_ccolor_t;
 
@@ -53,13 +52,19 @@ typedef struct{
 typedef strt_t* strt;
 typedef strt* strl;
 
-typedef struct{
+typedef struct {
+	SDL_Window* w;		// Window
+	SDL_GLContext* c;	// GL Context
+}jl_window_t;
+
+typedef struct {
 	// What to render
 	uint32_t tx;	// ID to texture.
 #if JL_GLRTEX == JL_GLRTEX_EGL
 	EGLSurface pb;	// The PixelBuffer.
 #elif JL_GLRTEX == JL_GLRTEX_SDL
-	SDL_Window *sw; // The hidden SDL_Window.
+	jl_window_t* sw; // The hidden SDL_Window.
+	void* px;	// Pixel Data
 #else
 	uint32_t db;	// ID to Depth Buffer
 	uint32_t fb;	// ID to Frame Buffer

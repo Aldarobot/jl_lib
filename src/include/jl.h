@@ -22,8 +22,8 @@
 	void jl_me_strt_clear(strt pa);
 	strt jl_me_strt_make(u32_t size);
 	void jl_me_strt_free(strt pstr);
-	strt jl_me_strt_c8ts(const char *string);
-	#define Strt(x) jl_me_strt_c8ts((const void*)x)
+	strt jl_me_strt_mkfrom_str(str_t string);
+	#define Strt(x) jl_me_strt_mkfrom_str((const void*)x)
 	strt jl_me_strt_mkfrom_data(jl_t* jlc, uint32_t size, void *data);
 	void jl_me_strt_strt(jl_t*jlc, strt a, strt b, uint64_t p);
 	void jl_me_strt_merg(jl_t *jlc, strt a, strt b);
@@ -129,6 +129,7 @@
 	void jl_io_return(jl_t* jlc, const char* fn_name);
 	void jl_io_stacktrace(jl_t* jlc);
 // "fl.c"
+	u8_t jl_fl_exist(jl_t* jlc, str_t path);
 	void jl_fl_save(jl_t* jlc, const void *file, const char *name,
 		uint32_t bytes);
 	strt jl_fl_load(jl_t* jlc, str_t file_name);
@@ -136,10 +137,10 @@
 		char *fileName,	void *data, uint64_t dataSize);
 	uint8_t *jl_fl_pk_load(jl_t* jlc, const char *packageFileName,
 		const char *filename);
-	uint8_t *jl_fl_media(jl_t* jlc, char *Fname, char *pzipfile,
+	uint8_t *jl_fl_media(jl_t* jlc, str_t Fname, str_t pzipfile,
 		void *pdata, uint64_t psize);
-	void jl_fl_mkdir(jl_t* jlc, strt pfilebase);
-	char * jl_fl_get_resloc(jl_t* jlc, char* pprg_name, char* pfilename);
+	u8_t jl_fl_mkdir(jl_t* jlc, str_t path);
+	str_t jl_fl_get_resloc(jl_t* jlc, str_t prg_folder, str_t fname);
 	uint8_t jl_fl_user_select_init(jl_t* jlc, const char *program_name,
 		void *newfiledata, uint64_t newfilesize);
 	void jl_fl_user_select_loop(jl_t* jlc);
@@ -153,7 +154,7 @@
 	uint8_t jl_au_mus_playing(void);
 	void jl_au_panning(uint8_t left, uint8_t toCenter);
 	void jl_au_panning_default(void);
-	void jl_au_add_audio(jl_t* jlc, char *pzipfile, uint16_t pigid);
+	void jl_au_add_audio(jl_t* jlc, str_t pzipfile, uint16_t pigid);
 /*
  *	This a Jeron Lau project. JL_lib (c) 2014 
 */

@@ -102,8 +102,8 @@ static const float DEFAULT_TC[] = {
 // Prototypes:
 #if JL_GLRTEX == JL_GLRTEX_EGL
 #elif JL_GLRTEX == JL_GLRTEX_SDL
-void jl_dl_screen_(jvct_t* _jlc, SDL_Window *which);
-SDL_Window* jl_dl_screen_new_(jvct_t* _jlc, u16_t w, u16_t h);
+void jl_dl_screen_(jvct_t* _jlc, jl_window_t* which);
+jl_window_t* jl_dl_screen_new_(jvct_t* _jlc, u16_t w, u16_t h);
 #else
 static void jl_gl_depthbuffer_set__(jvct_t *_jlc, u16_t w, u16_t h);
 static void _jl_gl_depthbuffer_bind(jvct_t *_jlc, uint32_t db);
@@ -174,7 +174,7 @@ static void jl_gl_buffer_set__(jvct_t *_jlc, uint32_t buffer,
 	//Set the data
 	glBufferData(GL_ARRAY_BUFFER, buffer_size * sizeof(float), buffer_data,
 		GL_DYNAMIC_DRAW);
-	JL_GL_ERROR(_jlc, buffer,"buffer data");
+	JL_GL_ERROR(_jlc, buffer_size, "buffer data");
 }
 
 static void jl_gl_buffer_new__(jvct_t *_jlc, uint32_t *buffer) {
@@ -482,19 +482,16 @@ static inline void _jl_gl_init_enable_alpha(jvct_t *_jlc) {
 	JL_GL_ERROR(_jlc, 0,"glBlendFunc");
 }
 
-// Convert & Push vertices to a VBO.
+// Copy & Push vertices to a VBO.
 static void jl_gl_vertices__(jvct_t *_jlc, const float *xyzw, uint8_t vertices,
 	float* cv, u32_t gl)
 {
-	m_u16_t i;
+	u16_t items = (vertices*3);
 
-	for(i = 0; i < vertices*3; i+=3) {
-		cv[i] = xyzw[i];
-		cv[i+1] = xyzw[i+1];
-		cv[i+2] = xyzw[i+2];
-	}
-	//Write Buffer Data "cv" to Buffer "gl"
-	jl_gl_buffer_set__(_jlc, gl, xyzw, vertices * 3);
+	// Copy Vertices
+	jl_me_copyto(xyzw, cv, items * sizeof(float));
+	// Copy Buffer Data "cv" to Buffer "gl"
+	jl_gl_buffer_set__(_jlc, gl, xyzw, items);
 }
 
 void jl_gl_vo_vertices(jvct_t *_jlc, jl_vo* pv, const float *xyzw,
@@ -502,13 +499,14 @@ void jl_gl_vo_vertices(jvct_t *_jlc, jl_vo* pv, const float *xyzw,
 {
 	pv->vc = vertices;
 	if(vertices) {
-		//Free pv->cv if non-null
+		// Free pv->cv if non-null
 		if(pv->cv) jl_me_alloc(_jlc->jlc, (void**)&pv->cv, 0, 0);
-		//Allocate pv->cv
+		// Allocate pv->cv
 		jl_me_alloc(_jlc->jlc,
 			(void**)&pv->cv, vertices * sizeof(float) * 3, 0);
+		// Set pv->cv & pv->gl
+		jl_gl_vertices__(_jlc, xyzw, vertices, pv->cv, pv->gl);
 	}
-	jl_gl_vertices__(_jlc, xyzw, vertices, pv->cv, pv->gl);
 }
 
 void jl_gl_vo_free(jvct_t *_jlc, jl_vo *pv) {
@@ -551,22 +549,39 @@ static void jl_gl_pbo_tex__(jvct_t *_jlc) {
 		// Bind Texture &
 		jl_gl_texture_bind__(_jlc, _jlc->gl.cp->tx);
 		// Copy to texture.
-		glCopyTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 0, 0,
-			_jlc->gl.cp->w, _jlc->gl.cp->h, 0);
-		JL_GL_ERROR(_jlc, 0, "jl_gl_pbo_tex__: glCopyTexImage2D");
+		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0,
+			_jlc->gl.cp->w, _jlc->gl.cp->h,
+			GL_RGBA, GL_UNSIGNED_BYTE, _jlc->gl.cp->px);
+		JL_GL_ERROR(_jlc, 0, "jl_gl_pbo_tex__: glTexSubImage2D");
+//		glCopyTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 0, 0,
+//			_jlc->gl.cp->w, _jlc->gl.cp->h, 0);
+//		JL_GL_ERROR(_jlc, 0, "jl_gl_pbo_tex__: glCopyTexImage2D");
+	}
+}
+
+static void jl_gl_pbo_pix__(jvct_t *_jlc) {
+	if(_jlc->gl.cp) {
+		glReadPixels(0, 0, _jlc->gl.cp->w, _jlc->gl.cp->h, GL_RGBA,
+			GL_UNSIGNED_BYTE, _jlc->gl.cp->px);
 	}
 }
 
 static void jl_gl_pbo_off__(jvct_t *_jlc) {
+	// Read pixels from previous pre-renderer if enabled.
+	jl_gl_pbo_pix__(_jlc);
+	// Select shown screen & context.
+	jl_dl_screen_(_jlc, _jlc->dl.displayWindow);
 	// Write to texture if There is a current pre-renderer enabled.
 	jl_gl_pbo_tex__(_jlc);
-	// Select shown screen.
-	jl_dl_screen_(_jlc, _jlc->dl.displayWindow);
 	// Set the viewport.
 	jl_gl_viewport_screen(_jlc);
 }
 
 static void jl_gl_pbo_use__(jvct_t *_jlc, jl_pr_t *pr) {
+	// Read pixels from previous pre-renderer if enabled.
+	jl_gl_pbo_pix__(_jlc);
+	// Select shown screen & context.
+	jl_dl_screen_(_jlc, _jlc->dl.displayWindow);
 	// Write to texture if There is a current pre-renderer enabled.
 	jl_gl_pbo_tex__(_jlc);
 	// Select pr's hidden screen.
@@ -811,10 +826,17 @@ static void _jl_gl_pr_obj_free(jvct_t *_jlc, jl_pr_t *pr) {
 #if JL_GLRTEX == JL_GLRTEX_EGL
 	jl_gl_pixelbuffer_old__(_jlc, pr->pb);
 #elif JL_GLRTEX == JL_GLRTEX_SDL
+	jl_me_alloc(_jlc->jlc, (void**)&pr->px, 0, 4 * pr->w * pr->h);
 #else
 	_jl_gl_framebuffer_free(_jlc, &(pr->fb));
 	_jl_gl_depthbuffer_free(_jlc, &(pr->db));
 #endif
+}
+
+static void jl_gl_pr_obj_make_tx__(jvct_t *_jlc, jl_pr_t *pr) {
+	// Make a new texture for pre-renderering.  The "NULL" sets it blank.
+	jl_gl_texture_new__(_jlc, &(pr->tx), NULL, pr->w, pr->h);
+	jl_gl_texture_off__(_jlc);
 }
 
 // Initialize an already allocated pr object with width and hieght of "pr->w" &
@@ -843,19 +865,24 @@ static void _jl_gl_pr_obj_make(jvct_t *_jlc, jl_pr_t *pr) {
 		_jl_fl_errf(_jlc, ": texture is too big for graphics card.\n");
 		jl_sg_kill(_jlc->jlc);
 	}
-	// Make a new texture for pre-renderering.  The "NULL" sets it blank.
-	jl_gl_texture_new__(_jlc, &(pr->tx), NULL, pr->w, pr->h);
-	jl_gl_texture_off__(_jlc);
 #if JL_GLRTEX == JL_GLRTEX_EGL
+	// Make the texture.
+	jl_gl_pr_obj_make_tx__(_jlc, pr);
 	// Make a new Pixelbuffer.
 	pr->pb = jl_gl_pixelbuffer_new__(_jlc, pr->w, pr->h);
 #elif JL_GLRTEX == JL_GLRTEX_SDL
+	// Make the texture.
+	jl_gl_pr_obj_make_tx__(_jlc, pr);
 	// Make a new Hidden Window.
 	pr->sw = jl_dl_screen_new_(_jlc, pr->w, pr->h);
+	// Allocate pixel space
+	jl_me_alloc(_jlc->jlc, (void**)&pr->px, 4 * pr->w * pr->h, 0);
 	// Use the Pre-renderer.
 	printf("jl_gl_pbo_use__: %dx%d\n", pr->w, pr->h);
 	jl_gl_pbo_use__(_jlc, pr);
 #else
+	// Make the texture.
+	jl_gl_pr_obj_make_tx__(_jlc, pr);
 	// Make a new Depthbuffer.
 	jl_gl_depthbuffer_new__(_jlc, &(pr->db), pr->w, pr->h);
 	jl_gl_depthbuffer_off__(_jlc);
@@ -1389,9 +1416,10 @@ static inline void _jl_gl_vo_make(jvct_t *_jlc, jl_vo* vo, u32_t nc) {
 	jl_gl_buffer_new__(_jlc, &vo->gl);
 	// GL Texture Coordinate Buffer
 	jl_gl_buffer_new__(_jlc, &vo->bt);
-	// Converted Vertices & Vertex Count
+	// Converted Vertices
 	vo->cv = NULL;
-	jl_gl_vo_vertices(_jlc, vo, NULL, 0); // cv & vc
+	// Vertex Count
+	vo->vc = 0;
 	// Converted Colors
 	vo->cc = NULL;
 	// Rendering Style = Polygon
@@ -1507,6 +1535,7 @@ jl_pr_t * jl_gl_pr_new(jl_t* jlc, f32_t w, f32_t h, u16_t w_px) {
 	pr->pb = (EGLSurface)0;
 	#elif JL_GLRTEX == JL_GLRTEX_SDL
 	pr->sw = 0;
+	pr->px = NULL;
 	#else
 	pr->db = 0;
 	pr->fb = 0;

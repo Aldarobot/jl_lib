@@ -7,8 +7,16 @@
  * 	This allows you to modify the file system.  It uses libzip.
  */
 #include "header/jl_pr.h"
+#if JL_PLAT == JL_PLAT_PHONE
+	#include <sys/stat.h>
+#endif
 
 #define PKFMAX 10000000
+#define JL_FL_PERMISSIONS ( S_IRWXU | S_IRWXG | S_IRWXO )
+
+#if JL_PLAT == JL_PLAT_PHONE
+	extern str_t JLVM_FILEBASE;
+#endif
 
 /** @cond **/
 // Static Functions 
@@ -44,8 +52,7 @@ static void _jl_fl_save(jl_t* jlc, const void *file_data, const char *file_name,
 	free(bytecount);
 
 	uint8_t offs = (file_name[0] == '!');
-	fd = open(file_name + offs, O_RDWR | O_CREAT,
-		S_IRWXU | S_IRWXG | S_IRWXO);
+	fd = open(file_name + offs, O_RDWR | O_CREAT, JL_FL_PERMISSIONS);
 
 	if(fd <= 0) {
 		errsv = errno;
@@ -95,23 +102,107 @@ static inline void jl_fl_reset_cursor__(str_t file_name) {
 	close(fd);
 }
 
+static inline void jl_fl_get_root__(jvct_t * _jlc) {
+	strt root_path;
+
+#if JL_PLAT == JL_PLAT_PHONE
+	// Get external storage directory.
+	root_path = jl_me_strt_mkfrom_str(JLVM_FILEBASE);
+	// Append JL_ROOT_DIR
+	jl_me_strt_merg(_jlc->jlc, root_path, Strt(JL_ROOT_DIR));
+#else
+	// Get the operating systems prefered path
+	m_str_t pref_path = SDL_GetPrefPath(JL_ROOT_DIRNAME, "\0");
+
+	if(pref_path) {
+		// Erase extra non-needed '/'s
+		pref_path[strlen(pref_path) - 1] = '\0';
+		// Set root path to pref path
+		root_path = jl_me_strt_mkfrom_str(pref_path);
+		// Free the pointer to pref path
+		SDL_free(pref_path);
+	}else{
+		_jl_fl_errf(_jlc, "This platform has no pref path!\n");
+		jl_sg_kill(_jlc->jlc);
+	}
+#endif
+	// Make "-- JL_ROOT_DIR"
+	if(jl_fl_mkdir(_jlc->jlc, (str_t) root_path->data) == 2) {
+		jl_io_printc(_jlc->jlc, (str_t) root_path->data);
+		jl_io_printc(_jlc->jlc, ": mkdir : Permission Denied\n");
+		jl_sg_kill(_jlc->jlc);
+	}
+	// Set paths.root & free root_path
+	_jlc->fl.paths.root = jl_me_string_fstrt(_jlc->jlc, root_path);
+}
+
+static inline void jl_fl_get_errf__(jvct_t * _jlc) {
+	strt fname = jl_me_strt_mkfrom_str("errf.txt");
+	// Add the root path
+	strt errfs = jl_me_strt_mkfrom_str(_jlc->fl.paths.root);
+
+	// Add the file name
+	jl_me_strt_merg(_jlc->jlc, errfs, fname);
+	// Free fname
+	jl_me_strt_free(fname);
+	// Set paths.errf & free errfs
+	_jlc->fl.paths.errf = jl_me_string_fstrt(_jlc->jlc, errfs);
+}
+
 // NON-STATIC Library Dependent Functions
 void _jl_fl_errf(jvct_t * _jlc, const char *msg) {
+	if(!_jlc->has.filesys) return;
 	jl_io_offset(_jlc->jlc, JL_IO_SIMPLE, "ERRF");
 	jl_io_printc(_jlc->jlc, "saving to errf: ");
-	jl_io_printc(_jlc->jlc, _jlc->fl.errf_filename);
+	jl_io_printc(_jlc->jlc, _jlc->fl.paths.errf);
 	jl_io_printc(_jlc->jlc, "\n");
 	jl_io_offset(_jlc->jlc, JL_IO_MINIMAL, "ERRF");
 	jl_io_printc(_jlc->jlc, msg);
 	jl_io_offset(_jlc->jlc, JL_IO_SIMPLE, "ERRF");
 	// Write to the errf file
-	_jl_fl_save(_jlc->jlc, msg, _jlc->fl.errf_filename, strlen(msg));
+	_jl_fl_save(_jlc->jlc, msg, _jlc->fl.paths.errf, strlen(msg));
 	jl_io_printc(_jlc->jlc, "saved to errf!\n");
 	
 	jl_io_close_block(_jlc->jlc); //Close Block "ERRF"
 }
 
 /** @endcond **/
+
+/**
+ * Check whether a file or directory exists.
+ * @param jlc: The library context.
+ * @param path: The path to the file to check.
+ * @returns 0: If the file doesn't exist.
+ * @returns 1: If the file does exist and is a directory.
+ * @returns 2: If the file does exist and isn't a directory.
+ * @returns 3: If the file exists and the user doesn't have permissions to open.
+ * @returns 255: This should never happen.
+**/
+u8_t jl_fl_exist(jl_t* jlc, str_t path) {
+	DIR *dir;
+	if ((dir = opendir (path)) == NULL) {
+		//Couldn't open Directory
+		int errsv = errno;
+		if(errsv == ENOTDIR) { //Not a directory - is a file
+			return 2;
+		}else if(errsv == ENOENT) { // Directory Doesn't Exist
+			return 0;
+		}else if(errsv == EACCES) { // Doesn't have permission
+			return 3;
+		}else if((errsv == EMFILE) || (errsv == ENFILE) ||
+			(errsv == ENOMEM)) //Not enough memory!
+		{
+			_jl_fl_errf(jlc->_jlc, "jl_fl_exist: Out of Memory!\n");
+			jl_sg_kill(jlc);
+		}else{ //Unknown error
+			_jl_fl_errf(jlc->_jlc, "jl_fl_exist: Unknown Error!\n");
+			jl_sg_kill(jlc);
+		}
+	}else{
+		return 1; // Directory Does exist
+	}
+	return 255;
+}
 
 /**
  * Save A File To The File System.  Save Data of "bytes" bytes in "file" to
@@ -302,23 +393,34 @@ uint8_t *jl_fl_pk_load(jl_t* jlc, const char *packageFileName,
  * Create a folder (directory)
  * @param jlc: library context
  * @param pfilebase: name of directory to create
+ * @returns 0: Success
+ * @returns 1: If the directory already exists.
+ * @returns 2: Permission Error
+ * @returns 255: Never.
 */
-void jl_fl_mkdir(jl_t* jlc, strt pfilebase) {
+u8_t jl_fl_mkdir(jl_t* jlc, str_t path) {
+	m_u8_t rtn = 255;
+
 	jl_io_offset(jlc, JL_IO_SIMPLE, "MDIR"); // {
-	if(mkdir((void *)pfilebase->data, 0)) {
+	if(mkdir(path, JL_FL_PERMISSIONS)) {
 		int errsv = errno;
 		if(errsv == EEXIST) {
-			jl_io_printc(jlc, "Directory Exist! Continue...\n");
+			rtn = 1;
+		}else if((errsv == EACCES) || (errsv == EROFS)) {
+			rtn = 2;
 		}else{
+			jl_io_printc(jlc, strerror(errsv));
 			_jl_fl_errf(jlc->_jlc, ":Directory: Uh oh...:\n:");
 			_jl_fl_errf(jlc->_jlc, strerror(errsv));
 			_jl_fl_errf(jlc->_jlc, "\n");
 			jl_sg_kill(jlc);
 		}
 	}else{
-		jl_io_printc(jlc, "Created Directory!\n");
+		rtn = 0;
 	}
 	jl_io_close_block(jlc); // } : MDIR
+	// Return
+	return rtn;
 }
 
 /**
@@ -330,7 +432,7 @@ void jl_fl_mkdir(jl_t* jlc, strt pfilebase) {
  * @param size: the size (in bytes) of the contents.
  * @return x: the data contents of the file.
 */
-uint8_t * jl_fl_mkfile(jl_t* jlc, char *pzipfile, char *pfilebase,
+uint8_t * jl_fl_mkfile(jl_t* jlc, str_t pzipfile, str_t pfilebase,
 	char *contents, uint32_t size)
 {
 
@@ -367,7 +469,7 @@ uint8_t * jl_fl_mkfile(jl_t* jlc, char *pzipfile, char *pfilebase,
  * @param pdata: Media Package Data to save if it doesn't exist.
  * @param psize: Size of "pdata" 
 */
-uint8_t *jl_fl_media(jl_t* jlc, char *Fname, char *pzipfile,
+uint8_t *jl_fl_media(jl_t* jlc, str_t Fname, str_t pzipfile,
 	void *pdata, uint64_t psize)
 {
 	uint8_t *freturn = jl_fl_pk_load(jlc, pzipfile, Fname);
@@ -380,94 +482,50 @@ uint8_t *jl_fl_media(jl_t* jlc, char *Fname, char *pzipfile,
 }
 
 /**
- * Get the designated location for a resource pack. Resloc = Resource Location
+ * Get the designated location for a resource file. Resloc = Resource Location
  * @param jlc: Library Context.
- * @param pprg_name: Program Name
- * @param pfilename: Name Of Resource Pack
+ * @param prg_folder: The name of the folder for all of the program's resources.
+ *	For a company "PlopGrizzly" with game "Super Game":
+ *		Pass: "PlopGrizzly_SG/"
+ *	For an individual game developer "Jeron Lau" with game "Cool Game":
+ *		Pass: "JeronLau_CG/"
+ * @param fname: Name Of Resource Pack
  * @returns: The designated location for a resouce pack
 */
-char * jl_fl_get_resloc(jl_t* jlc, char* pprg_name, char* pfilename) {
+str_t jl_fl_get_resloc(jl_t* jlc, str_t prg_folder, str_t fname) {
 	jvct_t * _jlc = jlc->_jlc;
-	int i;
-	char *filebase;
-	char *location;
-	strt filebases = jl_me_strt_make(0);
-	strt errfs = jl_me_strt_make(0);
+	strt pfstrt = jl_me_strt_mkfrom_str(prg_folder);
+	strt fnstrt = jl_me_strt_mkfrom_str(fname);
+	strt resloc = jl_me_strt_mkfrom_str(_jlc->fl.paths.root);
+	str_t rtn = NULL;
 	
 	//Open Block "FLBS"
-	jl_io_offset(jlc, JL_IO_SIMPLE, "FLBS");
+	jl_io_offset(jlc, JL_IO_SIMPLE, "FLBS"); // {
 	
-	jl_io_printc(jlc, "Getting FileBase....\n");
-	
-	#if JL_PLAT == JL_PLAT_PHONE
-	jl_me_strt_merg(jlc, filebases, Strt(JLVM_FILEBASE));
-	jl_me_strt_merg(jlc, filebases, Strt(pprg_name));
-	jl_me_strt_merg(jlc, filebases, Strt("/"));
-	filebase = (void *)filebases->data;
-	//Setting errf
-	jl_me_strt_merg(jlc, errfs, Strt(JLVM_FILEBASE));
-	jl_me_strt_merg(jlc, errfs, Strt("errf.txt"));
-
-	#elif JL_PLAT == JL_PLAT_COMPUTER
-	filebase = SDL_GetPrefPath("JLVM", pprg_name);
-	if(filebase == NULL) {
-		jl_me_strt_merg(jlc, filebases, Strt("JLVM/"));
-		jl_me_strt_merg(jlc, filebases, Strt(pprg_name));
-		filebase = (void *)filebases->data;
-	}else{
-		filebases = Strt(filebase);
+	jl_io_printc(jlc, "Getting Resource Location....\n");
+	// Append 'prg_folder' onto 'resloc'
+	jl_me_strt_merg(jlc, resloc, pfstrt);
+	// Make 'prg_folder' if it doesn't already exist.
+	if( jl_fl_mkdir(jlc, (str_t) resloc->data) == 2 ) {
+		jl_io_printc(jlc, "jl_fl_get_resloc: couldn't make \"");
+		jl_io_printc(jlc, (str_t) resloc->data);
+		jl_io_printc(jlc, "\"\n");
+		jl_io_printc(jlc, "mkdir : Permission Denied\n");
+		jl_sg_kill(jlc);
 	}
-	jl_io_printc(jlc, "Setting Errf....\n");
-	jl_me_strt_merg(jlc, errfs, filebases);
-	jl_me_strt_trunc(jlc, errfs, filebases->size - 5);
-	jl_me_strt_merg(jlc, errfs, Strt("errf.txt"));
-	jl_io_printc(jlc, "Set Errf....\n");
-	#else //OTHER
-	#endif
-	
-	_jlc->fl.errf_filename = (void *)errfs->data;
-	jl_io_printc(jlc, "errf_filename:");
-	jl_io_printc(jlc, _jlc->fl.errf_filename);
-	jl_io_printc(jlc, "\n");
+	// Append 'fname' onto 'resloc'
+	jl_me_strt_merg(jlc, resloc, fnstrt);
+	// Set 'rtn' to 'resloc' and free 'resloc'
+	rtn = jl_me_string_fstrt(jlc, resloc);
+	// Free pfstrt & fnstrt
+	jl_me_strt_free(pfstrt), jl_me_strt_free(fnstrt);
 
-	jl_io_printc(jlc, filebase);
-	
-	//filebase maker
-	#if JL_PLAT == JL_PLAT_PHONE
-	jl_fl_mkdir(jlc, Strt(JLVM_FILEBASE));
-	#else
-	jl_io_printc(jlc, "\nFB2....\n");
-	int fsize = strlen(filebase)+strlen(JLVM_FILEBASE) + 1;
-	char *filebase2 = malloc(fsize);
-	jl_io_printc(jlc, "Clear....\n");
-	for(i = 0; i < fsize; i++) {
-		filebase2[i] = '\0';
-	}
-	jl_io_printc(jlc, "Add....\n");
-	strncat(filebase2,filebase,strlen(filebase));
-	strncat(filebase2,JLVM_FILEBASE,strlen(JLVM_FILEBASE));
-	jl_io_printc(jlc, "Make....\n");
-	jl_fl_mkdir(jlc, Strt(filebase2));
-	#endif
-	jl_fl_mkdir(jlc, Strt(filebase));
-
-	jl_io_printc(jlc, "Merge....\n");
-	strt pvar_pkfl = jl_me_strt_make(0);
-	jl_me_strt_merg(jlc, pvar_pkfl, Strt(filebase));
-	jl_me_strt_merg(jlc, pvar_pkfl, Strt(pfilename));
-
-	location = jl_me_string_fstrt(jlc, pvar_pkfl);
-
-	jl_io_printc(jlc, "filebase: ");
-	jl_io_printc(jlc, filebase);
-	jl_io_printc(jlc, "\nlocation: ");
-	jl_io_printc(jlc, location);
-	
-	jl_io_close_block(jlc); //Close Block "FLBS"
-	jl_io_printc(jlc, "finished resloc w/ \"");
-	jl_io_printc(jlc, location);
+	// Close Block "FLBS"
+	jl_io_close_block(jlc); // }
+	jl_io_printc(jlc, "finished resloc w/ \""); 
+	jl_io_printc(jlc, rtn);
 	jl_io_printc(jlc, "\"\n");
-	return location;
+	return rtn;
 }
 
 static void _jl_fl_user_select_check_extradir(char *dirname) {
@@ -802,15 +860,19 @@ void _jl_fl_initb(jvct_t * _jlc) {
 void _jl_fl_inita(jvct_t * _jlc) {
 	jl_io_offset(_jlc->jlc, JL_IO_SIMPLE, "FILE"); // {
 	jl_io_offset(_jlc->jlc, JL_IO_SIMPLE, "INIT"); // {
-
+	// Get ( and if need be, make ) the directory for everything.
+	jl_fl_get_root__(_jlc);
+	// Get ( and if need be, make ) the error file.
+	jl_fl_get_errf__(_jlc);
+	//
+	_jlc->has.filesys = 1;
 	jl_io_printc(_jlc->jlc, "program name:");
 	jl_dl_progname(_jlc->jlc, Strt("JLVM"));
 
-	char * pkfl =
-		jl_fl_get_resloc(_jlc->jlc, "JLLB", "media.zip");
+	str_t pkfl = jl_fl_get_resloc(_jlc->jlc, JL_MAIN_DIR, JL_MAIN_MEF);
 	remove(pkfl);
 
-	truncate(_jlc->fl.errf_filename, 0);
+	truncate(_jlc->fl.paths.errf, 0);
 	_jl_fl_errf(_jlc, ":Starting...\n");
 	jl_io_close_block(_jlc->jlc); // } Close Block "INIT"
 	jl_io_close_block(_jlc->jlc); // } Close Block "FILE"

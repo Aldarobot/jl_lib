@@ -402,7 +402,7 @@ static inline void _jl_ct_handle_events(jvct_t *_jlc) {
 	}else if(_jlc->ct.event.type==SDL_WINDOWEVENT) { //Resize
 		if((_jlc->ct.event.window.event == SDL_WINDOWEVENT_RESIZED) &&
 			(SDL_GetWindowFromID(_jlc->ct.event.window.windowID) ==
-				_jlc->dl.displayWindow))
+				_jlc->dl.displayWindow->w))
 		{
 			main_resz(_jlc, _jlc->ct.event.window.data1,
 				_jlc->ct.event.window.data2);

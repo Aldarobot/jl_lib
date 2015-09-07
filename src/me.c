@@ -173,13 +173,10 @@ void jl_me_strt_free(strt pstr) {
  * @param string: String to convert
  * @returns: new "strt" with same contents as "string".
 */
-strt jl_me_strt_c8ts(const char *string) {
+strt jl_me_strt_mkfrom_str(str_t string) {
 	uint32_t size = strlen(string);
 	strt a = jl_me_strt_make(size);
-	int i;
-	for( i = 0; i < size; i++) {
-		a->data[i] = string[i];
-	}
+	jl_me_copyto(string, a->data, size);
 	a->data[size] = '\0';
 	return a;
 }
@@ -312,7 +309,7 @@ void jl_me_strt_trunc(jl_t *jlc, strt a, uint32_t size) {
 	a->data = _jl_me_hydd_allc(jlc->_jlc, a->data, a->size + 1);
 }
 
-//Print a number out as a string and return it (Type=STRT_TEMP)
+// Print a number out as a string and return it (Type=STRT_TEMP)
 strt jl_me_strt_fnum(i32_t a) {
 	strt new = jl_me_strt_make(30);
 	sprintf((void*)new->data, "%d", a);
@@ -446,6 +443,7 @@ jvct_t* _jl_me_init(void) {
 	//Make sure that non-initialized things aren't used
 	_jlc->has.graphics = 0;
 	_jlc->has.fileviewer = 0;
+	_jlc->has.filesys = 0;
 	_jlc->me.status = JL_STATUS_GOOD;
 	// Clear temporary pointer buffer.
 	for(i = 0; i < 16; i++) _jlc->me.tmp_ptr[i] = NULL;

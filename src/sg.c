@@ -62,6 +62,10 @@ void jl_gl_pr_scr_set(jvct_t *_jlc, jl_vo* vo);
 	//
 	#define IMG_SIZE_LOW (1+strlen(JL_IMG_HEADER)+(256*4)+(1024*1024)+1)
 
+	#if JL_PLAT == JL_PLAT_PHONE
+	str_t JLVM_FILEBASE;
+	#endif
+
 // Struct Types:
 	typedef struct{
 		uint8_t r;
@@ -378,7 +382,7 @@ void jl_sg_kill(jl_t* jlc) {
 	
 	_jl_fl_errf(jlc->_jlc, ":Quitting On Error...\n");
 	jl_io_offset(jlc, JL_IO_INTENSE, "ERQT");
-	strt error_string = jl_fl_load(jlc, _jlc->fl.errf_filename);
+	strt error_string = jl_fl_load(jlc, _jlc->fl.paths.errf);
 	jl_io_printc(jlc, (void*)error_string->data);
 //	jl_io_stacktrace(jlc);
 	_jl_sg_quit(jlc->_jlc, JL_RTN_FAIL);
@@ -602,7 +606,7 @@ static inline void _jl_sg_inita(jvct_t * _jlc) {
 	_jlc->gl.allocatedg = 0;
 	_jlc->gl.allocatedi = 0;
 	jl_sg_add_image(_jlc->jlc,
-		(void*)jl_fl_get_resloc(_jlc->jlc, "JLLB", "media.zip"), 0);
+		(void*)jl_fl_get_resloc(_jlc->jlc, JL_MAIN_DIR, JL_MAIN_MEF),0);
 	// Clear User Loops
 	for(i = 0; i < JL_SG_WM_MAX; i++) _jlc->sg.mode.tclp[i] = jl_dont;
 }
@@ -643,6 +647,10 @@ static inline void _jl_sg_init_done(jvct_t *_jlc) {
 }
 
 // Main.c
+#if JL_PLAT == JL_PLAT_PHONE
+	#include <jni.h>
+#endif
+
 // void _jl_sg_resz(jl_t* jlc);
 
 //Initialize The Libraries Needed At Very Beginning: The Base Of It All
@@ -735,6 +743,18 @@ static inline void _main_loop(jvct_t* _jlc) {
 		_jl_au_loop(_jlc);
 	}
 }
+
+#if JL_PLAT == JL_PLAT_PHONE
+
+JNIEXPORT void JNICALL
+Java_org_libsdl_app_SDLActivity_nativeJlSendData(
+	JNIEnv *env, jobject obj, jstring data)
+{
+	JLVM_FILEBASE = (*env)->GetStringUTFChars(env, data, 0);
+	SDL_Log("nativeJlSendData \"%s\"\n", JLVM_FILEBASE);
+}
+
+#endif
 
 int32_t main(int argc, char *argv[]) {
 	jvct_t* _jlc = _jl_sg_init_blib(); //Set Up Memory And Logging

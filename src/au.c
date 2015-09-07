@@ -187,7 +187,7 @@ static inline void _jl_au_init_sounds(jvct_t *_jlc, uint8_t *data) {
  * @param pzipfile: full file name of a zip file.
  * @param pigid: which audio group to load the soundtracks into.
 */
-void jl_au_add_audio(jl_t* jlc, char *pzipfile, uint16_t pigid) {
+void jl_au_add_audio(jl_t* jlc, str_t pzipfile, uint16_t pigid) {
 	uint8_t *aud = jl_fl_media(jlc, "jlex/2/_aud", pzipfile,
 		jal5_head_jlvm(), jal5_head_size());
 	jl_io_offset(jlc, JL_IO_MINIMAL, "LOAD"); // { : Open Block "LOAD"
@@ -223,7 +223,7 @@ void _jl_au_init(jvct_t *_jlc) {
 	}
 	//Load Sound Effects & Music
 	jl_au_add_audio(_jlc->jlc, 
-		jl_fl_get_resloc(_jlc->jlc, "JLLB", "media.zip"), 0);
+		jl_fl_get_resloc(_jlc->jlc, JL_MAIN_DIR, JL_MAIN_MEF), 0);
 	//audio by default is disabled
 	_jlc->au.smax = 0;
 	_jlc->au.idis = UINT32_MAX; 

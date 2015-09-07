@@ -37,11 +37,10 @@
 #define VAR_TEXTUREI 2
 
 //Files
-#if JL_PLAT == JL_PLAT_COMPUTER
-	#define JLVM_FILEBASE "../\0"
-#elif JL_PLAT == JL_PLAT_PHONE
-	#define JLVM_FILEBASE "/storage/sdcard0/JLVM/\0"
-#endif
+#define JL_ROOT_DIRNAME "JL_Lib"
+#define JL_ROOT_DIR JL_ROOT_DIRNAME "/"
+#define JL_MAIN_DIR "PlopGrizzly_JLL/"
+#define JL_MAIN_MEF "media.zip"
 
 #ifdef VIRTUAL_MACH_DAT
 //VIRTUAL MACHINE DATA

@@ -39,7 +39,5 @@ cp ../../obj/lb/lib_SDL_image.o ../../bin/jl_lib/jlib/lib_SDL_image.o
 # Update the android directory
 printf "[COMP] updating andr...\n"
 cp --recursive -u -t ../../bin/jl_lib/android/jni/src/ src/*
-cp --recursive -u -t ../../bin/jl_lib/android/jni/bin/jl_lib/jlib/ \
- ../../bin/jl_lib/jlib/*
 
 printf "[COMP] done!\n"
