@@ -467,9 +467,11 @@ static void _jl_sg_screen_draw(jl_t* jlc, float ytrans, jl_vo* bg, uint8_t lp) {
 	jvct_t * _jlc = jlc->_jlc;
 	jl_vec3_t translate = { _jlc->sg.offsx, _jlc->sg.offsy + ytrans, 0. };
 
+	// Turn off all pre-renderers.
+	jl_gl_pr_off(_jlc);
 	// Draw the vertex object.
 	jl_gr_draw_vo(jlc, bg, &translate);
-	// Use the pr for this screen.
+/*	// Use the pr for this screen.
 	jl_gl_pr_scr_set(_jlc, bg);
 	jl_gl_pr_scr(_jlc);
 	// Clear the screen.
@@ -482,7 +484,7 @@ static void _jl_sg_screen_draw(jl_t* jlc, float ytrans, jl_vo* bg, uint8_t lp) {
 	jl_gl_pr_off(_jlc);
 	// Draw the prendered texture.
 //	jl_gr_sprite_draw_pr(jlc, _jlc->gr.taskbar);
-	jl_gr_draw_pr(jlc, bg, &translate);
+	jl_gr_draw_pr(jlc, bg, &translate);*/
 }
 
 // Double screen loop
