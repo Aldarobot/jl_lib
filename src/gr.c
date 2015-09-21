@@ -528,11 +528,7 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 	**/
 	void jl_gr_sprite_redraw(jl_t* jlc, jl_sprite_t *spr) {
 		jl_me_tmp_ptr(jlc, 0, spr);
-		if(!spr->pr) {
-			jl_io_printc(jlc, "hi\n");
-			jl_gr_sprite_resz(jlc, spr);
-			jl_io_printc(jlc, "bye\n");
-		}
+		if(!spr->pr) jl_gr_sprite_resz(jlc, spr);
 		jl_gl_pr_(jlc->_jlc, spr->pr, jl_gr_sprite_draw_to_pr__);
 	}
 

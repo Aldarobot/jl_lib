@@ -483,7 +483,6 @@ static void _jl_sg_screen_draw(jl_t* jlc, float ytrans, jl_vo* bg, uint8_t lp) {
 	// Turn off the pre-renderer.
 	jl_gl_pr_off(_jlc);
 	// Draw the prendered texture.
-	jl_gr_sprite_draw_pr(jlc, _jlc->gr.taskbar);
 	jl_gr_draw_pr(jlc, bg, &translate);
 }
 
