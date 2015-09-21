@@ -526,7 +526,7 @@ void jl_gl_vo_free(jvct_t *_jlc, jl_vo *pv) {
 static void _jl_gl_updatevectors(jvct_t *_jlc, uint32_t gl){
 	_jl_gl_setv(_jlc, gl,
 		(_jlc->gl.whichprg == JL_GL_SLPR_TEX) ?
-		_jlc->gl.clr.attr.position : _jlc->gl.tex.attr.position,
+		_jlc->gl.tex.attr.position : _jlc->gl.clr.attr.position,
 		3);
 }
 
