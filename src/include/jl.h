@@ -45,8 +45,8 @@
 // "cl.c"
 	void jl_cl_list_alphabetize(struct cl_list *list);
 // "gl.c"
-	jl_vo *jl_gl_vo_make(jl_t* jlc, u32_t count);
-	void jl_gl_pr_draw(jl_t* jlc, jl_vo* pv);
+	jl_vo_t *jl_gl_vo_make(jl_t* jlc, u32_t count);
+	void jl_gl_pr_draw(jl_t* jlc, jl_vo_t* pv);
 	void jl_gl_maketexture(jl_t* jlc, uint16_t gid, uint16_t id,
 		void *pixels, int width, int height);
 	double jl_gl_ar(jl_t* jlc);
@@ -71,20 +71,20 @@
 	void jl_dl_progname(jl_t* jlc, strt name);
 // "gr.c"
 	void jl_gr_sprdr_dont(jl_t* jlc, jl_sprd_t* spr);
-	void jl_gr_pr_old(jl_t* jlc, jl_vo* pv);
-	void jl_gr_pr_new(jl_t* jlc, jl_vo* pv, u16_t xres);
+	void jl_gr_pr_old(jl_t* jlc, jl_vo_t* pv);
+	void jl_gr_pr_new(jl_t* jlc, jl_vo_t* pv, u16_t xres);
 	jl_ccolor_t* jl_gr_convert_color(jl_t* jlc, uint8_t *rgba, uint32_t vc,
 		uint8_t gradient);
-	void jl_gr_vo_color(jl_t* jlc, jl_vo* pv, jl_ccolor_t* cc);
-	void jl_gr_draw_vo(jl_t* jlc, jl_vo* pv, jl_vec3_t* vec);
-	void jl_gr_draw_pr(jl_t* jlc, jl_vo* pv, jl_vec3_t* vec);
-	void jl_gr_vos_vec(jl_t* jlc, jl_vo *pv, uint16_t tricount,
+	void jl_gr_vo_color(jl_t* jlc, jl_vo_t* pv, jl_ccolor_t* cc);
+	void jl_gr_draw_vo(jl_t* jlc, jl_vo_t* pv, jl_vec3_t* vec);
+	void jl_gr_draw_pr(jl_t* jlc, jl_vo_t* pv, jl_vec3_t* vec);
+	void jl_gr_vos_vec(jl_t* jlc, jl_vo_t *pv, uint16_t tricount,
 		float* triangles, uint8_t* colors, uint8_t multicolor);
-	void jl_gr_vos_rec(jl_t* jlc, jl_vo *pv, jl_rect_t rc, u8_t* colors,
+	void jl_gr_vos_rec(jl_t* jlc, jl_vo_t *pv, jl_rect_t rc, u8_t* colors,
 		uint8_t multicolor);
-	void jl_gr_vos_image(jl_t* jlc, jl_vo *pv, jl_rect_t rc,
+	void jl_gr_vos_image(jl_t* jlc, jl_vo_t *pv, jl_rect_t rc,
 		u16_t g, u16_t i, u8_t c, u8_t a);
-	void jl_gr_vo_old(jl_t* jlc, jl_vo* pv);
+	void jl_gr_vo_old(jl_t* jlc, jl_vo_t* pv);
 	void jl_gr_sprite_redraw(jl_t* jlc, jl_sprite_t *spr);
 	void jl_gr_sprite_resz(jl_t* jlc, jl_sprite_t *spr);
 	void jl_gr_sprite_loop(jl_t* jlc, jl_sprite_t *spr);

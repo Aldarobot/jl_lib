@@ -26,7 +26,7 @@ typedef enum{
 
 typedef struct{
 	// Used for all icons on the taskbar.
-	jl_vo* icon;
+	jl_vo_t* icon;
 	// Not Pressed & Pressed & Redraw Functions for 10 icons.
 	jl_simple_fnt func[3][10];
 	// Redraw? - 0 = no, 1 = yes
@@ -45,10 +45,10 @@ char *GMessage[2] = {
 };
 
 //Upper OpenGL prototypes
-void jl_gl_vo_free(jvct_t *_jlc, jl_vo *pv);
-void jl_gl_draw_pr(jvct_t *_jlc, jl_vo* pv);
-void jl_gl_pr_old(jvct_t *_jlc, jl_vo* pv);
-uint8_t jl_gl_pr_isi(jvct_t *_jlc, jl_vo* pv);
+void jl_gl_vo_free(jvct_t *_jlc, jl_vo_t *pv);
+void jl_gl_draw_pr(jvct_t *_jlc, jl_vo_t* pv);
+void jl_gl_pr_old(jvct_t *_jlc, jl_vo_t* pv);
+uint8_t jl_gl_pr_isi(jvct_t *_jlc, jl_vo_t* pv);
 void jl_gl_pr_old_(jvct_t *_jlc, jl_pr_t** pr);
 
 //Upper SDL prototype
@@ -246,7 +246,7 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 		jl_rect_t rc_shadow = {-.01, .01, .1, .1 };
 		uint8_t shadow_color[] = { 0, 0, 0, 64 };
 		jl_taskbar_t *ctx;
-		jl_vo *icon = jl_gl_vo_make(_jlc->jlc, 2);
+		jl_vo_t *icon = jl_gl_vo_make(_jlc->jlc, 2);
 
 		// Make the taskbar.
 		_jlc->gr.taskbar = jl_gr_sprite_make(
@@ -273,7 +273,7 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 
 	static void _jl_gr_mouse_loop(jl_t* jlc) {
 		jl_sprite_t* mouse = jlc->mouse;
-		jl_vo* mouse_vo = mouse->data.ctx;
+		jl_vo_t* mouse_vo = mouse->data.ctx;
 
 	//Update Mouse
 		mouse->data.tr.x = jl_ct_gmousex(jlc);
@@ -288,7 +288,7 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 
 	static inline void _jl_gr_mouse_init(jvct_t *_jlc) {
 		jl_rect_t rc = { 0.f, 0.f, .075f, .075f };
-		jl_vo *mouse = jl_gl_vo_make(_jlc->jlc, 1);
+		jl_vo_t *mouse = jl_gl_vo_make(_jlc->jlc, 1);
 
 		#if JL_PLAT == JL_PLAT_COMPUTER //if computer
 			jl_gr_vos_image(_jlc->jlc, &(mouse[0]), rc, 0, 0, 254,
@@ -298,7 +298,7 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 			_jlc->jlc, rc, jl_gr_sprdr_dont,
 			_jl_gr_mouse_loop,
 		#if JL_PLAT == JL_PLAT_COMPUTER //if computer
-				sizeof(jl_vo*));
+				sizeof(jl_vo_t*));
 			// Set the context to the vertex object.
 			((jl_sprite_t*)_jlc->jlc->mouse)->data.ctx = mouse;
 		#elif JL_PLAT == JL_PLAT_PHONE // if phone
@@ -320,7 +320,7 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 	 * @param jlc: The library context.
 	 * @param pv: The pr's vertex object.
 	**/
-	void jl_gr_pr_old(jl_t* jlc, jl_vo* pv) {
+	void jl_gr_pr_old(jl_t* jlc, jl_vo_t* pv) {
 		jl_gl_pr_old(jlc->_jlc, pv);
 	}
 
@@ -331,7 +331,7 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 	 * @param pv: The vertex object to create/replace a pr for.
 	 * @param xres: The resolution across the x axis for the pre-renderer.
 	**/
-	void jl_gr_pr_new(jl_t* jlc, jl_vo* pv, u16_t xres) {
+	void jl_gr_pr_new(jl_t* jlc, jl_vo_t* pv, u16_t xres) {
 		uint8_t isi = jl_gl_pr_isi(jlc->_jlc, pv);
 		if(isi == 2) {
 			_jl_fl_errf(jlc->_jlc, "jl_gr_pr_new: VO is NULL\n");
@@ -373,7 +373,7 @@ static void _jl_gr_popup_loop(jl_t* jlc);
  	 * @param cc: The Converted Color Object to use on the Vertex Object.
  	 *	The library takes care of freeing this variable.
 	**/
-	void jl_gr_vo_color(jl_t* jlc, jl_vo* pv, jl_ccolor_t* cc) {
+	void jl_gr_vo_color(jl_t* jlc, jl_vo_t* pv, jl_ccolor_t* cc) {
 		jl_gl_clrc(jlc->_jlc, pv, cc);
 	}
 
@@ -383,7 +383,7 @@ static void _jl_gr_popup_loop(jl_t* jlc);
   	 * @param pv: The vertex object to draw.
   	 * @param vec: The vector of offset/translation.
 	**/
-	void jl_gr_draw_vo(jl_t* jlc, jl_vo* pv, jl_vec3_t* vec) {
+	void jl_gr_draw_vo(jl_t* jlc, jl_vo_t* pv, jl_vec3_t* vec) {
 		if(vec == NULL) {
 			jl_gl_transform_vo_(jlc->_jlc, pv,
 				0.f, 0.f, 0.f, 1., 1., 1.);
@@ -400,7 +400,7 @@ static void _jl_gr_popup_loop(jl_t* jlc);
   	 * @param pv: The vertex object to get the pre-rendered texture from.
   	 * @param vec: The vector of offset/translation.
 	**/
-	void jl_gr_draw_pr(jl_t* jlc, jl_vo* pv, jl_vec3_t* vec) {
+	void jl_gr_draw_pr(jl_t* jlc, jl_vo_t* pv, jl_vec3_t* vec) {
 		jvct_t *_jlc = jlc->_jlc;
 
 		if(pv == NULL) pv = _jlc->gl.temp_vo;
@@ -417,7 +417,7 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 	 * Set a Vertex object to vector graphics.
 	 * 
 	**/
-	void jl_gr_vos_vec(jl_t* jlc, jl_vo *pv, uint16_t tricount,
+	void jl_gr_vos_vec(jl_t* jlc, jl_vo_t *pv, uint16_t tricount,
 		float* triangles, uint8_t* colors, uint8_t multicolor)
 	{
 		int i;
@@ -451,7 +451,7 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 	 * @param multicolor: If 0: Then 1 color is used.
 	 *	If 1: Then 1 color per each vertex is used.
 	**/
-	void jl_gr_vos_rec(jl_t* jlc, jl_vo *pv, jl_rect_t rc, u8_t* colors,
+	void jl_gr_vos_rec(jl_t* jlc, jl_vo_t *pv, jl_rect_t rc, u8_t* colors,
 		uint8_t multicolor)
 	{
 		float rectangle_coords[] = {
@@ -483,7 +483,7 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 	 * @param a: the transparency each pixel is multiplied by; 255 is
 	 *	solid and 0 is totally invisble.
 	**/
-	void jl_gr_vos_image(jl_t* jlc, jl_vo *pv, jl_rect_t rc,
+	void jl_gr_vos_image(jl_t* jlc, jl_vo_t *pv, jl_rect_t rc,
 		u16_t g, u16_t i, u8_t c, u8_t a)
 	{
 		//From bottom left & clockwise
@@ -506,7 +506,7 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 	 * @param jlc: The library context
 	 * @param pv: The vertex object to free
 	**/
-	void jl_gr_vo_old(jl_t* jlc, jl_vo* pv) {
+	void jl_gr_vo_old(jl_t* jlc, jl_vo_t* pv) {
 		jl_gl_vo_free(jlc->_jlc, pv);
 	}
 	
@@ -640,7 +640,7 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 		uint32_t i;
 		jl_rect_t rc = { x, y, size, size };
 		jl_vec3_t tr = { 0., 0., 0. };
-		jl_vo* vo = _jlc->gl.temp_vo;
+		jl_vo_t* vo = _jlc->gl.temp_vo;
 
 		if(str == NULL) return;
 		for(i = 0; i < strlen(str); i++) {

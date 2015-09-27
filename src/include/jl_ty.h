@@ -100,7 +100,7 @@ typedef struct{
 	jl_pr_t *pr;	// Pre-renderer.
 	// Collision Box
 	jl_cb_t cb;	// 2D/3D collision box.
-}jl_vo;
+}jl_vo_t;
 
 // Coordinate Structures
 typedef struct{

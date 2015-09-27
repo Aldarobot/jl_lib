@@ -496,7 +496,7 @@ static void jl_gl_vertices__(jvct_t *_jlc, const float *xyzw, uint8_t vertices,
 	jl_gl_buffer_set__(_jlc, gl, cv, items);
 }
 
-void jl_gl_vo_vertices(jvct_t *_jlc, jl_vo* pv, const float *xyzw,
+void jl_gl_vo_vertices(jvct_t *_jlc, jl_vo_t* pv, const float *xyzw,
 	uint8_t vertices)
 {
 	pv->vc = vertices;
@@ -511,7 +511,7 @@ void jl_gl_vo_vertices(jvct_t *_jlc, jl_vo* pv, const float *xyzw,
 	}
 }
 
-void jl_gl_vo_free(jvct_t *_jlc, jl_vo *pv) {
+void jl_gl_vo_free(jvct_t *_jlc, jl_vo_t *pv) {
 	// Free GL VBO
 	jl_gl_buffer_old__(_jlc, &pv->gl);
 	// Free GL Texture Buffer
@@ -537,7 +537,7 @@ static void _jl_gl_setp(jvct_t *_jlc, jl_gl_slpr id) {
 	}
 }
 
-static void _jl_gl_col_begin(jvct_t *_jlc, jl_vo* pv) {
+static void _jl_gl_col_begin(jvct_t *_jlc, jl_vo_t* pv) {
 	//Free anything old
 	if(pv->cc != NULL) jl_me_alloc(_jlc->jlc, (void**)&pv->cc, 0, 0);
 }
@@ -907,7 +907,7 @@ static void _jl_gl_pr_obj_make(jvct_t *_jlc, jl_pr_t *pr) {
 	jl_gl_pr_scr(_jlc);
 }
 
-static void _jl_gl_txtr(jvct_t *_jlc, jl_vo** pv, uint8_t a, uint8_t is_rt) {
+static void _jl_gl_txtr(jvct_t *_jlc, jl_vo_t** pv, uint8_t a, uint8_t is_rt) {
 	if((*pv) == NULL) (*pv) = _jlc->gl.temp_vo;
 	// Set Simple Variabes
 	(*pv)->a = ((float)a) / 255.f;
@@ -916,12 +916,12 @@ static void _jl_gl_txtr(jvct_t *_jlc, jl_vo** pv, uint8_t a, uint8_t is_rt) {
 		jl_me_alloc(_jlc->jlc, (void**)&((*pv)->cc), 0,0);
 }
 
-static inline void _jl_gl_set_shader(jvct_t *_jlc, jl_vo* pv) {
+static inline void _jl_gl_set_shader(jvct_t *_jlc, jl_vo_t* pv) {
 	_jl_gl_setp(_jlc, pv->cc == NULL ? JL_GL_SLPR_TEX : JL_GL_SLPR_CLR);
 }
 
 // Prepare to draw a solid color
-static inline void _jl_gl_draw_colr(jvct_t *_jlc, jl_vo* pv) {
+static inline void _jl_gl_draw_colr(jvct_t *_jlc, jl_vo_t* pv) {
 	// Bind Colors to shader
 	_jl_gl_setv(_jlc, pv->bt, _jlc->gl.clr.attr.acolor, 4);
 }
@@ -964,7 +964,7 @@ void jl_gl_pr_old_(jvct_t *_jlc, jl_pr_t** pr) {
 }
 
 // Free a pr for a vertex object
-void jl_gl_pr_old(jvct_t *_jlc, jl_vo* pv) {
+void jl_gl_pr_old(jvct_t *_jlc, jl_vo_t* pv) {
 	if(pv->pr == NULL) {
 		_jl_fl_errf(_jlc, "pr(): double free!\n");
 		jl_sg_kill(_jlc->jlc);
@@ -1005,7 +1005,7 @@ uint8_t jl_gl_pr_isi_(jvct_t *_jlc, jl_pr_t* pr) {
 }
 
 // Test if pre-renderer is initialized.
-uint8_t jl_gl_pr_isi(jvct_t *_jlc, jl_vo* pv) {
+uint8_t jl_gl_pr_isi(jvct_t *_jlc, jl_vo_t* pv) {
 	if(pv)
 		return jl_gl_pr_isi_(_jlc, pv->pr);
 	else
@@ -1026,7 +1026,7 @@ void jl_gl_pr_use_(jvct_t *_jlc, jl_pr_t* pr) {
 }
 
 // Use a vertex object's pre-renderer for rendering.
-void jl_gl_pr_use(jvct_t *_jlc, jl_vo* pv) {
+void jl_gl_pr_use(jvct_t *_jlc, jl_vo_t* pv) {
 	pv->a = 1.f;
 	if(!pv->pr) {
 		_jl_fl_errf(_jlc, "jl_gl_pr_use: pre-renderer not created\n");
@@ -1042,7 +1042,7 @@ void jl_gl_pr_scr(jvct_t *_jlc) {
 }
 
 // Set the screens prerenderer.
-void jl_gl_pr_scr_set(jvct_t *_jlc, jl_vo* vo) {
+void jl_gl_pr_scr_set(jvct_t *_jlc, jl_vo_t* vo) {
 	if(vo) _jlc->gl.bg = vo->pr;
 	else _jlc->gl.bg = NULL;
 }
@@ -1055,14 +1055,14 @@ void jl_gl_pr_off(jvct_t *_jlc) {
 /**
  * Render an image onto a vertex object's pr.
 **/
-void jl_gl_pr(jl_t *jlc, jl_vo* vo, jl_simple_fnt par__redraw) {
+void jl_gl_pr(jl_t *jlc, jl_vo_t* vo, jl_simple_fnt par__redraw) {
 	jvct_t *_jlc = jlc->_jlc;
 
 	jl_gl_pr_(_jlc, vo->pr, par__redraw);
 }
 
 // Set vertices for a polygon.
-void jl_gl_poly(jvct_t *_jlc, jl_vo* pv, uint8_t vertices, const float *xyzw) {
+void jl_gl_poly(jvct_t *_jlc, jl_vo_t* pv, uint8_t vertices, const float *xyzw) {
 	const float FS_RECT[] = {
 		0.,jl_gl_ar(_jlc->jlc),0.,
 		0.,0.,0.,
@@ -1079,7 +1079,7 @@ void jl_gl_poly(jvct_t *_jlc, jl_vo* pv, uint8_t vertices, const float *xyzw) {
 }
 
 // Set vertices for vector triangles.
-void jl_gl_vect(jvct_t *_jlc, jl_vo* pv, uint8_t vertices, const float *xyzw) {
+void jl_gl_vect(jvct_t *_jlc, jl_vo_t* pv, uint8_t vertices, const float *xyzw) {
 	if(pv == NULL) pv = _jlc->gl.temp_vo;
 	// Rendering Style = triangles
 	pv->rs = 1;
@@ -1088,7 +1088,7 @@ void jl_gl_vect(jvct_t *_jlc, jl_vo* pv, uint8_t vertices, const float *xyzw) {
 }
 
 // Set colors to "cc" in vertex oject "pv" - cc will be freed when done
-void jl_gl_clrc(jvct_t *_jlc, jl_vo* pv, jl_ccolor_t* cc) {
+void jl_gl_clrc(jvct_t *_jlc, jl_vo_t* pv, jl_ccolor_t* cc) {
 	_jl_gl_col_begin(_jlc, pv); // Free "pv->cc" if non-null
 	pv->cc = cc;
 	// Set Color Buffer "pv->bt" to "pv->cc"
@@ -1131,21 +1131,21 @@ jl_ccolor_t* jl_gl_clrcg(jvct_t *_jlc, u8_t *rgba, uint32_t vc) {
 }
 
 // Set Texturing to Gradient Color "rgba" { (4 * vertex count) values }
-void jl_gl_clrg(jvct_t *_jlc, jl_vo* pv, u8_t *rgba) {
+void jl_gl_clrg(jvct_t *_jlc, jl_vo_t* pv, u8_t *rgba) {
 	if(pv == NULL) pv = _jlc->gl.temp_vo;
 	_jl_gl_col_begin(_jlc, pv);
 	jl_gl_clrc(_jlc, pv, jl_gl_clrcg(_jlc, rgba, pv->vc));
 }
 
 // Set Texturing to Solid Color "rgba" { 4 values }
-void jl_gl_clrs(jvct_t *_jlc, jl_vo* pv, u8_t *rgba) {
+void jl_gl_clrs(jvct_t *_jlc, jl_vo_t* pv, u8_t *rgba) {
 	if(pv == NULL) pv = _jlc->gl.temp_vo;
 	_jl_gl_col_begin(_jlc, pv);
 	jl_gl_clrc(_jlc, pv, jl_gl_clrcs(_jlc, rgba, pv->vc));
 }
 
 // Set texturing to a bitmap
-void jl_gl_txtr(jvct_t *_jlc, jl_vo* pv, u8_t map, u8_t a, u16_t pgid, u16_t pi)
+void jl_gl_txtr(jvct_t *_jlc, jl_vo_t* pv, u8_t map, u8_t a, u16_t pgid, u16_t pi)
 {
 	_jl_gl_txtr(_jlc, &pv, a, 0);
 	pv->tx = _jlc->gl.textures[pgid][pi];
@@ -1210,7 +1210,7 @@ void jl_gl_transform_pr_(jvct_t *_jlc, jl_pr_t* pr, float x, float y, float z,
 	jl_gl_transform__(_jlc, 1, xm, ym, zm, ar);
 }
 
-void jl_gl_transform_vo_(jvct_t *_jlc, jl_vo* vo, float x, float y, float z,
+void jl_gl_transform_vo_(jvct_t *_jlc, jl_vo_t* vo, float x, float y, float z,
 	float xm, float ym, float zm)
 {
 	f64_t ar = jl_gl_ar(_jlc->jlc);
@@ -1229,7 +1229,7 @@ void jl_gl_transform_vo_(jvct_t *_jlc, jl_vo* vo, float x, float y, float z,
  * If "pv" is NULL then draw what's on the temporary buffer
  * Else render vertex object "pv" on the screen.
 */
-void jl_gl_draw(jvct_t *_jlc, jl_vo* pv) {
+void jl_gl_draw(jvct_t *_jlc, jl_vo_t* pv) {
 	// Fail if no vertex object.
 	if(pv == NULL) pv = _jlc->gl.temp_vo;
 	// Determine which shader to use: texturing or coloring?
@@ -1257,7 +1257,7 @@ void jl_gl_draw_pr_(jl_t* jlc, jl_pr_t* pr) {
 	_jl_gl_draw_onts(_jlc, pr->gl, 0, 4);
 }
 
-void jl_gl_pr_draw(jl_t* jlc, jl_vo* pv) {
+void jl_gl_pr_draw(jl_t* jlc, jl_vo_t* pv) {
 	jvct_t *_jlc = jlc->_jlc;
 
 	if(pv == NULL) pv = _jlc->gl.temp_vo;
@@ -1410,7 +1410,7 @@ static inline void _jl_gl_make_res(jvct_t *_jlc) {
 	jl_io_close_block(_jlc->jlc); //Close Block "GLIN"
 }
 
-static inline void _jl_gl_vo_make(jvct_t *_jlc, jl_vo* vo, u32_t nc) {
+static inline void _jl_gl_vo_make(jvct_t *_jlc, jl_vo_t* vo, u32_t nc) {
 	// How many more vo's will be made.
 	vo->nc = nc;
 	// GL VBO
@@ -1458,13 +1458,13 @@ static void jl_gl_pr_set__(jl_t* jlc,jl_pr_t *pr,f32_t w,f32_t h,u16_t w_px) {
  * @param count: How many vertex objects to create - default = 1.
  * @returns: A new vertex object with 0 vertices.
 **/
-jl_vo *jl_gl_vo_make(jl_t* jlc, u32_t count) {
+jl_vo_t *jl_gl_vo_make(jl_t* jlc, u32_t count) {
 	jvct_t *_jlc = jlc->_jlc;
-	jl_vo *rtn = NULL;
+	jl_vo_t *rtn = NULL;
 	m_u32_t i;
 
 	// Allocate space in "rtn"
-	jl_me_alloc(_jlc->jlc, (void**)&rtn, sizeof(jl_vo) * count,0);
+	jl_me_alloc(_jlc->jlc, (void**)&rtn, sizeof(jl_vo_t) * count,0);
 	// Make each vertex object.
 	for(i = 0; i < count; i++) _jl_gl_vo_make(_jlc, &rtn[i], (count-1) - i);
 	// Return the vertex object[s].

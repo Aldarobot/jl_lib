@@ -14,8 +14,8 @@
 
 // SG Prototypes
 void jl_gl_pr_off(jvct_t *_jlc);
-void jl_gl_draw_prendered(jvct_t *_jlc, jl_vo* pv);
-void jl_gl_pr_scr_set(jvct_t *_jlc, jl_vo* vo);
+void jl_gl_draw_prendered(jvct_t *_jlc, jl_vo_t* pv);
+void jl_gl_pr_scr_set(jvct_t *_jlc, jl_vo_t* vo);
 
 //Prototypes
 	//LIB INITIALIZATION fn(Context)
@@ -463,7 +463,7 @@ void jl_sg_add_image(jl_t* jlc, char *pzipfile, uint16_t pigid) {
 	jl_io_close_block(jlc); // }
 }
 
-static void _jl_sg_screen_draw(jl_t* jlc, float ytrans, jl_vo* bg, uint8_t lp) {
+static void _jl_sg_screen_draw(jl_t* jlc, float ytrans, jl_vo_t* bg, uint8_t lp) {
 	jvct_t * _jlc = jlc->_jlc;
 	jl_vec3_t translate = { _jlc->sg.offsx, _jlc->sg.offsy + ytrans, 0. };
 

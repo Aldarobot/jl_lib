@@ -86,23 +86,23 @@ void _jl_fl_errf(jvct_t * _jlc, const char *msg);
 //GL
 void jl_gl_viewport_screen(jvct_t *_jlc);
 //
-void jl_gl_poly(jvct_t *_jlc, jl_vo* pv, uint8_t vertices, const float *xyzw);
-void jl_gl_vect(jvct_t *_jlc, jl_vo* pv, uint8_t vertices, const float *xyzw);
-void jl_gl_clrc(jvct_t *_jlc, jl_vo* pv, jl_ccolor_t* cc);
+void jl_gl_poly(jvct_t *_jlc, jl_vo_t* pv, uint8_t vertices, const float *xyzw);
+void jl_gl_vect(jvct_t *_jlc, jl_vo_t* pv, uint8_t vertices, const float *xyzw);
+void jl_gl_clrc(jvct_t *_jlc, jl_vo_t* pv, jl_ccolor_t* cc);
 jl_ccolor_t* jl_gl_clrcs(jvct_t *_jlc, u8_t *rgba, uint32_t vc);
 jl_ccolor_t* jl_gl_clrcg(jvct_t *_jlc, u8_t *rgba, uint32_t vc);
-void jl_gl_clrg(jvct_t *_jlc, jl_vo* pv, u8_t *rgba);
-void jl_gl_clrs(jvct_t *_jlc, jl_vo* pv, u8_t *rgba);
-void jl_gl_txtr(jvct_t *_jlc, jl_vo* pv, u8_t map, u8_t a, u16_t pgid, u16_t pi);
+void jl_gl_clrg(jvct_t *_jlc, jl_vo_t* pv, u8_t *rgba);
+void jl_gl_clrs(jvct_t *_jlc, jl_vo_t* pv, u8_t *rgba);
+void jl_gl_txtr(jvct_t *_jlc, jl_vo_t* pv, u8_t map, u8_t a, u16_t pgid, u16_t pi);
 void jl_gl_transform_pr_(jvct_t *_jlc, jl_pr_t* pr, float x, float y, float z,
 	float xm, float ym, float zm);
-void jl_gl_transform_vo_(jvct_t *_jlc, jl_vo* vo, float x, float y, float z,
+void jl_gl_transform_vo_(jvct_t *_jlc, jl_vo_t* vo, float x, float y, float z,
 	float xm, float ym, float zm);
-void jl_gl_draw(jvct_t *_jlc, jl_vo* pv);
+void jl_gl_draw(jvct_t *_jlc, jl_vo_t* pv);
 void jl_gl_pr_(jvct_t *_jlc, jl_pr_t * pr, jl_simple_fnt par__redraw);
 void jl_gl_draw_pr_(jl_t* jlc, jl_pr_t* pr);
 uint8_t jl_gl_pr_isi_(jvct_t *_jlc, jl_pr_t* pr);
-void jl_gl_pr_use(jvct_t *_jlc, jl_vo* pv);
+void jl_gl_pr_use(jvct_t *_jlc, jl_vo_t* pv);
 void jl_gl_pr_scr(jvct_t *_jlc);
 
 //DL

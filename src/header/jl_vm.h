@@ -88,8 +88,8 @@ typedef struct {
 		
 		// 1 Background for each screen
 		struct {
-			jl_vo* up;
-			jl_vo* dn;
+			jl_vo_t* up;
+			jl_vo_t* dn;
 		}bg;
 
 		float screen_height;
@@ -174,7 +174,7 @@ typedef struct {
 				m_i32_t transform;
 			} uniforms;
 		} clr;
-		jl_vo *temp_vo;
+		jl_vo_t *temp_vo;
 		// Default texture coordinates.
 		uint32_t default_tc;
 		
@@ -214,7 +214,7 @@ typedef struct {
 			jl_popup_button_t* btns;
 		}popup;
 		struct {
-			jl_vo *whole_screen;
+			jl_vo_t *whole_screen;
 		}vos;
 		strt textbox_string;
 	}gr;
