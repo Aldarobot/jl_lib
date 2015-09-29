@@ -25,10 +25,6 @@
 
 	//Standard Mode Class
 	typedef struct {
-		//Sprites
-		m_u32_t sprite_count;
-		_sg_sprt_t *sprites;
-
 		//Standard Functions
 		jl_simple_fnt tclp[JL_SG_WM_MAX];
 	}__sg_mode_t;

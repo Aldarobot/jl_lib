@@ -55,14 +55,13 @@
 	jl_pr_t * jl_gl_pr_new(jl_t* jlc, f32_t w, f32_t h, u16_t w_px);
 // "sg.c"
 	void jl_sg_mode_init(jl_t* jlc, u8_t mdec);
-	void jl_sg_mode_set(jl_t* jlc, uint8_t mode, uint8_t wm,
-		jl_simple_fnt loop);
+	void jl_sg_mode_set(jl_t* jlc, u8_t mode, u8_t wm, jl_simple_fnt loop);
 	void jl_sg_mode_override(jl_t* jlc, uint8_t wm, jl_simple_fnt loop);
 	void jl_sg_mode_reset(jl_t* jlc);
 	void jl_sg_mode_switch(jl_t* jlc, uint8_t mode, jl_sg_wm_t loop);
 	void jl_sg_kill(jl_t* jlc);
 	void jl_sg_exit(jl_t* jlc);
-	void jl_sg_add_image(jl_t* jlc, char *pzipfile, uint16_t pigid);
+	void jl_sg_add_image(jl_t* jlc, str_t pzipfile, u16_t pigid);
 // "dl.c"
 	void jl_dl_setfullscreen(jl_t *jlc, uint8_t is);
 	void jl_dl_togglefullscreen(jl_t *jlc);
@@ -93,8 +92,8 @@
 		jl_gr_sprdr_fnt draw, jl_simple_fnt loop, u32_t ctxs);
 	u8_t jl_gr_sprite_collide(jl_t* jlc, jl_sprite_t *sprite1,
 		jl_sprite_t *sprite2);
-	void jl_gr_draw_text(jl_t* jlc, char *str, f32_t x, f32_t y, f32_t size,
-		uint8_t a);
+	void jl_gr_draw_text(jl_t* jlc, str_t str, f32_t x, f32_t y, f32_t size,
+		u8_t a);
 	void jl_gr_draw_numi(jl_t* jlc, uint32_t num, f32_t x, f32_t y, f32_t size,
 		uint8_t a);
 	void jl_gr_draw_text_area(jl_t* jlc, jl_sprite_t * spr, char *txt);
@@ -133,8 +132,8 @@
 	void jl_fl_save(jl_t* jlc, const void *file, const char *name,
 		uint32_t bytes);
 	strt jl_fl_load(jl_t* jlc, str_t file_name);
-	char jl_fl_pk_save(jl_t* jlc, char *packageFileName,
-		char *fileName,	void *data, uint64_t dataSize);
+	char jl_fl_pk_save(jl_t* jlc, str_t packageFileName, str_t fileName,
+		void *data, uint64_t dataSize);
 	uint8_t *jl_fl_pk_load(jl_t* jlc, const char *packageFileName,
 		const char *filename);
 	uint8_t *jl_fl_media(jl_t* jlc, str_t Fname, str_t pzipfile,

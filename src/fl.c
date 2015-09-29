@@ -268,7 +268,7 @@ strt jl_fl_load(jl_t* jlc, str_t file_name) {
  * @returns 0: On success
  * @returns 1: If File is unable to be made.
  */
-char jl_fl_pk_save(jl_t* jlc, char *packageFileName, char *fileName,
+char jl_fl_pk_save(jl_t* jlc, str_t packageFileName, str_t fileName,
 	void *data, uint64_t dataSize)
 {
 	jl_io_offset(jlc, JL_IO_SIMPLE, "PKSV"); // {

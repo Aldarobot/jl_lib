@@ -631,8 +631,8 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 	 * @param 'size': how big to draw the text
 	 * @param 'a': transparency of the text, 255=Opaque 0=Transparent
 	**/
-	void jl_gr_draw_text(jl_t* jlc, char *str, f32_t x, f32_t y, f32_t size,
-		uint8_t a)
+	void jl_gr_draw_text(jl_t* jlc, str_t str, f32_t x, f32_t y, f32_t size,
+		u8_t a)
 	{
 		jvct_t* _jlc = jlc->_jlc;
 		const void *Str = str;

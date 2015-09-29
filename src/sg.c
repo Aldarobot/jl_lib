@@ -93,11 +93,13 @@ void jl_gl_pr_scr_set(jvct_t *_jlc, jl_vo_t* vo);
 	
 //Functions:
 
-void _jl_sg_mode_add(jvct_t* _jlc, uint8_t mode) {
-	//Add & Allocate a new mode
-	_jlc->jlc->mdec = mode + 1;
+static void _jl_sg_mode_add(jvct_t* _jlc, u8_t mode) {
+	// Add a mode.
+	_jlc->jlc->mdec++;
+	// Allocate a new mode.
 	_jlc->sg.mdes = realloc(_jlc->sg.mdes,
 		(_jlc->jlc->mdec + 1) * sizeof(__sg_mode_t));
+	// Set the mode.
 	_jlc->sg.mdes[mode].tclp[JL_SG_WM_EXIT] = jl_sg_exit;
 	_jlc->sg.mdes[mode].tclp[JL_SG_WM_UP] = jl_dont;
 	_jlc->sg.mdes[mode].tclp[JL_SG_WM_DN] = jl_dont;
@@ -127,11 +129,11 @@ void _jl_sg_mode_add(jvct_t* _jlc, uint8_t mode) {
  *	JL_SG_WM_RESZ: This loop is called when the window is resized.
  * @param loop: What to change the loop to.
 */
-void jl_sg_mode_set(jl_t* jlc, uint8_t mode, uint8_t wm, jl_simple_fnt loop) {
-	jl_gr_draw_msge(jlc, "Switching Mode...");
+void jl_sg_mode_set(jl_t* jlc, u8_t mode, u8_t wm, jl_simple_fnt loop) {
 	jvct_t* _jlc = jlc->_jlc;
-	
-	if(mode > _jlc->jlc->mdec - 1) _jl_sg_mode_add(_jlc, mode);
+
+	jl_gr_draw_msge(jlc, "Switching Mode...");
+	while(mode >= _jlc->jlc->mdec) _jl_sg_mode_add(_jlc, mode);
 	_jlc->sg.mdes[mode].tclp[wm] = loop;
 	// Reset things
 	_jlc->ct.heldDown = 0;
@@ -447,7 +449,7 @@ static inline double _jl_sg_seconds_passed(jvct_t* _jlc) {
  * @param pzipfile: full file name of a zip file.
  * @param pigid: which image group to load the images into.
 */
-void jl_sg_add_image(jl_t* jlc, char *pzipfile, uint16_t pigid) {
+void jl_sg_add_image(jl_t* jlc, str_t pzipfile, u16_t pigid) {
 	jl_io_offset(jlc, JL_IO_PROGRESS, "LIMG");
 	//Load Graphics
 	uint8_t *img = jl_fl_media(jlc, "jlex/2/_img", pzipfile,
