@@ -151,7 +151,10 @@ static inline void jl_fl_get_errf__(jvct_t * _jlc) {
 
 // NON-STATIC Library Dependent Functions
 void _jl_fl_errf(jvct_t * _jlc, const char *msg) {
-	if(!_jlc->has.filesys) return;
+	if(!_jlc->has.filesys) {
+		printf("JL-Lib: \"%s\"\n", msg);
+		return;
+	}
 	jl_io_offset(_jlc->jlc, JL_IO_SIMPLE, "ERRF");
 	jl_io_printc(_jlc->jlc, "saving to errf: ");
 	jl_io_printc(_jlc->jlc, _jlc->fl.paths.errf);
@@ -338,7 +341,7 @@ uint8_t *jl_fl_pk_load(jl_t* jlc, const char *packageFileName,
 	jl_io_printc(jlc, "error check 1.\n");
 	struct zip *zipfile = zip_open(packageFileName, ZIP_CHECKCONS, &zerror);
 	jl_io_printc(jlc, "error check 2.\n");
-	if(zerror == ZIP_ER_OPEN) {
+	if(zerror == ZIP_ER_NOENT) {
 		jl_io_printc(jlc, " NO EXIST!");
 		jlc->errf = JL_ERR_FIND;
 		_jl_fl_pk_load_quit(jlc);

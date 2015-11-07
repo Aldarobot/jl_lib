@@ -342,7 +342,7 @@ void _jl_io_init(jvct_t * _jlc) {
 	_jlc->io.printfn = malloc(sizeof(void *));
 	_jlc->io.offs = 0;
 	_jlc->io.ofs2 = 0;
-	jl_io_tag_set(_jlc->jlc, JL_IO_MINIMAL, 0, NULL);
+	jl_io_tag_set(_jlc->jlc, JL_IO_MINIMAL, 1, NULL);
 	jl_io_tag_set(_jlc->jlc, JL_IO_PROGRESS, 0, NULL);
 	jl_io_tag_set(_jlc->jlc, JL_IO_SIMPLE, 0, NULL);
 	jl_io_tag_set(_jlc->jlc, JL_IO_INTENSE, 0, NULL);
