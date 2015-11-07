@@ -1,0 +1,40 @@
+#!/bin/sh
+
+args=("$@")
+JLL_PATH=${args[0]}
+PROGNAME=`sed -n '6p' media/dat.text`
+PACKNAME=`sed -n '4p' media/dat.text`
+USERNAME=`sed -n '2p' media/dat.text`
+printf "[JL/ANDR] exporting $PROGNAME ($PACKNAME/$USERNAME) to android....\n"
+USERPROG=`pwd -P`
+NDK_PATH=$JLL_PATH/deps/android-ndk-r10e
+SDK_PATH=$JLL_PATH/deps/android-sdk-linux
+ANDROID_PROJECT=$JLL_PATH/build/android
+ANDROID_MEDIA=`readlink -f $ANDROID_PROJECT/jni/src/gen/med`
+ANDROID_HOME=$SDK_PATH
+
+sh $JLL_PATH/bin/jl_android_.sh\
+ NDK_DEBUG=0 $JLL_PATH $PROGNAME $PACKNAME $USERNAME $USERPROG $NDK_PATH $SDK_PATH\
+ $ANDROID_PROJECT $ANDROID_MEDIA $ANDROID_HOME false 
+cd $ANDROID_PROJECT
+
+printf "[JL/ANDR] zipalign: creating release....\n"
+$SDK_PATH/build-tools/android-4.4W/zipalign -v 4 bin/jlw.$USERNAME.$PACKNAME-release-unsigned.apk bin/jlw.$USERNAME.$PACKNAME-release.apk
+
+printf "[JL/ANDR] finished!  Installing...\n"
+$SDK_PATH/platform-tools/adb install -r bin/jlw.$USERNAME.$PACKNAME-release.apk
+#ant release install
+
+printf "[JL/ANDR] Starting Up\n"
+$SDK_PATH/platform-tools/adb shell am start -a android.intent.action.MAIN -n jlw.$USERNAME.$PACKNAME/.jl_Activity
+
+printf "[JL/ANDR] Cleaning Up...\n"
+cd $USERPROG
+### clean-up ###
+rm $ANDROID_PROJECT/src/jlw/$USERNAME/$PACKNAME/jl_Activity.java
+rmdir $ANDROID_PROJECT/src/jlw/$USERNAME/$PACKNAME/
+rmdir $ANDROID_PROJECT/src/jlw/$USERNAME/
+
+printf "[JL/ANDR] DONE!\n"
+
+$SDK_PATH/platform-tools/adb logcat | grep I\/SDL\/APP

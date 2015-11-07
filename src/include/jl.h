@@ -69,7 +69,7 @@
 	uint16_t jl_dl_geth(jl_t *jlc);
 	void jl_dl_progname(jl_t* jlc, strt name);
 // "gr.c"
-	void jl_gr_sprdr_dont(jl_t* jlc, jl_sprd_t* spr);
+	void jl_gr_sp_dont(jl_t* jlc, jl_sprd_t* spr);
 	void jl_gr_pr_old(jl_t* jlc, jl_vo_t* pv);
 	void jl_gr_pr_new(jl_t* jlc, jl_vo_t* pv, u16_t xres);
 	jl_ccolor_t* jl_gr_convert_color(jl_t* jlc, uint8_t *rgba, uint32_t vc,
@@ -84,25 +84,25 @@
 	void jl_gr_vos_image(jl_t* jlc, jl_vo_t *pv, jl_rect_t rc,
 		u16_t g, u16_t i, u8_t c, u8_t a);
 	void jl_gr_vo_old(jl_t* jlc, jl_vo_t* pv);
-	void jl_gr_sprite_redraw(jl_t* jlc, jl_sprite_t *spr);
-	void jl_gr_sprite_resz(jl_t* jlc, jl_sprite_t *spr);
-	void jl_gr_sprite_loop(jl_t* jlc, jl_sprite_t *spr);
-	void jl_gr_sprite_draw_pr(jl_t* jlc, jl_sprite_t *spr);
-	jl_sprite_t * jl_gr_sprite_make(jl_t* jlc, jl_rect_t rc,
-		jl_gr_sprdr_fnt draw, jl_simple_fnt loop, u32_t ctxs);
+	void jl_gr_sp_rsz(jl_t* jlc, jl_sprite_t *spr);
+	void jl_gr_sp_rdr(jl_t* jlc, jl_sprite_t *spr);
+	void jl_gr_sp_rnl(jl_t* jlc, jl_sprite_t *spr);
+	void jl_gr_sp_drw(jl_t* jlc, jl_sprite_t *spr);
+	jl_sprite_t * jl_gr_sp_new(jl_t* jlc, jl_rect_t rc,
+		jl_gr_sp_fnt draw, jl_gr_sp_fnt loop, u32_t ctxs);
 	u8_t jl_gr_sprite_collide(jl_t* jlc, jl_sprite_t *sprite1,
 		jl_sprite_t *sprite2);
 	void jl_gr_draw_text(jl_t* jlc, str_t str, f32_t x, f32_t y, f32_t size,
 		u8_t a);
 	void jl_gr_draw_numi(jl_t* jlc, uint32_t num, f32_t x, f32_t y, f32_t size,
 		uint8_t a);
-	void jl_gr_draw_text_area(jl_t* jlc, jl_sprite_t * spr, char *txt);
-	void jl_gr_draw_text_sprite(jl_t* jlc,jl_sprite_t * spr,char *txt);
+	void jl_gr_draw_text_area(jl_t* jlc, jl_sprite_t * spr, str_t txt);
+	void jl_gr_draw_text_sprite(jl_t* jlc,jl_sprite_t * spr, str_t txt);
 	void jl_gr_draw_ctxt(jl_t* jlc, char *str, f32_t p_y, uint8_t p_a);
 	void jl_gr_draw_msge(jl_t* jlc, char* message);
 	void jl_gr_term_msge(jl_t* jlc, char* message);
-	void jl_gr_draw_slide_button(
-		jl_t* jlc, jl_sprite_t * spr, char *txt, float defaultx,
+	void jl_gr_slidebtn_rsz(jl_t* jlc, jl_sprite_t * spr, str_t txt);
+	void jl_gr_slidebtn_rnl(jl_t* jlc, jl_sprite_t * spr,  float defaultx,
 		float slidex, jl_simple_fnt prun);
 	void jl_gr_draw_glow_button(jl_t* jlc, jl_sprite_t * spr,
 		char *txt, jl_simple_fnt prun);

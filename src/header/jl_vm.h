@@ -202,7 +202,7 @@ typedef struct {
 	
 	//Graphics
 	struct {
-		jl_simple_fnt menuoverlay;
+		jl_gr_sp_fnt menuoverlay;
 		jl_sprite_t *taskbar;
 		struct {
 			char* window_name;

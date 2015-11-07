@@ -555,7 +555,6 @@ static void jl_sg_init_ss_(jl_t* jlc) {
 	jl_io_printc(jlc, "{{{ 1 Screen init\n");
 	// Update the rectangle backgrounds.
 	jl_gr_vos_rec(jlc, _jlc->sg.bg.dn, rcrd, rclr_bg, 0);
-	printf("ye got %d\n", _jlc->dl.current.w);
 	jl_gr_pr_new(jlc, _jlc->sg.bg.dn, _jlc->dl.current.w);
 	// Set single screen loop.
 	_jlc->sg.loop = _jl_sg_loop_ss;

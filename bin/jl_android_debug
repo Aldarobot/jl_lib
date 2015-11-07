@@ -1,0 +1,34 @@
+#!/bin/sh
+
+PROGNAME=`sed -n '6p' media/dat.text`
+PACKNAME=`sed -n '4p' media/dat.text`
+USERNAME=`sed -n '2p' media/dat.text`
+printf "[JL/ANDR] exporting $PROGNAME ($PACKNAME/$USERNAME) to android....\n"
+USERPROG=`pwd -P`
+NDK_PATH=`pwd`/../../bin/android-ndk-r10d
+SDK_PATH=`pwd`/../../bin/sdk
+ANDROID_PROJECT=`pwd`/../../bin/jl_lib/android
+ANDROID_MEDIA=`readlink -f $ANDROID_PROJECT/jni/src/gen/med`
+ANDROID_HOME=$SDK_PATH
+JL_LIB=`pwd`/../../libs/jl_lib
+
+sh jl_android_.sh NDK_DEBUG=1 $PROGNAME $PACKNAME $USERNAME $USERPROG $NDK_PATH $SDK_PATH $ANDROID_PROJECT $ANDROID_MEDIA $ANDROID_HOME true
+cd $ANDROID_PROJECT
+
+#printf "[JL/ANDR] zipalign: creating release....\n"
+#$SDK_PATH/build-tools/android-4.4W/zipalign -v 4 bin/jlw.$USERNAME.$PACKNAME-release-unsigned.apk bin/jlw.$USERNAME.$PACKNAME-release.apk
+
+printf "[JL/ANDR] finished!  Installing...\n"
+$SDK_PATH/platform-tools/adb install -r bin/jlw.$USERNAME.$PACKNAME-release-unsigned.apk
+
+printf "[JL/ANDR] Starting Up\n"
+$JL_LIB/tools/AndroidNDK/ndk-gdb --adb=$SDK_PATH/platform-tools/adb --project=$ANDROID_PROJECT --start --force --verbose
+
+printf "[JL/ANDR] Cleaning Up...\n"
+cd $USERPROG
+###
+rm $ANDROID_PROJECT/src/jlw/$USERNAME/$PACKNAME/jl_Activity.java
+rmdir $ANDROID_PROJECT/src/jlw/$USERNAME/$PACKNAME/
+rmdir $ANDROID_PROJECT/src/jlw/$USERNAME/
+
+printf "[JL/ANDR] DONE!\n"

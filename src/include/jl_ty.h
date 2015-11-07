@@ -116,6 +116,7 @@ typedef struct {
 	jl_rect_t cb;				// Collision Box
 	float rh, rw;				// Real Height & Width
 	void* ctx;				// The sprite's context.
+	void* spr;				// Pointer back to sprite.
 }jl_sprd_t;
 
 typedef struct{
@@ -140,14 +141,14 @@ typedef struct{
 }jl_t;
 
 typedef void(*jl_simple_fnt)(jl_t* jlc);
+typedef void(*jl_gr_sp_fnt)(jl_t* jlc, jl_sprd_t* spr);
 typedef void(*jl_ct_event_fnt)(jl_t* jlc, jl_simple_fnt prun,jl_simple_fnt pno);
 typedef void(*jl_io_print_fnt)(jl_t* jlc, const char * print);
-typedef void(*jl_gr_sprdr_fnt)(jl_t* jlc, jl_sprd_t* spr);
 
 typedef struct{
 	jl_sprd_t data;		// Sprite Data
-	jl_simple_fnt loop;	// Loop function
-	jl_gr_sprdr_fnt draw;	// Draw function
+	jl_gr_sp_fnt loop;	// Loop function
+	jl_gr_sp_fnt draw;	// Draw function
 	jl_pr_t *pr;		// Pre-renderer.
 }jl_sprite_t;
 

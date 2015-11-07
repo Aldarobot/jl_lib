@@ -593,7 +593,7 @@ static void jl_gl_pbo_use__(jvct_t *_jlc, jl_pr_t *pr) {
 }
 
 #else
-static void _jl_gl_framebuffer_free(jvct_t *_jlc, uint32_t *fb) {
+static void _jl_gl_framebuffer_free(jvct_t *_jlc, m_u32_t *fb) {
 	glDeleteFramebuffers(1, fb);
 	JL_GL_ERROR(_jlc, *fb, "glDeleteFramebuffers");
 	*fb = 0;
@@ -613,6 +613,18 @@ static void jl_gl_framebuffer_use__(jvct_t *_jlc, u32_t fb, u32_t db, u32_t tx,
 {
 	if(fb == 0) {
 		_jl_fl_errf(_jlc, "jl_gl_framebuffer_use__: GL FB = 0");
+		jl_sg_kill(_jlc->jlc);
+	}else if(db == 0) {
+		_jl_fl_errf(_jlc, "jl_gl_framebuffer_use__: GL DB = 0");
+		jl_sg_kill(_jlc->jlc);
+	}else if(tx == 0) {
+		_jl_fl_errf(_jlc, "jl_gl_framebuffer_use__: GL TX = 0");
+		jl_sg_kill(_jlc->jlc);
+	}else if(w == 0) {
+		_jl_fl_errf(_jlc, "jl_gl_framebuffer_use__: GL W = 0");
+		jl_sg_kill(_jlc->jlc);
+	}else if(h == 0) {
+		_jl_fl_errf(_jlc, "jl_gl_framebuffer_use__: GL H = 0");
 		jl_sg_kill(_jlc->jlc);
 	}
 	// Bind the texture.
@@ -1390,11 +1402,9 @@ static inline void _jl_gl_make_res(jvct_t *_jlc) {
 	// Initialize EGL.
 	jl_gl_init_egl(_jlc);
 #endif
-	// Create SDL_GL context to link with EGL
-
 	// Get GL Extensions.
-	SDL_Log("GL_EXTENSIONS = \"%s\"\n", glGetString(GL_EXTENSIONS));
-	JL_GL_ERROR(_jlc, 0, "glGetString()");
+	// SDL_Log("GL_EXTENSIONS = \"%s\"\n", glGetString(GL_EXTENSIONS));
+	// JL_GL_ERROR(_jlc, 0, "glGetString()");
 	// Setup opengl properties
 	_jl_gl_init_setup_gl(_jlc);
 	// Create shaders and set up attribute/uniform variable communication
@@ -1506,7 +1516,6 @@ void jl_gl_clear(jl_t* jlc, uint8_t r, uint8_t g, uint8_t b, uint8_t a) {
  * @param w_px: The resolution in pixels along the x axis [ 1- ]
 **/
 void jl_gl_pr_rsz(jl_t* jlc, jl_pr_t *pr, f32_t w, f32_t h, u16_t w_px) {
-	SDL_Log("%f, %f, %d", w, h, w_px);
 
 	f32_t xyzw[] = {
 		0.f,	h,	0.f,
@@ -1598,7 +1607,6 @@ void _jl_gl_init(jvct_t *_jlc) {
 		jl_sg_kill(_jlc->jlc);
 	}
 #endif
-	SDL_Log("GL_MAX_TEXTURE_SIZE: %d\n", GL_MAX_TEXTURE_SIZE);
 	_jlc->gl.cp = NULL;
 	_jlc->gl.bg = NULL;
 	_jl_gl_make_res(_jlc);

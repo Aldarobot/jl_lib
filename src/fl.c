@@ -787,8 +787,8 @@ void jl_fl_user_select_loop(jl_t* jlc) {
 		jl_ct_run_event(jlc, JL_CT_SELECT, _jl_fl_user_select_do,
 			jl_dont);
 	}
-	_jlc->fl.btns[0]->loop(jlc);
-	_jlc->fl.btns[1]->loop(jlc);
+	jl_gr_sp_rnl(jlc, _jlc->fl.btns[0]);
+	jl_gr_sp_rnl(jlc, _jlc->fl.btns[1]);
 }
 
 /**
@@ -810,11 +810,11 @@ static void _jl_fl_btn_makefile_press(jl_t* jlc) {
 	_jlc->fl.prompt = 1;
 }
 
-static void _jl_fl_btn_makefile_loop(jl_t* jlc) {
+static void _jl_fl_btn_makefile_loop(jl_t* jlc, jl_sprd_t* sprd) {
 	
 }
 
-static void _jl_fl_btn_makefile_draw(jl_t* jlc, jl_sprd_t* spr) {
+static void _jl_fl_btn_makefile_draw(jl_t* jlc, jl_sprd_t* sprd) {
 	jvct_t *_jlc = jlc->_jlc;
 	
 	//TODO: make graphic: 0, 1, 1, 255
@@ -823,11 +823,11 @@ static void _jl_fl_btn_makefile_draw(jl_t* jlc, jl_sprd_t* spr) {
 		_jl_fl_btn_makefile_press);
 }
 
-static void _jl_fl_btn_makefolder_loop(jl_t* jlc) {
+static void _jl_fl_btn_makefolder_loop(jl_t* jlc, jl_sprd_t* sprd) {
 	
 }
 
-static void _jl_fl_btn_makefolder_draw(jl_t* jlc, jl_sprd_t* spr) {
+static void _jl_fl_btn_makefolder_draw(jl_t* jlc, jl_sprd_t* sprd) {
 	jvct_t *_jlc = jlc->_jlc;
 	
 	//TODO: make graphic: 0, 1, 2, 255,
@@ -850,9 +850,9 @@ void _jl_fl_initb(jvct_t * _jlc) {
 	//Create the variables
 	_jlc->fl.filelist = cl_list_create();
 	_jlc->fl.inloop = 0;
-	_jlc->fl.btns[0] = jl_gr_sprite_make(_jlc->jlc, rc1,
+	_jlc->fl.btns[0] = jl_gr_sp_new(_jlc->jlc, rc1,
 		_jl_fl_btn_makefile_draw, _jl_fl_btn_makefile_loop, 0);
-	_jlc->fl.btns[1] = jl_gr_sprite_make(_jlc->jlc, rc2,
+	_jlc->fl.btns[1] = jl_gr_sp_new(_jlc->jlc, rc2,
 		_jl_fl_btn_makefolder_draw, _jl_fl_btn_makefolder_loop, 0);
 	_jlc->has.fileviewer = 1;
 }

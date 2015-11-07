@@ -230,7 +230,6 @@ void _jl_dl_resz(jvct_t *_jlc, uint16_t x, uint16_t y) {
 	_jlc->dl.current.h = y + (x - y);
 	// Set GL aspect.
 	_jlc->dl.aspect = ((double)y) / ((double)x);
-	printf("DL RESZ = %d\n", _jlc->dl.current.w);
 }
 
 /**
