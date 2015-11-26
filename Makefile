@@ -10,8 +10,45 @@ clean-deps:
 	rm -r deps/
 
 # The Build Options.
-build-android: android
 build-depends: build-libzip build-sdl-net build-sdl-image build-clump
+build-android:
+	# Copy android build files into android build project.
+	cp -u -t build/android/jni/ android-src/*.mk
+	cp -u -t build/android/ android-src/*.properties
+	cp -u -t build/android/src/org/libsdl/app/ android-src/SDL*.java 
+	# Copy SDL2 into android build project
+	cp -u android-src/SDL_android_main.c build/android/jni/SDL_android_main.c
+	cp -u --recursive -t build/android/jni/src/ src/*
+	cp -u --recursive -t build/android/jni/src/lib/sdl/src/\
+	 deps/SDL2-2.0.3/src/*
+	cp -u --recursive -t build/android/jni/src/lib/sdl/include/\
+	 deps/SDL2-2.0.3/include/*
+	# Copy Libzip into android project
+	cp -u deps/libzip-1.0.1/config.h build/android/jni/src/lib/libzip/
+	cp -u --recursive -t build/android/jni/src/lib/libzip/\
+	 deps/libzip-1.0.1/lib/*.c
+	cp -u --recursive -t build/android/jni/src/lib/libzip/\
+	 deps/libzip-1.0.1/lib/*.h
+	rm build/android/jni/src/lib/libzip/zipwin32.h
+	rm build/android/jni/src/lib/libzip/*win32*.c
+	# Copy SDL2_mixer into the android project.
+	cp -u --recursive -t build/android/jni/src/lib/sdl-mixer/external/\
+	 deps/SDL2_mixer-2.0.0/external/*
+	cp -u --recursive -t build/android/jni/src/lib/sdl-mixer/\
+	 deps/SDL2_mixer-2.0.0/*.c
+	cp -u --recursive -t build/android/jni/src/lib/sdl-mixer/\
+	 deps/SDL2_mixer-2.0.0/*.h
+	# Copy SDL2_image into the android project.
+	cp -u --recursive -t build/android/jni/src/lib/sdl-image/\
+	 deps/SDL2_image-2.0.0/*.c
+	cp -u --recursive -t build/android/jni/src/lib/sdl-image/\
+	 deps/SDL2_image-2.0.0/*.h
+	# Copy SDL2_net into the android project.
+	cp -u --recursive -t build/android/jni/src/lib/sdl-net/\
+	 deps/SDL2_net-2.0.0/*.c
+	cp -u --recursive -t build/android/jni/src/lib/sdl-net/\
+	 deps/SDL2_net-2.0.0/*.h
+	###
 build-library: 
 	# Build modules.
 	printf "[COMP] compiling separate jl_lib object files....\n"
@@ -38,6 +75,7 @@ build-library:
 	mkdir build/obj/
 	printf "[COMP] done!\n"
 build-project: compile_es
+build-project-android:
 
 # Lower Level
 init-deps-all: init-deps-most init-deps-ndk
@@ -60,6 +98,9 @@ init-build-android:
 	mkdir build/android/jni/
 	mkdir build/android/jni/src/
 	mkdir build/android/src/
+	mkdir build/android/src/org/
+	mkdir build/android/src/org/libsdl/
+	mkdir build/android/src/org/libsdl/app/
 	mkdir build/android/res/
 	mkdir build/android/res/values/
 	mkdir build/android/res/drawable/
@@ -102,6 +143,12 @@ init-deps-zip:
 	tar -xzf libzip-1.0.1.tar.gz && \
 	rm libzip-1.0.1.tar.gz
 
+init-deps-ems:
+	cd deps/&& \
+	wget https://s3.amazonaws.com/mozilla-games/emscripten/releases/emsdk-portable.tar.gz && \
+	tar -xzf emsdk-portable.tar.gz && \
+	rm emsdk-portable.tar.gz
+
 init-deps-ndk:
 	cd deps/ && \
 	wget http://dl.google.com/android/ndk/android-ndk-r10e-linux-x86_64.bin\
@@ -112,14 +159,19 @@ init-deps-ndk:
 
 init-deps-sdk:
 	cd deps/ && \
-	wget http://dl.google.com/android/android-sdk_r24.4-linux.tgz && \
-	tar -zxvf android-sdk_r24.4-linux.tgz && \
-	rm android-sdk_r24.4-linux.tgz
-
-android:
-	cp --recursive -u -t build/android/jni/src/ src/*
+	wget https://dl.google.com/android/android-sdk_r24.4.1-linux.tgz && \
+	tar -zxvf android-sdk_r24.4.1-linux.tgz && \
+	rm android-sdk_r24.4.1-linux.tgz && \
+	cd android-sdk-linux/ && \
+	./tools/android
 
 # Low Level / Build
+build-emscripten:
+	printf "[COMP] comiling emscripten...\n" && \
+	cd deps/emsdk_portable/ && \
+	./emsdk update && \
+	./emsdk install latest && \
+	./emsdk activate latest
 build-libzip:
 	printf "[COMP] compiling libzip...\n" && \
 	cd deps/libzip-1.0.1/ && \
@@ -133,8 +185,8 @@ build-sdl-image:
 	cd deps/SDL2_image-2.0.0/ && \
 	sh configure && \
 	make && \
-	rm showimage.o && \
-	ar csr ../../build/deps/lib_SDL_image.o *.o && \
+	#ar Tcsr ../../build/deps/lib_SDL_image.o .libs/IMG_*.o  && \
+	ld -r .libs/*.o -o ../../build/deps/lib_SDL_image.o && \
 	printf "[COMP] done!\n"
 build-sdl-net:
 	printf "[COMP] compiling SDL_net...\n" && \
@@ -193,9 +245,10 @@ nc_compile__:
 	else \
 		ar csr media/media.o media/genr/*.o; \
 	fi
-	gcc `sed -n '2p' pref.txt`/build/jl.o `sed -n '2p' pref.txt`/build/deps/*.o\
+	gcc -I`sed -n '2p' pref.txt`/src/include/\
+	 `sed -n '2p' pref.txt`/build/jl.o `sed -n '2p' pref.txt`/build/deps/*.o\
 	 src/*.c media/media.o\
-	 -lSDL2 -lpthread -Wl,--no-undefined -lm -ldl -lpthread -lrt\
+	 -lSDL2 -lpthread -lm -ldl -lpthread -lrt\
 	 $(GL_VERSION) -lm -lz\
 	 -o bin/comp/`sed -n '4p' data.txt`\
 	 -Wall -g

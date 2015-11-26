@@ -925,7 +925,7 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 		jvct_t *_jlc = jlc->_jlc;
 		jl_rect_t rc = { 0., 0., 1., jl_gl_ar(jlc)};
 
-		jl_gr_vos_image(jlc, _jlc->gr.vos.whole_screen, rc, 0, 0, 0, 255);
+		jl_gr_vos_image(jlc, _jlc->gr.vos.whole_screen, rc, 0, 1, 1, 127);
 	//Menu Bar
 		_jl_gr_taskbar_loop_resz(jlc);
 	//Mouse

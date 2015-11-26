@@ -1,6 +1,6 @@
 // SDL OpenGL 2
 #if JL_GLTYPE == JL_GLTYPE_SDL_GL2
-	#include "lib/SDL/header/SDL_opengl.h"
+	#include "lib/SDL/include/SDL_opengl.h"
 	#include "lib/glext.h"
 #endif
 
@@ -23,7 +23,7 @@
 	#if JL_PLAT == JL_PLAT_COMPUTER
 		#include <SDL2/SDL_opengles2.h>
 	#else
-		#include "lib/sdl/header/SDL_opengles2.h"
+		#include "lib/sdl/include/SDL_opengles2.h"
 	#endif
 #endif
 	

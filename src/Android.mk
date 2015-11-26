@@ -4,9 +4,11 @@ include $(CLEAR_VARS)
 
 LOCAL_MODULE := main
 
-LIB_ZIP := lib/libzip-0.11.2/lib/
+LIB_ZIP := lib/libzip/
 LIB_SDL := lib/sdl/src/
-LIB_MIX := lib/SDL_mixer/
+LIB_MIX := lib/sdl-mixer/
+LIB_NET := lib/sdl-net/
+LIB_IMG := lib/sdl-image/
 
 # Load The Programmers C files
 LOCAL_SRC_FILES += $(subst $(LOCAL_PATH)/,, \
@@ -17,6 +19,11 @@ LOCAL_SRC_FILES += gen/jlvm_hack_main.c \
 	gen/src/main.c
 
 #load SDL
+LOCAL_SRC_FILES += $(subst $(LOCAL_PATH)/,, \
+	$(wildcard $(LOCAL_PATH)/lib/sdl/src/render/opengles2/*.c) \
+	$(wildcard $(LOCAL_PATH)/lib/sdl/src/render/opengles/*.c) \
+)
+
 LOCAL_SRC_FILES += \
 	$(LIB_SDL)SDL.c\
 	$(LIB_SDL)SDL_assert.c \
@@ -109,93 +116,9 @@ LOCAL_SRC_FILES += \
 	$(LIB_SDL)main/android/SDL_android_main.c
 
 #load libzip
-LOCAL_SRC_FILES += \
-	$(LIB_ZIP)mkstemp.c \
-	$(LIB_ZIP)zip_add.c \
-	$(LIB_ZIP)zip_new.c \
-	$(LIB_ZIP)zip_open.c \
-	$(LIB_ZIP)zip_stat.c \
-	$(LIB_ZIP)zip_close.c \
-	$(LIB_ZIP)zip_entry.c \
-	$(LIB_ZIP)zip_error.c \
-	$(LIB_ZIP)zip_fopen.c \
-	$(LIB_ZIP)zip_fread.c \
-	$(LIB_ZIP)zip_utf-8.c \
-	$(LIB_ZIP)zip_delete.c \
-	$(LIB_ZIP)zip_dirent.c \
-	$(LIB_ZIP)zip_fdopen.c \
-	$(LIB_ZIP)zip_fclose.c \
-	$(LIB_ZIP)zip_memdup.c \
-	$(LIB_ZIP)zip_rename.c \
-	$(LIB_ZIP)zip_string.c \
-	$(LIB_ZIP)zip_add_dir.c \
-	$(LIB_ZIP)zip_dir_add.c \
-	$(LIB_ZIP)zip_discard.c \
-	$(LIB_ZIP)zip_err_str.c \
-	$(LIB_ZIP)zip_replace.c \
-	$(LIB_ZIP)zip_file_add.c \
-	$(LIB_ZIP)zip_get_name.c \
-	$(LIB_ZIP)zip_set_name.c \
-	$(LIB_ZIP)zip_strerror.c \
-	$(LIB_ZIP)zip_unchange.c \
-	$(LIB_ZIP)zip_add_entry.c \
-	$(LIB_ZIP)zip_error_get.c \
-	$(LIB_ZIP)zip_stat_init.c \
-	$(LIB_ZIP)zip_source_crc.c \
-	$(LIB_ZIP)zip_source_pop.c \
-	$(LIB_ZIP)zip_source_zip.c \
-	$(LIB_ZIP)zip_stat_index.c \
-	$(LIB_ZIP)zip_error_clear.c \
-	$(LIB_ZIP)zip_extra_field.c \
-	$(LIB_ZIP)zip_file_rename.c \
-	$(LIB_ZIP)zip_fopen_index.c \
-	$(LIB_ZIP)zip_name_locate.c \
-	$(LIB_ZIP)zip_source_file.c \
-	$(LIB_ZIP)zip_source_free.c \
-	$(LIB_ZIP)zip_source_open.c \
-	$(LIB_ZIP)zip_source_read.c \
-	$(LIB_ZIP)zip_source_stat.c \
-	$(LIB_ZIP)zip_error_to_str.c \
-	$(LIB_ZIP)zip_file_replace.c \
-	$(LIB_ZIP)zip_source_close.c \
-	$(LIB_ZIP)zip_source_error.c \
-	$(LIB_ZIP)zip_source_filep.c \
-	$(LIB_ZIP)zip_unchange_all.c \
-	$(LIB_ZIP)zip_filerange_crc.c \
-	$(LIB_ZIP)zip_file_strerror.c \
-	$(LIB_ZIP)zip_get_num_files.c \
-	$(LIB_ZIP)zip_source_buffer.c \
-	$(LIB_ZIP)zip_source_pkware.c \
-	$(LIB_ZIP)zip_source_window.c \
-	$(LIB_ZIP)zip_unchange_data.c \
-	$(LIB_ZIP)zip_error_strerror.c \
-	$(LIB_ZIP)zip_file_error_get.c \
-	$(LIB_ZIP)zip_source_deflate.c \
-	$(LIB_ZIP)zip_source_layered.c \
-	$(LIB_ZIP)zip_source_zip_new.c \
-	$(LIB_ZIP)zip_extra_field_api.c \
-	$(LIB_ZIP)zip_file_get_offset.c \
-	$(LIB_ZIP)zip_fopen_encrypted.c \
-	$(LIB_ZIP)zip_get_num_entries.c \
-	$(LIB_ZIP)zip_source_function.c \
-	$(LIB_ZIP)zip_file_error_clear.c \
-	$(LIB_ZIP)zip_file_get_comment.c \
-	$(LIB_ZIP)zip_file_set_comment.c \
-	$(LIB_ZIP)zip_get_archive_flag.c \
-	$(LIB_ZIP)zip_get_file_comment.c \
-	$(LIB_ZIP)zip_set_archive_flag.c \
-	$(LIB_ZIP)zip_set_file_comment.c \
-	$(LIB_ZIP)zip_unchange_archive.c \
-	$(LIB_ZIP)zip_error_get_sys_type.c \
-	$(LIB_ZIP)zip_get_archive_comment.c \
-	$(LIB_ZIP)zip_set_archive_comment.c \
-	$(LIB_ZIP)zip_set_default_password.c \
-	$(LIB_ZIP)zip_set_file_compression.c \
-	$(LIB_ZIP)zip_fopen_index_encrypted.c \
-	$(LIB_ZIP)zip_file_get_external_attributes.c \
-	$(LIB_ZIP)zip_file_set_external_attributes.c \
-	$(LIB_ZIP)zip_get_encryption_implementation.c \
-	$(LIB_ZIP)zip_get_compression_implementation.c
+LOCAL_SRC_FILES += $(subst $(LOCAL_PATH)/,, \
+	$(wildcard $(LOCAL_PATH)/lib/libzip/*.c) \
+)
 
 #load SDL_mixer
 LOCAL_SRC_FILES += \
@@ -249,11 +172,17 @@ LOCAL_SRC_FILES +=\
 	me.c cl.c io.c fl.c cm.c ct.c\
 	sg.c dl.c gl.c gr.c vi.c au.c
 
-LOCAL_CFLAGS += -DGL_GLEXT_PROTOTYPES -DNDEBUG -O3
+LOCAL_CFLAGS += -Ijni/src/include/ -Ijni/src/lib/sdl/include/ -DGL_GLEXT_PROTOTYPES -DNDEBUG -DHAVE_CONFIG_H -O3
+
+LOCAL_C_INCLUDES :=\
+	jni/src/lib/libzip/\
+	jni/src/lib/sdl-mixer/external/libogg-1.3.1/include/\
+	jni/src/lib/sdl-mixer/external/libvorbis-1.3.3/include/\
+	jni/src/lib/sdl-mixer/external/libvorbis-1.3.3/lib/
 
 LOCAL_STATIC_LIBRARIES := 
 
-LOCAL_LDLIBS := -lz -ldl -lEGL -lGLESv2 -llog -landroid
+LOCAL_LDLIBS := -Wl,--undefined=Java_org_libsdl_app_SDLActivity_nativeInit -ldl -lGLESv1_CM -lz -lEGL -lGLESv2 -llog -landroid
 
 APP_OPTIM := release
 

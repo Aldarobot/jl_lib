@@ -2,9 +2,9 @@
 
 args=("$@")
 JLL_PATH=${args[0]}
-PROGNAME=`sed -n '6p' media/dat.text`
-PACKNAME=`sed -n '4p' media/dat.text`
-USERNAME=`sed -n '2p' media/dat.text`
+PROGNAME=`sed -n '6p' data.txt`
+PACKNAME=`sed -n '4p' data.txt`
+USERNAME=`sed -n '2p' data.txt`
 printf "[JL/ANDR] exporting $PROGNAME ($PACKNAME/$USERNAME) to android....\n"
 USERPROG=`pwd -P`
 NDK_PATH=$JLL_PATH/deps/android-ndk-r10e
@@ -13,13 +13,13 @@ ANDROID_PROJECT=$JLL_PATH/build/android
 ANDROID_MEDIA=`readlink -f $ANDROID_PROJECT/jni/src/gen/med`
 ANDROID_HOME=$SDK_PATH
 
-sh $JLL_PATH/bin/jl_android_.sh\
+sh $JLL_PATH/compile-scripts/jl_android_.sh\
  NDK_DEBUG=0 $JLL_PATH $PROGNAME $PACKNAME $USERNAME $USERPROG $NDK_PATH $SDK_PATH\
  $ANDROID_PROJECT $ANDROID_MEDIA $ANDROID_HOME false 
 cd $ANDROID_PROJECT
 
 printf "[JL/ANDR] zipalign: creating release....\n"
-$SDK_PATH/build-tools/android-4.4W/zipalign -v 4 bin/jlw.$USERNAME.$PACKNAME-release-unsigned.apk bin/jlw.$USERNAME.$PACKNAME-release.apk
+$SDK_PATH/build-tools/23.0.2/zipalign -v 4 bin/jlw.$USERNAME.$PACKNAME-release-unsigned.apk bin/jlw.$USERNAME.$PACKNAME-release.apk
 
 printf "[JL/ANDR] finished!  Installing...\n"
 $SDK_PATH/platform-tools/adb install -r bin/jlw.$USERNAME.$PACKNAME-release.apk

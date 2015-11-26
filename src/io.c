@@ -249,23 +249,28 @@ void jl_io_close_block(jl_t* jlc) {
 }
 
 /**
+ * Change the tag of the current block.
+ * @param jlc: the library context.
+ * @param tag: the tag attached to the block.
+**/
+void jl_io_tag(jl_t* jlc, i16_t tag) {
+	jvct_t *_jlc = jlc->_jlc;
+
+	_jlc->io.tag[_jlc->io.offs] = tag;
+}
+
+/**
  * Open an offset block.
  * @param jlc: the library context.
  * @param this: the name of the block.
  * @param tag: the tag attached to the block.
 */
-void jl_io_offset(jl_t* jlc, int16_t tag, char * this) {
+void jl_io_offset(jl_t* jlc, i16_t tag, char * this) {
 	jvct_t *_jlc = jlc->_jlc;
 	int i = 0;
 
-	if(this == NULL) {
-		return;
-	}
-	if(strncmp(this,
-		_jlc->io.head[
-		_jlc->io.offs],
-		4) != 0)
-	{
+	if(this == NULL) return;
+	if(strncmp(this, _jlc->io.head[_jlc->io.offs], 4) != 0) {
 		//extend
 		_jlc->io.offs++;
 		_jlc->io.ofs2++;
@@ -274,7 +279,7 @@ void jl_io_offset(jl_t* jlc, int16_t tag, char * this) {
 		}
 		_jlc->io.head[_jlc->io.offs][4] = '\0';
 	}
-	_jlc->io.tag[_jlc->io.offs] = tag;
+	jl_io_tag(jlc, tag);
 	return;
 }
 
@@ -343,9 +348,9 @@ void _jl_io_init(jvct_t * _jlc) {
 	_jlc->io.offs = 0;
 	_jlc->io.ofs2 = 0;
 	jl_io_tag_set(_jlc->jlc, JL_IO_MINIMAL, 1, NULL);
-	jl_io_tag_set(_jlc->jlc, JL_IO_PROGRESS, 0, NULL);
-	jl_io_tag_set(_jlc->jlc, JL_IO_SIMPLE, 0, NULL);
-	jl_io_tag_set(_jlc->jlc, JL_IO_INTENSE, 0, NULL);
+	jl_io_tag_set(_jlc->jlc, JL_IO_PROGRESS, 1, NULL);
+	jl_io_tag_set(_jlc->jlc, JL_IO_SIMPLE, 1, NULL);
+	jl_io_tag_set(_jlc->jlc, JL_IO_INTENSE, 1, NULL);
 	jl_io_offset(_jlc->jlc, JL_IO_MINIMAL, "JLLB\0");
 	// Clear & Print to the print buffer.
 	jl_io_reset_print_descriptor_(_jlc);

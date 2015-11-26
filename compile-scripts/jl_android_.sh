@@ -70,10 +70,11 @@ if [ ! -e bin/andr/my-release-key.keystore ];then
 	printf "[JL/ANDR] a key.  Create your key for jarsigner:\n"
 	keytool -sigalg SHA1withRSA -keyalg RSA -keysize 1024 -genkey -keystore bin/andr/my-release-key.keystore -alias daliasle -validity 3650
 fi
-cp --recursive -t $ANDROID_PROJECT/jni/src/gen/src/ src/*
+cp --recursive -u -t $ANDROID_PROJECT/jni/src/gen/src/ src/*
 rm -r $ANDROID_MEDIA/
 mkdir $ANDROID_MEDIA/
 cp -l media/genr/* $ANDROID_MEDIA/
+rm $ANDROID_PROJECT/my-release-key.keystore
 cp bin/andr/my-release-key.keystore $ANDROID_PROJECT/
 rm $ANDROID_PROJECT/res/drawable/prgm_icon.png
 cp media/icon.png $ANDROID_PROJECT/res/drawable/prgm_icon.png

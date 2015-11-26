@@ -104,12 +104,17 @@ static inline void jl_fl_reset_cursor__(str_t file_name) {
 
 static inline void jl_fl_get_root__(jvct_t * _jlc) {
 	strt root_path;
+	strt root_dir;
 
 #if JL_PLAT == JL_PLAT_PHONE
-	// Get external storage directory.
+	jl_io_printc(_jlc->jlc, "Get external storage directory.\n");
 	root_path = jl_me_strt_mkfrom_str(JLVM_FILEBASE);
-	// Append JL_ROOT_DIR
-	jl_me_strt_merg(_jlc->jlc, root_path, Strt(JL_ROOT_DIR));
+	jl_io_printc(_jlc->jlc, "Append JL_ROOT_DIR.\n");
+	root_dir = jl_me_strt_mkfrom_str(JL_ROOT_DIR);
+	jl_io_printc(_jlc->jlc, "Merging root_path and root_dir.\n");
+	jl_me_strt_merg(_jlc->jlc, root_path, root_dir);
+	jl_io_printc(_jlc->jlc, "Free root_dir.\n");
+	jl_me_strt_free(root_dir);
 #else
 	// Get the operating systems prefered path
 	m_str_t pref_path = SDL_GetPrefPath(JL_ROOT_DIRNAME, "\0");
@@ -861,13 +866,17 @@ void _jl_fl_initb(jvct_t * _jlc) {
 }
 
 void _jl_fl_inita(jvct_t * _jlc) {
-	jl_io_offset(_jlc->jlc, JL_IO_SIMPLE, "FILE"); // {
-	jl_io_offset(_jlc->jlc, JL_IO_SIMPLE, "INIT"); // {
+	jl_io_offset(_jlc->jlc, JL_IO_INTENSE, "flIa");
 	// Get ( and if need be, make ) the directory for everything.
+	jl_io_printc(_jlc->jlc, "Get/Make directory for everything...\n");
 	jl_fl_get_root__(_jlc);
+	jl_io_printc(_jlc->jlc, "Complete!\n");
 	// Get ( and if need be, make ) the error file.
+	jl_io_printc(_jlc->jlc, "Get/Make directory error logfile...\n");
 	jl_fl_get_errf__(_jlc);
+	jl_io_printc(_jlc->jlc, "Complete!\n");
 	//
+	jl_io_tag(_jlc->jlc, JL_IO_SIMPLE);
 	_jlc->has.filesys = 1;
 	jl_io_printc(_jlc->jlc, "program name:");
 	jl_dl_progname(_jlc->jlc, Strt("JLVM"));
@@ -877,7 +886,6 @@ void _jl_fl_inita(jvct_t * _jlc) {
 
 	truncate(_jlc->fl.paths.errf, 0);
 	_jl_fl_errf(_jlc, ":Starting...\n");
-	jl_io_close_block(_jlc->jlc); // } Close Block "INIT"
-	jl_io_close_block(_jlc->jlc); // } Close Block "FILE"
 	jl_io_printc(_jlc->jlc, "finished file init\n");
+	jl_io_close_block(_jlc->jlc);
 }
