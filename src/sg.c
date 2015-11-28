@@ -63,7 +63,7 @@ void jl_gl_pr_scr_set(jvct_t *_jlc, jl_vo_t* vo);
 	#define IMG_SIZE_LOW (1+strlen(JL_IMG_HEADER)+(256*4)+(1024*1024)+1)
 
 	#if JL_PLAT == JL_PLAT_PHONE
-	str_t JLVM_FILEBASE;
+	str_t JL_FL_BASE;
 	#endif
 
 // Struct Types:
@@ -752,8 +752,8 @@ JNIEXPORT void JNICALL
 Java_org_libsdl_app_SDLActivity_nativeJlSendData(
 	JNIEnv *env, jobject obj, jstring data)
 {
-	JLVM_FILEBASE = (*env)->GetStringUTFChars(env, data, 0);
-	SDL_Log("nativeJlSendData \"%s\"\n", JLVM_FILEBASE);
+	JL_FL_BASE = (*env)->GetStringUTFChars(env, data, 0);
+	SDL_Log("nativeJlSendData \"%s\"\n", JL_FL_BASE);
 }
 
 #endif

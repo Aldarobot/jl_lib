@@ -37,9 +37,10 @@
 #define VAR_TEXTUREI 2
 
 //Files
+#define JL_FILE_SEPARATOR "/"
 #define JL_ROOT_DIRNAME "JL_Lib"
-#define JL_ROOT_DIR JL_ROOT_DIRNAME "/"
-#define JL_MAIN_DIR "PlopGrizzly_JLL/"
+#define JL_ROOT_DIR JL_ROOT_DIRNAME JL_FILE_SEPARATOR
+#define JL_MAIN_DIR "PlopGrizzly_JLL"
 #define JL_MAIN_MEF "media.zip"
 
 #ifdef VIRTUAL_MACH_DAT

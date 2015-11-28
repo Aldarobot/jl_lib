@@ -109,12 +109,11 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 		uint8_t c)
 	{
 		jvct_t *_jlc = jlc->_jlc;
-		jl_rect_t rc_icon = { 0., 0., jl_gl_ar(jlc), jl_gl_ar(jlc)};
+		jl_rect_t rc_icon = { 0., 0., .1, .1};
 		jl_taskbar_t* ctx = _jlc->gr.taskbar->data.ctx;
-		jl_vec3_t tr = { 1. - (jl_gl_ar(jlc) * (ctx->cursor+1.)),
-			0., 0. };
+		jl_vec3_t tr = { .9 - (.1 * ctx->cursor), 0., 0. };
 
-		jl_gr_vos_image(jlc, &(ctx->icon[1]), rc_icon, g, i, c, 255);
+		jl_gr_vos_image(jlc, &(ctx->icon[1]), rc_icon, g, i, c, 64);
 		jl_gr_draw_vo(jlc, &(ctx->icon[1]), &tr);
 	}
 	
@@ -165,32 +164,55 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 		if(_jlc->sg.changed) ctx->redraw = 1;
 	}
 
+	//TODO: Move
+	static inline u8_t jl_gr_taskbar_idle__(jl_t* jlc, jl_taskbar_t *ctx) {
+		// If A NULL function then, stop looping taskbar.
+		if( !(ctx->func[0][ctx->cursor]) ) return 1;
+		// Run the not loop.
+		ctx->func[JL_GRTP_NOT][ctx->cursor](jlc);
+		return 0;
+	}
+
 	// Run when the taskbar is left alone.
 	static void _jl_gr_taskbar_loop_pass(jl_t* jlc) {
 		jvct_t* _jlc = jlc->_jlc;
 		jl_taskbar_t *ctx = _jlc->gr.taskbar->data.ctx;
 
-		for( ctx->cursor = 0; ctx->cursor < 10; ctx->cursor++) {
-			// If A NULL function then, stop looping taskbar.
-			if( !(ctx->func[0][ctx->cursor]) ) break;
-			// Run the not loop.
-			ctx->func[JL_GRTP_NOT][ctx->cursor](jlc);
-			// If need to redraw run "rdr"
-			if(ctx->redraw) jl_gr_sp_rdr(jlc, _jlc->gr.taskbar);
+		if(ctx->redraw) {
+			for( ctx->cursor = 0; ctx->cursor < 10; ctx->cursor++) {
+				if(jl_gr_taskbar_idle__(jlc, ctx)) break;
+				jl_gr_sp_rdr(jlc, _jlc->gr.taskbar);
+			}
+			ctx->redraw = 0;
+		}else{
+			for( ctx->cursor = 0; ctx->cursor < 10; ctx->cursor++)
+				if(jl_gr_taskbar_idle__(jlc, ctx)) break;
 		}
+	}
+
+	// TODO: MOVE
+	static inline void jl_gr_taskbar_shadow__(jl_t* jlc, jl_taskbar_t* ctx) {
+		m_u8_t i;
+
+		// Clear Texture.
+		jl_gl_clear(jlc, 0, 0, 255, 64);
+		// Draw Shadows.
+		for(i = 0; i < 10; i++) {
+			jl_vec3_t tr = { .9 - (.1 * i), 0., 0. };
+
+			if(!ctx->func[0][i]) break;
+			jl_gr_draw_vo(jlc, &(ctx->icon[0]), &tr);
+		}
+		// Set redraw = true.
+		ctx->redraw = 1;
 	}
 	
 	static void _jl_gr_taskbar_loop_resz(jl_t* jlc) {
 		jvct_t* _jlc = jlc->_jlc;
 		jl_taskbar_t *ctx = _jlc->gr.taskbar->data.ctx;
 
+		ctx->redraw = 2;
 		jl_gr_sp_rsz(jlc, _jlc->gr.taskbar);
-		for( ctx->cursor = 0; ctx->cursor < 10; ctx->cursor++) {
-			// If A NULL function then, stop looping taskbar.
-			if( !(ctx->func[0][ctx->cursor]) ) break;
-			// If need to redraw run "rdr"
-			jl_gr_sp_rdr(jlc, _jlc->gr.taskbar);
-		}	
 	}
 
 	// Run when the taskbar is clicked/pressed
@@ -198,7 +220,7 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 		jvct_t* _jlc = jlc->_jlc;
 		jl_taskbar_t *ctx;
 
-		//If mouse is'nt over the taskbar - dont run pressed.
+		//If mouse isn't over the taskbar - dont run pressed.
 		if(_jlc->ct.msy >= .1) {
 			_jl_gr_taskbar_loop_pass(jlc);
 			return;
@@ -223,10 +245,15 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 	static void _jl_gr_taskbar_draw(jl_t* jlc, jl_sprd_t* sprd) {
 		jvct_t *_jlc = jlc->_jlc;
 		jl_taskbar_t* ctx = _jlc->gr.taskbar->data.ctx;
-		
+
+		if(ctx->redraw == 2) {
+			jl_gr_taskbar_shadow__(jlc, ctx);
+			
+		}
 		// Run the selected icon's redraw function
-		if(ctx->cursor >= 0 && ctx->func[JL_GRTP_RDR][ctx->cursor])
+		if(ctx->func[JL_GRTP_RDR][ctx->cursor]) {
 			ctx->func[JL_GRTP_RDR][ctx->cursor](jlc);
+		}
 	}
 
 	// Runs every frame.
@@ -241,7 +268,7 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 	}
 
 	static void _jl_gr_menu_init(jvct_t* _jlc) {
-		jl_rect_t rc = { 0.f, 0.f, 1.f, .1f };
+		jl_rect_t rc = { 0.f, 0.f, 1.f, .11f };
 		jl_rect_t rc_icon = { 0., 0., .1, .1};
 		jl_rect_t rc_shadow = {-.01, .01, .1, .1 };
 		uint8_t shadow_color[] = { 0, 0, 0, 64 };
@@ -314,6 +341,35 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 /************************/
 
 	void jl_gr_sp_dont(jl_t* jlc, jl_sprd_t* spr) { }
+
+	/**
+	 * Prepare to draw an image that takes up the entire pre-renderer or
+	 * screen.
+	 * @param jlc: The library context.
+  	 * @param g: the image group that the image pointed to by 'i' is in.
+	 * @param i:  the ID of the image.
+	 * @param c: is 0 unless you want to use the image as
+	 * 	a charecter map, then it will zoom into charecter 'chr'.
+	 * @param a: the transparency each pixel is multiplied by; 255 is
+	 *	solid and 0 is totally invisble.
+	**/
+	void jl_gr_fill_image_set(jl_t *jlc, u16_t g, u16_t i, u8_t c, u8_t a) {
+		jvct_t *_jlc = jlc->_jlc;
+		jl_rect_t rc = { 0., 0., 1., jl_gl_ar(jlc) };
+
+		jl_gr_vos_image(jlc, _jlc->gr.vos.whole_screen, rc,
+			g, i, c, a);
+	}
+
+	/**
+	 * Draw the image prepared with jl_gr_fill_image_set().
+	 * @param jlc: The library context.
+	**/
+	void jl_gr_fill_image_draw(jl_t *jlc) {
+		jvct_t *_jlc = jlc->_jlc;
+
+		jl_gr_draw_vo(jlc, _jlc->gr.vos.whole_screen, NULL);
+	}
 
 	/**
 	 * Delete a pr image for a vertex object.
@@ -510,6 +566,12 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 		jl_gl_vo_free(jlc->_jlc, pv);
 	}
 
+	// TODO: Move.
+	static inline void jl_gr_sp_redraw_tex__(jl_t* jlc, jl_sprite_t *spr) {
+		jl_me_tmp_ptr(jlc, 0, spr);
+		jl_gl_pr_(jlc->_jlc, spr->pr, jl_gr_sprite_draw_to_pr__);
+	}
+
 	/**
 	 * Run a sprite's draw routine to draw on it's pre-rendered texture.
 	 *
@@ -517,9 +579,10 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 	 * @param spr: Which sprite to draw.
 	**/
 	void jl_gr_sp_rdr(jl_t* jlc, jl_sprite_t *spr) {
-		jl_me_tmp_ptr(jlc, 0, spr);
+		// If pre-renderer hasn't been intialized, initialize & redraw.
 		if(!spr->pr) jl_gr_sp_rsz(jlc, spr);
-		jl_gl_pr_(jlc->_jlc, spr->pr, jl_gr_sprite_draw_to_pr__);
+		// Else, Redraw texture.
+		else jl_gr_sp_redraw_tex__(jlc, spr);
 	}
 
 	/**
@@ -529,12 +592,16 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 		jvct_t* _jlc = jlc->_jlc;
 		u16_t res = (_jlc->gl.cp ? _jlc->gl.cp->w : _jlc->dl.full_w)
 			* spr->data.rw;
-		u8_t isi = jl_gl_pr_isi_(_jlc, spr->pr);
 
-		// Resize
-		if(isi) jl_gl_pr_rsz(jlc,spr->pr,spr->data.rw,spr->data.rh,res);
-		else spr->pr = jl_gl_pr_new(jlc, spr->data.rw,spr->data.rh,res);
-
+		// Initialize or Resize
+		if(jl_gl_pr_isi_(_jlc, spr->pr)) {
+			jl_gl_pr_rsz(jlc,spr->pr,spr->data.rw,spr->data.rh,res);
+		}else{
+			spr->pr = jl_gl_pr_new(jlc,
+				spr->data.rw, spr->data.rh, res);
+		}
+		// Redraw
+		jl_gr_sp_redraw_tex__(jlc, spr);
 	}
 
 	/**
@@ -690,10 +757,10 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 	 * @param 'txt': the text to draw
 	**/
 	void jl_gr_draw_text_area(jl_t* jlc, jl_sprite_t * spr, str_t txt){
-		float fontsize = (spr->data.cb.w - .1) / strlen(txt);
+		float fontsize = .9 / strlen(txt);
 		jl_gr_draw_text(jlc, txt,
-			spr->data.cb.x + .05,
-			spr->data.cb.y + (.5 * (spr->data.cb.h - fontsize)),
+			.05,
+			.5 * (jl_gl_ar(jlc) - fontsize),
 			fontsize, 255);
 	}
 
@@ -703,8 +770,9 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 	 * @param 'spr': the boundary sprite
 	 * @param 'txt': the text to draw
 	**/
-	void jl_gr_draw_text_sprite(jl_t* jlc,jl_sprite_t * spr, str_t txt){
-		//jl_gr_sp_rdr(jlc, spr);
+	void jl_gr_draw_text_sprite(jl_t* jlc,jl_sprite_t * spr, str_t txt) {
+		jl_gr_fill_image_set(jlc, 0, 1, 1, 255);
+		jl_gr_fill_image_draw(jlc);
 		jl_gr_draw_text_area(jlc, spr, txt);
 	}
 
@@ -726,13 +794,8 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 	 * @param 'message': the message 
 	 */
 	void jl_gr_draw_msge(jl_t* jlc, char * message) {
-		jvct_t *_jlc = jlc->_jlc;
-		//TODO: Make it so this variable is unneeded to change graphics.
-		jl_rect_t rc = { 0., 0., 1., jl_gl_ar(jlc) };
-
-		jl_gr_draw_vo(jlc, _jlc->gr.vos.whole_screen, NULL);
-		jl_gr_vos_image(jlc, _jlc->gr.vos.whole_screen, rc,
-			0, 1, 1, 127);
+		jl_gr_fill_image_set(jlc, 0, 1, 1, 127);
+		jl_gr_fill_image_draw(jlc);
 		jl_gr_draw_ctxt(jlc, message, (9./16.)/2, 255);
 		_jl_dl_loop(jlc->_jlc); //Update Screen
 	}
@@ -802,14 +865,23 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 	void jl_gr_draw_glow_button(jl_t* jlc, jl_sprite_t * spr,
 		char *txt, jl_simple_fnt prun)
 	{
+		jvct_t* _jlc = jlc->_jlc;
+
 		jl_gr_sp_rdr(jlc, spr);
+		jl_gr_sp_drw(jlc, spr);
 		if(jl_gr_sprite_collide(jlc, jlc->mouse, spr)) {
-			jl_ct_run_event(jlc, JL_CT_PRESS, prun, jl_dont);
-//			jl_gr_draw_rect(jlc, spr->data.cb.x, spr->data.cb.y,
-//				spr->data.cb.w, spr->data.cb.h,
-//				1., 1., 1., 64);
+			jl_rect_t rc = { spr->data.cb.x, spr->data.cb.y,
+				spr->data.cb.w, spr->data.cb.h };
+			uint8_t glow_color[] = { 255, 255, 255, 64 };
+
+			// Draw glow
+			jl_gr_vos_rec(jlc, _jlc->gl.temp_vo, rc, glow_color, 0);
+			jl_gr_draw_vo(jlc, _jlc->gl.temp_vo, NULL);
+			// Description
 			jl_gr_draw_text(jlc, txt, 0, jl_gl_ar(jlc) - .0625,
 				.05, 255);
+			// Run if press
+			jl_ct_run_event(jlc, JL_CT_PRESS, prun, jl_dont);
 		}
 	}
 
@@ -876,9 +948,11 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 	{
 		jvct_t *_jlc = jlc->_jlc;
 		jl_taskbar_t* ctx = _jlc->gr.taskbar->data.ctx;
-		uint8_t i;
+		m_u8_t i;
 
-		for(i = 0; i < 10; i++) { if(!ctx->func[0][i]) break; }
+		ctx->redraw = 2;
+		for(i = 0; i < 10; i++) if(!ctx->func[0][i]) break;
+		// Set functions for: draw, press, not press
 		ctx->func[JL_GRTP_NOT][i] = fno;
 		ctx->func[JL_GRTP_YES][i] = fnc;
 		ctx->func[JL_GRTP_RDR][i] = rdr;
@@ -922,10 +996,6 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 /************************/
 
 	void _jl_gr_resz(jl_t* jlc) {
-		jvct_t *_jlc = jlc->_jlc;
-		jl_rect_t rc = { 0., 0., 1., jl_gl_ar(jlc)};
-
-		jl_gr_vos_image(jlc, _jlc->gr.vos.whole_screen, rc, 0, 1, 1, 127);
 	//Menu Bar
 		_jl_gr_taskbar_loop_resz(jlc);
 	//Mouse

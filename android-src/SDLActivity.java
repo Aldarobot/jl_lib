@@ -512,8 +512,8 @@ class SDLMain implements Runnable {
 			System.out.println("[JAVA/JLVM] Mount your media.\n");
 			return;
 		}
-		SDLActivity.nativeJlSendData(SDLActivity.getContext().
-			getExternalFilesDir(null).getAbsolutePath());
+		SDLActivity.nativeJlSendData(Environment.
+			getExternalStorageDirectory().getAbsolutePath() + "/");
 		SDLActivity.nativeInit();
 		System.out.println("[JAVA/JLVM] Program Ended!\n");
 	}

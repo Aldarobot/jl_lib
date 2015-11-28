@@ -70,6 +70,8 @@
 	void jl_dl_progname(jl_t* jlc, strt name);
 // "gr.c"
 	void jl_gr_sp_dont(jl_t* jlc, jl_sprd_t* spr);
+	void jl_gr_fill_image_set(jl_t *jlc, u16_t g, u16_t i, u8_t c, u8_t a);
+	void jl_gr_fill_image_draw(jl_t *jlc);
 	void jl_gr_pr_old(jl_t* jlc, jl_vo_t* pv);
 	void jl_gr_pr_new(jl_t* jlc, jl_vo_t* pv, u16_t xres);
 	jl_ccolor_t* jl_gr_convert_color(jl_t* jlc, uint8_t *rgba, uint32_t vc,

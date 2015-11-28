@@ -478,9 +478,10 @@ static inline void _jl_gl_init_enable_alpha(jvct_t *_jlc) {
 	JL_GL_ERROR(_jlc, 0,"glEnable( GL_BLEND )");
 //	glEnable(GL_CULL_FACE);
 //	JL_GL_ERROR(_jlc, 0,"glEnable( GL_CULL_FACE )");
-	glBlendColor(1.f,1.f,1.f,0.f);
+	glBlendColor(0.f,0.f,0.f,0.f);
 	JL_GL_ERROR(_jlc, 0,"glBlendColor");
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA,
+		GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
 	JL_GL_ERROR(_jlc, 0,"glBlendFunc");
 }
 

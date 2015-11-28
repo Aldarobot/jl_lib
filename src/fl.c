@@ -15,7 +15,7 @@
 #define JL_FL_PERMISSIONS ( S_IRWXU | S_IRWXG | S_IRWXO )
 
 #if JL_PLAT == JL_PLAT_PHONE
-	extern str_t JLVM_FILEBASE;
+	extern str_t JL_FL_BASE;
 #endif
 
 /** @cond **/
@@ -104,11 +104,12 @@ static inline void jl_fl_reset_cursor__(str_t file_name) {
 
 static inline void jl_fl_get_root__(jvct_t * _jlc) {
 	strt root_path;
-	strt root_dir;
 
 #if JL_PLAT == JL_PLAT_PHONE
+	strt root_dir;
+
 	jl_io_printc(_jlc->jlc, "Get external storage directory.\n");
-	root_path = jl_me_strt_mkfrom_str(JLVM_FILEBASE);
+	root_path = jl_me_strt_mkfrom_str(JL_FL_BASE);
 	jl_io_printc(_jlc->jlc, "Append JL_ROOT_DIR.\n");
 	root_dir = jl_me_strt_mkfrom_str(JL_ROOT_DIR);
 	jl_io_printc(_jlc->jlc, "Merging root_path and root_dir.\n");
@@ -139,6 +140,9 @@ static inline void jl_fl_get_root__(jvct_t * _jlc) {
 	}
 	// Set paths.root & free root_path
 	_jlc->fl.paths.root = jl_me_string_fstrt(_jlc->jlc, root_path);
+	jl_io_printc(_jlc->jlc, "Root Path=\"");
+	jl_io_printc(_jlc->jlc, _jlc->fl.paths.root);
+	jl_io_printc(_jlc->jlc, "\"\n");
 }
 
 static inline void jl_fl_get_errf__(jvct_t * _jlc) {
@@ -297,7 +301,7 @@ char jl_fl_pk_save(jl_t* jlc, str_t packageFileName, str_t fileName,
 	struct zip_source *s;
 	if ((s=zip_source_buffer(archive, (void *)data, dataSize, 0)) == NULL) {
 		zip_source_free(s);
-		_jl_fl_errf(jlc->_jlc, "[JLVM/FILE/PKDJ/SAVE] src null error[replace]: ");
+		_jl_fl_errf(jlc->_jlc, "[JL_FL_PK_SAVE] src null error[replace]: ");
 		_jl_fl_errf(jlc->_jlc, (char *)zip_strerror(archive));
 		_jl_fl_errf(jlc->_jlc, "\n");
 		jl_sg_kill(jlc);
@@ -494,14 +498,15 @@ uint8_t *jl_fl_media(jl_t* jlc, str_t Fname, str_t pzipfile,
  * @param jlc: Library Context.
  * @param prg_folder: The name of the folder for all of the program's resources.
  *	For a company "PlopGrizzly" with game "Super Game":
- *		Pass: "PlopGrizzly_SG/"
+ *		Pass: "PlopGrizzly_SG"
  *	For an individual game developer "Jeron Lau" with game "Cool Game":
- *		Pass: "JeronLau_CG/"
+ *		Pass: "JeronLau_CG"
  * @param fname: Name Of Resource Pack
  * @returns: The designated location for a resouce pack
 */
 str_t jl_fl_get_resloc(jl_t* jlc, str_t prg_folder, str_t fname) {
 	jvct_t * _jlc = jlc->_jlc;
+	strt filesr = jl_me_strt_mkfrom_str(JL_FILE_SEPARATOR);
 	strt pfstrt = jl_me_strt_mkfrom_str(prg_folder);
 	strt fnstrt = jl_me_strt_mkfrom_str(fname);
 	strt resloc = jl_me_strt_mkfrom_str(_jlc->fl.paths.root);
@@ -513,6 +518,8 @@ str_t jl_fl_get_resloc(jl_t* jlc, str_t prg_folder, str_t fname) {
 	jl_io_printc(jlc, "Getting Resource Location....\n");
 	// Append 'prg_folder' onto 'resloc'
 	jl_me_strt_merg(jlc, resloc, pfstrt);
+	// Append 'filesr' onto 'resloc'
+	jl_me_strt_merg(jlc, resloc, filesr);
 	// Make 'prg_folder' if it doesn't already exist.
 	if( jl_fl_mkdir(jlc, (str_t) resloc->data) == 2 ) {
 		jl_io_printc(jlc, "jl_fl_get_resloc: couldn't make \"");
@@ -525,9 +532,8 @@ str_t jl_fl_get_resloc(jl_t* jlc, str_t prg_folder, str_t fname) {
 	jl_me_strt_merg(jlc, resloc, fnstrt);
 	// Set 'rtn' to 'resloc' and free 'resloc'
 	rtn = jl_me_string_fstrt(jlc, resloc);
-	// Free pfstrt & fnstrt
-	jl_me_strt_free(pfstrt), jl_me_strt_free(fnstrt);
-
+	// Free pfstrt & fnstrt & filesr
+	jl_me_strt_free(pfstrt),jl_me_strt_free(fnstrt),jl_me_strt_free(filesr);
 	// Close Block "FLBS"
 	jl_io_close_block(jlc); // }
 	jl_io_printc(jlc, "finished resloc w/ \""); 
@@ -555,7 +561,7 @@ static uint8_t _jl_fl_user_select_open_dir(jl_t* jlc, char *dirname) {
 	_jl_fl_user_select_check_extradir(dirname);
 	if(dirname[1] == '\0') {
 		jl_me_alloc(jlc, (void**)&dirname, 0, 0);
-		dirname = SDL_GetPrefPath("JLVM", "\0");
+		dirname = SDL_GetPrefPath("JL_Lib", "\0");
 		_jl_fl_user_select_check_extradir(dirname);
 	}
 	offset = dirname[0] == '!';
@@ -629,7 +635,7 @@ uint8_t jl_fl_user_select_init(jl_t* jlc, const char *program_name,
 		return _jl_fl_user_select_open_dir(jlc, path);
 	}else{
 		return _jl_fl_user_select_open_dir(jlc,
-			SDL_GetPrefPath("JLVM",program_name));
+			SDL_GetPrefPath("JL_Lib",program_name));
 	}
 }
 
@@ -739,8 +745,8 @@ void jl_fl_user_select_loop(jl_t* jlc) {
 
 	iterator = cl_list_iterator_create(_jlc->fl.filelist);
 
-	jl_gr_draw_vo(jlc, _jlc->gr.vos.whole_screen, NULL);
-//	jl_gr_draw_image(jlc, 0, 1, 0., 0., 1., jl_gl_ar(jlc), 1, 127);
+	jl_gr_fill_image_set(jlc, 0, 1, 1, 255);
+	jl_gr_fill_image_draw(jlc);
 	jl_gr_draw_text(jlc, "Select File", .02, .02, .04,255);
 
 	jl_ct_run_event(jlc,JL_CT_MAINUP, _jl_fl_user_select_up, jl_dont);
@@ -819,28 +825,38 @@ static void _jl_fl_btn_makefile_press(jl_t* jlc) {
 }
 
 static void _jl_fl_btn_makefile_loop(jl_t* jlc, jl_sprd_t* sprd) {
-	
-}
-
-static void _jl_fl_btn_makefile_draw(jl_t* jlc, jl_sprd_t* sprd) {
 	jvct_t *_jlc = jlc->_jlc;
-	
+
 	//TODO: make graphic: 0, 1, 1, 255
-	if(_jlc->fl.newfiledata == NULL) return;
+	if(!_jlc->fl.newfiledata) return;
 	jl_gr_draw_glow_button(jlc, _jlc->fl.btns[0], "+ New File",
 		_jl_fl_btn_makefile_press);
 }
 
-static void _jl_fl_btn_makefolder_loop(jl_t* jlc, jl_sprd_t* sprd) {
-	
+static void _jl_fl_btn_makefile_draw(jl_t* jlc, jl_sprd_t* sprd) {
+	jvct_t* _jlc = jlc->_jlc;
+	jl_rect_t rc = { 0., 0., jl_gl_ar(jlc), jl_gl_ar(jlc) };
+	jl_vec3_t tr = { 0., 0., 0. };
+
+	jl_gr_vos_image(jlc, _jlc->gl.temp_vo, rc, 0, 1, 9, 255);
+	jl_gr_draw_vo(jlc, _jlc->gl.temp_vo, &tr);
 }
 
-static void _jl_fl_btn_makefolder_draw(jl_t* jlc, jl_sprd_t* sprd) {
+static void _jl_fl_btn_makefolder_loop(jl_t* jlc, jl_sprd_t* sprd) {
 	jvct_t *_jlc = jlc->_jlc;
 	
 	//TODO: make graphic: 0, 1, 2, 255,
 	jl_gr_draw_glow_button(jlc, _jlc->fl.btns[1], "+ New Folder",
 		_jl_fl_btn_makefile_press);
+}
+
+static void _jl_fl_btn_makefolder_draw(jl_t* jlc, jl_sprd_t* sprd) {
+	jvct_t* _jlc = jlc->_jlc;
+	jl_rect_t rc = { 0., 0., jl_gl_ar(jlc), jl_gl_ar(jlc) };
+	jl_vec3_t tr = { 0., 0., 0. };
+
+	jl_gr_vos_image(jlc, _jlc->gl.temp_vo, rc, 0, 1, 10, 255);
+	jl_gr_draw_vo(jlc, _jlc->gl.temp_vo, &tr);
 }
 
 void _jl_fl_kill(jvct_t * _jlc) {
@@ -879,7 +895,7 @@ void _jl_fl_inita(jvct_t * _jlc) {
 	jl_io_tag(_jlc->jlc, JL_IO_SIMPLE);
 	_jlc->has.filesys = 1;
 	jl_io_printc(_jlc->jlc, "program name:");
-	jl_dl_progname(_jlc->jlc, Strt("JLVM"));
+	jl_dl_progname(_jlc->jlc, Strt("JL_Lib"));
 
 	str_t pkfl = jl_fl_get_resloc(_jlc->jlc, JL_MAIN_DIR, JL_MAIN_MEF);
 	remove(pkfl);
