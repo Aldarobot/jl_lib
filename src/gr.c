@@ -838,7 +838,7 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 
 	/**
 	 * Run the Slide Button loop. ( activated when pressed, moved when
-	 *  hovered over. )
+	 *  hovered over. ) - And Draw Slide Button.
 	 * @param 'jlc': the libary context
  	 * @param 'spr': the Slide Button Sprite.
  	 * @param 'defaultx': the default x position of the button.
@@ -852,7 +852,8 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 		if(jl_gr_sprite_collide(jlc, jlc->mouse, spr)) {
 			jl_ct_run_event(jlc, JL_CT_PRESS, prun, jl_dont);
 			spr->data.tr.x = defaultx + slidex;
-		}	
+		}
+		jl_gr_sp_drw(jlc, spr);
 	}
 
 	/**

@@ -237,7 +237,6 @@ void jl_fl_save(jl_t* jlc, const void *file, const char *name, uint32_t bytes) {
  */
 strt jl_fl_load(jl_t* jlc, str_t file_name) {
 	jl_fl_reset_cursor__(file_name);
-	m_u32_t i;
 	unsigned char *file = malloc(MAXFILELEN);
 	uint8_t offs = (file_name[0] == '!');
 	int fd = open(file_name + offs, O_RDWR);
@@ -252,21 +251,19 @@ strt jl_fl_load(jl_t* jlc, str_t file_name) {
 		jl_io_printc(jlc, "file_file_load: Failed to open file\n");
 		jl_sg_kill(jlc);
 	}
-	int Read = read(fd, file, MAXFILELEN + 1);
+	int Read = read(fd, file, MAXFILELEN);
 	jlc->info = Read;
 
 	jl_io_printc(jlc, "jl_fl_load(): read ");
 	jl_io_printi(jlc, jlc->info);
 	jl_io_printc(jlc, " bytes\n");
 	close(fd);
-	strt frtn = jl_me_strt_make(jlc->info);
-	for( i = 0; i < jlc->info; i++) {
-		frtn->data[i] = file[i];
-	}
-	frtn->data = file;
+
+	strt rtn = jlc->info ?
+		jl_me_strt_mkfrom_data(jlc, jlc->info, file) : NULL;
 	
 	jl_io_close_block(jlc); //Close Block "FLLD"
-	return frtn;
+	return rtn;
 }
 
 /**
@@ -338,7 +335,7 @@ static void _jl_fl_pk_load_quit(jl_t* jlc) {
  * @param filename: file within package to load
  * @returns: contents of file ( "filename" ) in package ( "packageFileName" )
 */
-uint8_t *jl_fl_pk_load(jl_t* jlc, const char *packageFileName,
+strt jl_fl_pk_load(jl_t* jlc, const char *packageFileName,
 	const char *filename)
 {
 	jlc->errf = JL_ERR_NERR;
@@ -390,15 +387,18 @@ uint8_t *jl_fl_pk_load(jl_t* jlc, const char *packageFileName,
 		jl_io_printc(jlc, "empty file, returning NULL.");
 		return NULL;
 	}
-	jl_io_printc(jlc, "read ");
+	jl_io_printc(jlc, "jl_fl_pk_load: read ");
 	jl_io_printi(jlc, jlc->info);
 	jl_io_printc(jlc, " bytes\n");
-	jl_io_printc(jlc, "read opened file.\n");
 	zip_close(zipfile);
+	jl_io_printc(jlc, "closed file.\n");
+	// Make a strt from the data.
+	strt rtn = jlc->info ?
+		jl_me_strt_mkfrom_data(jlc, jlc->info, fileToLoad) : NULL;
 	jl_io_printc(jlc, "done.\n");
 	jlc->errf = JL_ERR_NERR;
 	_jl_fl_pk_load_quit(jlc);
-	return fileToLoad;
+	return rtn;
 }
 
 /**
@@ -444,12 +444,11 @@ u8_t jl_fl_mkdir(jl_t* jlc, str_t path) {
  * @param size: the size (in bytes) of the contents.
  * @return x: the data contents of the file.
 */
-uint8_t * jl_fl_mkfile(jl_t* jlc, str_t pzipfile, str_t pfilebase,
+strt jl_fl_mkfile(jl_t* jlc, str_t pzipfile, str_t pfilebase,
 	char *contents, uint32_t size)
 {
-
 //	if(!pfilebase) { return; }
-	uint8_t *freturn;
+	strt rtn;
 
 	//Create Block "MKFL"
 	jl_io_offset(jlc, JL_IO_SIMPLE, "MKFL"); // {
@@ -460,7 +459,7 @@ uint8_t * jl_fl_mkfile(jl_t* jlc, str_t pzipfile, str_t pfilebase,
 	SDL_Delay(1000); //give file system time to update
 	jl_io_printc(jlc, "Try loading....\n");
 	if(
-		((freturn = jl_fl_pk_load(jlc, pzipfile, pfilebase))== NULL) &&
+		((rtn = jl_fl_pk_load(jlc, pzipfile, pfilebase))== NULL) &&
 		(jlc->errf == JL_ERR_FIND) )//Package still doesn't exist!!
 	{
 		_jl_fl_errf(jlc->_jlc, ":Failed To Create file\n");
@@ -470,7 +469,7 @@ uint8_t * jl_fl_mkfile(jl_t* jlc, str_t pzipfile, str_t pfilebase,
 	//Close Block "MKFL"
 	jl_io_close_block(jlc); // }
 	jl_io_printc(jlc, "File Made!\n");
-	return freturn;
+	return rtn;
 }
 
 /**
@@ -481,16 +480,16 @@ uint8_t * jl_fl_mkfile(jl_t* jlc, str_t pzipfile, str_t pfilebase,
  * @param pdata: Media Package Data to save if it doesn't exist.
  * @param psize: Size of "pdata" 
 */
-uint8_t *jl_fl_media(jl_t* jlc, str_t Fname, str_t pzipfile,
+strt jl_fl_media(jl_t* jlc, str_t Fname, str_t pzipfile,
 	void *pdata, uint64_t psize)
 {
-	uint8_t *freturn = jl_fl_pk_load(jlc, pzipfile, Fname);
+	strt rtn = jl_fl_pk_load(jlc, pzipfile, Fname);
 	jl_io_printc(jlc, "JL_FL_MEDIA Returning\n");
 	//If Package doesn't exist!! - create
-	if( (freturn == NULL) && (jlc->errf == JL_ERR_FIND) )
+	if( (rtn == NULL) && (jlc->errf == JL_ERR_FIND) )
 		return jl_fl_mkfile(jlc, pzipfile, Fname, pdata, psize);
 	else
-		return freturn;
+		return rtn;
 }
 
 /**

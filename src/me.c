@@ -66,6 +66,11 @@ static void _jl_me_truncate_curs(strt pstr) {
 	}
 }
 
+static void jl_me_strt_increment(strt pstr, u8_t incrementation) {
+	pstr->curs += incrementation;
+	_jl_me_truncate_curs(pstr);
+}
+
 /************************/
 /*** Global Functions ***/
 /************************/
@@ -204,6 +209,40 @@ u8_t jl_me_strt_byte(strt pstr) {
 }
 
 /**
+ * Get the byte at the cursor of "strt", and increment the cursor value
+**/
+u8_t jl_me_strt_get_byte(strt pstr) {
+	uint8_t* area = ((void*)pstr->data) + pstr->curs;
+	jl_me_strt_increment(pstr, 1);
+	return *area;
+}
+
+/**
+ * Get data at the cursor of "pstr", and increment the cursor value.
+ * @param pstr: the string to read.
+ * @param varsize: the size of variable pointed to by "var" in bytes (1,2,4,8).
+ * @param var: the variable to save the data to.
+**/
+void jl_me_strt_loadto(strt pstr, u32_t varsize, void* var) {
+	void* area = ((void*)pstr->data) + pstr->curs;
+
+	jl_me_copyto(area, var, varsize);
+	jl_me_strt_increment(pstr, varsize);
+}
+
+/**
+ * Add variable data at the cursor of "pstr", and increment the cursor value.
+ * @param pstr: the string to read.
+ * @param: pval: the integer to add to "pstr"
+*/
+void jl_me_strt_saveto(strt pstr, u32_t varsize, const void* var) {
+	void* area = ((void*)pstr->data) + pstr->curs;
+
+	jl_me_copyto(var, area, varsize);
+	jl_me_strt_increment(pstr, varsize);
+}
+
+/**
  * Add a byte ( "pvalue" ) at the cursor in a string ( "pstr" ), then increment
  * the cursor value [ truncated to the string size ]
  * @param pstr: The string to add a byte to.
@@ -212,8 +251,7 @@ u8_t jl_me_strt_byte(strt pstr) {
 void jl_me_strt_add_byte(strt pstr, u8_t pvalue) {
 	_jl_me_truncate_curs(pstr);
 	pstr->data[pstr->curs] = pvalue;
-	pstr->curs++;
-	_jl_me_truncate_curs(pstr);
+	jl_me_strt_increment(pstr, 1);
 }
 
 /**

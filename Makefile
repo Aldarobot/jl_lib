@@ -180,6 +180,14 @@ build-libzip:
 	ar csr ../../build/deps/lib_zip.o lib/*.o && \
 	cp lib/zip.h ../../src/lib/zip.h && \
 	printf "[COMP] done!\n"
+build-sdl:
+	printf "[COMP] compiling SDL...\n" && \
+	cd deps/SDL2-2.0.3/ && \
+	sh configure && \
+	make && \
+	ld -r build/.libs/*.o -o ../../build/deps/lib_SDL.o && \
+	cp include/*.h ../../src/lib/include/ && \
+	printf "[COMP] done!\n"
 build-sdl-image:
 	printf "[COMP] compiling SDL_image...\n" && \
 	cd deps/SDL2_image-2.0.0/ && \
@@ -187,6 +195,7 @@ build-sdl-image:
 	make && \
 	#ar Tcsr ../../build/deps/lib_SDL_image.o .libs/IMG_*.o  && \
 	ld -r .libs/*.o -o ../../build/deps/lib_SDL_image.o && \
+	cp SDL_image.h ../../src/lib/include/ && \
 	printf "[COMP] done!\n"
 build-sdl-net:
 	printf "[COMP] compiling SDL_net...\n" && \
@@ -194,16 +203,17 @@ build-sdl-net:
 	sh configure && \
 	make && \
 	ar csr ../../build/deps/lib_SDL_net.o .libs/*.o && \
-	cp SDL_net.h ../../src/lib/lib_SDL_net.h && \
-	sed -i "s|\"SDL.h\"|<SDL2/SDL.h>|g" ../../src/lib/lib_SDL_net.h && \
-	sed -i "s|\"SDL_endian.h\"|<SDL2/SDL_endian.h>|g"\
-	 ../../src/lib/lib_SDL_net.h && \
-	sed -i "s|\"SDL_version.h\"|<SDL2/SDL_version.h>|g"\
-	 ../../src/lib/lib_SDL_net.h && \
-	sed -i "s|\"begin_code.h\"|<SDL2/begin_code.h>|g"\
-	 ../../src/lib/lib_SDL_net.h && \
-	sed -i "s|\"close_code.h\"|<SDL2/close_code.h>|g"\
-	 ../../src/lib/lib_SDL_net.h && \
+	cp SDL_net.h ../../src/lib/include/ && \
+	#cp SDL_net.h ../../src/lib/lib_SDL_net.h && \
+	#sed -i "s|\"SDL.h\"|<SDL2/SDL.h>|g" ../../src/lib/lib_SDL_net.h && \
+	#sed -i "s|\"SDL_endian.h\"|<SDL2/SDL_endian.h>|g"\
+	# ../../src/lib/lib_SDL_net.h && \
+	#sed -i "s|\"SDL_version.h\"|<SDL2/SDL_version.h>|g"\
+	# ../../src/lib/lib_SDL_net.h && \
+	#sed -i "s|\"begin_code.h\"|<SDL2/begin_code.h>|g"\
+	# ../../src/lib/lib_SDL_net.h && \
+	#sed -i "s|\"close_code.h\"|<SDL2/close_code.h>|g"\
+	# ../../src/lib/lib_SDL_net.h && \
 	printf "[COMP] done!\n"
 build-sdl-mixer:
 	printf "[COMP] compiling SDL_mixer...\n" && \

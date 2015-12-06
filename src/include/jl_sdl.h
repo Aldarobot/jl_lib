@@ -5,3 +5,5 @@
 	#include "SDL_test_common.h"
 	#include "SDL_main.h"
 #endif
+
+#include "../lib/include/SDL_image.h"

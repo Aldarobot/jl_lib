@@ -347,14 +347,18 @@ static void jl_gl_texture_off__(jvct_t *_jlc) {
 static void jl_gl_texture_new__(jvct_t *_jlc, m_u32_t *tex, u8_t* px,
 	u16_t w, u16_t h)
 {
+	jl_io_printc(_jlc->jlc, "make tx\n");
 	// Make the texture
 	jl_gl_texture_make__(_jlc, tex);
 	// Bind the texture
 	jl_gl_texture_bind__(_jlc, *tex);
+	jl_io_printc(_jlc->jlc, "set tx\n");
 	// Set texture
 	jl_gl_texture_set__(_jlc, px, w, h);
+	jl_io_printc(_jlc->jlc, "set txpar\n");
 	// Set the texture parametrs.
 	jl_gl_texpar_set__(_jlc);
+	jl_io_printc(_jlc->jlc, "setd tx\n");
 }
 
 #if JL_GLRTEX == JL_GLRTEX_EGL

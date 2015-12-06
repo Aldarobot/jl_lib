@@ -53,6 +53,13 @@ typedef enum{
 }jl_imgi_t;
 
 typedef enum{
+	JL_IMG_FORMAT_IMG=1,
+	JL_IMG_FORMAT_HQB=2,
+	JL_IMG_FORMAT_PIC=3,
+	JL_IMG_FORMAT_FLS=4,
+}jl_img_format_t;
+
+typedef enum{
 	_JL_IO_MINIMAL,	//JL-lib prints starting/started/stopping etc.
 	_JL_IO_PROGRESS,//JL-lib prints image/audio loading
 	_JL_IO_SIMPLE,	//JL-lib prints all landmarks

@@ -1,3 +1,4 @@
 target
 build
 deps
+src/lib/include/

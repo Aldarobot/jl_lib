@@ -188,7 +188,7 @@ static inline void _jl_au_init_sounds(jvct_t *_jlc, uint8_t *data) {
  * @param pigid: which audio group to load the soundtracks into.
 */
 void jl_au_add_audio(jl_t* jlc, str_t pzipfile, uint16_t pigid) {
-	uint8_t *aud = jl_fl_media(jlc, "jlex/2/_aud", pzipfile,
+	strt aud = jl_fl_media(jlc, "jlex/2/_aud", pzipfile,
 		jal5_head_jlvm(), jal5_head_size());
 	jl_io_offset(jlc, JL_IO_MINIMAL, "LOAD"); // { : Open Block "LOAD"
 	jl_io_printc(jlc, "AUDIO_AUDIO:");
@@ -196,7 +196,7 @@ void jl_au_add_audio(jl_t* jlc, str_t pzipfile, uint16_t pigid) {
 	jl_io_printc(jlc, "\nLoading audiostuffs...\n");
 	jl_io_close_block(jlc); // } : Close Block "LOAD"
 	if((aud != NULL) || (jlc->info > 4)) {
-		_jl_au_init_sounds(jlc->_jlc,aud);
+		_jl_au_init_sounds(jlc->_jlc,aud->data);
 	}
 	jl_io_offset(jlc, JL_IO_MINIMAL, "LOAD"); // { : Open Block "LOAD"
 	jl_io_printc(jlc, "Loaded audiostuffs!\n");

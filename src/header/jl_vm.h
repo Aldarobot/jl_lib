@@ -77,7 +77,7 @@ typedef struct {
 		//For loading images
 		uint16_t image_id;
 		uint16_t igid;
-		void *image_data;
+		strt image_data;
 		
 		// Offset x and y
 		float offsx, offsy;

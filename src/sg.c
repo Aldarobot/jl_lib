@@ -52,7 +52,6 @@ void jl_gl_pr_scr_set(jvct_t *_jlc, jl_vo_t* vo);
 // Constants
 	//ALL IMAGES: 1024x1024
 	#define TEXTURE_WH 1024*1024 
-	#define JL_IMG_HEADER "JLVM0:JYMJ\0"
 	//1bpp Bitmap = 1048832 bytes (Color Key(256)*RGBA(4), 1024*1024)
 	#define IMG_FORMAT_LOW 1048832 
 	//2bpp HQ bitmap = 2097664 bytes (Color Key(256*2=512)*RGBA(4), 2*1024*1024)
@@ -178,92 +177,131 @@ void jl_sg_mode_switch(jl_t* jlc, uint8_t mode, jl_sg_wm_t loop) {
 	jl_sg_mode_reset(jlc);
 }
 
-void _jl_sg_load_jlpx(jvct_t* _jlc,uint8_t *data,void **pixels,int *w,int *h) {
+//Get a pixels RGBA values from a surface and xy
+void _jl_sg_gpix(
+	/*in */ SDL_Surface* surface, int32_t x, int32_t y,
+	/*out*/ void* color)
+{
+	uint8_t *p = (uint8_t *)surface->pixels + (y * surface->pitch) + (x * 1);
+	SDL_Color *sdl_color= &surface->format->palette->colors[*p];
+	uint8_t* out_color = color;
+
+	out_color[0] = sdl_color->r;
+	out_color[1] = sdl_color->g;
+	out_color[2] = sdl_color->b;
+	out_color[3] = sdl_color->a;
+}
+
+void _jl_sg_load_jlpx(jvct_t* _jlc,strt data,void **pixels,int *w,int *h) {
 	if(data == NULL) {
 		_jl_fl_errf(_jlc, ":NULL DATA!\n");
 		jl_sg_kill(_jlc->jlc);
-	}else if(data[_jlc->sg.init_image_location] == 0) {
+	}else if(data->data[_jlc->sg.init_image_location] == 0) {
 		return;
 	}
-	jgr_img_t *image = NULL;
-	jl_me_alloc(_jlc->jlc, (void**)&image, sizeof(jgr_img_t), 0);
-	
-	jl_io_offset(_jlc->jlc, JL_IO_PROGRESS, "LOAD"); // {
+
 	jl_io_offset(_jlc->jlc, JL_IO_PROGRESS, "JLPX"); // {
 	
 	//Check If File Is Of Correct Format
-	jl_io_printc(_jlc->jlc, "loading image - header@");
-	jl_io_printi(_jlc->jlc, _jlc->sg.init_image_location);
-	jl_io_printc(_jlc->jlc,":");
-	jl_io_printt(_jlc->jlc, 8, (char *)data + _jlc->sg.init_image_location);
-	jl_io_printc(_jlc->jlc,"\n");
-
 	char *testing = malloc(strlen(JL_IMG_HEADER)+1);
-	uint32_t i;
+	int32_t i, j;
 
-	for(i = 0; i < strlen(JL_IMG_HEADER); i++) {
-		testing[i] = data[_jlc->sg.init_image_location+i];
-	}
+	jl_me_copyto(data->data + _jlc->sg.init_image_location, testing,
+		strlen(JL_IMG_HEADER));
 	testing[strlen(JL_IMG_HEADER)] = '\0';
 	jl_io_offset(_jlc->jlc, JL_IO_SIMPLE, "JLPX"); // =
-	jl_io_printc(_jlc->jlc, "header:");
+	jl_io_printc(_jlc->jlc, "header=\"");
 	jl_io_printc(_jlc->jlc, testing);
+	jl_io_printc(_jlc->jlc, "\" @");
+	jl_io_printi(_jlc->jlc, _jlc->sg.init_image_location);
 	jl_io_printc(_jlc->jlc, "\n");
 
 	if(strcmp(testing, JL_IMG_HEADER) != 0) {
-		_jl_fl_errf(_jlc, ":error: bad file type:\n:");
-		_jl_fl_errf(_jlc, testing);
-		_jl_fl_errf(_jlc, "\n:!=\n:");
-		_jl_fl_errf(_jlc, JL_IMG_HEADER);
-		_jl_fl_errf(_jlc, "\n");
+		jl_io_printc(_jlc->jlc, ":error: bad file type:\n:");
+		jl_io_printc(_jlc->jlc, testing);
+		jl_io_printc(_jlc->jlc, "\n:!=\n:");
+		jl_io_printc(_jlc->jlc, JL_IMG_HEADER);
+		jl_io_printc(_jlc->jlc, "\ncouldn't load image #");
+		jl_io_printi(_jlc->jlc, _jlc->sg.image_id);
+		jl_io_printc(_jlc->jlc, "\n");
 		jl_sg_kill(_jlc->jlc);
 	}
-	uint8_t tester = data[_jlc->sg.init_image_location+strlen(JL_IMG_HEADER)];
-	int FSIZE; //The size of the file.
-	if(tester == 1) { //Normal Quality[Lowy]
+	uint8_t tester = data->data[_jlc->sg.init_image_location+strlen(JL_IMG_HEADER)];
+	uint32_t FSIZE;
+	if(tester == JL_IMG_FORMAT_IMG) { //Normal Quality[Lowy]
 		FSIZE = IMG_SIZE_LOW;
 		jl_io_printc(_jlc->jlc, "normal quality\n");
-	}else if(tester == 2) { //High Quality[Norm]
+	}else if(tester == JL_IMG_FORMAT_HQB) { //High Quality[Norm]
 		FSIZE = IMG_FORMAT_MED;
 		jl_io_printc(_jlc->jlc, "high quality\n");
-	}else if(tester == 3) { //Picture[High]
+	}else if(tester == JL_IMG_FORMAT_PIC) { //Picture[High]
 		FSIZE = IMG_FORMAT_PIC;
 		jl_io_printc(_jlc->jlc, "pic quality\n");
+	}else if(tester == JL_IMG_FORMAT_FLS) {
+		SDL_Surface *image;
+		SDL_RWops *rw;
+		void* img_file = NULL;
+		uint32_t color = 0;
+		strt pixel_data;
+
+		jl_io_printc(_jlc->jlc, "png/gif/jpeg etc.\n");
+		data->curs = _jlc->sg.init_image_location+strlen(JL_IMG_HEADER)+1;
+		jl_me_strt_loadto(data, 4, &FSIZE);
+		jl_io_printc(_jlc->jlc, "File Size = ");
+		jl_io_printi(_jlc->jlc, FSIZE);
+		jl_io_printc(_jlc->jlc, "\n");
+		jl_me_alloc(_jlc->jlc, &img_file, FSIZE, 0);
+		jl_me_strt_loadto(data, FSIZE, img_file);
+		rw = SDL_RWFromMem(img_file, FSIZE);
+		if ((image = IMG_Load_RW(rw, 1)) == NULL) {
+			jl_io_printc(_jlc->jlc, "Couldn't load image: ");
+			jl_io_printc(_jlc->jlc, IMG_GetError());
+			jl_io_printc(_jlc->jlc, "\n");
+			jl_sg_kill(_jlc->jlc);
+		}
+		// Covert SDL_Surface.
+		pixel_data = jl_me_strt_make(image->w * image->h * 4);
+		for(i = image->h - 1; i >= 0; i--) {
+			for(j = 0; j < image->w; j++) {
+				_jl_sg_gpix(image, j, i, &color);
+				jl_me_strt_saveto(pixel_data, 4, &color);
+			}
+		}
+		_jlc->sg.init_image_location += FSIZE + 6;
+		//Set Return values
+		*pixels = jl_me_string_fstrt(_jlc->jlc, pixel_data);
+		*w = image->w;
+		*h = image->h;
+		// Clean-up
+		SDL_free(image);
+		return;
 	}else{
 		jl_io_offset(_jlc->jlc, JL_IO_MINIMAL, "JLPX");
-		jl_io_printc(_jlc->jlc, "bad file type(must be 1,2 or 3) is: ");
+		jl_io_printc(_jlc->jlc, "bad file type(must be 1-4) is: ");
 		jl_io_printi(_jlc->jlc, tester);
 		jl_io_printc(_jlc->jlc, "\n");
-		_jl_fl_errf(_jlc, ":bad file type(must be 1,2 or 3)\n");
+		_jl_fl_errf(_jlc, ":bad file type(must be 1-4)\n");
 		jl_sg_kill(_jlc->jlc);
 	}
-	uint32_t ki;
-	ki = strlen(JL_IMG_HEADER)+1;
+	jgr_img_t *image = NULL;
+	uint32_t ki = strlen(JL_IMG_HEADER)+1;
+
+	jl_me_alloc(_jlc->jlc, (void**)&image, sizeof(jgr_img_t), 0);
 	for(i = 0; i < 256; i++) {
-		image->key[i].r = data[_jlc->sg.init_image_location+ki];
+		image->key[i].r = data->data[_jlc->sg.init_image_location+ki];
 		ki++;
-		image->key[i].g = data[_jlc->sg.init_image_location+ki];
+		image->key[i].g = data->data[_jlc->sg.init_image_location+ki];
 		ki++;
-		image->key[i].b = data[_jlc->sg.init_image_location+ki];
+		image->key[i].b = data->data[_jlc->sg.init_image_location+ki];
 		ki++;
-		image->key[i].a = data[_jlc->sg.init_image_location+ki];
+		image->key[i].a = data->data[_jlc->sg.init_image_location+ki];
 		ki++;
 	}
 	jl_io_offset(_jlc->jlc, JL_IO_INTENSE, "JLPX");
-	jl_io_printc(_jlc->jlc, "Key: ");
-	jl_io_printi(_jlc->jlc, image->key[0].r);
-	jl_io_printc(_jlc->jlc, ", ");
-	jl_io_printi(_jlc->jlc, image->key[0].g);
-	jl_io_printc(_jlc->jlc, ", ");
-	jl_io_printi(_jlc->jlc, image->key[0].b);
-	jl_io_printc(_jlc->jlc, ", ");
-	jl_io_printi(_jlc->jlc, image->key[0].a);
-	jl_io_printc(_jlc->jlc, "\n");
 	for(i = 0; i < TEXTURE_WH; i++) {
-		image->tex_pixels[i] = data[_jlc->sg.init_image_location+ki];
+		image->tex_pixels[i] = data->data[_jlc->sg.init_image_location+ki];
 		ki++;
 	}
-	// Don't comment out this line!!!! it will cause an endless freeze!
 	_jlc->sg.init_image_location+=FSIZE+1;
 	jl_io_offset(_jlc->jlc, JL_IO_SIMPLE, "JLPX");
 	jl_io_printc(_jlc->jlc, "creating texture...\n");
@@ -282,14 +320,12 @@ void _jl_sg_load_jlpx(jvct_t* _jlc,uint8_t *data,void **pixels,int *w,int *h) {
 	a[0] = 1024;
 	a[1] = 1024;
 	//Set Return values
-	pixels[0] = tex_pixels;
-	w[0] = a[0];
-	h[0] = a[1];
+	*pixels = tex_pixels;
+	*w = a[0];
+	*h = a[1];
 	//Cleanup
 	free(image);
-	
 	jl_io_close_block(_jlc->jlc); // } :Close Block "JLPX"
-	jl_io_close_block(_jlc->jlc); // } :Close Block "LOAD"
 }
 
 //loads next image in the currently loaded file.
@@ -309,8 +345,11 @@ static inline uint8_t _jl_sg_load_next_img(jvct_t * _jlc) {
 		jl_io_printc(_jlc->jlc, "IL\n");
 		return 0;
 	}else{
+		jl_io_printc(_jlc->jlc, "creating image #");
+		jl_io_printi(_jlc->jlc, _jlc->sg.igid);
+		jl_io_printc(_jlc->jlc, "!\n");
 		jl_gl_maketexture(_jlc->jlc, _jlc->sg.igid,
-			_jlc->sg.image_id, fpixels, 1024, 1024);
+			_jlc->sg.image_id, fpixels, fw, fh);
 		jl_io_printc(_jlc->jlc, "created image #");
 		jl_io_printi(_jlc->jlc, _jlc->sg.igid);
 		jl_io_printc(_jlc->jlc, ":");
@@ -325,7 +364,7 @@ static inline uint8_t _jl_sg_load_next_img(jvct_t * _jlc) {
 }
 
 //Load the images in the image file
-static inline void _jl_sg_init_images(jvct_t * _jlc, uint8_t *data, uint16_t p){
+static inline void _jl_sg_init_images(jvct_t * _jlc, strt data, uint16_t p){
 	char *stringlength;
 
 	_jlc->sg.init_image_location = 0;
@@ -336,7 +375,7 @@ static inline void _jl_sg_init_images(jvct_t * _jlc, uint8_t *data, uint16_t p){
 	jl_io_offset(_jlc->jlc, JL_IO_PROGRESS, "INIM");
 	jl_io_printc(_jlc->jlc, "loading images...\n");
 	jl_io_offset(_jlc->jlc, JL_IO_SIMPLE, "INIM");
-	stringlength = jl_me_string_fnum(_jlc->jlc, (int)strlen((void *)data));
+	stringlength = jl_me_string_fnum(_jlc->jlc, data->size);
 	jl_io_printc(_jlc->jlc, "lne ");
 	jl_io_printc(_jlc->jlc, stringlength);
 	jl_io_printc(_jlc->jlc, "\n");
@@ -452,7 +491,7 @@ static inline double _jl_sg_seconds_passed(jvct_t* _jlc) {
 void jl_sg_add_image(jl_t* jlc, str_t pzipfile, u16_t pigid) {
 	jl_io_offset(jlc, JL_IO_PROGRESS, "LIMG");
 	//Load Graphics
-	uint8_t *img = jl_fl_media(jlc, "jlex/2/_img", pzipfile,
+	strt img = jl_fl_media(jlc, "jlex/2/_img", pzipfile,
 		jal5_head_jlvm(), jal5_head_size());
 
 	jl_io_printc(jlc, "Loading Images...\n");

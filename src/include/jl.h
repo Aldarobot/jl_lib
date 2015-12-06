@@ -11,6 +11,10 @@
 #include "jl_ct.h" // Input Types
 #include "clump.h" // LibClump
 
+#define JL_IMG_HEADER "JLVM0:JYMJ\0" // File format for images
+//1=format,4=size,x=data
+#define JL_IMG_SIZE_FLS 5 // How many bytes start for images.
+
 	void jl_dont(jl_t* jlc);
 // "me.c"
 	uint32_t jl_me_tbiu(void);
@@ -35,6 +39,8 @@
 	uint8_t jl_me_string_print(jl_t* jlc, char *string, const char* format,
 		const char *var, u64_t n);
 	u8_t jl_me_strt_byte(strt pstr);
+	void jl_me_strt_loadto(strt pstr, u32_t varsize, void* var);
+	void jl_me_strt_saveto(strt pstr, u32_t varsize, const void* var);
 	void jl_me_strt_add_byte(strt pstr, u8_t pvalue);
 	void jl_me_strt_delete_byte(jl_t *jlc, strt pstr);
 	void jl_me_strt_insert_byte(jl_t *jlc, strt pstr, uint8_t pvalue);
@@ -137,9 +143,9 @@
 	strt jl_fl_load(jl_t* jlc, str_t file_name);
 	char jl_fl_pk_save(jl_t* jlc, str_t packageFileName, str_t fileName,
 		void *data, uint64_t dataSize);
-	uint8_t *jl_fl_pk_load(jl_t* jlc, const char *packageFileName,
+	strt jl_fl_pk_load(jl_t* jlc, const char *packageFileName,
 		const char *filename);
-	uint8_t *jl_fl_media(jl_t* jlc, str_t Fname, str_t pzipfile,
+	strt jl_fl_media(jl_t* jlc, str_t Fname, str_t pzipfile,
 		void *pdata, uint64_t psize);
 	u8_t jl_fl_mkdir(jl_t* jlc, str_t path);
 	str_t jl_fl_get_resloc(jl_t* jlc, str_t prg_folder, str_t fname);
