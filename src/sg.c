@@ -178,18 +178,30 @@ void jl_sg_mode_switch(jl_t* jlc, uint8_t mode, jl_sg_wm_t loop) {
 }
 
 //Get a pixels RGBA values from a surface and xy
-void _jl_sg_gpix(
-	/*in */ SDL_Surface* surface, int32_t x, int32_t y,
-	/*out*/ void* color)
+uint32_t _jl_sg_gpix(
+	/*in */ SDL_Surface* surface, int32_t x, int32_t y)
 {
-	uint8_t *p = (uint8_t *)surface->pixels + (y * surface->pitch) + (x * 1);
-	SDL_Color *sdl_color= &surface->format->palette->colors[*p];
-	uint8_t* out_color = color;
+	i32_t bpp = surface->format->BytesPerPixel;
+	u8_t *p = (uint8_t *)surface->pixels + (y * surface->pitch) + (x * bpp);
+	uint32_t color_orig;
+	uint32_t color;
+	uint8_t* out_color = (void*)&color;
 
-	out_color[0] = sdl_color->r;
-	out_color[1] = sdl_color->g;
-	out_color[2] = sdl_color->b;
-	out_color[3] = sdl_color->a;
+	if(bpp == 1) {
+		color_orig = *p;
+	}else if(bpp == 2) {
+		color_orig = *(u16_t *)p;
+	}else if(bpp == 3) {
+		if(SDL_BYTEORDER == SDL_BIG_ENDIAN)
+			color_orig = p[0] << 16 | p[1] << 8 | p[2];
+		else
+			color_orig = p[0] | p[1] << 8 | p[2] << 16;
+	}else{ // 4
+		color_orig = *(u32_t *)p;
+	}
+	SDL_GetRGBA(color_orig, surface->format, &(out_color[0]),
+		&(out_color[1]), &(out_color[2]), &(out_color[3]));
+	return color;
 }
 
 void _jl_sg_load_jlpx(jvct_t* _jlc,strt data,void **pixels,int *w,int *h) {
@@ -263,7 +275,7 @@ void _jl_sg_load_jlpx(jvct_t* _jlc,strt data,void **pixels,int *w,int *h) {
 		pixel_data = jl_me_strt_make(image->w * image->h * 4);
 		for(i = image->h - 1; i >= 0; i--) {
 			for(j = 0; j < image->w; j++) {
-				_jl_sg_gpix(image, j, i, &color);
+				color = _jl_sg_gpix(image, j, i);
 				jl_me_strt_saveto(pixel_data, 4, &color);
 			}
 		}
