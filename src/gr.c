@@ -113,7 +113,7 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 		jl_taskbar_t* ctx = _jlc->gr.taskbar->data.ctx;
 		jl_vec3_t tr = { .9 - (.1 * ctx->cursor), 0., 0. };
 
-		jl_gr_vos_image(jlc, &(ctx->icon[1]), rc_icon, g, i, c, 64);
+		jl_gr_vos_image(jlc, &(ctx->icon[1]), rc_icon, g, i, c, 255);
 		jl_gr_draw_vo(jlc, &(ctx->icon[1]), &tr);
 	}
 	
@@ -195,7 +195,7 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 		m_u8_t i;
 
 		// Clear Texture.
-		jl_gl_clear(jlc, 0, 0, 255, 64);
+		jl_gl_clear(jlc, 0, 0, 0, 0);
 		// Draw Shadows.
 		for(i = 0; i < 10; i++) {
 			jl_vec3_t tr = { .9 - (.1 * i), 0., 0. };

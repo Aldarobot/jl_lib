@@ -1,8 +1,5 @@
 // JL_LIB
 	#include "../include/jl.h"
-// SDL
-	#include "../include/jl_sdl.h" // Include SDL 2.0.3 headers.
-	#include "../lib/SDL_mixer.h" // Include SDL Mixer Headers
 // LIBZIP
 	#define ZIP_DISABLE_DEPRECATED //Don't allow the old functions.
 	#if JL_PLAT == JL_PLAT_COMPUTER

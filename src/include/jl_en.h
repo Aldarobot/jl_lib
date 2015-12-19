@@ -40,6 +40,7 @@ typedef enum{
 
 typedef enum{
 	JL_GL_SLPR_TEX, //Texture Shader
+	JL_GL_SLPR_PRM, //Pre-Blended Texture Shader
 	JL_GL_SLPR_CLR, //Color Shader
 	JL_GL_SLPR_MAX,
 }jl_gl_slpr;

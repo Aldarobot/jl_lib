@@ -1,3 +1,8 @@
+HEADER = -Isrc/lib/include/
+CFLAGS_DEBUG = $(HEADER) $(sdl2-config --cflags) -Wall -g
+CFLAGS_RELEASE = $(HEADER) $(sdl2-config --cflags) -O3
+CFLAGS = $(CFLAGS_DEBUG)
+
 # The Set-Up Options.
 init-all: init-build init-deps-all
 init-all-wo-android: init-build-wo-android init-deps-most
@@ -19,10 +24,11 @@ build-android:
 	# Copy SDL2 into android build project
 	cp -u android-src/SDL_android_main.c build/android/jni/SDL_android_main.c
 	cp -u --recursive -t build/android/jni/src/ src/*
-	cp -u --recursive -t build/android/jni/src/lib/sdl/src/\
+	cp -u --recursive -t build/android/jni/src/lib/sdl/\
 	 deps/SDL2-2.0.3/src/*
-	cp -u --recursive -t build/android/jni/src/lib/sdl/include/\
-	 deps/SDL2-2.0.3/include/*
+	rm build/android/jni/src/lib/include/SDL_config.h
+	cp build/android/jni/src/lib/include/SDL_config_android.h\
+	 build/android/jni/src/lib/include/SDL_config.h
 	# Copy Libzip into android project
 	cp -u deps/libzip-1.0.1/config.h build/android/jni/src/lib/libzip/
 	cp -u --recursive -t build/android/jni/src/lib/libzip/\
@@ -52,20 +58,20 @@ build-android:
 build-library: 
 	# Build modules.
 	printf "[COMP] compiling separate jl_lib object files....\n"
-	gcc src/me.c -c -o build/obj/me.o $(sdl2-config --cflags) -Wall -g #1
-	gcc src/cl.c -c -o build/obj/cl.o $(sdl2-config --cflags) -Wall -g #2
-	gcc src/io.c -c -o build/obj/io.o $(sdl2-config --cflags) -Wall -g #3
-	gcc src/fl.c -c -o build/obj/fl.o $(sdl2-config --cflags) -Wall -g #4
-	gcc src/cm.c -c -o build/obj/cm.o $(sdl2-config --cflags) -Wall -g #5
-	gcc src/ct.c -c -o build/obj/ct.o $(sdl2-config --cflags) -Wall -g #6
-	gcc src/sg.c -c -o build/obj/sg.o $(sdl2-config --cflags) -Wall -g #7
-	gcc src/dl.c -c -o build/obj/dl.o $(sdl2-config --cflags) -Wall -g #8
-	gcc src/gl.c -c -o build/obj/gl.o $(sdl2-config --cflags) -Wall -g #9
-	gcc src/gr.c -c -o build/obj/gr.o $(sdl2-config --cflags) -Wall -g #10
-	gcc src/vi.c -c -o build/obj/vi.o $(sdl2-config --cflags) -Wall -g #11
-	gcc src/au.c -c -o build/obj/au.o $(sdl2-config --cflags) -Wall -g #12
-	gcc src/Main.c -c -o build/obj/Main.o $(sdl2-config --cflags) -Wall -g
-	gcc src/gen/jlvm_hack_main.c -c -o build/obj/media.o -Wall -g
+	gcc src/me.c -c -o build/obj/me.o $(CFLAGS) #1
+	gcc src/cl.c -c -o build/obj/cl.o $(CFLAGS) #2
+	gcc src/io.c -c -o build/obj/io.o $(CFLAGS) #3
+	gcc src/fl.c -c -o build/obj/fl.o $(CFLAGS) #4
+	gcc src/cm.c -c -o build/obj/cm.o $(CFLAGS) #5
+	gcc src/ct.c -c -o build/obj/ct.o $(CFLAGS) #6
+	gcc src/sg.c -c -o build/obj/sg.o $(CFLAGS) #7
+	gcc src/dl.c -c -o build/obj/dl.o $(CFLAGS) #8
+	gcc src/gl.c -c -o build/obj/gl.o $(CFLAGS) #9
+	gcc src/gr.c -c -o build/obj/gr.o $(CFLAGS) #10
+	gcc src/vi.c -c -o build/obj/vi.o $(CFLAGS) #11
+	gcc src/au.c -c -o build/obj/au.o $(CFLAGS) #12
+	gcc src/Main.c -c -o build/obj/Main.o $(CFLAGS)
+	gcc src/gen/jlvm_hack_main.c -c -o build/obj/media.o $(CFLAGS)
 	# Make "jl.o"
 	printf "[COMP] compiling singular jl_lib object file....\n"
 	ar csr build/jl.o build/obj/*.o
@@ -178,7 +184,7 @@ build-libzip:
 	sh configure && \
 	make && \
 	ar csr ../../build/deps/lib_zip.o lib/*.o && \
-	cp lib/zip.h ../../src/lib/zip.h && \
+	cp lib/zip.h ../../src/lib/include/ && \
 	printf "[COMP] done!\n"
 build-sdl:
 	printf "[COMP] compiling SDL...\n" && \
@@ -204,16 +210,16 @@ build-sdl-net:
 	make && \
 	ar csr ../../build/deps/lib_SDL_net.o .libs/*.o && \
 	cp SDL_net.h ../../src/lib/include/ && \
-	#cp SDL_net.h ../../src/lib/lib_SDL_net.h && \
-	#sed -i "s|\"SDL.h\"|<SDL2/SDL.h>|g" ../../src/lib/lib_SDL_net.h && \
+	#cp SDL_net.h ../../src/lib/include/SDL_net.h && \
+	#sed -i "s|\"SDL.h\"|<SDL2/SDL.h>|g" ../../src/lib/include/SDL_net.h && \
 	#sed -i "s|\"SDL_endian.h\"|<SDL2/SDL_endian.h>|g"\
-	# ../../src/lib/lib_SDL_net.h && \
+	# ../../src/lib/include/SDL_net.h && \
 	#sed -i "s|\"SDL_version.h\"|<SDL2/SDL_version.h>|g"\
-	# ../../src/lib/lib_SDL_net.h && \
+	# ../../src/lib/include/SDL_net.h && \
 	#sed -i "s|\"begin_code.h\"|<SDL2/begin_code.h>|g"\
-	# ../../src/lib/lib_SDL_net.h && \
+	# ../../src/lib/include/SDL_net.h && \
 	#sed -i "s|\"close_code.h\"|<SDL2/close_code.h>|g"\
-	# ../../src/lib/lib_SDL_net.h && \
+	# ../../src/lib/include/SDL_net.h && \
 	printf "[COMP] done!\n"
 build-sdl-mixer:
 	printf "[COMP] compiling SDL_mixer...\n" && \
@@ -221,7 +227,7 @@ build-sdl-mixer:
 	sh configure && \
 	make && \
 	ar csr ../../build/deps/lib_SDL_mixer.o build/*.o && \
-	cp SDL_mixer.h ../../src/lib/lib_SDL_mixer.h && \
+	cp SDL_mixer.h ../../src/lib/include/SDL_mixer.h && \
 	printf "[COMP] done!\n"
 build-clump:
 	printf "[COMP] compiling clump...\n"
@@ -255,7 +261,9 @@ nc_compile__:
 	else \
 		ar csr media/media.o media/genr/*.o; \
 	fi
-	gcc -I`sed -n '2p' pref.txt`/src/include/\
+	gcc\
+	 -I`sed -n '2p' pref.txt`/src/include/\
+	 -I`sed -n '2p' pref.txt`/src/lib/include/\
 	 `sed -n '2p' pref.txt`/build/jl.o `sed -n '2p' pref.txt`/build/deps/*.o\
 	 src/*.c media/media.o\
 	 -lSDL2 -lpthread -lm -ldl -lpthread -lrt\

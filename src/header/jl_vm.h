@@ -159,6 +159,19 @@ typedef struct {
 				m_i32_t transform;
 			} uniforms;
 		} tex;
+		//PRG: PRM
+		struct {
+			struct {
+				m_i32_t position;
+				m_i32_t texpos;
+			} attr;
+			struct {
+				//PRG: TEX
+				m_i32_t textures;
+				m_i32_t translate;
+				m_i32_t transform;
+			} uniforms;
+		} prm;	
 		//PRG: CLR
 		struct {
 			struct {

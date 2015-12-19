@@ -1,27 +1,35 @@
-LOCAL_PATH := $(call my-dir)
+LOCAL_PATH := $(call my-dir)/
 
 include $(CLEAR_VARS)
 
 LOCAL_MODULE := main
 
 LIB_ZIP := lib/libzip/
-LIB_SDL := lib/sdl/src/
+LIB_SDL := lib/sdl/
 LIB_MIX := lib/sdl-mixer/
 LIB_NET := lib/sdl-net/
 LIB_IMG := lib/sdl-image/
 
 # Load The Programmers C files
-LOCAL_SRC_FILES += $(subst $(LOCAL_PATH)/,, \
-	$(wildcard $(LOCAL_PATH)/gen/med/*.c) \
+LOCAL_SRC_FILES += $(subst $(LOCAL_PATH),,\
+	$(wildcard $(LOCAL_PATH)gen/med/*.c)\
 )
 
 LOCAL_SRC_FILES += gen/jlvm_hack_main.c \
 	gen/src/main.c
 
 #load SDL
-LOCAL_SRC_FILES += $(subst $(LOCAL_PATH)/,, \
-	$(wildcard $(LOCAL_PATH)/lib/sdl/src/render/opengles2/*.c) \
-	$(wildcard $(LOCAL_PATH)/lib/sdl/src/render/opengles/*.c) \
+LOCAL_SRC_FILES += $(subst $(LOCAL_PATH),,\
+	$(wildcard $(LOCAL_PATH)$(LIB_SDL)render/opengles/*.c)\
+	$(wildcard $(LOCAL_PATH)$(LIB_SDL)render/opengles2/*.c)\
+)
+
+# Load SDL_image
+LOCAL_SRC_FILES += $(subst $(LOCAL_PATH),,\
+	$(wildcard $(LOCAL_PATH)$(LIB_IMG)IMG*.c)\
+	$(wildcard $(LOCAL_PATH)$(LIB_IMG)external/jpeg-9/*.c)\
+	$(wildcard $(LOCAL_PATH)$(LIB_IMG)external/libpng-1.6.2/*.c)\
+	$(wildcard $(LOCAL_PATH)$(LIB_IMG)external/libwebp-0.3.0/*.c)\
 )
 
 LOCAL_SRC_FILES += \
@@ -116,12 +124,12 @@ LOCAL_SRC_FILES += \
 	$(LIB_SDL)main/android/SDL_android_main.c
 
 #load libzip
-LOCAL_SRC_FILES += $(subst $(LOCAL_PATH)/,, \
-	$(wildcard $(LOCAL_PATH)/lib/libzip/*.c) \
+LOCAL_SRC_FILES += $(subst $(LOCAL_PATH),, \
+	$(wildcard $(LOCAL_PATH)lib/libzip/*.c) \
 )
 
 #load SDL_mixer
-LOCAL_SRC_FILES += \
+LOCAL_SRC_FILES +=\
 	$(LIB_MIX)external/libogg-1.3.1/src/bitwise.c\
 	$(LIB_MIX)external/libogg-1.3.1/src/framing.c\
 	$(LIB_MIX)external/libvorbis-1.3.3/lib/analysis.c\
@@ -157,6 +165,9 @@ LOCAL_SRC_FILES += \
 	$(LIB_MIX)effect_position.c\
 	$(LIB_MIX)mixer.c
 
+# Load SDL_net
+
+
 # Load Clump
 LOCAL_SRC_FILES +=\
 	lib/clump/clump.c\
@@ -172,7 +183,7 @@ LOCAL_SRC_FILES +=\
 	me.c cl.c io.c fl.c cm.c ct.c\
 	sg.c dl.c gl.c gr.c vi.c au.c
 
-LOCAL_CFLAGS += -Ijni/src/include/ -Ijni/src/lib/sdl/include/ -DGL_GLEXT_PROTOTYPES -DNDEBUG -DHAVE_CONFIG_H -O3
+LOCAL_CFLAGS += -Ijni/src/include/ -Ijni/src/lib/include/ -DGL_GLEXT_PROTOTYPES -DHAVE_CONFIG_H -DNDEBUG -O3
 
 LOCAL_C_INCLUDES :=\
 	jni/src/lib/libzip/\
