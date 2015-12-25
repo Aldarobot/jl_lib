@@ -4,6 +4,9 @@ CFLAGS_DEBUG = $(HEADER) $(sdl2-config --cflags) -Wall -g
 CFLAGS_RELEASE = $(HEADER) $(sdl2-config --cflags) -O3
 CFLAGS = $(CFLAGS_DEBUG)
 
+# Locations
+LIBZIP = build/android/jni/src/lib/libzip/
+
 # The Set-Up Options.
 init-all: init-build init-deps-all
 init-all-wo-android: init-build-wo-android init-deps-most
@@ -36,8 +39,12 @@ build-android:
 	 deps/libzip-1.0.1/lib/*.c
 	cp -u --recursive -t build/android/jni/src/lib/libzip/\
 	 deps/libzip-1.0.1/lib/*.h
-	rm build/android/jni/src/lib/libzip/zipwin32.h
-	rm build/android/jni/src/lib/libzip/*win32*.c
+	rm $(LIBZIP)zipwin32.h $(LIBZIP)*win32*.c $(LIBZIP)zip_add.c \
+		$(LIBZIP)zip_add_dir.c $(LIBZIP)zip_error_get.c \
+		$(LIBZIP)zip_error_get_sys_type.c $(LIBZIP)zip_error_to_str.c \
+		$(LIBZIP)zip_file_error_get.c $(LIBZIP)zip_get_file_comment.c \
+		$(LIBZIP)zip_get_num_files.c $(LIBZIP)zip_rename.c \
+		$(LIBZIP)zip_replace.c $(LIBZIP)zip_set_file_comment.c
 	# Copy SDL2_mixer into the android project.
 	cp -u --recursive -t build/android/jni/src/lib/sdl-mixer/external/\
 	 deps/SDL2_mixer-2.0.0/external/*
@@ -47,9 +54,7 @@ build-android:
 	 deps/SDL2_mixer-2.0.0/*.h
 	# Copy SDL2_image into the android project.
 	cp -u --recursive -t build/android/jni/src/lib/sdl-image/\
-	 deps/SDL2_image-2.0.0/*.c
-	cp -u --recursive -t build/android/jni/src/lib/sdl-image/\
-	 deps/SDL2_image-2.0.0/*.h
+	 deps/SDL2_image-2.0.0/*
 	# Copy SDL2_net into the android project.
 	cp -u --recursive -t build/android/jni/src/lib/sdl-net/\
 	 deps/SDL2_net-2.0.0/*.c

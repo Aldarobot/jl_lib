@@ -118,7 +118,7 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 	}
 	
 	static void jl_gr_menu_flip_draw__(jl_t* jlc) {
-		jl_gr_draw_icon__(jlc, 0, 1, JLGR_ID_FLIP_IMAGE);
+		jl_gr_draw_icon__(jlc, 0, JL_IMGI_ICON, JLGR_ID_FLIP_IMAGE);
 	}
 
 	static void jl_gr_menu_flip_press__(jl_t* jlc) {
@@ -129,7 +129,7 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 	}
 	
 	static void jl_gr_menu_name_draw2__(jl_t* jlc) {
-		jl_gr_draw_icon__(jlc, 0, 1, JLGR_ID_UNKNOWN);
+		jl_gr_draw_icon__(jlc, 0, JL_IMGI_ICON, JLGR_ID_UNKNOWN);
 	}
 
 	static void jl_gr_menu_name_draw__(jl_t* jlc) {
@@ -157,7 +157,7 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 		if(!_jlc->sg.on_time)
 			sprintf(_jlc->dl.windowTitle[1],"%f",(float)jlc->psec);
 		// Draw the icon based on whether on time or not.
-		jl_gr_draw_icon__(jlc, 0, 1, _jlc->sg.on_time ?
+		jl_gr_draw_icon__(jlc, 0, JL_IMGI_ICON, _jlc->sg.on_time ?
 			JLGR_ID_GOOD_IMAGE : JLGR_ID_SLOW_IMAGE);
 	}
 

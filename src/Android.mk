@@ -10,28 +10,95 @@ LIB_MIX := lib/sdl-mixer/
 LIB_NET := lib/sdl-net/
 LIB_IMG := lib/sdl-image/
 
-# Load The Programmers C files
+LOCAL_C_INCLUDES :=
+
+# Load The Programmers C & media files
 LOCAL_SRC_FILES += $(subst $(LOCAL_PATH),,\
 	$(wildcard $(LOCAL_PATH)gen/med/*.c)\
+	$(wildcard $(LOCAL_PATH)gen/src/*.c)\
 )
 
 # Load The Default Graphics
 LOCAL_SRC_FILES += gen/media.c
+
+# Load SDL_image
+LOCAL_SRC_FILES +=\
+	$(LIB_IMG)external/libpng-1.6.2/png.c \
+	$(LIB_IMG)external/libpng-1.6.2/pngerror.c \
+	$(LIB_IMG)external/libpng-1.6.2/pngget.c \
+	$(LIB_IMG)external/libpng-1.6.2/pngmem.c \
+	$(LIB_IMG)external/libpng-1.6.2/pngpread.c \
+	$(LIB_IMG)external/libpng-1.6.2/pngread.c \
+	$(LIB_IMG)external/libpng-1.6.2/pngrio.c \
+	$(LIB_IMG)external/libpng-1.6.2/pngrtran.c \
+	$(LIB_IMG)external/libpng-1.6.2/pngrutil.c \
+	$(LIB_IMG)external/libpng-1.6.2/pngset.c \
+	$(LIB_IMG)external/libpng-1.6.2/pngtrans.c \
+	$(LIB_IMG)external/libpng-1.6.2/pngwio.c \
+	$(LIB_IMG)external/libpng-1.6.2/pngwrite.c \
+	$(LIB_IMG)external/libpng-1.6.2/pngwtran.c \
+	$(LIB_IMG)external/libpng-1.6.2/pngwutil.c \
+	$(LIB_IMG)external/jpeg-9/jaricom.c \
+	$(LIB_IMG)external/jpeg-9/jcapimin.c \
+	$(LIB_IMG)external/jpeg-9/jcapistd.c \
+	$(LIB_IMG)external/jpeg-9/jcarith.c \
+	$(LIB_IMG)external/jpeg-9/jccoefct.c \
+	$(LIB_IMG)external/jpeg-9/jccolor.c \
+	$(LIB_IMG)external/jpeg-9/jcdctmgr.c \
+	$(LIB_IMG)external/jpeg-9/jchuff.c \
+	$(LIB_IMG)external/jpeg-9/jcinit.c \
+	$(LIB_IMG)external/jpeg-9/jcmainct.c \
+	$(LIB_IMG)external/jpeg-9/jcmarker.c \
+	$(LIB_IMG)external/jpeg-9/jcmaster.c \
+	$(LIB_IMG)external/jpeg-9/jcomapi.c \
+	$(LIB_IMG)external/jpeg-9/jcparam.c \
+	$(LIB_IMG)external/jpeg-9/jcprepct.c \
+	$(LIB_IMG)external/jpeg-9/jcsample.c \
+	$(LIB_IMG)external/jpeg-9/jctrans.c \
+	$(LIB_IMG)external/jpeg-9/jdapimin.c \
+	$(LIB_IMG)external/jpeg-9/jdapistd.c \
+	$(LIB_IMG)external/jpeg-9/jdarith.c \
+	$(LIB_IMG)external/jpeg-9/jdatadst.c \
+	$(LIB_IMG)external/jpeg-9/jdatasrc.c \
+	$(LIB_IMG)external/jpeg-9/jdcoefct.c \
+	$(LIB_IMG)external/jpeg-9/jdcolor.c \
+	$(LIB_IMG)external/jpeg-9/jddctmgr.c \
+	$(LIB_IMG)external/jpeg-9/jdhuff.c \
+	$(LIB_IMG)external/jpeg-9/jdinput.c \
+	$(LIB_IMG)external/jpeg-9/jdmainct.c \
+	$(LIB_IMG)external/jpeg-9/jdmarker.c \
+	$(LIB_IMG)external/jpeg-9/jdmaster.c \
+	$(LIB_IMG)external/jpeg-9/jdmerge.c \
+	$(LIB_IMG)external/jpeg-9/jdpostct.c \
+	$(LIB_IMG)external/jpeg-9/jdsample.c \
+	$(LIB_IMG)external/jpeg-9/jdtrans.c \
+	$(LIB_IMG)external/jpeg-9/jerror.c \
+	$(LIB_IMG)external/jpeg-9/jfdctflt.c \
+	$(LIB_IMG)external/jpeg-9/jfdctfst.c \
+	$(LIB_IMG)external/jpeg-9/jfdctint.c \
+	$(LIB_IMG)external/jpeg-9/jidctflt.c \
+	$(LIB_IMG)external/jpeg-9/jidctfst.S \
+	$(LIB_IMG)external/jpeg-9/jidctint.c \
+	$(LIB_IMG)external/jpeg-9/jquant1.c \
+	$(LIB_IMG)external/jpeg-9/jquant2.c \
+	$(LIB_IMG)external/jpeg-9/jutils.c \
+	$(LIB_IMG)external/jpeg-9/jmemmgr.c \
+	$(LIB_IMG)external/jpeg-9/jmem-android.c
+LOCAL_SRC_FILES += $(subst $(LOCAL_PATH),,\
+	$(wildcard $(LOCAL_PATH)$(LIB_IMG)IMG*.c)\
+)
+LOCAL_CFLAGS := -DLOAD_BMP -DLOAD_GIF -DLOAD_LBM -DLOAD_PCX -DLOAD_PNM \
+	-DLOAD_TGA -DLOAD_XCF -DLOAD_XPM -DLOAD_XV -DLOAD_JPG \
+	-DLOAD_PNG
+LOCAL_CFLAGS += -fstrict-aliasing -DAVOID_TABLES -DPNG_NO_CONFIG_H
+LOCAL_C_INCLUDES += $(LOCAL_PATH)$(LIB_IMG)external/jpeg-9\
+	$(LOCAL_PATH)$(LIB_IMG)external/libpng-1.6.2\
 
 # Load SDL
 LOCAL_SRC_FILES += $(subst $(LOCAL_PATH),,\
 	$(wildcard $(LOCAL_PATH)$(LIB_SDL)render/opengles/*.c)\
 	$(wildcard $(LOCAL_PATH)$(LIB_SDL)render/opengles2/*.c)\
 )
-
-# Load SDL_image
-LOCAL_SRC_FILES += $(subst $(LOCAL_PATH),,\
-	$(wildcard $(LOCAL_PATH)$(LIB_IMG)IMG*.c)\
-	$(wildcard $(LOCAL_PATH)$(LIB_IMG)external/jpeg-9/*.c)\
-	$(wildcard $(LOCAL_PATH)$(LIB_IMG)external/libpng-1.6.2/*.c)\
-	$(wildcard $(LOCAL_PATH)$(LIB_IMG)external/libwebp-0.3.0/*.c)\
-)
-
 LOCAL_SRC_FILES += \
 	$(LIB_SDL)SDL.c\
 	$(LIB_SDL)SDL_assert.c \
@@ -185,7 +252,7 @@ LOCAL_SRC_FILES +=\
 
 LOCAL_CFLAGS += -Ijni/src/include/ -Ijni/src/lib/include/ -DGL_GLEXT_PROTOTYPES -DHAVE_CONFIG_H -DNDEBUG -O3
 
-LOCAL_C_INCLUDES :=\
+LOCAL_C_INCLUDES +=\
 	jni/src/lib/libzip/\
 	jni/src/lib/sdl-mixer/external/libogg-1.3.1/include/\
 	jni/src/lib/sdl-mixer/external/libvorbis-1.3.3/include/\
