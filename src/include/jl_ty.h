@@ -112,6 +112,13 @@ typedef struct{
 }jl_vec3_t;
 
 typedef struct {
+	m_i32_t g, i; // Group ID, Image ID
+	m_u8_t multicolor; // Allow Multiple Colors
+	m_u8_t* colors; // The Colors
+	m_f32_t size; // The Size
+}jl_font_t;
+
+typedef struct {
 	jl_vec3_t tr;				// The translate vector.
 	jl_rect_t cb;				// Collision Box
 	float rh, rw;				// Real Height & Width
@@ -138,6 +145,8 @@ typedef struct{
 		uint8_t h; //How long held down.
 		uint8_t k; //Which key [ a-z , left/right click ]
 	}ctrl;
+	uint8_t fontcolor[4];
+	jl_font_t font;
 }jl_t;
 
 typedef void(*jl_simple_fnt)(jl_t* jlc);

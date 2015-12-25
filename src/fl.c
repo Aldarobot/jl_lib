@@ -542,10 +542,9 @@ str_t jl_fl_get_resloc(jl_t* jlc, str_t prg_folder, str_t fname) {
 }
 
 static void _jl_fl_user_select_check_extradir(char *dirname) {
-	if(dirname[strlen(dirname)-1] == '/' &&
-		dirname[strlen(dirname)-2] == '/')
-	{
-		dirname[strlen(dirname)-1] = '\0';
+	if(dirname[strlen(dirname)-1] == '/' && strlen(dirname) > 1) {
+		if(dirname[strlen(dirname)-2] == '/')
+			dirname[strlen(dirname)-1] = '\0';
 	}
 }
 
@@ -563,7 +562,7 @@ static uint8_t _jl_fl_user_select_open_dir(jl_t* jlc, char *dirname) {
 		dirname = SDL_GetPrefPath("JL_Lib", "\0");
 		_jl_fl_user_select_check_extradir(dirname);
 	}
-	offset = dirname[0] == '!';
+	offset = (dirname[0] == '!');
 	_jlc->fl.dirname = dirname;
 	_jlc->fl.cursor = 0;
 	_jlc->fl.cpage = 0;
@@ -740,13 +739,15 @@ void jl_fl_user_select_loop(jl_t* jlc) {
 	struct cl_list_iterator *iterator;
 	int i;
 	char *stringtoprint;
+
 	_jlc->fl.drawupto = ((int)(20.f * jl_gl_ar(jlc))) - 1;
 
 	iterator = cl_list_iterator_create(_jlc->fl.filelist);
 
-	jl_gr_fill_image_set(jlc, 0, 1, 1, 255);
+	jl_gr_fill_image_set(jlc, 0, JL_IMGI_ICON, 1, 255);
 	jl_gr_fill_image_draw(jlc);
-	jl_gr_draw_text(jlc, "Select File", .02, .02, .04,255);
+	jl_gr_draw_text(jlc, "Select File", (jl_vec3_t) { .02, .02, 0. },
+		jlc->font);
 
 	jl_ct_run_event(jlc,JL_CT_MAINUP, _jl_fl_user_select_up, jl_dont);
 	jl_ct_run_event(jlc,JL_CT_MAINDN, _jl_fl_user_select_dn, jl_dont);
@@ -761,10 +762,11 @@ void jl_fl_user_select_loop(jl_t* jlc) {
 			stringtoprint = "//this folder//";
 		}
 		if(i - (_jlc->fl.cpage * (_jlc->fl.drawupto+1)) >= 0)
-			jl_gr_draw_text(jlc, stringtoprint,
-				.06, .08 + (.04 *
-				(i - (_jlc->fl.cpage * (_jlc->fl.drawupto+1)))),
-				.04,255);
+			jl_gr_draw_text(jlc, stringtoprint, (jl_vec3_t) {
+				.06,
+				.08 + (jlc->font.size * (i - (_jlc->fl.cpage * (
+					_jlc->fl.drawupto+1)))), 0. },
+				jlc->font);
 		if(i - (_jlc->fl.cpage * (_jlc->fl.drawupto+1)) >
 			_jlc->fl.drawupto - 1)
 		{
@@ -794,9 +796,12 @@ void jl_fl_user_select_loop(jl_t* jlc) {
 			_jlc->fl.prompt = 0;
 		}
 	}else{
-		jl_gr_draw_text(jlc, ">", .02, .08 + (.04 * _jlc->fl.cursor),
-			.04,255);
-		jl_gr_draw_text(jlc, _jlc->fl.dirname, .02, jl_gl_ar(jlc) - .02, .02, 255);
+		jl_gr_draw_text(jlc, ">", (jl_vec3_t) {
+			.02, .08 + (.04 * _jlc->fl.cursor), 0. },
+			jlc->font);
+		jl_gr_draw_text(jlc, _jlc->fl.dirname,
+			(jl_vec3_t) { .02, jl_gl_ar(jlc) - .02, 0. },
+			(jl_font_t) { 0, JL_IMGI_ICON, 0, jlc->fontcolor, .02});
 		jl_ct_run_event(jlc, JL_CT_SELECT, _jl_fl_user_select_do,
 			jl_dont);
 	}
@@ -837,7 +842,7 @@ static void _jl_fl_btn_makefile_draw(jl_t* jlc, jl_sprd_t* sprd) {
 	jl_rect_t rc = { 0., 0., jl_gl_ar(jlc), jl_gl_ar(jlc) };
 	jl_vec3_t tr = { 0., 0., 0. };
 
-	jl_gr_vos_image(jlc, _jlc->gl.temp_vo, rc, 0, 1, 9, 255);
+	jl_gr_vos_image(jlc, _jlc->gl.temp_vo, rc, 0, JL_IMGI_ICON, 9, 255);
 	jl_gr_draw_vo(jlc, _jlc->gl.temp_vo, &tr);
 }
 
@@ -854,7 +859,7 @@ static void _jl_fl_btn_makefolder_draw(jl_t* jlc, jl_sprd_t* sprd) {
 	jl_rect_t rc = { 0., 0., jl_gl_ar(jlc), jl_gl_ar(jlc) };
 	jl_vec3_t tr = { 0., 0., 0. };
 
-	jl_gr_vos_image(jlc, _jlc->gl.temp_vo, rc, 0, 1, 10, 255);
+	jl_gr_vos_image(jlc, _jlc->gl.temp_vo, rc, 0, JL_IMGI_ICON, 10, 255);
 	jl_gr_draw_vo(jlc, _jlc->gl.temp_vo, &tr);
 }
 

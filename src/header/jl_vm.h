@@ -152,7 +152,6 @@ typedef struct {
 				m_i32_t texpos;
 			} attr;
 			struct {
-				//PRG: TEX
 				m_i32_t **textures;
 				m_i32_t multiply_alpha;
 				m_i32_t translate;
@@ -166,12 +165,25 @@ typedef struct {
 				m_i32_t texpos;
 			} attr;
 			struct {
-				//PRG: TEX
 				m_i32_t textures;
 				m_i32_t translate;
 				m_i32_t transform;
 			} uniforms;
-		} prm;	
+		} prm;
+		//PRG: CHR
+		struct {
+			struct {
+				m_i32_t position;
+				m_i32_t texpos;
+			} attr;
+			struct {
+				m_i32_t textures;
+				m_i32_t multiply_alpha;
+				m_i32_t new_color;
+				m_i32_t translate;
+				m_i32_t transform;
+			} uniforms;
+		} chr;
 		//PRG: CLR
 		struct {
 			struct {

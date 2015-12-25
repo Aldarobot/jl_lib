@@ -52,6 +52,7 @@
 	void jl_cl_list_alphabetize(struct cl_list *list);
 // "gl.c"
 	jl_vo_t *jl_gl_vo_make(jl_t* jlc, u32_t count);
+	void jl_gl_vo_txmap(jl_t* jlc, jl_vo_t* pv, u8_t map);
 	void jl_gl_pr_draw(jl_t* jlc, jl_vo_t* pv);
 	void jl_gl_maketexture(jl_t* jlc, uint16_t gid, uint16_t id,
 		void *pixels, int width, int height);
@@ -100,13 +101,12 @@
 		jl_gr_sp_fnt draw, jl_gr_sp_fnt loop, u32_t ctxs);
 	u8_t jl_gr_sprite_collide(jl_t* jlc, jl_sprite_t *sprite1,
 		jl_sprite_t *sprite2);
-	void jl_gr_draw_text(jl_t* jlc, str_t str, f32_t x, f32_t y, f32_t size,
-		u8_t a);
+	void jl_gr_draw_text(jl_t* jlc, str_t str, jl_vec3_t xyz, jl_font_t f);
 	void jl_gr_draw_numi(jl_t* jlc, uint32_t num, f32_t x, f32_t y, f32_t size,
 		uint8_t a);
 	void jl_gr_draw_text_area(jl_t* jlc, jl_sprite_t * spr, str_t txt);
 	void jl_gr_draw_text_sprite(jl_t* jlc,jl_sprite_t * spr, str_t txt);
-	void jl_gr_draw_ctxt(jl_t* jlc, char *str, f32_t p_y, uint8_t p_a);
+	void jl_gr_draw_ctxt(jl_t* jlc, char *str, float yy, uint8_t* color);
 	void jl_gr_draw_msge(jl_t* jlc, char* message);
 	void jl_gr_term_msge(jl_t* jlc, char* message);
 	void jl_gr_slidebtn_rsz(jl_t* jlc, jl_sprite_t * spr, str_t txt);

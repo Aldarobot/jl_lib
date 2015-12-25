@@ -504,7 +504,7 @@ void jl_sg_add_image(jl_t* jlc, str_t pzipfile, u16_t pigid) {
 	jl_io_offset(jlc, JL_IO_PROGRESS, "LIMG");
 	//Load Graphics
 	strt img = jl_fl_media(jlc, "jlex/2/_img", pzipfile,
-		jal5_head_jlvm(), jal5_head_size());
+		jl_gem(), jl_gem_size());
 
 	jl_io_printc(jlc, "Loading Images...\n");
 	if(img != NULL)

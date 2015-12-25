@@ -139,11 +139,15 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 
 		jl_gr_menu_name_draw2__(jlc);
 		jl_gr_draw_text(jlc, _jlc->dl.windowTitle[0],
-			1. - (jl_gl_ar(jlc) * (ctx->cursor+1.)),
-			0., text_size, 255);
+			(jl_vec3_t) { 1. - (jl_gl_ar(jlc) * (ctx->cursor+1.)),
+				0., 0. },
+			(jl_font_t) { 0, JL_IMGI_ICON, 0, jlc->fontcolor, 
+				text_size});
 		jl_gr_draw_text(jlc, _jlc->dl.windowTitle[1],
-			1. - (jl_gl_ar(jlc) * (ctx->cursor+1.)),
-			text_size, text_size, 255);
+			(jl_vec3_t) { 1. - (jl_gl_ar(jlc) * (ctx->cursor+1.)),
+				text_size, 0. },
+			(jl_font_t) { 0, JL_IMGI_ICON, 0, jlc->fontcolor, 
+				text_size});
 	}
 
 	static void _jl_gr_menu_slow_draw(jl_t* jlc) {
@@ -281,6 +285,8 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 			_jl_gr_taskbar_loop, sizeof(jl_taskbar_t));
 		// Get the context.
 		ctx = _jlc->gr.taskbar->data.ctx;
+		// Initialize the context.
+		ctx->redraw = 2;
 		// Set the icon & Shadow vertex objects
 		ctx->icon = icon;
 		// Make the shadow vertex object.
@@ -318,8 +324,8 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 		jl_vo_t *mouse = jl_gl_vo_make(_jlc->jlc, 1);
 
 		#if JL_PLAT == JL_PLAT_COMPUTER //if computer
-			jl_gr_vos_image(_jlc->jlc, &(mouse[0]), rc, 0, 0, 254,
-				255);
+			jl_gr_vos_image(_jlc->jlc, &(mouse[0]), rc, 0,
+				JL_IMGI_FONT, 255, 255);
 		#endif
 		_jlc->jlc->mouse = jl_gr_sp_new(
 			_jlc->jlc, rc, jl_gr_sp_dont,
@@ -705,31 +711,32 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 	}
 
 	/**
-	 * Draw text in the window
+	 * Draw text on the current pre-renderer.
 	 * @param 'jlc': library context
 	 * @param 'str': the text to draw
-	 * @param 'x': the x position to draw it at
-	 * @param 'y': the y position to draw it at
-	 * @param 'size': how big to draw the text
-	 * @param 'a': transparency of the text, 255=Opaque 0=Transparent
+	 * @param 'loc': the position to draw it at
+	 * @param 'f': the font to use.
 	**/
-	void jl_gr_draw_text(jl_t* jlc, str_t str, f32_t x, f32_t y, f32_t size,
-		u8_t a)
-	{
+	void jl_gr_draw_text(jl_t* jlc, str_t str, jl_vec3_t loc, jl_font_t f) {
 		jvct_t* _jlc = jlc->_jlc;
 		const void *Str = str;
 		const uint8_t *STr = Str;
 		uint32_t i;
-		jl_rect_t rc = { x, y, size, size };
+		jl_rect_t rc = { loc.x, loc.y, f.size, f.size };
 		jl_vec3_t tr = { 0., 0., 0. };
 		jl_vo_t* vo = _jlc->gl.temp_vo;
 
 		if(str == NULL) return;
 		for(i = 0; i < strlen(str); i++) {
 			//Font 0:0
-			jl_gr_vos_image(jlc, vo, rc, 0, 0, STr[i], a);
-			jl_gr_draw_vo(jlc, vo, &tr);
-			tr.x += size;
+			jl_gr_vos_image(jlc,vo,rc,0,JL_IMGI_FONT,STr[i],255);
+			jl_gl_transform_chr_(jlc->_jlc, vo, tr.x, tr.y, tr.z,
+				1., 1., 1.);
+			jl_gl_draw_chr(jlc->_jlc, vo,((double)f.colors[0])/255.,
+				((double)f.colors[1])/255.,
+				((double)f.colors[2])/255.,
+				((double)f.colors[3])/255.);
+			tr.x += f.size;
 		}
 	}
 
@@ -747,7 +754,10 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 	{
 		char display[10];
 		sprintf(display, "%d", num);
-		jl_gr_draw_text(jlc, display, x, y, size, a);
+		jl_gr_draw_text(jlc, display,
+			(jl_vec3_t) { x, y, 0. },
+			(jl_font_t) { 0, JL_IMGI_ICON, 0, jlc->fontcolor, 
+				size});
 	}
 
 	/**
@@ -759,9 +769,9 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 	void jl_gr_draw_text_area(jl_t* jlc, jl_sprite_t * spr, str_t txt){
 		float fontsize = .9 / strlen(txt);
 		jl_gr_draw_text(jlc, txt,
-			.05,
-			.5 * (jl_gl_ar(jlc) - fontsize),
-			fontsize, 255);
+			(jl_vec3_t) { .05,.5 * (jl_gl_ar(jlc) - fontsize),0. },
+			(jl_font_t) { 0, JL_IMGI_ICON, 0, jlc->fontcolor, 
+				fontsize});
 	}
 
 	/**
@@ -771,7 +781,7 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 	 * @param 'txt': the text to draw
 	**/
 	void jl_gr_draw_text_sprite(jl_t* jlc,jl_sprite_t * spr, str_t txt) {
-		jl_gr_fill_image_set(jlc, 0, 1, 1, 255);
+		jl_gr_fill_image_set(jlc, 0, JL_IMGI_ICON, 1, 255);
 		jl_gr_fill_image_draw(jlc);
 		jl_gr_draw_text_area(jlc, spr, txt);
 	}
@@ -780,12 +790,14 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 	 * Draw centered text across screen
   	 * @param 'jlc': library context.
 	 * @param 'str': the text to draw
-	 * @param 'p_y': y coordinate to draw it at
-	 * @param 'p_a': 255 = opaque, 0 = invisible
+	 * @param 'yy': y coordinate to draw it at
+	 * @param 'color': 255 = opaque, 0 = invisible
 	 */
-	void jl_gr_draw_ctxt(jl_t* jlc, char *str, float p_y, uint8_t p_a) {
-		jl_gr_draw_text(jlc, str, 0, p_y,
-			1. / ((float)(strlen(str))), p_a);
+	void jl_gr_draw_ctxt(jl_t* jlc, char *str, float yy, uint8_t* color) {
+		jl_gr_draw_text(jlc, str,
+			(jl_vec3_t) { 0., yy, 0. },
+			(jl_font_t) { 0, JL_IMGI_ICON, 0, color, 
+				1. / ((float)(strlen(str)))} );
 	}
 
 	/**
@@ -794,9 +806,9 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 	 * @param 'message': the message 
 	 */
 	void jl_gr_draw_msge(jl_t* jlc, char * message) {
-		jl_gr_fill_image_set(jlc, 0, 1, 1, 127);
+		jl_gr_fill_image_set(jlc, 0, JL_IMGI_ICON, 1, 127);
 		jl_gr_fill_image_draw(jlc);
-		jl_gr_draw_ctxt(jlc, message, (9./16.)/2, 255);
+		jl_gr_draw_ctxt(jlc, message, (9./16.)/2, jlc->fontcolor);
 		_jl_dl_loop(jlc->_jlc); //Update Screen
 	}
 
@@ -879,8 +891,10 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 			jl_gr_vos_rec(jlc, _jlc->gl.temp_vo, rc, glow_color, 0);
 			jl_gr_draw_vo(jlc, _jlc->gl.temp_vo, NULL);
 			// Description
-			jl_gr_draw_text(jlc, txt, 0, jl_gl_ar(jlc) - .0625,
-				.05, 255);
+			jl_gr_draw_text(jlc, txt,
+				(jl_vec3_t) { 0., jl_gl_ar(jlc) - .0625, 0. },
+				(jl_font_t) { 0, JL_IMGI_ICON, 0,
+					jlc->fontcolor, .05 });
 			// Run if press
 			jl_ct_run_event(jlc, JL_CT_PRESS, prun, jl_dont);
 		}
@@ -916,7 +930,9 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 		jl_ct_run_event(jlc,JL_CT_MAINLT,_jl_gr_textbox_lt,jl_dont);
 		jl_ct_run_event(jlc,JL_CT_MAINRT,_jl_gr_textbox_rt,jl_dont);
 //		jl_gr_draw_image(jlc, 0, 0, x, y, w, h, ' ', 255);
-		jl_gr_draw_text(jlc, (char*)((*string)->data), x, y, h, 255);
+		jl_gr_draw_text(jlc, (char*)((*string)->data),
+			(jl_vec3_t) {x, y, 0.},
+			(jl_font_t) {0, JL_IMGI_ICON, 0, jlc->fontcolor, h});
 //		jl_gr_draw_image(jlc, 0, 0,
 //			x + (h*((float)(*string)->curs-.5)), y, h, h, 252, 255);
 		return 0;
@@ -1010,15 +1026,18 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 		if(!_jlc->fl.inloop) _jlc->gr.menuoverlay(jlc, NULL);
 	//Message Display
 		if(timeTilMessageVanish > 0.f) {
-			if(timeTilMessageVanish > 4.25)
+			if(timeTilMessageVanish > 4.25) {
+				uint8_t color[] = { 255, 255, 255, 255 };
 				jl_gr_draw_ctxt(jlc,
 					GMessage[jlc->loop == JL_SG_WM_DN],
-					0, 255);
-			else
+					0, color);
+			}else{
+				uint8_t color[] = { 255, 255, 255, (uint8_t)
+					(timeTilMessageVanish * 255.f / 4.25)};
 				jl_gr_draw_ctxt(jlc,
 					GMessage[jlc->loop == JL_SG_WM_DN],
-					0, (uint8_t)
-					(timeTilMessageVanish * 255.f / 4.25));	
+					0, color);
+			}
 			timeTilMessageVanish-=jlc->psec;
 		}
 	//Update mouse
@@ -1028,6 +1047,12 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 	void jl_gr_inita_(jvct_t *_jlc) {
 		jl_io_offset(_jlc->jlc, JL_IO_SIMPLE, "GRIN");
 		_jl_gr_init_vos(_jlc);
+		_jlc->jlc->fontcolor[0] = 0;
+		_jlc->jlc->fontcolor[1] = 0;
+		_jlc->jlc->fontcolor[2] = 0;
+		_jlc->jlc->fontcolor[3] = 255;
+		_jlc->jlc->font = (jl_font_t)
+			{ 0, JL_IMGI_FONT, 0, _jlc->jlc->fontcolor, .04 };
 		jl_io_close_block(_jlc->jlc); //Close Block "GRIN"
 	}
 

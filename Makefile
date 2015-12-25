@@ -1,4 +1,5 @@
 HEADER = -Isrc/lib/include/
+CFLAGS_MEDIA = $(HEADER) -O3
 CFLAGS_DEBUG = $(HEADER) $(sdl2-config --cflags) -Wall -g
 CFLAGS_RELEASE = $(HEADER) $(sdl2-config --cflags) -O3
 CFLAGS = $(CFLAGS_DEBUG)
@@ -71,7 +72,7 @@ build-library:
 	gcc src/vi.c -c -o build/obj/vi.o $(CFLAGS) #11
 	gcc src/au.c -c -o build/obj/au.o $(CFLAGS) #12
 	gcc src/Main.c -c -o build/obj/Main.o $(CFLAGS)
-	gcc src/gen/jlvm_hack_main.c -c -o build/obj/media.o $(CFLAGS)
+	gcc src/gen/media.c -c -o build/obj/media.o $(CFLAGS)
 	# Make "jl.o"
 	printf "[COMP] compiling singular jl_lib object file....\n"
 	ar csr build/jl.o build/obj/*.o
@@ -80,6 +81,7 @@ build-library:
 	rm -r build/obj/
 	mkdir build/obj/
 	printf "[COMP] done!\n"
+build-media: compile_media
 build-project: compile_es
 build-project-android:
 
@@ -245,6 +247,10 @@ build-clump:
 compile_gl: nc_compile_gl__ nc_compile__
 compile_es: nc_compile_es__ nc_compile__
 
+compile_media:
+	printf "[COMP] compiling media\n"
+	gcc media/genr/*.c -c -o media/media.o $(CFLAGS_MEDIA)
+
 nc_compile_gl__:
 	printf "[COMP] compiling with OPENGL\n"
 	$(eval GL_VERSION=-lGL)
@@ -256,11 +262,6 @@ nc_compile__:
 	printf "[COMP] cleaning up....\n"
 	rm -f bin/comp/`sed -n '4p' data.txt`
 	printf "[COMP] compiling with GL $(GL_VERSION)....\n"
-	if [ ! -e media/genr/*.o ]; then \
-		ar csr media/media.o; \
-	else \
-		ar csr media/media.o media/genr/*.o; \
-	fi
 	gcc\
 	 -I`sed -n '2p' pref.txt`/src/include/\
 	 -I`sed -n '2p' pref.txt`/src/lib/include/\

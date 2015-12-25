@@ -42,15 +42,16 @@ typedef enum{
 	JL_GL_SLPR_TEX, //Texture Shader
 	JL_GL_SLPR_PRM, //Pre-Blended Texture Shader
 	JL_GL_SLPR_CLR, //Color Shader
+	JL_GL_SLPR_CHR, //Character Shader
 	JL_GL_SLPR_MAX,
 }jl_gl_slpr;
 
 //Image ID's
 typedef enum{
-	JL_IMGI_TEXT_IMAGE,
-	JL_IMGI_TASK_BUTTON,
-	JL_IMGI_TERMINAL_TEXT,
-	JL_IMGI_LANDSCAPE,
+	JL_IMGI_LOAD,
+	JL_IMGI_FONT,
+	JL_IMGI_ICON,
+	JL_IMGI_GAME,
 }jl_imgi_t;
 
 typedef enum{

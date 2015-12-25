@@ -110,8 +110,9 @@ void jl_me_copyto(const void *src, void* dest, size_t size) {
  * @returns: a new pointer to 
 */
 void * jl_me_copy(jl_t* jlc, const void *src, size_t size) {
-	void *dest = NULL; _jl_me_alloc_malloc(jlc, &dest, size);
+	void *dest = NULL; _jl_me_alloc_malloc(jlc, &dest, size + 1);
 	void *rtn = memcpy(dest, src, size);
+	((char*)dest)[size] = 0;
 	return rtn;
 }
 
@@ -375,7 +376,7 @@ const char* jl_me_string_fnum_tmp(jl_t* jlc, int32_t a) {
  * @returns: a new string (char *) with the same contents as "a"
 */
 char* jl_me_string_fstrt(jl_t* jlc, strt a) {
-	char *rtn = jl_me_copy(jlc, (char*)(a->data), a->size + 1);
+	char *rtn = jl_me_copy(jlc, (char*)(a->data), a->size);
 	jl_me_strt_free(a);
 	return rtn;
 }

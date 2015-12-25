@@ -15,10 +15,10 @@ LOCAL_SRC_FILES += $(subst $(LOCAL_PATH),,\
 	$(wildcard $(LOCAL_PATH)gen/med/*.c)\
 )
 
-LOCAL_SRC_FILES += gen/jlvm_hack_main.c \
-	gen/src/main.c
+# Load The Default Graphics
+LOCAL_SRC_FILES += gen/media.c
 
-#load SDL
+# Load SDL
 LOCAL_SRC_FILES += $(subst $(LOCAL_PATH),,\
 	$(wildcard $(LOCAL_PATH)$(LIB_SDL)render/opengles/*.c)\
 	$(wildcard $(LOCAL_PATH)$(LIB_SDL)render/opengles2/*.c)\

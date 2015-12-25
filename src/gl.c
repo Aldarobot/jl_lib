@@ -46,6 +46,24 @@ static char *source_frag_tex_premult =
 	"	gl_FragColor = vec4(vcolor.rgb * vcolor.a, vcolor.a);\n"
 	"}\n\0";
 
+static char *source_frag_tex_charmap = 
+	GLSL_HEAD
+	"uniform sampler2D texture;\n"
+	"uniform float multiply_alpha;\n"
+	"uniform vec4 new_color;\n"
+	"\n"
+	"varying vec2 texcoord;\n"
+	"\n"
+	"void main()\n"
+	"{\n"
+	"	vec4 vcolor = texture2D(texture, texcoord);\n"
+	"	if((vcolor.r < 0.1) && (vcolor.g < 0.1) &&"
+	"	   (vcolor.b < 0.1) && (vcolor.a > .9))\n"
+	"		vcolor = new_color;\n"
+	"	vcolor.a *= multiply_alpha;\n"
+	"	gl_FragColor = vec4(vcolor.rgb * vcolor.a, vcolor.a);\n"
+	"}\n\0";
+
 static char *source_frag_tex = 
 	GLSL_HEAD
 	"uniform sampler2D texture;\n"
@@ -935,12 +953,20 @@ static void _jl_gl_draw_txtr(jvct_t *_jlc, f32_t a, u32_t tx, u32_t tc) {
 	jl_gl_texture_bind__(_jlc, tx);
 }
 
+static void jl_gl_draw_vertices(jvct_t *_jlc, u32_t gl, i32_t attr) {
+	_jl_gl_setv(_jlc, gl, attr, 3);
+}
+
+static void jl_gl_draw_final__(jvct_t *_jlc, u8_t rs, u32_t vc) {
+	_jl_gl_draw_arrays(_jlc, rs ? GL_TRIANGLES : GL_TRIANGLE_FAN, vc);
+}
+
 static void _jl_gl_draw_onts(jvct_t *_jlc, u32_t gl, u8_t rs, u32_t vc) {
 	// Update the position variable in shader.
-	_jl_gl_setv(_jlc, gl, (_jlc->gl.whichprg == JL_GL_SLPR_TEX) ?
-		_jlc->gl.tex.attr.position : _jlc->gl.clr.attr.position, 3);
+	jl_gl_draw_vertices(_jlc, gl, (_jlc->gl.whichprg == JL_GL_SLPR_TEX) ?
+		_jlc->gl.tex.attr.position : _jlc->gl.clr.attr.position);
 	// Draw the image on the screen!
-	_jl_gl_draw_arrays(_jlc, rs ? GL_TRIANGLES : GL_TRIANGLE_FAN, vc);
+	jl_gl_draw_final__(_jlc, rs, vc);
 }
 
 /************************/
@@ -1145,22 +1171,7 @@ void jl_gl_txtr(jvct_t *_jlc, jl_vo_t* pv, u8_t map, u8_t a, u16_t pgid, u16_t p
 {
 	_jl_gl_txtr(_jlc, &pv, a, 0);
 	pv->tx = _jlc->gl.textures[pgid][pi];
-	if(map) {
-		int32_t cX = map%16;
-		int32_t cY = map/16;
-		double CX = -.0039 + (((double)cX)/16.);
-		double CY = .001 + (((double)(15-cY))/16.);
-		float tex1[] =
-		{
-			(DEFAULT_TC[0]/16.) + CX, (DEFAULT_TC[1]/16.) + CY,
-			(DEFAULT_TC[2]/16.) + CX, (DEFAULT_TC[3]/16.) + CY,
-			(DEFAULT_TC[4]/16.) + CX, (DEFAULT_TC[5]/16.) + CY,
-			(DEFAULT_TC[6]/16.) + CX, (DEFAULT_TC[7]/16.) + CY
-		};
-		jl_gl_buffer_set__(_jlc, pv->bt, tex1, 8);
-	}else{
-		jl_gl_buffer_set__(_jlc, pv->bt, DEFAULT_TC, 8);
-	}
+	jl_gl_vo_txmap(_jlc->jlc, pv, map);
 }
 
 //TODO:MOVE
@@ -1170,7 +1181,7 @@ void jl_gl_txtr(jvct_t *_jlc, jl_vo_t* pv, u8_t map, u8_t a, u16_t pgid, u16_t p
 static void jl_gl_translate__(jvct_t *_jlc, i32_t shader, i8_t which, float x,
 	float y, float z, f64_t ar)
 {
-	// Determine which shader to use: texturing or coloring?
+	// Determine which shader to use
 	_jl_gl_setp(_jlc, which);
 	// Set the uniforms
 	glUniform3f(shader, x - (1./2.), y - (ar/2.), z);
@@ -1207,7 +1218,6 @@ void jl_gl_transform_vo_(jvct_t *_jlc, jl_vo_t* vo, float x, float y, float z,
 {
 	f64_t ar = jl_gl_ar(_jlc->jlc);
 	if(vo == NULL) vo = _jlc->gl.temp_vo;
-	
 
 	jl_gl_translate__(_jlc, (vo->cc == NULL) ?
 		_jlc->gl.tex.uniforms.translate:_jlc->gl.clr.uniforms.translate,
@@ -1221,6 +1231,18 @@ void jl_gl_transform_vo_(jvct_t *_jlc, jl_vo_t* vo, float x, float y, float z,
 	if(vo->pr) jl_gl_transform_pr_(_jlc, vo->pr, x, y, z, xm, ym, zm);
 }
 
+void jl_gl_transform_chr_(jvct_t *_jlc, jl_vo_t* vo, float x, float y, float z,
+	float xm, float ym, float zm)
+{
+	f64_t ar = jl_gl_ar(_jlc->jlc);
+	if(vo == NULL) vo = _jlc->gl.temp_vo;
+
+	jl_gl_translate__(_jlc, _jlc->gl.chr.uniforms.translate, JL_GL_SLPR_CHR,
+		x, y, z, ar);
+	jl_gl_transform__(_jlc, _jlc->gl.chr.uniforms.transform, JL_GL_SLPR_CHR,
+		xm, ym, zm, ar);
+}
+
 //Draw object with "vertices" vertices.  The vertex data is in "x","y" and "z".
 //"map" refers to the charecter map.  0 means don't zoom in to one character.
 //Otherwise it will zoom in x16 to a single charecter
@@ -1229,7 +1251,7 @@ void jl_gl_transform_vo_(jvct_t *_jlc, jl_vo_t* vo, float x, float y, float z,
  * Else render vertex object "pv" on the screen.
 */
 void jl_gl_draw(jvct_t *_jlc, jl_vo_t* pv) {
-	// Fail if no vertex object.
+	// Use Temporary Vertex Object If no vertex object.
 	if(pv == NULL) pv = _jlc->gl.temp_vo;
 	// Determine which shader to use: texturing or coloring?
 	_jl_gl_set_shader(_jlc, pv);
@@ -1238,6 +1260,33 @@ void jl_gl_draw(jvct_t *_jlc, jl_vo_t* pv) {
 	else _jl_gl_draw_txtr(_jlc, pv->a, pv->tx, pv->bt);
 	// Draw onto the screen.
 	_jl_gl_draw_onts(_jlc, pv->gl, pv->rs, pv->vc);
+}
+
+/**
+ * If "pv" is NULL then draw what's on the temporary buffer
+ * Else render vertex object "pv" on the screen.
+*/
+void jl_gl_draw_chr(jvct_t *_jlc, jl_vo_t* pv,
+	m_f32_t r, m_f32_t g, m_f32_t b, m_f32_t a)
+{
+	// Use Temporary Vertex Object If no vertex object.
+	if(pv == NULL) pv = _jlc->gl.temp_vo;
+	// Set Shader
+	_jl_gl_setp(_jlc, JL_GL_SLPR_CHR);
+	// Bind Texture Coordinates to shader
+	_jl_gl_setv(_jlc, pv->bt, _jlc->gl.chr.attr.texpos, 2);
+	// Set Alpha Value In Shader
+	glUniform1f(_jlc->gl.chr.uniforms.multiply_alpha, pv->a);
+	JL_GL_ERROR(_jlc, 0,"jl_gl_draw_chr: glUniform1f");
+	// Set New Color In Shader
+	jl_gl_uniform4f__(_jlc, _jlc->gl.chr.uniforms.new_color, r, g, b, a);
+	// Bind the texture
+	glBindTexture(GL_TEXTURE_2D, pv->tx);
+	JL_GL_ERROR(_jlc, pv->tx,"jl_gl_draw_chr: glBindTexture");
+	// Update the position variable in shader.
+	jl_gl_draw_vertices(_jlc, pv->gl, _jlc->gl.chr.attr.position);
+	// Draw the image on the screen!
+	jl_gl_draw_final__(_jlc, pv->rs, pv->vc);
 }
 
 // Draw the pre-rendered texture.
@@ -1310,6 +1359,8 @@ static inline void _jl_gl_init_shaders(jvct_t *_jlc) {
 		source_vert_tex, source_frag_tex);
 	_jlc->gl.prgs[JL_GL_SLPR_TEX] = jl_gl_glsl_prg_create(_jlc,
 		source_vert_tex, source_frag_tex_premult);
+	_jlc->gl.prgs[JL_GL_SLPR_CHR] = jl_gl_glsl_prg_create(_jlc,
+		source_vert_tex, source_frag_tex_charmap);
 	_jlc->gl.prgs[JL_GL_SLPR_CLR] = jl_gl_glsl_prg_create(_jlc,
 		source_vert_clr, source_frag_clr);
 	jl_io_printc(_jlc->jlc, "made programs.\n");
@@ -1324,15 +1375,22 @@ static inline void _jl_gl_init_shaders(jvct_t *_jlc) {
 		_jl_gl_getu(_jlc, _jlc->gl.prgs[JL_GL_SLPR_PRM], "texture");
 	_jlc->gl.tex.uniforms.textures[0][0] =
 		_jl_gl_getu(_jlc, _jlc->gl.prgs[JL_GL_SLPR_TEX], "texture");
+	_jlc->gl.chr.uniforms.textures =
+		_jl_gl_getu(_jlc, _jlc->gl.prgs[JL_GL_SLPR_CHR], "texture");
 	// Multipy alpha
 	_jlc->gl.tex.uniforms.multiply_alpha =
 		_jl_gl_getu(_jlc, _jlc->gl.prgs[JL_GL_SLPR_TEX],
+			"multiply_alpha");
+	_jlc->gl.chr.uniforms.multiply_alpha =
+		_jl_gl_getu(_jlc, _jlc->gl.prgs[JL_GL_SLPR_CHR],
 			"multiply_alpha");
 	// Translate Vector
 	_jlc->gl.prm.uniforms.translate =
 		_jl_gl_getu(_jlc, _jlc->gl.prgs[JL_GL_SLPR_PRM], "translate");
 	_jlc->gl.tex.uniforms.translate =
 		_jl_gl_getu(_jlc, _jlc->gl.prgs[JL_GL_SLPR_TEX], "translate");
+	_jlc->gl.chr.uniforms.translate =
+		_jl_gl_getu(_jlc, _jlc->gl.prgs[JL_GL_SLPR_CHR], "translate");
 	_jlc->gl.clr.uniforms.translate =
 		_jl_gl_getu(_jlc, _jlc->gl.prgs[JL_GL_SLPR_CLR], "translate");
 	// Transform Vector
@@ -1340,8 +1398,13 @@ static inline void _jl_gl_init_shaders(jvct_t *_jlc) {
 		_jl_gl_getu(_jlc, _jlc->gl.prgs[JL_GL_SLPR_PRM], "transform");
 	_jlc->gl.tex.uniforms.transform =
 		_jl_gl_getu(_jlc, _jlc->gl.prgs[JL_GL_SLPR_TEX], "transform");
+	_jlc->gl.chr.uniforms.transform =
+		_jl_gl_getu(_jlc, _jlc->gl.prgs[JL_GL_SLPR_CHR], "transform");
 	_jlc->gl.clr.uniforms.transform =
 		_jl_gl_getu(_jlc, _jlc->gl.prgs[JL_GL_SLPR_CLR], "transform");
+	// New Color
+	_jlc->gl.chr.uniforms.new_color =
+		_jl_gl_getu(_jlc, _jlc->gl.prgs[JL_GL_SLPR_CHR], "new_color");
 	//
 	jl_io_printc(_jlc->jlc, "setting up prm shader attrib's....\n");
 	_jl_gl_geta(_jlc, _jlc->gl.prgs[JL_GL_SLPR_PRM],
@@ -1353,6 +1416,11 @@ static inline void _jl_gl_init_shaders(jvct_t *_jlc) {
 		&_jlc->gl.tex.attr.position, "position");
 	_jl_gl_geta(_jlc, _jlc->gl.prgs[JL_GL_SLPR_TEX],
 		&_jlc->gl.tex.attr.texpos, "texpos");
+	jl_io_printc(_jlc->jlc, "setting up chr shader attrib's....\n");
+	_jl_gl_geta(_jlc, _jlc->gl.prgs[JL_GL_SLPR_CHR],
+		&_jlc->gl.chr.attr.position, "position");
+	_jl_gl_geta(_jlc, _jlc->gl.prgs[JL_GL_SLPR_CHR],
+		&_jlc->gl.chr.attr.texpos, "texpos");
 	jl_io_printc(_jlc->jlc, "setting up clr shader attrib's....\n");
 	_jl_gl_geta(_jlc, _jlc->gl.prgs[JL_GL_SLPR_CLR],
 		&_jlc->gl.clr.attr.position, "position");
@@ -1486,6 +1554,30 @@ jl_vo_t *jl_gl_vo_make(jl_t* jlc, u32_t count) {
 	for(i = 0; i < count; i++) _jl_gl_vo_make(_jlc, &rtn[i], (count-1) - i);
 	// Return the vertex object[s].
 	return rtn;
+}
+
+/**
+ * Change the character map for a texture.
+ * @param jlc: The library context.
+ * @param pv: The vertext object to change.
+ * @param map: The character value to map.
+**/
+void jl_gl_vo_txmap(jl_t* jlc, jl_vo_t* pv, u8_t map) {
+	if(map) {
+		int32_t cX = map%16;
+		int32_t cY = 15 - (map/16);
+		double CX = ((double)cX)/16.;
+		double CY = ((double)cY)/16.;
+		float tex1[] = {
+			(DEFAULT_TC[0]/16.) + CX, (DEFAULT_TC[1]/16.) + CY,
+			(DEFAULT_TC[2]/16.) + CX, (DEFAULT_TC[3]/16.) + CY,
+			(DEFAULT_TC[4]/16.) + CX, (DEFAULT_TC[5]/16.) + CY,
+			(DEFAULT_TC[6]/16.) + CX, (DEFAULT_TC[7]/16.) + CY
+		};
+		jl_gl_buffer_set__(jlc->_jlc, pv->bt, tex1, 8);
+	}else{
+		jl_gl_buffer_set__(jlc->_jlc, pv->bt, DEFAULT_TC, 8);
+	}
 }
 
 /**

@@ -19,8 +19,8 @@
 	#include <stdlib.h>
 	#include <math.h>
 	#include <dirent.h>
-	
-	#include "jl_vm.h" //Variable Map
+// Variable Map
+	#include "jl_vm.h"
 
 #define MAXFILELEN 1000 * 100000 //100,000 kb
 
@@ -75,9 +75,9 @@
 
 //USER's Functions
 void hack_user_init(jl_t* jlc);
-//USER's MAIN
-char *jal5_head_jlvm(void);
-uint32_t jal5_head_size(void);
+// Media To Include
+char *jl_gem(void);
+uint32_t jl_gem_size(void);
 
 //OTHER LIB STUFF
 void _jl_fl_errf(jvct_t * _jlc, const char *msg);
@@ -96,7 +96,11 @@ void jl_gl_transform_pr_(jvct_t *_jlc, jl_pr_t* pr, float x, float y, float z,
 	float xm, float ym, float zm);
 void jl_gl_transform_vo_(jvct_t *_jlc, jl_vo_t* vo, float x, float y, float z,
 	float xm, float ym, float zm);
+void jl_gl_transform_chr_(jvct_t *_jlc, jl_vo_t* vo, float x, float y, float z,
+	float xm, float ym, float zm);
 void jl_gl_draw(jvct_t *_jlc, jl_vo_t* pv);
+void jl_gl_draw_chr(jvct_t *_jlc, jl_vo_t* pv,
+	m_f32_t r, m_f32_t g, m_f32_t b, m_f32_t a);
 void jl_gl_pr_(jvct_t *_jlc, jl_pr_t * pr, jl_simple_fnt par__redraw);
 void jl_gl_draw_pr_(jl_t* jlc, jl_pr_t* pr);
 uint8_t jl_gl_pr_isi_(jvct_t *_jlc, jl_pr_t* pr);

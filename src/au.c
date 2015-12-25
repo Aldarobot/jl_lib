@@ -189,7 +189,7 @@ static inline void _jl_au_init_sounds(jvct_t *_jlc, uint8_t *data) {
 */
 void jl_au_add_audio(jl_t* jlc, str_t pzipfile, uint16_t pigid) {
 	strt aud = jl_fl_media(jlc, "jlex/2/_aud", pzipfile,
-		jal5_head_jlvm(), jal5_head_size());
+		jl_gem(), jl_gem_size());
 	jl_io_offset(jlc, JL_IO_MINIMAL, "LOAD"); // { : Open Block "LOAD"
 	jl_io_printc(jlc, "AUDIO_AUDIO:");
 	jl_io_printi(jlc, jlc->info);
