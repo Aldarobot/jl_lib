@@ -483,6 +483,7 @@ jvct_t* _jl_me_init(void) {
 	_jlc->has.graphics = 0;
 	_jlc->has.fileviewer = 0;
 	_jlc->has.filesys = 0;
+	_jlc->has.input = 0;
 	_jlc->me.status = JL_STATUS_GOOD;
 	// Clear temporary pointer buffer.
 	for(i = 0; i < 16; i++) _jlc->me.tmp_ptr[i] = NULL;

@@ -1,5 +1,5 @@
 // Version Definitions
-#define JL_VERSION "5.2.0e1"
+#define JL_VERSION "5.2.0"
 /*
  * Version System:
  * 	major version "." minor version "." debug version "."

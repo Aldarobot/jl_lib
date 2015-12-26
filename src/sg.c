@@ -13,7 +13,6 @@
 #include "header/jl_pr.h"
 
 // SG Prototypes
-void jl_gl_pr_off(jvct_t *_jlc);
 void jl_gl_draw_prendered(jvct_t *_jlc, jl_vo_t* pv);
 void jl_gl_pr_scr_set(jvct_t *_jlc, jl_vo_t* vo);
 
@@ -131,12 +130,11 @@ static void _jl_sg_mode_add(jvct_t* _jlc, u8_t mode) {
 void jl_sg_mode_set(jl_t* jlc, u8_t mode, u8_t wm, jl_simple_fnt loop) {
 	jvct_t* _jlc = jlc->_jlc;
 
-	jl_gr_draw_msge(jlc, "Switching Mode...");
+	jl_gr_draw_msge(jlc, "Switching Mode...", 0, 0, 0);
 	while(mode >= _jlc->jlc->mdec) _jl_sg_mode_add(_jlc, mode);
 	_jlc->sg.mdes[mode].tclp[wm] = loop;
 	// Reset things
 	_jlc->ct.heldDown = 0;
-	jl_gr_draw_msge(jlc, "Switched Mode!");
 }
 
 /**
@@ -375,13 +373,20 @@ static inline uint8_t _jl_sg_load_next_img(jvct_t * _jlc) {
 	}
 }
 
+void jl_sg_add_some_imgs_(jvct_t * _jlc, u16_t x) {
+	m_u16_t i;
+	for(i = 0; i < x; i++) {
+		if(!_jl_sg_load_next_img(_jlc)) break;
+	}
+}
+
 //Load the images in the image file
-static inline void _jl_sg_init_images(jvct_t * _jlc, strt data, uint16_t p){
+static inline void _jl_sg_init_images(jvct_t * _jlc,strt data,u16_t gi,u16_t x){
 	char *stringlength;
 
 	_jlc->sg.init_image_location = 0;
 	_jlc->sg.image_id= 0; //Reset Image Id
-	_jlc->sg.igid = p;
+	_jlc->sg.igid = gi;
 	_jlc->sg.image_data = data;
 
 	jl_io_offset(_jlc->jlc, JL_IO_PROGRESS, "INIM");
@@ -394,7 +399,8 @@ static inline void _jl_sg_init_images(jvct_t * _jlc, strt data, uint16_t p){
 	free(stringlength);
 	jl_io_close_block(_jlc->jlc); //Close Block "INIM"
 //load textures
-	while(_jl_sg_load_next_img(_jlc));
+	if(x) jl_sg_add_some_imgs_(_jlc, x);
+	else while(_jl_sg_load_next_img(_jlc));
 }
 
 static uint32_t _jl_sg_quit(jvct_t* _jlc, int rc) {
@@ -407,17 +413,16 @@ static uint32_t _jl_sg_quit(jvct_t* _jlc, int rc) {
 	}
 	// Set status to Exiting
 	_jlc->me.status = JL_STATUS_EXIT;
-	if(_jlc->has.graphics) jl_gr_draw_msge(_jlc->jlc, "QUITING JLLIB....");
 	_jl_fl_errf(_jlc, ":Quitting....\n"); //Exited properly
 	_jl_au_kill(_jlc);
-	_jl_dl_kill(_jlc);
 	_jl_fl_kill(_jlc);
 	_jl_sg_kill(_jlc->jlc);
+	_jl_dl_kill(_jlc);
 	_jl_fl_errf(_jlc, ":Quit successfully!\n"); //Exited properly
 	_jl_io_kill(_jlc->jlc);
 	_jl_me_kill(_jlc);
-	if(!rc) printf("!! No errors ");
-	printf("!! Exiting with return value %d\n", rc);
+	if(!rc) printf("| No errors ");
+	printf("| Exiting with return value %d |\n", rc);
 	exit(rc);
 	_jl_fl_errf(_jlc, ":What The Hell?  This is an impossible error!\n");
 	return JL_RTN_IMPOSSIBLE;
@@ -446,6 +451,7 @@ void jl_sg_kill(jl_t* jlc) {
  * Go to exit mode or exit if in exit mode.
  */
 void jl_sg_exit(jl_t* jlc) {
+	jl_gr_draw_msge(jlc, "Quiting JL-Lib....", 0, 0, 0);
 	if(jlc->loop == JL_SG_WM_EXIT)
 		_jl_sg_quit(jlc->_jlc, JL_RTN_SUCCESS);
 	else
@@ -493,6 +499,22 @@ static inline double _jl_sg_seconds_passed(jvct_t* _jlc) {
 	}
 }
 
+static void jl_sg_add_image__(jl_t* jlc, str_t pzipfile, u16_t pigid, u8_t x) {
+	jl_io_offset(jlc, JL_IO_PROGRESS, "LIMG");
+	//Load Graphics
+	strt img = jl_fl_media(jlc, "jlex/2/_img", pzipfile,
+		jl_gem(), jl_gem_size());
+
+	jl_io_printc(jlc, "Loading Images...\n");
+	if(img != NULL)
+		_jl_sg_init_images(jlc->_jlc, img, pigid, x);
+	else
+		jl_io_printc(jlc, "Loaded 0 images!\n");
+	jl_io_offset(jlc, JL_IO_PROGRESS, "LIMG"); // {
+	jl_io_printc(jlc, "Loaded Images...\n");
+	jl_io_close_block(jlc); // }
+}
+
 /**
  * Load all images from a zipfile and give them ID's.
  * info: info is set to number of images loaded.
@@ -501,22 +523,10 @@ static inline double _jl_sg_seconds_passed(jvct_t* _jlc) {
  * @param pigid: which image group to load the images into.
 */
 void jl_sg_add_image(jl_t* jlc, str_t pzipfile, u16_t pigid) {
-	jl_io_offset(jlc, JL_IO_PROGRESS, "LIMG");
-	//Load Graphics
-	strt img = jl_fl_media(jlc, "jlex/2/_img", pzipfile,
-		jl_gem(), jl_gem_size());
-
-	jl_io_printc(jlc, "Loading Images...\n");
-	if(img != NULL)
-		_jl_sg_init_images(jlc->_jlc, img, pigid);
-	else
-		jl_io_printc(jlc, "Loaded 0 images!\n");
-	jl_io_offset(jlc, JL_IO_PROGRESS, "LIMG"); // {
-	jl_io_printc(jlc, "Loaded Images...\n");
-	jl_io_close_block(jlc); // }
+	jl_sg_add_image__(jlc, pzipfile, pigid, 0);
 }
 
-static void _jl_sg_screen_draw(jl_t* jlc, float ytrans, jl_vo_t* bg, uint8_t lp) {
+static void _jl_sg_screen_draw(jl_t* jlc, f32_t ytrans, jl_vo_t* bg, u8_t lp) {
 	jvct_t * _jlc = jlc->_jlc;
 	jl_vec3_t translate = { _jlc->sg.offsx, _jlc->sg.offsy + ytrans, 0. };
 
@@ -655,11 +665,12 @@ static inline void _jl_sg_inita(jvct_t * _jlc) {
 	_jlc->gl.tex.uniforms.textures = NULL;
 	_jlc->sg.image_id = 0; //Reset Image Id
 	_jlc->sg.igid = 0; //Reset Image Group Id
-	//Load Graphics
+	// Load Graphics
 	_jlc->gl.allocatedg = 0;
 	_jlc->gl.allocatedi = 0;
-	jl_sg_add_image(_jlc->jlc,
-		(void*)jl_fl_get_resloc(_jlc->jlc, JL_MAIN_DIR, JL_MAIN_MEF),0);
+	jl_sg_add_image__(_jlc->jlc,
+		(void*)jl_fl_get_resloc(_jlc->jlc, JL_MAIN_DIR, JL_MAIN_MEF),
+		0, 1);
 	// Clear User Loops
 	for(i = 0; i < JL_SG_WM_MAX; i++) _jlc->sg.mode.tclp[i] = jl_dont;
 }
@@ -687,7 +698,7 @@ static inline void _jl_sg_init_done(jvct_t *_jlc) {
 	jl_io_printc(_jlc->jlc, "turning on display....\n");
 	_jlc->has.graphics = 1; //Graphics Now Available For Use
 	jl_io_printc(_jlc->jlc, "printing to the screen....\n");
-	jl_gr_draw_msge(_jlc->jlc, "LOADING JLLIB....");
+	jl_gr_draw_msge(_jlc->jlc, "LOADING JLLIB....", 0, 0, 0);
 	jl_io_printc(_jlc->jlc, "offsetting....\n");
 	jl_io_offset(_jlc->jlc, JL_IO_MINIMAL, "JLLB"); //"JLLB" to SIMPLE
 	jl_io_printc(_jlc->jlc, "started up display ");
@@ -707,11 +718,11 @@ static inline void _jl_sg_init_done(jvct_t *_jlc) {
 // void _jl_sg_resz(jl_t* jlc);
 
 //Initialize The Libraries Needed At Very Beginning: The Base Of It All
-static inline jvct_t* _jl_sg_init_blib(void) {
+static inline jvct_t* jl_sg_init_essential__(void) {
 	// Memory
 	jvct_t* _jlc = _jl_me_init(); // Create The Library Context
-	// Other
-	_jl_io_init(_jlc); // Allow Printing
+	// Printing to terminal
+	_jl_io_init(_jlc);
 	return _jlc;
 }
 
@@ -810,7 +821,7 @@ Java_org_libsdl_app_SDLActivity_nativeJlSendData(
 #endif
 
 int32_t main(int argc, char *argv[]) {
-	jvct_t* _jlc = _jl_sg_init_blib(); //Set Up Memory And Logging
+	jvct_t* _jlc = jl_sg_init_essential__(); //Set Up Memory And Logging
 
 	// Initialize JL_lib!
 	_jl_ini(_jlc);

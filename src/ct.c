@@ -415,7 +415,6 @@ static inline void _jl_ct_process_events(jvct_t *_jlc) {
 #if JL_PLAT == JL_PLAT_PHONE
 	_jl_ct_state(&_jlc->ct.heldDown, _jlc->ct.input.finger);
 	_jl_ct_state(&_jlc->ct.menu, _jlc->ct.input.menu);
-	_jl_ct_state(&_jlc->ct.back, _jlc->ct.input.back);
 #elif JL_PLAT == JL_PLAT_COMPUTER
 	_jl_ct_state(&_jlc->ct.heldDown, _jlc->ct.input.click_left);
 #endif
@@ -434,19 +433,38 @@ static void _jl_ct_run_event(jvct_t * _jlc, uint8_t pevent,
 	_jlc->ct.getEvents[pevent](_jlc->jlc, prun, pno);
 }
 
+static void jl_ct_testquit__(jvct_t * _jlc) {
+	if(_jlc->ct.back == 1) jl_sg_exit(_jlc->jlc); // Back Button/Key
+}
+
 void jl_ct_run_event(jl_t *jlc, uint8_t pevent,
 	jl_simple_fnt prun, jl_simple_fnt pno)
 {
 	_jl_ct_run_event(jlc->_jlc, pevent, prun, pno);
 }
 
+void jl_ct_getevents_(jvct_t* _jlc) {
+	while(SDL_PollEvent(&_jlc->ct.event)) _jl_ct_handle_events(_jlc);
+	//If Back key is pressed, then quit the program
+#if JL_PLAT == JL_PLAT_COMPUTER
+	_jlc->ct.keys = SDL_GetKeyboardState(NULL);
+	_jlc->ct.back = jl_ct_key_pressed(_jlc->jlc, SDL_SCANCODE_ESCAPE);
+#elif JL_PLAT == JL_PLAT_PHONE
+	_jl_ct_state(&_jlc->ct.back, _jlc->ct.input.back);
+#endif
+}
+
+void jl_ct_quickloop_(jvct_t* _jlc) {
+	jl_ct_getevents_(_jlc);
+	if(_jlc->ct.back == 1) jl_sg_exit(_jlc->jlc);
+}
+
 //Main Input Loop
 void _jl_ct_loop(jvct_t* _jlc) {
 	//Get the information on current events
-	while(SDL_PollEvent(&_jlc->ct.event)) _jl_ct_handle_events(_jlc);
+	jl_ct_getevents_(_jlc);
 	_jl_ct_process_events(_jlc);
 	#if JL_PLAT == JL_PLAT_COMPUTER
-		_jlc->ct.keys = SDL_GetKeyboardState(NULL);
 		//Get Whether mouse is down or not and xy coordinates
 		SDL_GetMouseState(&_jlc->ct.msxi,&_jlc->ct.msyi);
 		if(_jlc->ct.msxi < _jlc->dl.window.x ||
@@ -477,12 +495,10 @@ void _jl_ct_loop(jvct_t* _jlc) {
 			_jlc->ct.msy = 0.;
 			_jlc->ct.heldDown = 0;
 		}
-		//If Escape key is pressed, then quit the program
-		_jlc->ct.back = jl_ct_key_pressed(_jlc->jlc, SDL_SCANCODE_ESCAPE);
 		if(jl_ct_key_pressed(_jlc->jlc, SDL_SCANCODE_F11) == 1)
 			jl_dl_togglefullscreen(_jlc->jlc);
 	#endif
-	if(_jlc->ct.back == 1) jl_sg_exit(_jlc->jlc); // Back Button/Key
+	jl_ct_testquit__(_jlc);
 }
 
 static inline void _jl_ct_fn_init(jvct_t* _jlc) {
@@ -527,6 +543,7 @@ static inline void _jl_ct_var_init(jvct_t* _jlc) {
 void _jl_ct_init(jvct_t* _jlc) {
 	_jl_ct_fn_init(_jlc);
 	_jl_ct_var_init(_jlc);
+	_jlc->has.input = 1;
 }
 
 /**

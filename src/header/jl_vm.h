@@ -270,6 +270,7 @@ typedef struct {
 		uint8_t graphics; //graphics are enabled
 		uint8_t fileviewer; //Fileviewer is enabled
 		uint8_t filesys; // Filesystem is enabled.
+		uint8_t input; // Input is enabled.
 	}has;
 
 	uint64_t cprg; //current program ID

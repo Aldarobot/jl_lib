@@ -107,7 +107,7 @@
 	void jl_gr_draw_text_area(jl_t* jlc, jl_sprite_t * spr, str_t txt);
 	void jl_gr_draw_text_sprite(jl_t* jlc,jl_sprite_t * spr, str_t txt);
 	void jl_gr_draw_ctxt(jl_t* jlc, char *str, float yy, uint8_t* color);
-	void jl_gr_draw_msge(jl_t* jlc, char* message);
+	void jl_gr_draw_msge(jl_t* jlc, char* message, u16_t g, u16_t i,u8_t c);
 	void jl_gr_term_msge(jl_t* jlc, char* message);
 	void jl_gr_slidebtn_rsz(jl_t* jlc, jl_sprite_t * spr, str_t txt);
 	void jl_gr_slidebtn_rnl(jl_t* jlc, jl_sprite_t * spr,  float defaultx,

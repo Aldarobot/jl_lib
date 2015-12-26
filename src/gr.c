@@ -805,11 +805,16 @@ static void _jl_gr_popup_loop(jl_t* jlc);
    	 * @param 'jlc': library context.
 	 * @param 'message': the message 
 	 */
-	void jl_gr_draw_msge(jl_t* jlc, char * message) {
-		jl_gr_fill_image_set(jlc, 0, JL_IMGI_ICON, 1, 127);
+	void jl_gr_draw_msge(jl_t* jlc, char* message, u16_t g, u16_t i,u8_t c){
+		jvct_t* _jlc = jlc->_jlc;
+
+		jl_gl_pr_off(_jlc);
+		jl_gr_fill_image_set(jlc, g, i, c, 127);
 		jl_gr_fill_image_draw(jlc);
-		jl_gr_draw_ctxt(jlc, message, (9./16.)/2, jlc->fontcolor);
-		_jl_dl_loop(jlc->_jlc); //Update Screen
+		if(message)
+			jl_gr_draw_ctxt(jlc, message, 9./32., jlc->fontcolor);
+		_jl_dl_loop(_jlc); //Update Screen
+		if(_jlc->has.input) jl_ct_quickloop_(jlc->_jlc);
 	}
 
 	/**
@@ -818,7 +823,7 @@ static void _jl_gr_popup_loop(jl_t* jlc);
  	 * @param 'message': the message 
 	 */
 	void jl_gr_term_msge(jl_t* jlc, char *message) {
-		jl_gr_draw_msge(jlc, message);
+		jl_gr_draw_msge(jlc, message, 0, JL_IMGI_ICON, 1);
 		_jl_fl_errf(jlc->_jlc, message);
 		jl_sg_kill(jlc);
 	}
@@ -1045,15 +1050,23 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 	}
 	
 	void jl_gr_inita_(jvct_t *_jlc) {
-		jl_io_offset(_jlc->jlc, JL_IO_SIMPLE, "GRIN");
 		_jl_gr_init_vos(_jlc);
+		// Draw Loading Screen
+		jl_gr_draw_msge(_jlc->jlc, NULL, 0, 0, 0);
+		// Create Font
 		_jlc->jlc->fontcolor[0] = 0;
 		_jlc->jlc->fontcolor[1] = 0;
 		_jlc->jlc->fontcolor[2] = 0;
 		_jlc->jlc->fontcolor[3] = 255;
 		_jlc->jlc->font = (jl_font_t)
 			{ 0, JL_IMGI_FONT, 0, _jlc->jlc->fontcolor, .04 };
-		jl_io_close_block(_jlc->jlc); //Close Block "GRIN"
+		jl_sg_add_some_imgs_(_jlc, 1);
+		jl_gr_draw_msge(_jlc->jlc, "LOADING JL_LIB GRAPHICS...",
+			0, 0, 0);
+		// Load the other images.
+		jl_sg_add_some_imgs_(_jlc, 2);
+		jl_gr_draw_msge(_jlc->jlc, "LOADED JL_LIB GRAPHICS!",
+			0, 0, 0);
 	}
 
 	void jl_gr_initb_(jvct_t *_jlc) {

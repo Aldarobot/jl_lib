@@ -89,13 +89,6 @@ static inline void _jlvm_crea_wind(jvct_t *_jlc) {
 	_jlc->dl.current.w = 480;
 	_jlc->dl.current.h = 272;
 	#endif
-
-	// Set attributes
-/*	SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
-	SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
-	SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
-	SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8);
-	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);*/
 	
 	// Allocate space for "displayWindow"
 	jl_me_alloc(_jlc->jlc, (void**)&_jlc->dl.displayWindow,
@@ -105,8 +98,8 @@ static inline void _jlvm_crea_wind(jvct_t *_jlc) {
 		"¡SDL2 Window!",			// window title
 		SDL_WINDOWPOS_UNDEFINED,		// initial x position
 		SDL_WINDOWPOS_UNDEFINED,		// initial y position
-		_jlc->dl.current.w, _jlc->dl.current.h,	//width and height
-		SDL_WINDOW_OPENGL | SDL_WINDOW_FULLSCREEN | SDL_WINDOW_RESIZABLE
+		_jlc->dl.current.w, _jlc->dl.current.h,	// width and height
+		SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE
     	);
 
 	if(_jlc->dl.displayWindow == NULL)
@@ -116,13 +109,16 @@ static inline void _jlvm_crea_wind(jvct_t *_jlc) {
 		_jl_fl_errf(_jlc, "\n");
 		jl_sg_kill(_jlc->jlc);
 	}
-	_jlc->dl.fullscreen = 1;
 	SDL_GL_SetAttribute(SDL_GL_SHARE_WITH_CURRENT_CONTEXT, 0);
 	_jlc->dl.displayWindow->c =
 		SDL_GL_CreateContext(_jlc->dl.displayWindow->w);
+	// Clear and update
+	jl_gl_clear(_jlc->jlc, 2, 255, 5, 255);
+	_jl_dl_loop(_jlc);
 #if JL_GLRTEX == JL_GLRTEX_SDL
 	_jlc->dl.whichwindow = 0;
 #endif
+	_jlc->dl.fullscreen = 0;
 }
 
 //NON-STATIC FUNCTIONS
@@ -174,7 +170,6 @@ void _jl_dl_resz(jvct_t *_jlc, uint16_t x, uint16_t y) {
 	_jlc->dl.full_w = x;
 	_jlc->dl.full_h = y;
 	jl_gl_viewport_screen(_jlc);
-	jl_gl_clear(_jlc->jlc, 2, 5, 255, 255);
 	_jlc->dl.multiplyy = -2.*((float)x)/((float)y);
 	_jlc->dl.multiplyx = 2.;
 	_jlc->dl.shiftx = 0.;
@@ -230,6 +225,8 @@ void _jl_dl_resz(jvct_t *_jlc, uint16_t x, uint16_t y) {
 	_jlc->dl.current.h = y + (x - y);
 	// Set GL aspect.
 	_jlc->dl.aspect = ((double)y) / ((double)x);
+	// Clear the screen of anything wierd.
+	jl_gl_clear(_jlc->jlc, 122, 255, 125, 255);
 }
 
 /**
@@ -262,16 +259,15 @@ void _jl_dl_inita(jvct_t* _jlc) {
 	_jlvm_curd_mode(_jlc);
 	//Update screensize to fix any rendering glitches
 	_jl_dl_resz(_jlc, _jlc->dl.current.w, _jlc->dl.current.h);
-	// Clear the screen of anything wierd.
-	jl_gl_clear(_jlc->jlc, 2, 5, 255, 255);
 	// Update The Screen
 	_jl_dl_loop(_jlc);
 }
 
 void _jl_dl_kill(jvct_t* _jlc) {
 	jl_io_printc(_jlc->jlc, "killing SDL...\n");
-/*	if (_jlc->dl.glcontext != NULL) {
-		SDL_free(_jlc->dl.glcontext);
-	}*/
+	if (_jlc->dl.displayWindow->c != NULL) {
+		SDL_free(_jlc->dl.displayWindow->c);
+		SDL_free(_jlc->dl.displayWindow->w);
+	}
 	jl_io_printc(_jlc->jlc, "killed SDL!\n");
 }

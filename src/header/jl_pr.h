@@ -105,8 +105,12 @@ void jl_gl_pr_(jvct_t *_jlc, jl_pr_t * pr, jl_simple_fnt par__redraw);
 void jl_gl_draw_pr_(jl_t* jlc, jl_pr_t* pr);
 uint8_t jl_gl_pr_isi_(jvct_t *_jlc, jl_pr_t* pr);
 void jl_gl_pr_use(jvct_t *_jlc, jl_vo_t* pv);
+void jl_gl_pr_off(jvct_t *_jlc);
 void jl_gl_pr_scr(jvct_t *_jlc);
 
 //DL
 void _jl_dl_resz(jvct_t *_jlc, uint16_t x, uint16_t y);
+void _jl_dl_loop(jvct_t* _jlc);
 void _jl_gr_resz(jl_t* jlc);
+void jl_sg_add_some_imgs_(jvct_t * _jlc, u16_t x);
+void jl_ct_quickloop_(jvct_t* _jlc);
