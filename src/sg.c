@@ -546,7 +546,7 @@ static void _jl_sg_screen_draw(jl_t* jlc, f32_t ytrans, jl_vo_t* bg, u8_t lp) {
 	// Turn off the pre-renderer.
 	jl_gl_pr_off(_jlc);
 	// Draw the prendered texture.
-	jl_gr_draw_pr(jlc, bg, &translate);
+	jl_gr_pr_draw(jlc, bg, &translate);
 }
 
 // Double screen loop

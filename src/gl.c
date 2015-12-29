@@ -1074,15 +1074,6 @@ void jl_gl_pr_off(jvct_t *_jlc) {
 	_jl_gl_pr_unuse(_jlc);
 }
 
-/**
- * Render an image onto a vertex object's pr.
-**/
-void jl_gl_pr(jl_t *jlc, jl_vo_t* vo, jl_simple_fnt par__redraw) {
-	jvct_t *_jlc = jlc->_jlc;
-
-	jl_gl_pr_(_jlc, vo->pr, par__redraw);
-}
-
 // Set vertices for a polygon.
 void jl_gl_poly(jvct_t *_jlc, jl_vo_t* pv, uint8_t vertices, const float *xyzw) {
 	const float FS_RECT[] = {
@@ -1308,13 +1299,6 @@ void jl_gl_draw_pr_(jl_t* jlc, jl_pr_t* pr) {
 	_jl_gl_setv(_jlc, pr->gl, _jlc->gl.prm.attr.position, 3);
 	// Draw the image on the screen!
 	_jl_gl_draw_arrays(_jlc, GL_TRIANGLE_FAN, 4);
-}
-
-void jl_gl_pr_draw(jl_t* jlc, jl_vo_t* pv) {
-	jvct_t *_jlc = jlc->_jlc;
-
-	if(pv == NULL) pv = _jlc->gl.temp_vo;
-	jl_gl_draw_pr_(jlc, pv->pr);
 }
 
 int32_t _jl_gl_getu(jvct_t *_jlc, GLuint prg, char *var) {
@@ -1673,23 +1657,42 @@ jl_pr_t * jl_gl_pr_new(jl_t* jlc, f32_t w, f32_t h, u16_t w_px) {
 	return pr;
 }
 
+/**
+ * Draw a pre-rendered texture.
+ * @param jlc: The library context.
+ * @param pr: The pre-rendered texture.
+ * @param vec: The vector of offset/translation.
+**/
+void jl_gl_pr_draw(jl_t* jlc, jl_pr_t* pr, jl_vec3_t* vec) {
+	jvct_t *_jlc = jlc->_jlc;
+
+	if(pr == NULL) pr = _jlc->gl.temp_vo->pr;
+	if(vec == NULL)
+		jl_gl_transform_pr_(jlc->_jlc, pr,
+			0.f, 0.f, 0.f, 1., 1., 1.);
+	else
+		jl_gl_transform_pr_(jlc->_jlc, pr,
+			vec->x, vec->y, vec->z, 1., 1., 1.);
+	jl_gl_draw_pr_(jlc, pr);
+}
+
+void jl_gl_pr(jl_t* jlc, jl_pr_t * pr, jl_simple_fnt par__redraw) {
+	if(!pr) {
+		_jl_fl_errf(jlc->_jlc, "Drawing on lost pre-renderer.\n");
+		jl_sg_kill(jlc);
+	}
+	// Use the vo's pr
+	jl_gl_pr_use_(jlc->_jlc, pr);
+	// Render to the pr.
+	par__redraw(jlc);
+	// Go back to the screen without clearing it.
+	jl_gl_pr_scr(jlc->_jlc);
+}
+
 /***	  @cond	   ***/
 /************************/
 /***  ETOM Functions  ***/
 /************************/
-
-void jl_gl_pr_(jvct_t *_jlc, jl_pr_t * pr, jl_simple_fnt par__redraw) {
-	if(!pr) {
-		_jl_fl_errf(_jlc, "Drawing on lost pre-renderer.\n");
-		jl_sg_kill(_jlc->jlc);
-	}
-	// Use the vo's pr
-	jl_gl_pr_use_(_jlc, pr);
-	// Render to the pr.
-	par__redraw(_jlc->jlc);
-	// Go back to the screen without clearing it.
-	jl_gl_pr_scr(_jlc);
-}
 
 void jl_gl_resz_(jvct_t* _jlc) {
 	// Deselect any pre-renderer.

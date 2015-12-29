@@ -4,6 +4,11 @@ CFLAGS_DEBUG = $(HEADER) $(sdl2-config --cflags) -Wall -g
 CFLAGS_RELEASE = $(HEADER) $(sdl2-config --cflags) -O3
 CFLAGS = $(CFLAGS_DEBUG)
 
+# Build Project
+CFLAGS_PRJ_INCLUDES = -I`sed -n '2p' pref.txt`/src/include/\
+	-I`sed -n '2p' pref.txt`/src/lib/include/\
+	-Isrc/ -Isrc/include/
+
 # Locations
 LIBZIP = build/android/jni/src/lib/libzip/
 
@@ -80,7 +85,7 @@ build-library:
 	gcc src/gen/media.c -c -o build/obj/media.o $(CFLAGS)
 	# Make "jl.o"
 	printf "[COMP] compiling singular jl_lib object file....\n"
-	ar csr build/jl.o build/obj/*.o
+	ar csr build/jl.o build/obj/*.o build/deps/*.o
 	# Empty directory: build/obj/
 	printf "[COMP] cleaning up....\n"
 	rm -r build/obj/
@@ -89,6 +94,15 @@ build-library:
 build-media: compile_media
 build-project: compile_es
 build-project-android:
+install-project:
+	printf "Installing....\n"
+	if [ -z "$(JLL_PATH)" ]; then \
+		printf "Where to install? ( hint: /bin or $$HOME/bin ) [ Set JLL_PATH ]\n"; \
+		read JLL_PATH; \
+	fi; \
+	printf "Copying files to $$JLL_PATH/....\n"; \
+	cp -u --recursive -t $$JLL_PATH/ bin/comp/*; \
+	printf "Done!\n"
 
 # Lower Level
 init-deps-all: init-deps-most init-deps-ndk
@@ -190,7 +204,7 @@ build-libzip:
 	cd deps/libzip-1.0.1/ && \
 	sh configure && \
 	make && \
-	ar csr ../../build/deps/lib_zip.o lib/*.o && \
+	ld -r lib/*.o -o ../../build/deps/lib_zip.o && \
 	cp lib/zip.h ../../src/lib/include/ && \
 	printf "[COMP] done!\n"
 build-sdl:
@@ -233,7 +247,9 @@ build-sdl-mixer:
 	cd deps/SDL2_mixer-2.0.0/ && \
 	sh configure && \
 	make && \
-	ar csr ../../build/deps/lib_SDL_mixer.o build/*.o && \
+	rm -f build/playmus.o build/playwave.o && \
+	printf "[COMP] Linking...\n" && \
+	ld -r build/*.o -o ../../build/deps/lib_SDL_mixer.o && \
 	cp SDL_mixer.h ../../src/lib/include/SDL_mixer.h && \
 	printf "[COMP] done!\n"
 build-clump:
@@ -254,7 +270,7 @@ compile_es: nc_compile_es__ nc_compile__
 
 compile_media:
 	printf "[COMP] compiling media\n"
-	gcc media/genr/*.c -c -o media/media.o $(CFLAGS_MEDIA)
+	gcc src/media/*.c -c -o media/media.o $(CFLAGS_MEDIA)
 
 nc_compile_gl__:
 	printf "[COMP] compiling with OPENGL\n"
@@ -267,11 +283,9 @@ nc_compile__:
 	printf "[COMP] cleaning up....\n"
 	rm -f bin/comp/`sed -n '4p' data.txt`
 	printf "[COMP] compiling with GL $(GL_VERSION)....\n"
-	gcc\
-	 -I`sed -n '2p' pref.txt`/src/include/\
-	 -I`sed -n '2p' pref.txt`/src/lib/include/\
-	 `sed -n '2p' pref.txt`/build/jl.o `sed -n '2p' pref.txt`/build/deps/*.o\
-	 src/*.c media/media.o\
+	gcc $(CFLAGS_PRJ_INCLUDES)\
+	 `sed -n '2p' pref.txt`/build/jl.o\
+	 src/**/*.c src/*.c\
 	 -lSDL2 -lpthread -lm -ldl -lpthread -lrt\
 	 $(GL_VERSION) -lm -lz\
 	 -o bin/comp/`sed -n '4p' data.txt`\

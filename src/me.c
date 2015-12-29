@@ -344,6 +344,7 @@ void jl_me_strt_merg(jl_t *jlc, strt a, strt b) {
  * @param 'size': size to truncate to.
  */
 void jl_me_strt_trunc(jl_t *jlc, strt a, uint32_t size) {
+	a->curs = 0;
 	a->size = size;
 	a->data = _jl_me_hydd_allc(jlc->_jlc, a->data, a->size + 1);
 }
@@ -418,10 +419,9 @@ u32_t jl_me_random_int(u32_t a) {
  * @return 1: If particle is at the cursor.
  * @return 0: If particle is not at the cursor.
 */
-u8_t jl_me_test_next(strt script, strt particle) {
-	char * point = (void*)script->data + script->curs;//the cursor
-	char * place = strstr(point, (void*)particle->data);//search for partical
-	printf("%s, %s\n", point, particle->data);
+u8_t jl_me_test_next(strt script, str_t particle) {
+	char * point = (void*)script->data + script->curs; //the cursor
+	char * place = strstr(point, particle); //search for partical
 	if(place == point) {//if partical at begining return true otherwise false
 		return 1;
 	}else{
@@ -429,22 +429,25 @@ u8_t jl_me_test_next(strt script, strt particle) {
 	}
 }
 
-/*
+/**
  * Returns string "script" truncated to "psize" or to the byte "end" in
  * "script".  It is dependant on which happens first.
+ * @param jlc: The library context.
  * @param script: The array script.
  * @param end: byte to end at if found.
  * @param psize: maximum size of truncated "script" to return.
  * @returns: a "strt" that is a truncated array script.
 */
-strt jl_me_read_upto(strt script, u8_t end, u32_t psize) {
+strt jl_me_read_upto(jl_t* jlc, strt script, u8_t end, u32_t psize) {
 	strt compiled = jl_me_strt_make(psize);
+	compiled->curs = 0;
 	while((jl_me_strt_byte(script) != end) && (jl_me_strt_byte(script) != 0)) {
 		strncat((void*)compiled->data,
 			(void*)script->data + script->curs, 1);
 		script->curs++;
+		compiled->curs++;
 	}
-//	strcat(compiled, "\0");
+	jl_me_strt_trunc(jlc, compiled, compiled->curs);
 	return compiled;
 }
 

@@ -45,21 +45,22 @@
 	void jl_me_strt_delete_byte(jl_t *jlc, strt pstr);
 	void jl_me_strt_insert_byte(jl_t *jlc, strt pstr, uint8_t pvalue);
 	u32_t jl_me_random_int(u32_t a);
-	u8_t jl_me_test_next(strt script, strt particle);
-	strt jl_me_read_upto(strt script, u8_t end, u32_t psize);
+	u8_t jl_me_test_next(strt script, str_t particle);
+	strt jl_me_read_upto(jl_t* jlc, strt script, u8_t end, u32_t psize);
 	void *jl_me_tmp_ptr(jl_t* jlc, uint8_t which, void *tmp_ptr);
 // "cl.c"
 	void jl_cl_list_alphabetize(struct cl_list *list);
 // "gl.c"
 	jl_vo_t *jl_gl_vo_make(jl_t* jlc, u32_t count);
 	void jl_gl_vo_txmap(jl_t* jlc, jl_vo_t* pv, u8_t map);
-	void jl_gl_pr_draw(jl_t* jlc, jl_vo_t* pv);
 	void jl_gl_maketexture(jl_t* jlc, uint16_t gid, uint16_t id,
 		void *pixels, int width, int height);
 	double jl_gl_ar(jl_t* jlc);
 	void jl_gl_clear(jl_t* jlc, uint8_t r, uint8_t g, uint8_t b, uint8_t a);
 	void jl_gl_pr_rsz(jl_t* jlc, jl_pr_t *pr, f32_t w, f32_t h, u16_t w_px);
 	jl_pr_t * jl_gl_pr_new(jl_t* jlc, f32_t w, f32_t h, u16_t w_px);
+	void jl_gl_pr_draw(jl_t* jlc, jl_pr_t* pr, jl_vec3_t* vec);
+	void jl_gl_pr(jl_t* jlc, jl_pr_t * pr, jl_simple_fnt par__redraw);
 // "sg.c"
 	void jl_sg_mode_init(jl_t* jlc, u8_t mdec);
 	void jl_sg_mode_set(jl_t* jlc, u8_t mode, u8_t wm, jl_simple_fnt loop);
@@ -81,11 +82,12 @@
 	void jl_gr_fill_image_draw(jl_t *jlc);
 	void jl_gr_pr_old(jl_t* jlc, jl_vo_t* pv);
 	void jl_gr_pr_new(jl_t* jlc, jl_vo_t* pv, u16_t xres);
+	void jl_gr_pr(jl_t *jlc, jl_vo_t* vo, jl_simple_fnt par__redraw);
+	void jl_gr_pr_draw(jl_t* jlc, jl_vo_t* pv, jl_vec3_t* vec);
 	jl_ccolor_t* jl_gr_convert_color(jl_t* jlc, uint8_t *rgba, uint32_t vc,
 		uint8_t gradient);
 	void jl_gr_vo_color(jl_t* jlc, jl_vo_t* pv, jl_ccolor_t* cc);
 	void jl_gr_draw_vo(jl_t* jlc, jl_vo_t* pv, jl_vec3_t* vec);
-	void jl_gr_draw_pr(jl_t* jlc, jl_vo_t* pv, jl_vec3_t* vec);
 	void jl_gr_vos_vec(jl_t* jlc, jl_vo_t *pv, uint16_t tricount,
 		float* triangles, uint8_t* colors, uint8_t multicolor);
 	void jl_gr_vos_rec(jl_t* jlc, jl_vo_t *pv, jl_rect_t rc, u8_t* colors,
@@ -102,8 +104,9 @@
 	u8_t jl_gr_sprite_collide(jl_t* jlc, jl_sprite_t *sprite1,
 		jl_sprite_t *sprite2);
 	void jl_gr_draw_text(jl_t* jlc, str_t str, jl_vec3_t xyz, jl_font_t f);
-	void jl_gr_draw_numi(jl_t* jlc, uint32_t num, f32_t x, f32_t y, f32_t size,
-		uint8_t a);
+	void jl_gr_draw_int(jl_t* jlc, i64_t num, jl_vec3_t loc, jl_font_t f);
+	void jl_gr_draw_float(jl_t* jlc, f64_t num, u8_t dec, jl_vec3_t loc,
+		jl_font_t f);
 	void jl_gr_draw_text_area(jl_t* jlc, jl_sprite_t * spr, str_t txt);
 	void jl_gr_draw_text_sprite(jl_t* jlc,jl_sprite_t * spr, str_t txt);
 	void jl_gr_draw_ctxt(jl_t* jlc, char *str, float yy, uint8_t* color);

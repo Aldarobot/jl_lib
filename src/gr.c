@@ -414,6 +414,29 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 	}
 
 	/**
+	 * Render an image onto a vertex object's pr.
+	 * @param jlc: The library context.
+	 * @param vo: The vertex object that contains the pre-renderer.
+	 * @param par__redraw: The redraw functions for the pre-renderer.
+	**/
+	void jl_gr_pr(jl_t *jlc, jl_vo_t* vo, jl_simple_fnt par__redraw) {
+		jl_gl_pr(jlc, vo->pr, par__redraw);
+	}
+
+	/**
+	 * Draw a vertex object's pre-rendered texture.
+  	 * @param jlc: The library context.
+  	 * @param pv: The vertex object to get the pre-rendered texture from.
+  	 * @param vec: The vector of offset/translation.
+	**/
+	void jl_gr_pr_draw(jl_t* jlc, jl_vo_t* pv, jl_vec3_t* vec) {
+		jvct_t *_jlc = jlc->_jlc;
+
+		if(pv == NULL) pv = _jlc->gl.temp_vo;
+		jl_gl_pr_draw(jlc, pv->pr, vec);
+	}
+
+	/**
 	 * Convert a color.
 	 * @param jlc: The library context.
 	 * @param rgba: The color to convert ( Not freed - Reusable ).
@@ -454,25 +477,6 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 				vec->x, vec->y, vec->z, 1., 1., 1.);
 		}
 		jl_gl_draw(jlc->_jlc, pv);
-	}
-
-	/**
-	 * Draw a vertex object's pre-rendered texture.
-  	 * @param jlc: The library context.
-  	 * @param pv: The vertex object to get the pre-rendered texture from.
-  	 * @param vec: The vector of offset/translation.
-	**/
-	void jl_gr_draw_pr(jl_t* jlc, jl_vo_t* pv, jl_vec3_t* vec) {
-		jvct_t *_jlc = jlc->_jlc;
-
-		if(pv == NULL) pv = _jlc->gl.temp_vo;
-		if(vec == NULL)
-			jl_gl_transform_vo_(jlc->_jlc, pv,
-				0.f, 0.f, 0.f, 1., 1., 1.);
-		else
-			jl_gl_transform_vo_(jlc->_jlc, pv,
-				vec->x, vec->y, vec->z, 1., 1., 1.);
-		jl_gl_pr_draw(jlc, pv);
 	}
 
 	/**
@@ -575,7 +579,7 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 	// TODO: Move.
 	static inline void jl_gr_sp_redraw_tex__(jl_t* jlc, jl_sprite_t *spr) {
 		jl_me_tmp_ptr(jlc, 0, spr);
-		jl_gl_pr_(jlc->_jlc, spr->pr, jl_gr_sprite_draw_to_pr__);
+		jl_gl_pr(jlc, spr->pr, jl_gr_sprite_draw_to_pr__);
 	}
 
 	/**
@@ -741,23 +745,35 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 	}
 
 	/**
-	 * draw a number on the screen
+	 * draw an integer on the screen
  	 * @param 'jlc': library context
 	 * @param 'num': the number to draw
-	 * @param 'x': the x position to draw it at
-	 * @param 'y': the y position to draw it at
-	 * @param 'size': how big to draw the text
-	 * @param 'a': transparency of the text, 255=Opaque 0=Transparent
+	 * @param 'loc': the position to draw it at
+	 * @param 'f': the font to use.
 	 */
-	void jl_gr_draw_numi(jl_t* jlc, uint32_t num, float x, float y, float size,
-		uint8_t a)
+	void jl_gr_draw_int(jl_t* jlc, i64_t num, jl_vec3_t loc, jl_font_t f) {
+		char display[10];
+		sprintf(display, "%ld", num);
+		jl_gr_draw_text(jlc, display, loc, f);
+	}
+
+	/**
+	 * draw a floating point on the screen
+ 	 * @param 'jlc': library context
+	 * @param 'num': the number to draw
+	 * @param 'dec': the number of places after the decimal to include.
+	 * @param 'loc': the position to draw it at
+	 * @param 'f': the font to use.
+	 */
+	void jl_gr_draw_float(jl_t* jlc, f64_t num, u8_t dec, jl_vec3_t loc,
+		jl_font_t f)
 	{
 		char display[10];
-		sprintf(display, "%d", num);
-		jl_gr_draw_text(jlc, display,
-			(jl_vec3_t) { x, y, 0. },
-			(jl_font_t) { 0, JL_IMGI_ICON, 0, jlc->fontcolor, 
-				size});
+		char convert[10];
+
+		sprintf(convert, "%%%df", dec);
+		sprintf(display, convert, num);
+		jl_gr_draw_text(jlc, display, loc, f);
 	}
 
 	/**

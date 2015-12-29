@@ -19,7 +19,34 @@
 #endif
 
 /** @cond **/
-// Static Functions 
+// Static Functions
+
+// This function converts linux filenames to native filnames
+static str_t jl_fl_convert__(jl_t* jlc, str_t filename) {
+	jvct_t * _jlc = jlc->_jlc;
+
+	strt src = jl_me_strt_mkfrom_str(filename);
+	strt converted = jl_me_strt_make(0);
+
+	if(jl_me_test_next(src, "!")) {
+		src->curs++; // ignore
+	}else{
+		src->curs++; // ignore
+		jl_me_strt_merg(_jlc->jlc, converted, _jlc->fl.separator);
+	}
+	while(1) {
+		strt append = jl_me_read_upto(jlc, src, '/', 300);
+		if(append->data[0] == '\0') break;
+		jl_me_strt_merg(_jlc->jlc, converted, append);
+		if(jl_me_strt_byte(src) == '/')
+			jl_me_strt_merg(_jlc->jlc,converted,_jlc->fl.separator);
+		src->curs++; // Skip '/'
+		jl_me_strt_free(append);
+	}
+	jl_me_strt_free(src);
+	return jl_me_string_fstrt(jlc, converted);
+}
+
 static void _jl_fl_save(jl_t* jlc, const void *file_data, const char *file_name,
 	uint32_t bytes)
 {
@@ -51,18 +78,20 @@ static void _jl_fl_save(jl_t* jlc, const void *file_data, const char *file_name,
 	jl_io_printc(jlc, bytecount);
 	free(bytecount);
 
-	uint8_t offs = (file_name[0] == '!');
-	fd = open(file_name + offs, O_RDWR | O_CREAT, JL_FL_PERMISSIONS);
+	str_t converted_filename = jl_fl_convert__(jlc, file_name);
+	fd = open(converted_filename, O_RDWR | O_CREAT, JL_FL_PERMISSIONS);
 
 	if(fd <= 0) {
 		errsv = errno;
 
 		jl_io_offset(jlc, JL_IO_MINIMAL, "FLSV"); // =
-		_jl_fl_errf(_jlc, "Save[open]: Failed to open file: \"");
-		_jl_fl_errf(_jlc, file_name);
-		_jl_fl_errf(_jlc, "\" Write failed: ");
-		_jl_fl_errf(_jlc, strerror(errsv));
-		_jl_fl_errf(_jlc, "\n");
+		jl_io_printc(jlc, "Save[open]: \n");
+		jl_io_printc(jlc, "Failed to open file: \n");
+		jl_io_printc(jlc, "\t");
+		jl_io_printc(jlc, converted_filename);
+		jl_io_printc(jlc, "\n Write failed: ");
+		jl_io_printc(jlc, strerror(errsv));
+		jl_io_printc(jlc, "\n");
 		jl_io_close_block(jlc); // !}
 		jl_sg_kill(jlc);
 	}
@@ -238,8 +267,8 @@ void jl_fl_save(jl_t* jlc, const void *file, const char *name, uint32_t bytes) {
 strt jl_fl_load(jl_t* jlc, str_t file_name) {
 	jl_fl_reset_cursor__(file_name);
 	unsigned char *file = malloc(MAXFILELEN);
-	uint8_t offs = (file_name[0] == '!');
-	int fd = open(file_name + offs, O_RDWR);
+	str_t converted_filename = jl_fl_convert__(jlc, file_name);
+	int fd = open(converted_filename, O_RDWR);
 	
 	//Open Block FLLD
 	jl_io_offset(jlc, JL_IO_SIMPLE, "FLLD");
@@ -280,18 +309,20 @@ strt jl_fl_load(jl_t* jlc, str_t file_name) {
 char jl_fl_pk_save(jl_t* jlc, str_t packageFileName, str_t fileName,
 	void *data, uint64_t dataSize)
 {
+	str_t converted = jl_fl_convert__(jlc, packageFileName);
+
 	jl_io_offset(jlc, JL_IO_SIMPLE, "PKSV"); // {
 	jl_io_printc(jlc, "opening \"");
-	jl_io_printc(jlc, packageFileName);
+	jl_io_printc(jlc, converted);
 	jl_io_printc(jlc, "\"....\n");
-	struct zip *archive = zip_open(packageFileName, ZIP_CREATE 
+	struct zip *archive = zip_open(converted, ZIP_CREATE 
 		/*| ZIP_CHECKCONS*/, NULL);
 	if(archive == NULL) {
 		jl_io_close_block(jlc); // !}
 		return 1;
 	}else{
-		jl_io_printc(jlc, "opened file system:\"");
-		jl_io_printc(jlc, packageFileName);
+		jl_io_printc(jlc, "opened package, \"");
+		jl_io_printc(jlc, converted);
 		jl_io_printc(jlc, "\".\n");
 	}
 
@@ -338,14 +369,17 @@ static void _jl_fl_pk_load_quit(jl_t* jlc) {
 strt jl_fl_pk_load(jl_t* jlc, const char *packageFileName,
 	const char *filename)
 {
+	str_t converted = jl_fl_convert__(jlc, packageFileName);
+	int zerror = 0;
+
 	jlc->errf = JL_ERR_NERR;
 	jl_io_offset(jlc, JL_IO_SIMPLE, "PKLD"); // { : PKLD
-	int zerror = 0;
+
 	jl_io_printc(jlc, "loading package:\"");
-	jl_io_printc(jlc, packageFileName);
+	jl_io_printc(jlc, converted);
 	jl_io_printc(jlc, "\"...\n");
 	jl_io_printc(jlc, "error check 1.\n");
-	struct zip *zipfile = zip_open(packageFileName, ZIP_CHECKCONS, &zerror);
+	struct zip *zipfile = zip_open(converted, ZIP_CHECKCONS, &zerror);
 	jl_io_printc(jlc, "error check 2.\n");
 	if(zerror == ZIP_ER_NOENT) {
 		jl_io_printc(jlc, " NO EXIST!");
@@ -369,7 +403,7 @@ strt jl_fl_pk_load(jl_t* jlc, const char *packageFileName,
 		jl_io_printc(jlc, "couldn't open up file: \"");
 		jl_io_printc(jlc, filename);
 		jl_io_printc(jlc, "\" in ");
-		jl_io_printc(jlc, packageFileName);
+		jl_io_printc(jlc, converted);
 		jl_io_printc(jlc, "because: ");
 		jl_io_printc(jlc, (void *)zip_strerror(zipfile));
 		jl_io_printc(jlc, "\n");
@@ -554,7 +588,7 @@ static uint8_t _jl_fl_user_select_open_dir(jl_t* jlc, char *dirname) {
 	DIR *dir;
 	struct dirent *ent;
 	jvct_t * _jlc = jlc->_jlc;
-	uint8_t offset = 0;
+	str_t converted_filename;
 
 	_jl_fl_user_select_check_extradir(dirname);
 	if(dirname[1] == '\0') {
@@ -562,13 +596,14 @@ static uint8_t _jl_fl_user_select_open_dir(jl_t* jlc, char *dirname) {
 		dirname = SDL_GetPrefPath("JL_Lib", "\0");
 		_jl_fl_user_select_check_extradir(dirname);
 	}
-	offset = (dirname[0] == '!');
 	_jlc->fl.dirname = dirname;
 	_jlc->fl.cursor = 0;
 	_jlc->fl.cpage = 0;
+	converted_filename = jl_fl_convert__(jlc, _jlc->fl.dirname);
 	cl_list_clear(_jlc->fl.filelist);
-	printf("dirname=%s\n", _jlc->fl.dirname);
-	if ((dir = opendir (dirname + offset)) != NULL) {
+//UnComment to test file system conversion code.
+	printf("dirname=%s:%s\n", _jlc->fl.dirname, converted_filename);
+	if ((dir = opendir (converted_filename)) != NULL) {
 		/* print all the files and directories within directory */
 		while ((ent = readdir (dir)) != NULL) {
 			char *element = malloc(strlen(ent->d_name) + 1);
@@ -887,6 +922,8 @@ void _jl_fl_initb(jvct_t * _jlc) {
 
 void _jl_fl_inita(jvct_t * _jlc) {
 	jl_io_offset(_jlc->jlc, JL_IO_INTENSE, "flIa");
+	// Find out the native file separator.
+	_jlc->fl.separator = jl_me_strt_mkfrom_str("/");
 	// Get ( and if need be, make ) the directory for everything.
 	jl_io_printc(_jlc->jlc, "Get/Make directory for everything...\n");
 	jl_fl_get_root__(_jlc);
