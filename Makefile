@@ -1,13 +1,29 @@
 HEADER = -Isrc/lib/include/
 CFLAGS_MEDIA = $(HEADER) -O3
-CFLAGS_DEBUG = $(HEADER) $(sdl2-config --cflags) -Wall -g
-CFLAGS_RELEASE = $(HEADER) $(sdl2-config --cflags) -O3
+CFLAGS_DEBUG = $(HEADER) -Wall -g
+CFLAGS_RELEASE = $(HEADER) -O3
+
+CC = gcc
 CFLAGS = $(CFLAGS_DEBUG)
 
+SRC = src
+BUILD = build/obj
+MODULES = me cl io fl cm ct sg gl dl gr vi au Main media
+OBJS = $(addprefix $(BUILD)/, $(addsuffix .o,$(MODULES)))
+SHARED = $(BUILD)/jl.so
+STATIC = $(BUILD)/jl.a
+
 # Build Project
-CFLAGS_PRJ_INCLUDES = -I`sed -n '2p' pref.txt`/src/include/\
-	-I`sed -n '2p' pref.txt`/src/lib/include/\
+CFLAGS_PRJ_INCLUDES = -I$(shell echo $(JLL_HOME))/src/include/\
+	-I$(shell echo $(JLL_HOME))/src/lib/include/\
 	-Isrc/ -Isrc/include/
+PRJ_SRC = src
+PRJ_BUILD = build/objs
+PRJ_MODULES = $(subst .c,, $(subst src/,,$(shell find src/ -type f -name '*.c')))
+PRJ_OBJS = $(addprefix $(PRJ_BUILD)/, $(addsuffix .o,$(PRJ_MODULES)))
+PRJ_OUT = build/program.o
+PRJ_LIB = $(shell echo $(JLL_HOME))/build/jl.o
+PRJ_CFLAGS = -lSDL2 -lpthread -lm -ldl -lpthread -lrt $(GL_VERSION) -lm -lz
 
 # Locations
 LIBZIP = build/android/jni/src/lib/libzip/
@@ -18,8 +34,16 @@ init-all-wo-android: init-build-wo-android init-deps-most
 
 # The Clean Options.
 clean-all: clean-build clean-deps
-clean-build:
+clean-build-all:
 	rm -r build/
+clean-build-comp:
+	# Empty directory: build/obj/
+	printf "[COMP] Cleaning up....\n"
+	rm -r build/obj/
+	mkdir build/obj/
+	printf "[COMP] Done!\n"
+clean-build-andr:
+	
 clean-deps:
 	rm -r deps/
 
@@ -66,33 +90,26 @@ build-android:
 	cp -u --recursive -t build/android/jni/src/lib/sdl-net/\
 	 deps/SDL2_net-2.0.0/*.h
 	###
-build-library: 
-	# Build modules.
-	printf "[COMP] compiling separate jl_lib object files....\n"
-	gcc src/me.c -c -o build/obj/me.o $(CFLAGS) #1
-	gcc src/cl.c -c -o build/obj/cl.o $(CFLAGS) #2
-	gcc src/io.c -c -o build/obj/io.o $(CFLAGS) #3
-	gcc src/fl.c -c -o build/obj/fl.o $(CFLAGS) #4
-	gcc src/cm.c -c -o build/obj/cm.o $(CFLAGS) #5
-	gcc src/ct.c -c -o build/obj/ct.o $(CFLAGS) #6
-	gcc src/sg.c -c -o build/obj/sg.o $(CFLAGS) #7
-	gcc src/dl.c -c -o build/obj/dl.o $(CFLAGS) #8
-	gcc src/gl.c -c -o build/obj/gl.o $(CFLAGS) #9
-	gcc src/gr.c -c -o build/obj/gr.o $(CFLAGS) #10
-	gcc src/vi.c -c -o build/obj/vi.o $(CFLAGS) #11
-	gcc src/au.c -c -o build/obj/au.o $(CFLAGS) #12
-	gcc src/Main.c -c -o build/obj/Main.o $(CFLAGS)
-	gcc src/gen/media.c -c -o build/obj/media.o $(CFLAGS)
-	# Make "jl.o"
+
+$(BUILD)/%.o: $(SRC)/%.c $(SRC)/**/*
+	printf "[COMP] compiling $<....\n"
+	$(CC) $(CFLAGS) -o $@ -c $<
+
+build/jl.o: $(BUILD) $(BUILD)/*.o
 	printf "[COMP] compiling singular jl_lib object file....\n"
 	ar csr build/jl.o build/obj/*.o build/deps/*.o
-	# Empty directory: build/obj/
-	printf "[COMP] cleaning up....\n"
-	rm -r build/obj/
-	mkdir build/obj/
+
+# Build modules.
+build-library: $(OBJS) build/jl.o
+	# Make "jl.o"
 	printf "[COMP] done!\n"
 build-media: compile_media
-build-project: compile_es
+build-project: $(PRJ_OBJS) $(PRJ_OUT)
+#	$(eval GL_VERSION=-lGL) ## OpenGL
+	$(eval GL_VERSION=-lGLESv2) ## OpenGL ES
+	printf "[COMP] Linking ....\n"
+	gcc $(PRJ_OUT) $(PRJ_LIB) -o build/bin/$(shell echo `sed -n '4p' data.txt`) $(PRJ_CFLAGS) -Wall -g
+	printf "[COMP] Done [ OpenGL Version = $(GL_VERSION) ]!\n"
 build-project-android:
 install-project:
 	printf "Installing....\n"
@@ -101,7 +118,7 @@ install-project:
 		read JLL_PATH; \
 	fi; \
 	printf "Copying files to $$JLL_PATH/....\n"; \
-	cp -u --recursive -t $$JLL_PATH/ bin/comp/*; \
+	cp -u --recursive -t $$JLL_PATH/ build/bin/*; \
 	printf "Done!\n"
 
 # Lower Level
@@ -110,10 +127,6 @@ init-deps-most: init-deps init-deps-sdl init-deps-sdl-image init-deps-sdl-mixer\
 	init-deps-sdl-net init-deps-zip
 init-build: init-build-wo-android init-build-android
 init-build-wo-android: init-build-folder
-
-test:
-	make compile_gles --directory=test/
-	make run --directory=test/
 
 init-build-folder:
 	mkdir build/
@@ -220,7 +233,6 @@ build-sdl-image:
 	cd deps/SDL2_image-2.0.0/ && \
 	sh configure && \
 	make && \
-	#ar Tcsr ../../build/deps/lib_SDL_image.o .libs/IMG_*.o  && \
 	ld -r .libs/*.o -o ../../build/deps/lib_SDL_image.o && \
 	cp SDL_image.h ../../src/lib/include/ && \
 	printf "[COMP] done!\n"
@@ -231,16 +243,6 @@ build-sdl-net:
 	make && \
 	ar csr ../../build/deps/lib_SDL_net.o .libs/*.o && \
 	cp SDL_net.h ../../src/lib/include/ && \
-	#cp SDL_net.h ../../src/lib/include/SDL_net.h && \
-	#sed -i "s|\"SDL.h\"|<SDL2/SDL.h>|g" ../../src/lib/include/SDL_net.h && \
-	#sed -i "s|\"SDL_endian.h\"|<SDL2/SDL_endian.h>|g"\
-	# ../../src/lib/include/SDL_net.h && \
-	#sed -i "s|\"SDL_version.h\"|<SDL2/SDL_version.h>|g"\
-	# ../../src/lib/include/SDL_net.h && \
-	#sed -i "s|\"begin_code.h\"|<SDL2/begin_code.h>|g"\
-	# ../../src/lib/include/SDL_net.h && \
-	#sed -i "s|\"close_code.h\"|<SDL2/close_code.h>|g"\
-	# ../../src/lib/include/SDL_net.h && \
 	printf "[COMP] done!\n"
 build-sdl-mixer:
 	printf "[COMP] compiling SDL_mixer...\n" && \
@@ -265,31 +267,17 @@ build-clump:
 	printf "[COMP] done!\n"
 
 # low-level: compile project:
-compile_gl: nc_compile_gl__ nc_compile__
-compile_es: nc_compile_es__ nc_compile__
 
 compile_media:
 	printf "[COMP] compiling media\n"
 	gcc src/media/*.c -c -o media/media.o $(CFLAGS_MEDIA)
 
-nc_compile_gl__:
-	printf "[COMP] compiling with OPENGL\n"
-	$(eval GL_VERSION=-lGL)
-nc_compile_es__:
-	printf "[COMP] compiling with OPENGLES Version 2\n"
-	$(eval GL_VERSION=-lGLESv2)
+$(PRJ_BUILD)/%.o: $(PRJ_SRC)/%.c $(PRJ_SRC)/**/*
+	printf "[COMP] Compiling $<....\n"
+	$(CC) $(CFLAGS_PRJ_INCLUDES) -Wall -g -o $(PRJ_BUILD)/`basename $@` -c $<
 
-nc_compile__:
-	printf "[COMP] cleaning up....\n"
-	rm -f bin/comp/`sed -n '4p' data.txt`
-	printf "[COMP] compiling with GL $(GL_VERSION)....\n"
-	gcc $(CFLAGS_PRJ_INCLUDES)\
-	 `sed -n '2p' pref.txt`/build/jl.o\
-	 src/**/*.c src/*.c\
-	 -lSDL2 -lpthread -lm -ldl -lpthread -lrt\
-	 $(GL_VERSION) -lm -lz\
-	 -o bin/comp/`sed -n '4p' data.txt`\
-	 -Wall -g
-	printf "[COMP] done compiling!\n"
+$(PRJ_OUT): $(PRJ_BUILD) $(PRJ_BUILD)/*.o
+	printf "[COMP] Creating Object File....\n"
+	ld -r $(PRJ_BUILD)/*.o -o $(PRJ_OUT)
 
 ################################################################################
