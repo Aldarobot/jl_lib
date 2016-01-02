@@ -13,18 +13,6 @@ OBJS = $(addprefix $(BUILD)/, $(addsuffix .o,$(MODULES)))
 SHARED = $(BUILD)/jl.so
 STATIC = $(BUILD)/jl.a
 
-# Build Project
-CFLAGS_PRJ_INCLUDES = -I$(shell echo $(JLL_HOME))/src/include/\
-	-I$(shell echo $(JLL_HOME))/src/lib/include/\
-	-Isrc/ -Isrc/include/
-PRJ_SRC = src
-PRJ_BUILD = build/objs
-PRJ_MODULES = $(subst .c,, $(subst src/,,$(shell find src/ -type f -name '*.c')))
-PRJ_OBJS = $(addprefix $(PRJ_BUILD)/, $(addsuffix .o,$(PRJ_MODULES)))
-PRJ_OUT = build/program.o
-PRJ_LIB = $(shell echo $(JLL_HOME))/build/jl.o
-PRJ_CFLAGS = -lSDL2 -lpthread -lm -ldl -lpthread -lrt $(GL_VERSION) -lm -lz
-
 # Locations
 LIBZIP = build/android/jni/src/lib/libzip/
 
@@ -103,23 +91,6 @@ build/jl.o: $(BUILD) $(BUILD)/*.o
 build-library: $(OBJS) build/jl.o
 	# Make "jl.o"
 	printf "[COMP] done!\n"
-build-media: compile_media
-build-project: $(PRJ_OBJS) $(PRJ_OUT)
-#	$(eval GL_VERSION=-lGL) ## OpenGL
-	$(eval GL_VERSION=-lGLESv2) ## OpenGL ES
-	printf "[COMP] Linking ....\n"
-	gcc $(PRJ_OUT) $(PRJ_LIB) -o build/bin/$(shell echo `sed -n '4p' data.txt`) $(PRJ_CFLAGS) -Wall -g
-	printf "[COMP] Done [ OpenGL Version = $(GL_VERSION) ]!\n"
-build-project-android:
-install-project:
-	printf "Installing....\n"
-	if [ -z "$(JLL_PATH)" ]; then \
-		printf "Where to install? ( hint: /bin or $$HOME/bin ) [ Set JLL_PATH ]\n"; \
-		read JLL_PATH; \
-	fi; \
-	printf "Copying files to $$JLL_PATH/....\n"; \
-	cp -u --recursive -t $$JLL_PATH/ build/bin/*; \
-	printf "Done!\n"
 
 # Lower Level
 init-deps-all: init-deps-most init-deps-ndk
@@ -265,19 +236,5 @@ build-clump:
 	gcc src/lib/clump/tree.c -c -o build/obj/clump_tree.o
 	ar csr build/deps/lib_clump.o build/obj/clump_*.o
 	printf "[COMP] done!\n"
-
-# low-level: compile project:
-
-compile_media:
-	printf "[COMP] compiling media\n"
-	gcc src/media/*.c -c -o media/media.o $(CFLAGS_MEDIA)
-
-$(PRJ_BUILD)/%.o: $(PRJ_SRC)/%.c $(PRJ_SRC)/**/*
-	printf "[COMP] Compiling $<....\n"
-	$(CC) $(CFLAGS_PRJ_INCLUDES) -Wall -g -o $(PRJ_BUILD)/`basename $@` -c $<
-
-$(PRJ_OUT): $(PRJ_BUILD) $(PRJ_BUILD)/*.o
-	printf "[COMP] Creating Object File....\n"
-	ld -r $(PRJ_BUILD)/*.o -o $(PRJ_OUT)
 
 ################################################################################
