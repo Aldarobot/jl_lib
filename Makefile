@@ -69,9 +69,12 @@ build-android:
 	 deps/SDL2_mixer-2.0.0/*.c
 	cp -u --recursive -t build/android/jni/src/lib/sdl-mixer/\
 	 deps/SDL2_mixer-2.0.0/*.h
+	rm build/android/jni/src/lib/sdl-mixer/play*.c
 	# Copy SDL2_image into the android project.
 	cp -u --recursive -t build/android/jni/src/lib/sdl-image/\
 	 deps/SDL2_image-2.0.0/*
+	cp android-src/jconfig.h\
+	 build/android/jni/src/lib/sdl-image/external/jpeg-9/jconfig.h
 	# Copy SDL2_net into the android project.
 	cp -u --recursive -t build/android/jni/src/lib/sdl-net/\
 	 deps/SDL2_net-2.0.0/*.c

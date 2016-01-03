@@ -14,9 +14,8 @@ USERPROG=${args[5]}
 NDK_PATH=${args[6]}
 SDK_PATH=${args[7]}
 ANDROID_PROJECT=${args[8]}
-ANDROID_MEDIA=${args[9]}
-ANDROID_HOME=${args[10]}
-IS_DEBUG=${args[11]}
+ANDROID_HOME=${args[9]}
+IS_DEBUG=${args[10]}
 
 export ANDROID_HOME
 
@@ -29,7 +28,6 @@ printf "USERPROG = $USERPROG\n"
 printf "NDK_PATH = $NDK_PATH\n"
 printf "SDK_PATH = $SDK_PATH\n"
 printf "ANDROID_PROJECT = $ANDROID_PROJECT\n"
-printf "ANDROID_MEDIA = $ANDROID_MEDIA\n"
 printf "ANDROID_HOME = $ANDROID_HOME\n"
 
 cp $JLL_PATH/android-src/AndroidManifest.xml \
@@ -65,17 +63,14 @@ $ANDROID_PROJECT/src/jlw/$USERNAME/\
 $PACKNAME/jl_Activity.java
 
 printf "[JL/ANDR] setting up files....\n"
-if [ ! -e bin/andr/my-release-key.keystore ];then
+if [ ! -e build/android-release-key.keystore ];then
 	printf "[JL/ANDR] Jarsigner key not found.  For android you must create\n"
 	printf "[JL/ANDR] a key.  Create your key for jarsigner:\n"
-	keytool -sigalg SHA1withRSA -keyalg RSA -keysize 1024 -genkey -keystore bin/andr/my-release-key.keystore -alias daliasle -validity 3650
+	keytool -sigalg SHA1withRSA -keyalg RSA -keysize 1024 -genkey -keystore build/android-release-key.keystore -alias daliasle -validity 3650
 fi
-cp --recursive -u -t $ANDROID_PROJECT/jni/src/gen/src/ src/*
-rm -r $ANDROID_MEDIA/
-mkdir $ANDROID_MEDIA/
-cp -l media/genr/* $ANDROID_MEDIA/
-rm $ANDROID_PROJECT/my-release-key.keystore
-cp bin/andr/my-release-key.keystore $ANDROID_PROJECT/
+cp --recursive -u -t $ANDROID_PROJECT/jni/src/gen/src/ `find src/*`
+rm $ANDROID_PROJECT/android-release-key.keystore
+cp build/android-release-key.keystore $ANDROID_PROJECT/
 rm $ANDROID_PROJECT/res/drawable/prgm_icon.png
 cp media/icon.png $ANDROID_PROJECT/res/drawable/prgm_icon.png
 
@@ -88,4 +83,4 @@ echo $NDK_MODULE_PATH
 $NDK_PATH/ndk-build $DEBUG && ant clean release
 
 printf "[JL/ANDR] signing jar with jarsigner....\n"
-jarsigner -verbose -tsa http://timestamp.digicert.com -sigalg SHA1withRSA -digestalg SHA1 -keystore my-release-key.keystore bin/jlw.$USERNAME.$PACKNAME-release-unsigned.apk daliasle
+jarsigner -verbose -tsa http://timestamp.digicert.com -sigalg SHA1withRSA -digestalg SHA1 -keystore android-release-key.keystore bin/jlw.$USERNAME.$PACKNAME-release-unsigned.apk daliasle

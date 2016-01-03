@@ -91,8 +91,65 @@ LOCAL_CFLAGS := -DLOAD_BMP -DLOAD_GIF -DLOAD_LBM -DLOAD_PCX -DLOAD_PNM \
 	-DLOAD_TGA -DLOAD_XCF -DLOAD_XPM -DLOAD_XV -DLOAD_JPG \
 	-DLOAD_PNG
 LOCAL_CFLAGS += -fstrict-aliasing -DAVOID_TABLES -DPNG_NO_CONFIG_H
-LOCAL_C_INCLUDES += $(LOCAL_PATH)$(LIB_IMG)external/jpeg-9\
-	$(LOCAL_PATH)$(LIB_IMG)external/libpng-1.6.2\
+LOCAL_C_INCLUDES +=\
+	$(LOCAL_PATH)$(LIB_IMG)external/jpeg-9\
+	$(LOCAL_PATH)$(LIB_IMG)external/libpng-1.6.2
+
+#load SDL_mixer
+LOCAL_CFLAGS += -DSTDC_HEADERS=1 -DHAVE_SYS_TYPES_H=1 -DHAVE_SYS_STAT_H=1\
+ -DHAVE_STDLIB_H=1 -DHAVE_STRING_H=1 -DHAVE_MEMORY_H=1 -DHAVE_STRINGS_H=1\
+ -DHAVE_INTTYPES_H=1 -DHAVE_STDINT_H=1 -DHAVE_UNISTD_H=1 -DHAVE_DLFCN_H=1\
+ -D_THREAD_SAFE -DTHREADED_AUDIO -DNOCONTROLS
+LOCAL_CFLAGS += -DOGG_MUSIC -DOGG_USE_TREMOR -DMP3_MUSIC -DWAV_MUSIC
+LOCAL_C_INCLUDES +=\
+	jni/src/lib/sdl-mixer/external/smpeg2-2.0.0\
+	jni/src/lib/sdl-mixer/external/libvorbisidec-1.2.1\
+	jni/src/lib/sdl-mixer/external/libogg-1.3.1/include/
+LOCAL_SRC_FILES += $(subst $(LOCAL_PATH),,\
+	$(wildcard $(LOCAL_PATH)$(LIB_MIX)*.c)\
+)
+LOCAL_SRC_FILES +=\
+	$(LIB_MIX)external/smpeg2-2.0.0/smpeg.cpp \
+	$(LIB_MIX)external/smpeg2-2.0.0/MPEG.cpp \
+	$(LIB_MIX)external/smpeg2-2.0.0/MPEGlist.cpp \
+	$(LIB_MIX)external/smpeg2-2.0.0/MPEGring.cpp \
+	$(LIB_MIX)external/smpeg2-2.0.0/MPEGstream.cpp \
+	$(LIB_MIX)external/smpeg2-2.0.0/MPEGsystem.cpp \
+	$(LIB_MIX)external/smpeg2-2.0.0/audio/MPEGaudio.cpp \
+	$(LIB_MIX)external/smpeg2-2.0.0/audio/bitwindow.cpp \
+	$(LIB_MIX)external/smpeg2-2.0.0/audio/filter.cpp \
+	$(LIB_MIX)external/smpeg2-2.0.0/audio/filter_2.cpp \
+	$(LIB_MIX)external/smpeg2-2.0.0/audio/hufftable.cpp \
+	$(LIB_MIX)external/smpeg2-2.0.0/audio/mpeglayer1.cpp \
+	$(LIB_MIX)external/smpeg2-2.0.0/audio/mpeglayer2.cpp \
+	$(LIB_MIX)external/smpeg2-2.0.0/audio/mpeglayer3.cpp \
+	$(LIB_MIX)external/smpeg2-2.0.0/audio/mpegtable.cpp \
+	$(LIB_MIX)external/smpeg2-2.0.0/audio/mpegtoraw.cpp \
+	$(LIB_MIX)external/smpeg2-2.0.0/video/MPEGvideo.cpp \
+	$(LIB_MIX)external/smpeg2-2.0.0/video/decoders.cpp \
+	$(LIB_MIX)external/smpeg2-2.0.0/video/floatdct.cpp \
+	$(LIB_MIX)external/smpeg2-2.0.0/video/gdith.cpp \
+	$(LIB_MIX)external/smpeg2-2.0.0/video/jrevdct.cpp \
+	$(LIB_MIX)external/smpeg2-2.0.0/video/motionvec.cpp \
+	$(LIB_MIX)external/smpeg2-2.0.0/video/parseblock.cpp \
+	$(LIB_MIX)external/smpeg2-2.0.0/video/readfile.cpp \
+	$(LIB_MIX)external/smpeg2-2.0.0/video/util.cpp \
+	$(LIB_MIX)external/smpeg2-2.0.0/video/video.cpp\
+	$(LIB_MIX)external/libvorbisidec-1.2.1/mdct.c \
+	$(LIB_MIX)external/libvorbisidec-1.2.1/block.c \
+	$(LIB_MIX)external/libvorbisidec-1.2.1/window.c \
+	$(LIB_MIX)external/libvorbisidec-1.2.1/synthesis.c \
+	$(LIB_MIX)external/libvorbisidec-1.2.1/info.c \
+	$(LIB_MIX)external/libvorbisidec-1.2.1/floor1.c \
+	$(LIB_MIX)external/libvorbisidec-1.2.1/floor0.c \
+	$(LIB_MIX)external/libvorbisidec-1.2.1/vorbisfile.c \
+	$(LIB_MIX)external/libvorbisidec-1.2.1/res012.c \
+	$(LIB_MIX)external/libvorbisidec-1.2.1/mapping0.c \
+	$(LIB_MIX)external/libvorbisidec-1.2.1/registry.c \
+	$(LIB_MIX)external/libvorbisidec-1.2.1/codebook.c \
+	$(LIB_MIX)external/libvorbisidec-1.2.1/sharedbook.c \
+	$(LIB_MIX)external/libogg-1.3.1/src/bitwise.c\
+	$(LIB_MIX)external/libogg-1.3.1/src/framing.c
 
 # Load SDL
 LOCAL_SRC_FILES += $(subst $(LOCAL_PATH),,\
@@ -195,43 +252,6 @@ LOCAL_SRC_FILES += $(subst $(LOCAL_PATH),, \
 	$(wildcard $(LOCAL_PATH)lib/libzip/*.c) \
 )
 
-#load SDL_mixer
-LOCAL_SRC_FILES +=\
-	$(LIB_MIX)external/libogg-1.3.1/src/bitwise.c\
-	$(LIB_MIX)external/libogg-1.3.1/src/framing.c\
-	$(LIB_MIX)external/libvorbis-1.3.3/lib/analysis.c\
-	$(LIB_MIX)external/libvorbis-1.3.3/lib/bitrate.c\
-	$(LIB_MIX)external/libvorbis-1.3.3/lib/block.c\
-	$(LIB_MIX)external/libvorbis-1.3.3/lib/codebook.c\
-	$(LIB_MIX)external/libvorbis-1.3.3/lib/envelope.c\
-	$(LIB_MIX)external/libvorbis-1.3.3/lib/floor0.c\
-	$(LIB_MIX)external/libvorbis-1.3.3/lib/floor1.c\
-	$(LIB_MIX)external/libvorbis-1.3.3/lib/info.c\
-	$(LIB_MIX)external/libvorbis-1.3.3/lib/lookup.c\
-	$(LIB_MIX)external/libvorbis-1.3.3/lib/lpc.c\
-	$(LIB_MIX)external/libvorbis-1.3.3/lib/lsp.c\
-	$(LIB_MIX)external/libvorbis-1.3.3/lib/mapping0.c\
-	$(LIB_MIX)external/libvorbis-1.3.3/lib/mdct.c\
-	$(LIB_MIX)external/libvorbis-1.3.3/lib/psy.c\
-	$(LIB_MIX)external/libvorbis-1.3.3/lib/registry.c\
-	$(LIB_MIX)external/libvorbis-1.3.3/lib/res0.c\
-	$(LIB_MIX)external/libvorbis-1.3.3/lib/sharedbook.c\
-	$(LIB_MIX)external/libvorbis-1.3.3/lib/smallft.c\
-	$(LIB_MIX)external/libvorbis-1.3.3/lib/synthesis.c\
-	$(LIB_MIX)external/libvorbis-1.3.3/lib/tone.c\
-	$(LIB_MIX)external/libvorbis-1.3.3/lib/vorbisenc.c\
-	$(LIB_MIX)external/libvorbis-1.3.3/lib/vorbisfile.c\
-	$(LIB_MIX)external/libvorbis-1.3.3/lib/window.c\
-	$(LIB_MIX)music_ogg.c\
-	$(LIB_MIX)dynamic_ogg.c\
-	$(LIB_MIX)load_ogg.c\
-	$(LIB_MIX)load_aiff.c\
-	$(LIB_MIX)load_voc.c\
-	$(LIB_MIX)effects_internal.c\
-	$(LIB_MIX)music.c\
-	$(LIB_MIX)effect_position.c\
-	$(LIB_MIX)mixer.c
-
 # Load SDL_net
 
 
@@ -250,15 +270,10 @@ LOCAL_SRC_FILES +=\
 	me.c cl.c io.c fl.c cm.c ct.c\
 	sg.c dl.c gl.c gr.c vi.c au.c
 
-LOCAL_CFLAGS += -Ijni/src/include/ -Ijni/src/lib/include/ -DGL_GLEXT_PROTOTYPES -DHAVE_CONFIG_H -DNDEBUG -O3
+LOCAL_CFLAGS += -Ijni/src/include/ -Ijni/src/lib/include/ -DGL_GLEXT_PROTOTYPES -DHAVE_CONFIG_H -DNDEBUG -O3 -Ijni/src/lib/sdl-mixer/external/libvorbis-1.3.3/include/ -Ijni/src/lib/sdl-mixer/external/libvorbis-1.3.3/lib/
 
 LOCAL_C_INCLUDES +=\
-	jni/src/lib/libzip/\
-	jni/src/lib/sdl-mixer/external/libogg-1.3.1/include/\
-	jni/src/lib/sdl-mixer/external/libvorbis-1.3.3/include/\
-	jni/src/lib/sdl-mixer/external/libvorbis-1.3.3/lib/
-
-LOCAL_STATIC_LIBRARIES := 
+	jni/src/lib/libzip/
 
 LOCAL_LDLIBS := -Wl,--undefined=Java_org_libsdl_app_SDLActivity_nativeInit -ldl -lGLESv1_CM -lz -lEGL -lGLESv2 -llog -landroid
 

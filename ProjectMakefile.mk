@@ -1,7 +1,7 @@
 # Build Project
 CFLAGS_INCLUDES = -I$(shell echo $(JLL_HOME))/src/include/\
 	-I$(shell echo $(JLL_HOME))/src/lib/include/\
-	-Isrc/ -Isrc/include/
+	-Isrc/ $(addprefix -I, $(shell find src/ -type d ))
 SRC = src
 BUILD = build/objs
 BUILD_TEST = build/test
@@ -48,6 +48,7 @@ $(BUILD_TEST)/%.o: $(SRC)/*/*/%.c
 	$(eval GL_VERSION=-lGLESv2) ## OpenGL ES
 	$(eval JL_DEBUG=-g)
 	$(eval JL_OUT=build/test.out)
+	$(eval OBJS=$(TEST))
 -publish:
 #	$(eval GL_VERSION=-lGL) ## OpenGL
 	$(eval GL_VERSION=-lGLESv2) ## OpenGL ES
