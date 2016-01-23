@@ -170,16 +170,12 @@ void _jl_dl_resz(jvct_t *_jlc, uint16_t x, uint16_t y) {
 	_jlc->dl.full_w = x;
 	_jlc->dl.full_h = y;
 	jl_gl_viewport_screen(_jlc);
-	_jlc->dl.multiplyy = -2.*((float)x)/((float)y);
-	_jlc->dl.multiplyx = 2.;
 	_jlc->dl.shiftx = 0.;
 	_jlc->dl.shifty = 0.;
 	if(y < x * .5625) {
 		_jlc->jlc->smde = 0;
 		offx = x;
 		x = y * 16./9.; //Widesceen
-		_jlc->dl.multiplyy = -2.*((float)x)/((float)y);
-		_jlc->dl.multiplyx = 2.*((float)x)/((float)offx);
 		_jlc->dl.shiftx += ((float)offx - (float)x)/((float)offx);
 		offx = (offx - x) / 2;
 		_jlc->dl.window.x = offx;

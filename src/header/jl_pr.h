@@ -80,6 +80,7 @@ char *jl_gem(void);
 uint32_t jl_gem_size(void);
 
 //OTHER LIB STUFF
+void main_resz(jvct_t* _jlc, u16_t x, u16_t y);
 void _jl_fl_errf(jvct_t * _jlc, const char *msg);
 //GL
 void jl_gl_viewport_screen(jvct_t *_jlc);
@@ -110,6 +111,7 @@ void jl_gl_pr_scr(jvct_t *_jlc);
 //DL
 void _jl_dl_resz(jvct_t *_jlc, uint16_t x, uint16_t y);
 void _jl_dl_loop(jvct_t* _jlc);
-void _jl_gr_resz(jl_t* jlc);
+void _jl_gr_resz(jvct_t* _jlc);
 void jl_sg_add_some_imgs_(jvct_t * _jlc, u16_t x);
+void _jl_sg_loop(jvct_t *_jlc);
 void jl_ct_quickloop_(jvct_t* _jlc);

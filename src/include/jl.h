@@ -54,12 +54,12 @@
 	jl_vo_t *jl_gl_vo_make(jl_t* jlc, u32_t count);
 	void jl_gl_vo_txmap(jl_t* jlc, jl_vo_t* pv, u8_t map);
 	void jl_gl_maketexture(jl_t* jlc, uint16_t gid, uint16_t id,
-		void *pixels, int width, int height);
+		void* pixels, int width, int height, u8_t bytepp);
 	double jl_gl_ar(jl_t* jlc);
 	void jl_gl_clear(jl_t* jlc, uint8_t r, uint8_t g, uint8_t b, uint8_t a);
 	void jl_gl_pr_rsz(jl_t* jlc, jl_pr_t *pr, f32_t w, f32_t h, u16_t w_px);
 	jl_pr_t * jl_gl_pr_new(jl_t* jlc, f32_t w, f32_t h, u16_t w_px);
-	void jl_gl_pr_draw(jl_t* jlc, jl_pr_t* pr, jl_vec3_t* vec);
+	void jl_gl_pr_draw(jl_t* jlc, jl_pr_t* pr, jl_vec3_t* vec, jl_vec3_t* scl);
 	void jl_gl_pr(jl_t* jlc, jl_pr_t * pr, jl_simple_fnt par__redraw);
 // "sg.c"
 	void jl_sg_mode_init(jl_t* jlc, u8_t mdec);

@@ -93,10 +93,10 @@ static char *source_vert_tex =
 	
 // Full texture
 static const float DEFAULT_TC[] = {
-	0., 0.,
 	0., 1.,
-	1., 1.,
-	1., 0.
+	0., 0.,
+	1., 0.,
+	1., 1.
 };
 
 #if JL_GLRTEX == JL_GLRTEX_EGL
@@ -308,12 +308,16 @@ static void jl_gl_texture_make__(jvct_t* _jlc, uint32_t *tex) {
 }
 
 // Set the bound texture.  pm is the pixels 0 - blank texture.
-static void jl_gl_texture_set__(jvct_t* _jlc, u8_t* pm, u16_t w, u16_t h) {
+static void jl_gl_texture_set__(jvct_t* _jlc, u8_t* pm, u16_t w, u16_t h,
+	u8_t bytepp)
+{
+	GLenum format = GL_RGBA;
+	if(bytepp == 3)	format = GL_RGB;
 	glTexImage2D(
 		GL_TEXTURE_2D, 0,		/* target, level */
-		GL_RGBA,			/* internal format */
+		format,				/* internal format */
 		w, h, 0,			/* width, height, border */
-		GL_RGBA, GL_UNSIGNED_BYTE,	/* external format, type */
+		format, GL_UNSIGNED_BYTE,	/* external format, type */
 		pm				/* pixels */
 	);
 	JL_GL_ERROR(_jlc, 0,"texture image 2D");
@@ -351,7 +355,7 @@ static void jl_gl_texture_off__(jvct_t *_jlc) {
 
 // Make & Bind a new texture.
 static void jl_gl_texture_new__(jvct_t *_jlc, m_u32_t *tex, u8_t* px,
-	u16_t w, u16_t h)
+	u16_t w, u16_t h, u8_t bytepp)
 {
 	jl_io_printc(_jlc->jlc, "make tx\n");
 	// Make the texture
@@ -360,7 +364,7 @@ static void jl_gl_texture_new__(jvct_t *_jlc, m_u32_t *tex, u8_t* px,
 	jl_gl_texture_bind__(_jlc, *tex);
 	jl_io_printc(_jlc->jlc, "set tx\n");
 	// Set texture
-	jl_gl_texture_set__(_jlc, px, w, h);
+	jl_gl_texture_set__(_jlc, px, w, h, bytepp);
 	jl_io_printc(_jlc->jlc, "set txpar\n");
 	// Set the texture parametrs.
 	jl_gl_texpar_set__(_jlc);
@@ -383,7 +387,7 @@ static void jl_gl_depthbuffer_new__(jvct_t* _jlc,m_u32_t*db ,u16_t w,u16_t h) {
 
 // Make a texture - doesn't free "pixels"
 void jl_gl_maketexture(jl_t* jlc, uint16_t gid, uint16_t id,
-	void* pixels, int width, int height)
+	void* pixels, int width, int height, u8_t bytepp)
 {
 	jvct_t *_jlc = jlc->_jlc;
 
@@ -420,7 +424,7 @@ void jl_gl_maketexture(jl_t* jlc, uint16_t gid, uint16_t id,
 	jl_io_printc(_jlc->jlc, ")\n");
 	// Make the texture.
 	jl_gl_texture_new__(_jlc, &_jlc->gl.textures[gid][id], pixels, width,
-		height);
+		height, bytepp);
 	jl_io_close_block(_jlc->jlc); //Close Block "MKTX"
 }
 
@@ -854,7 +858,7 @@ static void _jl_gl_pr_obj_free(jvct_t *_jlc, jl_pr_t *pr) {
 
 static void jl_gl_pr_obj_make_tx__(jvct_t *_jlc, jl_pr_t *pr) {
 	// Make a new texture for pre-renderering.  The "NULL" sets it blank.
-	jl_gl_texture_new__(_jlc, &(pr->tx), NULL, pr->w, pr->h);
+	jl_gl_texture_new__(_jlc, &(pr->tx), NULL, pr->w, pr->h, 0);
 	jl_gl_texture_off__(_jlc);
 }
 
@@ -1184,7 +1188,7 @@ static void jl_gl_transform__(jvct_t *_jlc, i32_t shader, i8_t which, float x,
 	float y, float z, f64_t ar)
 {
 	_jl_gl_setp(_jlc, which);
-	glUniform4f(shader, 2. * x, -2. * (y / ar), 2. * z, 1.f);
+	glUniform4f(shader, 2. * x, 2. * (y / ar), 2. * z, 1.f);
 	JL_GL_ERROR(_jlc, 0,"glUniform3f - transform");
 }
 
@@ -1549,7 +1553,7 @@ jl_vo_t *jl_gl_vo_make(jl_t* jlc, u32_t count) {
 void jl_gl_vo_txmap(jl_t* jlc, jl_vo_t* pv, u8_t map) {
 	if(map) {
 		int32_t cX = map%16;
-		int32_t cY = 15 - (map/16);
+		int32_t cY = map/16;
 		double CX = ((double)cX)/16.;
 		double CY = ((double)cY)/16.;
 		float tex1[] = {
@@ -1662,17 +1666,22 @@ jl_pr_t * jl_gl_pr_new(jl_t* jlc, f32_t w, f32_t h, u16_t w_px) {
  * @param jlc: The library context.
  * @param pr: The pre-rendered texture.
  * @param vec: The vector of offset/translation.
+ * @param scl: The scale factor.
 **/
-void jl_gl_pr_draw(jl_t* jlc, jl_pr_t* pr, jl_vec3_t* vec) {
+void jl_gl_pr_draw(jl_t* jlc, jl_pr_t* pr, jl_vec3_t* vec, jl_vec3_t* scl) {
 	jvct_t *_jlc = jlc->_jlc;
 
 	if(pr == NULL) pr = _jlc->gl.temp_vo->pr;
-	if(vec == NULL)
+	if(vec == NULL) {
 		jl_gl_transform_pr_(jlc->_jlc, pr,
 			0.f, 0.f, 0.f, 1., 1., 1.);
-	else
+	}else if(scl == NULL) {
 		jl_gl_transform_pr_(jlc->_jlc, pr,
 			vec->x, vec->y, vec->z, 1., 1., 1.);
+	}else{
+		jl_gl_transform_pr_(jlc->_jlc, pr,
+			vec->x, vec->y, vec->z, scl->x, scl->y, scl->z);	
+	}
 	jl_gl_draw_pr_(jlc, pr);
 }
 

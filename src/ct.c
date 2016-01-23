@@ -10,8 +10,6 @@
 //Prototypes
 	// ct.c
 	uint8_t jl_ct_key_pressed(jl_t *jlc, uint8_t key);
-	// main.c
-	void main_resz(jvct_t* _jlc, u16_t x, u16_t y);
 
 /*
  * Returns 0 if key isn't pressed
@@ -392,14 +390,8 @@ static inline void _jl_ct_handle_events_platform_dependant(jvct_t *_jlc) {
 #endif
 }
 
-static inline void _jl_ct_handle_events(jvct_t *_jlc) {
-	if ( _jlc->ct.event.type == SDL_TEXTINPUT) {
-//		printf("%1s\n", &(_jlc->ct.event.text.text[0]));
-		int i;
-		for(i = 0; i < 32; i++)
-			_jlc->ct.text_input[i] = _jlc->ct.event.text.text[i];
-		_jlc->ct.read_cursor = 0;
-	}else if(_jlc->ct.event.type==SDL_WINDOWEVENT) { //Resize
+static void jl_ct_handle_resize__(jvct_t *_jlc) {
+	if(_jlc->ct.event.type==SDL_WINDOWEVENT) { //Resize
 		if((_jlc->ct.event.window.event == SDL_WINDOWEVENT_RESIZED) &&
 			(SDL_GetWindowFromID(_jlc->ct.event.window.windowID) ==
 				_jlc->dl.displayWindow->w))
@@ -407,6 +399,18 @@ static inline void _jl_ct_handle_events(jvct_t *_jlc) {
 			main_resz(_jlc, _jlc->ct.event.window.data1,
 				_jlc->ct.event.window.data2);
 		}
+	}
+}
+
+static inline void _jl_ct_handle_events(jvct_t *_jlc) {
+	if ( _jlc->ct.event.type == SDL_TEXTINPUT) {
+//		printf("%1s\n", &(_jlc->ct.event.text.text[0]));
+		int i;
+		for(i = 0; i < 32; i++)
+			_jlc->ct.text_input[i] = _jlc->ct.event.text.text[i];
+		_jlc->ct.read_cursor = 0;
+	}else{
+		jl_ct_handle_resize__(_jlc);
 	}
 	_jl_ct_handle_events_platform_dependant(_jlc);
 }
@@ -455,8 +459,13 @@ void jl_ct_getevents_(jvct_t* _jlc) {
 }
 
 void jl_ct_quickloop_(jvct_t* _jlc) {
-	jl_ct_getevents_(_jlc);
-	if(_jlc->ct.back == 1) jl_sg_exit(_jlc->jlc);
+	if(_jlc->has.input) {
+		jl_ct_getevents_(_jlc);
+		if(_jlc->ct.back == 1) jl_sg_exit(_jlc->jlc);
+	}else{
+		while(SDL_PollEvent(&_jlc->ct.event))
+			jl_ct_handle_resize__(_jlc);
+	}
 }
 
 //Main Input Loop

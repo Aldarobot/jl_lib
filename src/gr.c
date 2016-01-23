@@ -433,7 +433,7 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 		jvct_t *_jlc = jlc->_jlc;
 
 		if(pv == NULL) pv = _jlc->gl.temp_vo;
-		jl_gl_pr_draw(jlc, pv->pr, vec);
+		jl_gl_pr_draw(jlc, pv->pr, vec, NULL);
 	}
 
 	/**
@@ -816,6 +816,19 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 				1. / ((float)(strlen(str)))} );
 	}
 
+	//TODO: MOVE
+	void jl_gr_draw_msge__(jl_t* jlc) {
+		jvct_t* _jlc = jlc->_jlc;
+
+		jl_gl_pr_scr(_jlc);
+		jl_gr_fill_image_set(jlc, _jlc->gr.msge.g, _jlc->gr.msge.i,
+			_jlc->gr.msge.c, 127);
+		jl_gr_fill_image_draw(jlc);
+		if(_jlc->gr.msge.message)
+			jl_gr_draw_ctxt(jlc, _jlc->gr.msge.message, 9./32.,
+				jlc->fontcolor);
+	}
+
 	/**
 	 * Print message on the screen.
    	 * @param 'jlc': library context.
@@ -823,14 +836,31 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 	 */
 	void jl_gr_draw_msge(jl_t* jlc, char* message, u16_t g, u16_t i,u8_t c){
 		jvct_t* _jlc = jlc->_jlc;
+		u8_t prev_loop = jlc->loop;
+		u8_t prev_flin = _jlc->fl.inloop;
 
-		jl_gl_pr_off(_jlc);
-		jl_gr_fill_image_set(jlc, g, i, c, 127);
-		jl_gr_fill_image_draw(jlc);
-		if(message)
-			jl_gr_draw_ctxt(jlc, message, 9./32., jlc->fontcolor);
-		_jl_dl_loop(_jlc); //Update Screen
-		if(_jlc->has.input) jl_ct_quickloop_(jlc->_jlc);
+		_jlc->gr.msge.message = message;
+		_jlc->gr.msge.g = g;
+		_jlc->gr.msge.i = i;
+		_jlc->gr.msge.c = c;
+		// Set mode to EXIT.
+		_jlc->fl.inloop = 1;
+		jlc->loop = JL_SG_WM_EXIT;
+		jl_sg_mode_reset(jlc);
+		jl_sg_mode_override(jlc, JL_SG_WM_EXIT, jl_gr_draw_msge__);
+		// Run Minimal loop.
+			// Update events ( minimal )
+			jl_ct_quickloop_(jlc->_jlc);
+			// Deselect any pre-renderer.
+			_jlc->gl.cp = NULL;
+			//Redraw screen.
+			_jl_sg_loop(_jlc);
+			//Update Screen.
+			_jl_dl_loop(_jlc);
+		// Return to original loop mode.
+		jlc->loop = prev_loop;
+		_jlc->fl.inloop = prev_flin;
+		jl_sg_mode_reset(jlc);
 	}
 
 	/**
@@ -1033,19 +1063,15 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 /***  ETOM Functions  ***/
 /************************/
 
-	void _jl_gr_resz(jl_t* jlc) {
+	void _jl_gr_resz(jvct_t* _jlc) {
 	//Menu Bar
-		_jl_gr_taskbar_loop_resz(jlc);
+		_jl_gr_taskbar_loop_resz(_jlc->jlc);
 	//Mouse
-		jl_gr_sp_rsz(jlc, jlc->mouse);
+		if(_jlc->has.graphics) jl_gr_sp_rsz(_jlc->jlc,_jlc->jlc->mouse);
 	}
 
-	void _jl_gr_loop(jl_t* jlc) {
-		jvct_t* _jlc = jlc->_jlc;
-		
-	//Menu Bar
-		if(!_jlc->fl.inloop) _jlc->gr.menuoverlay(jlc, NULL);
-	//Message Display
+	void _jl_gr_loopb(jl_t* jlc) {
+		//Message Display
 		if(timeTilMessageVanish > 0.f) {
 			if(timeTilMessageVanish > 4.25) {
 				uint8_t color[] = { 255, 255, 255, 255 };
@@ -1061,12 +1087,28 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 			}
 			timeTilMessageVanish-=jlc->psec;
 		}
-	//Update mouse
+	}
+
+	void _jl_gr_loopa(jl_t* jlc) {
+		jvct_t* _jlc = jlc->_jlc;
+		
+		// Menu Bar
+		if(!_jlc->fl.inloop) _jlc->gr.menuoverlay(jlc, NULL);
+		// Update mouse
 		jl_gr_sp_rnl(jlc, jlc->mouse);
+		// Update messages.
+		_jl_gr_loopb(jlc);
 	}
 	
 	void jl_gr_inita_(jvct_t *_jlc) {
+		jl_sprite_t* mouse = NULL;
+
 		_jl_gr_init_vos(_jlc);
+		// Set the menu loop.
+		_jl_gr_menu_init(_jlc);
+		_jlc->gr.menuoverlay = _jl_gr_taskbar_loop;
+		// Resize screen
+		main_resz(_jlc, _jlc->dl.full_w, _jlc->dl.full_h);
 		// Draw Loading Screen
 		jl_gr_draw_msge(_jlc->jlc, NULL, 0, 0, 0);
 		// Create Font
@@ -1077,28 +1119,20 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 		_jlc->jlc->font = (jl_font_t)
 			{ 0, JL_IMGI_FONT, 0, _jlc->jlc->fontcolor, .04 };
 		jl_sg_add_some_imgs_(_jlc, 1);
+		//
 		jl_gr_draw_msge(_jlc->jlc, "LOADING JL_LIB GRAPHICS...",
 			0, 0, 0);
 		// Load the other images.
 		jl_sg_add_some_imgs_(_jlc, 2);
 		jl_gr_draw_msge(_jlc->jlc, "LOADED JL_LIB GRAPHICS!",
 			0, 0, 0);
-	}
-
-	void jl_gr_initb_(jvct_t *_jlc) {
-		jl_sprite_t* mouse = NULL;
-
-		jl_io_offset(_jlc->jlc, JL_IO_SIMPLE, "GRIN");
 		// Create the Mouse
 		_jl_gr_mouse_init(_jlc);
 		mouse = _jlc->jlc->mouse;
+		jl_gr_sp_rsz(_jlc->jlc, mouse);
 		// Set the mouse's collision width and height to 0
 		mouse->data.cb.w = 0.f;
 		mouse->data.cb.h = 0.f;
-		// Set the menu loop.
-		_jl_gr_menu_init(_jlc);
-		_jlc->gr.menuoverlay = _jl_gr_taskbar_loop;
-		jl_io_close_block(_jlc->jlc); //Close Block "GRIN"
 	}
 
 /**      @endcond      **/
