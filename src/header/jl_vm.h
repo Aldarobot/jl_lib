@@ -59,6 +59,7 @@ typedef struct {
 		uint8_t temp_buff[30];
 		void * tmp_ptr[16];
 		m_u8_t status;
+		m_u64_t usedmem;
 	}me;
 
 	_io_t io; //Terminal Data

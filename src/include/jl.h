@@ -17,7 +17,9 @@
 
 	void jl_dont(jl_t* jlc);
 // "me.c"
-	uint32_t jl_me_tbiu(void);
+	u64_t jl_me_tbiu(void);
+	void jl_me_leak_init(jl_t* jlc);
+	void jl_me_leak_fail(jl_t* jlc, str_t fn_name);
 	void jl_me_clr(void *pmem, uint64_t size);
 	void jl_me_copyto(const void *src, void* dest, size_t size);
 	void * jl_me_copy(jl_t* jlc, const void *src, size_t size);

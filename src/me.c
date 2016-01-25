@@ -25,13 +25,12 @@ static void *_jl_me_hydd_allc(jvct_t* _jlc, void *a, uint32_t size) {
 //Update Memory To Size "kb" kilobytes
 static inline void _jlvm_jl_me_resz(jvct_t* _jlc, uint32_t kb) {
 	printf("[jl_me] updating memory size....\n");
-	printf("[jl_me] total size = %d\n", jl_me_tbiu());
+	printf("[jl_me] total size = %ld\n", jl_me_tbiu());
 	printf("[jl_me] update to =  %d\n", kb);
 	printf("[jl_me] SDL Size =   %d\n", 0);
 	printf("[jl_me] JLVM Size =  %d\n", 0);
 	printf("[jl_me] NonLib Size =%d\n", 0);
 	printf("[jl_me] Unknown =    %d\n", 0);
-	malloc_trim(0); //Remove Free Memory
 }
 
 static void _jl_me_init_alloc(void **a, uint32_t size) {
@@ -79,17 +78,38 @@ static void jl_me_strt_increment(strt pstr, u8_t incrementation) {
  * Return Amount Of Total Memory Being Used
  * @returns The total amount of memory being used in bytes.
 **/
-uint32_t jl_me_tbiu(void) {
+u64_t jl_me_tbiu(void) {
 	struct mallinfo mi;
+
+	malloc_trim(0); //Remove Free Memory
 	mi = mallinfo();
 	return mi.uordblks;
+}
+
+void jl_me_leak_init(jl_t* jlc) {
+	jvct_t * jlc_ = jlc->_jlc;
+
+	jlc_->me.usedmem = jl_me_tbiu();
+}
+
+/**
+ * Exit if there's been a memory leak since the last call to jl_me_leak_init().
+**/
+void jl_me_leak_fail(jl_t* jlc, str_t fn_name) {
+	jvct_t * jlc_ = jlc->_jlc;
+
+	if(jl_me_tbiu() != jlc_->me.usedmem) {
+		jl_io_printc(jlc, fn_name);
+		jl_io_printc(jlc, ": Memory Leak Fail");
+		jl_sg_kill(jlc);
+	}
 }
 
 /**
  * Clear memory pointed to by "mem" of size "size"
  * @param pmem: memory to clear
  * @param size: size of "mem"
-*/
+**/
 void jl_me_clr(void *pmem, uint64_t size) {
 	uint8_t *fmem = pmem;
 	uint64_t i;

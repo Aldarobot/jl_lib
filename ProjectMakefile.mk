@@ -1,5 +1,16 @@
 ################################################################################
 
+# Dependencies
+SRCS_DEPS = \
+	$(shell find $(SRC_DEPS)/ -type f -name '*.c')\
+	$(shell find $(SRC_DEPS)/ -type f -name '*.cpp')
+MODULES_DEPS = \
+	$(subst .c,, $(subst .cpp,, \
+	$(subst /,-, $(SRCS_DEPS))))
+OBJS_DEPS = \
+	$(addprefix $(BUILD_DEPS)/, $(subst $(BUILD_DEPS)/libs-,,\
+	$(foreach x, $(MODULES_DEPS), $(BUILD_DEPS)/$(x).o)))
+
 # directories
 SRC = src
 SRC_DEPS = libs
@@ -76,16 +87,6 @@ $(BUILD_DEPS)/%.o: build-deps-var/%.o $(CFILE_DEPS)
 		-I$(shell echo $(JLL_HOME))/src/lib/include/\
 		-Isrc/ $(addprefix -I, $(shell find src/ -type d ))\
 		-iquote $(INCLUDES_DEPS))
-	# Dependencies
-	$(eval SRCS_DEPS=\
-		$(shell find $(SRC_DEPS)/ -type f -name '*.c')\
-		$(shell find $(SRC_DEPS)/ -type f -name '*.cpp'))
-	$(eval MODULES_DEPS=\
-		$(subst .c,, $(subst .cpp,, \
-		$(subst /,-, $(SRCS_DEPS)))))
-	$(eval OBJS_DEPS=\
-		$(addprefix $(BUILD_DEPS)/, $(subst $(BUILD_DEPS)/libs-,,\
-			$(foreach x, $(MODULES_DEPS), $(BUILD_DEPS)/$(x).o))))
 
 -debug: -init-vars
 #	$(eval GL_VERSION=-lGL) ## OpenGL
