@@ -80,6 +80,7 @@ char *jl_gem(void);
 uint32_t jl_gem_size(void);
 
 //OTHER LIB STUFF
+void main_resz(jvct_t* _jlc, u16_t x, u16_t y);
 void _jl_fl_errf(jvct_t * _jlc, const char *msg);
 //GL
 void jl_gl_viewport_screen(jvct_t *_jlc);
@@ -92,6 +93,7 @@ jl_ccolor_t* jl_gl_clrcg(jvct_t *_jlc, u8_t *rgba, uint32_t vc);
 void jl_gl_clrg(jvct_t *_jlc, jl_vo_t* pv, u8_t *rgba);
 void jl_gl_clrs(jvct_t *_jlc, jl_vo_t* pv, u8_t *rgba);
 void jl_gl_txtr(jvct_t *_jlc, jl_vo_t* pv, u8_t map, u8_t a, u16_t pgid, u16_t pi);
+void jl_gl_txtr_(jvct_t* _jlc, jl_vo_t* pv, u8_t map, u8_t a, u32_t tx);
 void jl_gl_transform_pr_(jvct_t *_jlc, jl_pr_t* pr, float x, float y, float z,
 	float xm, float ym, float zm);
 void jl_gl_transform_vo_(jvct_t *_jlc, jl_vo_t* vo, float x, float y, float z,
@@ -110,6 +112,7 @@ void jl_gl_pr_scr(jvct_t *_jlc);
 //DL
 void _jl_dl_resz(jvct_t *_jlc, uint16_t x, uint16_t y);
 void _jl_dl_loop(jvct_t* _jlc);
-void _jl_gr_resz(jl_t* jlc);
+void _jl_gr_resz(jvct_t* _jlc);
 void jl_sg_add_some_imgs_(jvct_t * _jlc, u16_t x);
+void _jl_sg_loop(jvct_t *_jlc);
 void jl_ct_quickloop_(jvct_t* _jlc);

@@ -68,10 +68,10 @@ if [ ! -e build/android-release-key.keystore ];then
 	printf "[JL/ANDR] a key.  Create your key for jarsigner:\n"
 	keytool -sigalg SHA1withRSA -keyalg RSA -keysize 1024 -genkey -keystore build/android-release-key.keystore -alias daliasle -validity 3650
 fi
-cp --recursive -u -t $ANDROID_PROJECT/jni/src/gen/src/ `find src/*`
-rm $ANDROID_PROJECT/android-release-key.keystore
+rm -r $ANDROID_PROJECT/jni/src/gen/src/
+mkdir $ANDROID_PROJECT/jni/src/gen/src/
+cp --recursive -t $ANDROID_PROJECT/jni/src/gen/src/ `find src/*`
 cp build/android-release-key.keystore $ANDROID_PROJECT/
-rm $ANDROID_PROJECT/res/drawable/prgm_icon.png
 cp media/icon.png $ANDROID_PROJECT/res/drawable/prgm_icon.png
 
 sudo $SDK_PATH/platform-tools/adb kill-server

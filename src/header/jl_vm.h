@@ -59,6 +59,7 @@ typedef struct {
 		uint8_t temp_buff[30];
 		void * tmp_ptr[16];
 		m_u8_t status;
+		m_u64_t usedmem;
 	}me;
 
 	_io_t io; //Terminal Data
@@ -238,6 +239,12 @@ typedef struct {
 		struct {
 			jl_vo_t *whole_screen;
 		}vos;
+		struct {
+			m_str_t message;
+			m_u16_t g;
+			m_u16_t i;
+			m_u8_t c;
+		}msge;
 		strt textbox_string;
 	}gr;
 
@@ -253,8 +260,6 @@ typedef struct {
 		jl_window_t* whichwindow;
 	#endif
 
-		float multiplyy;
-		float multiplyx;
 		float shifty;
 		float shiftx;
 		

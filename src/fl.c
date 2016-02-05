@@ -254,7 +254,10 @@ u8_t jl_fl_exist(jl_t* jlc, str_t path) {
  * @param bytes: Size of "File"
  */
 void jl_fl_save(jl_t* jlc, const void *file, const char *name, uint32_t bytes) {
-	truncate(name, 0);
+	str_t converted_filename = jl_fl_convert__(jlc, name);
+	// delete file
+	unlink(converted_filename);
+	// make file
 	_jl_fl_save(jlc, file, name, bytes);
 }
 

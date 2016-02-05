@@ -23,7 +23,6 @@ void jl_gl_pr_scr_set(jvct_t *_jlc, jl_vo_t* vo);
 	void _jl_fl_inita(jvct_t* _jlc);
 	void _jl_fl_initb(jvct_t* _jlc);
 	void jl_gr_inita_(jvct_t* _jlc);
-	void jl_gr_initb_(jvct_t* _jlc);
 	void _jl_ct_init(jvct_t* _jlc);
 	void _jl_gl_init(jvct_t* _jlc);
 	void _jl_io_init(jvct_t* _jlc);
@@ -31,7 +30,7 @@ void jl_gl_pr_scr_set(jvct_t *_jlc, jl_vo_t* vo);
 	jvct_t* _jl_me_init(void);
 
 	//LIB LOOPS: parameter is context
-	void _jl_gr_loop(jl_t* jlc);
+	void _jl_gr_loopa(jl_t* jlc);
 	void _jl_ct_loop(jvct_t* _jlc);
 	void _jl_sg_loop(jvct_t* _jlc);
 	void _jl_dl_loop(jvct_t* _jlc);
@@ -95,8 +94,8 @@ static void _jl_sg_mode_add(jvct_t* _jlc, u8_t mode) {
 	// Add a mode.
 	_jlc->jlc->mdec++;
 	// Allocate a new mode.
-	_jlc->sg.mdes = realloc(_jlc->sg.mdes,
-		(_jlc->jlc->mdec + 1) * sizeof(__sg_mode_t));
+	jl_me_alloc(_jlc->jlc, (void**)&(_jlc->sg.mdes),
+		_jlc->jlc->mdec * sizeof(__sg_mode_t), 0);
 	// Set the mode.
 	_jlc->sg.mdes[mode].tclp[JL_SG_WM_EXIT] = jl_sg_exit;
 	_jlc->sg.mdes[mode].tclp[JL_SG_WM_UP] = jl_dont;
@@ -140,10 +139,8 @@ void jl_sg_mode_set(jl_t* jlc, u8_t mode, u8_t wm, jl_simple_fnt loop) {
 /**
  * Temporarily change the mode functions without actually changing the mode.
  * @param jlc: The library context.
- * @param exit: exit loop
- * @param upsl: upper screen loop
- * @param dnsl: lower screen loop
- * @param term: terminal screen loop
+ * @param wm: the loop to override
+ * @param loop: the overriding function 
  */
 void jl_sg_mode_override(jl_t* jlc, uint8_t wm, jl_simple_fnt loop) {
 	jvct_t* _jlc = jlc->_jlc;
@@ -271,7 +268,7 @@ void _jl_sg_load_jlpx(jvct_t* _jlc,strt data,void **pixels,int *w,int *h) {
 		}
 		// Covert SDL_Surface.
 		pixel_data = jl_me_strt_make(image->w * image->h * 4);
-		for(i = image->h - 1; i >= 0; i--) {
+		for(i = 0; i < image->h; i++) {
 			for(j = 0; j < image->w; j++) {
 				color = _jl_sg_gpix(image, j, i);
 				jl_me_strt_saveto(pixel_data, 4, &color);
@@ -359,7 +356,7 @@ static inline uint8_t _jl_sg_load_next_img(jvct_t * _jlc) {
 		jl_io_printi(_jlc->jlc, _jlc->sg.igid);
 		jl_io_printc(_jlc->jlc, "!\n");
 		jl_gl_maketexture(_jlc->jlc, _jlc->sg.igid,
-			_jlc->sg.image_id, fpixels, fw, fh);
+			_jlc->sg.image_id, fpixels, fw, fh, 0);
 		jl_io_printc(_jlc->jlc, "created image #");
 		jl_io_printi(_jlc->jlc, _jlc->sg.igid);
 		jl_io_printc(_jlc->jlc, ":");
@@ -404,6 +401,7 @@ static inline void _jl_sg_init_images(jvct_t * _jlc,strt data,u16_t gi,u16_t x){
 }
 
 static uint32_t _jl_sg_quit(jvct_t* _jlc, int rc) {
+	jl_gr_draw_msge(_jlc->jlc, "Quiting JL-Lib....", 0, 0, 0);
 	jl_io_offset(_jlc->jlc, JL_IO_SIMPLE, "KILL"); // {
 	if(_jlc->me.status == JL_STATUS_EXIT) {
 		rc = JL_RTN_FAIL_IN_FAIL_EXIT;
@@ -451,7 +449,6 @@ void jl_sg_kill(jl_t* jlc) {
  * Go to exit mode or exit if in exit mode.
  */
 void jl_sg_exit(jl_t* jlc) {
-	jl_gr_draw_msge(jlc, "Quiting JL-Lib....", 0, 0, 0);
 	if(jlc->loop == JL_SG_WM_EXIT)
 		_jl_sg_quit(jlc->_jlc, JL_RTN_SUCCESS);
 	else
@@ -529,6 +526,7 @@ void jl_sg_add_image(jl_t* jlc, str_t pzipfile, u16_t pigid) {
 static void _jl_sg_screen_draw(jl_t* jlc, f32_t ytrans, jl_vo_t* bg, u8_t lp) {
 	jvct_t * _jlc = jlc->_jlc;
 	jl_vec3_t translate = { _jlc->sg.offsx, _jlc->sg.offsy + ytrans, 0. };
+	jl_vec3_t transform = { 1., -1., 1. };
 
 	// Turn off all pre-renderers.
 	jl_gl_pr_off(_jlc);
@@ -542,11 +540,11 @@ static void _jl_sg_screen_draw(jl_t* jlc, f32_t ytrans, jl_vo_t* bg, u8_t lp) {
 	// Run the screen's loop
 	_jlc->sg.mode.tclp[lp](jlc);
 	// If BG is lower screen: Draw Menu Bar & Mouse - on lower screen
-	if(bg == _jlc->sg.bg.dn) _jl_gr_loop(jlc);
+	if(bg == _jlc->sg.bg.dn && _jlc->has.graphics) _jl_gr_loopa(jlc);
 	// Turn off the pre-renderer.
 	jl_gl_pr_off(_jlc);
 	// Draw the prendered texture.
-	jl_gr_pr_draw(jlc, bg, &translate);
+	jl_gl_pr_draw(jlc, bg->pr, &translate, &transform);
 }
 
 // Double screen loop
@@ -649,9 +647,6 @@ static inline void _jl_sg_initc(jvct_t * _jlc) {
 	// No error
 	_jlc->jlc->errf = JL_ERR_NERR;
 	_jlc->jlc->psec = 0.f;
-	_jlc->jlc->mode = 0;
-	_jlc->jlc->mdec = 0;
-	_jlc->sg.mdes = NULL;
 	// Set Default Window To Terminal
 	_jlc->jlc->loop = JL_SG_WM_TERM;
 	_jlc->sg.prev_tick = 0;
@@ -671,20 +666,23 @@ static inline void _jl_sg_inita(jvct_t * _jlc) {
 	jl_sg_add_image__(_jlc->jlc,
 		(void*)jl_fl_get_resloc(_jlc->jlc, JL_MAIN_DIR, JL_MAIN_MEF),
 		0, 1);
-	// Clear User Loops
-	for(i = 0; i < JL_SG_WM_MAX; i++) _jlc->sg.mode.tclp[i] = jl_dont;
-}
-
-static inline void _jl_sg_initb(jvct_t * _jlc) {
+	// Create upper and lower screens
 	_jlc->sg.bg.up = jl_gl_vo_make(_jlc->jlc, 1);
 	_jlc->sg.bg.dn = jl_gl_vo_make(_jlc->jlc, 1);
 	jl_gl_pr_off(_jlc);
-	// Resize for 2 screen Default - so they initialize.
-	_jlc->jlc->smde = 1;
-	jl_sg_init_ds_(_jlc->jlc);
 	// Default to lower screen
 	jl_gl_pr_scr_set(_jlc, _jlc->sg.bg.dn);
 	jl_gl_pr_scr(_jlc);
+	// Resize for 2 screen Default - so they initialize.
+	_jlc->jlc->smde = 1;
+	jl_sg_init_ds_(_jlc->jlc);
+	// Set up modes:
+	_jlc->jlc->mode = 0;
+	_jlc->jlc->mdec = 0;
+	_jlc->sg.mdes = NULL;
+	_jl_sg_mode_add(_jlc, 0);
+	// Clear User Loops
+	for(i = 0; i < JL_SG_WM_MAX; i++) _jlc->sg.mode.tclp[i] = jl_dont;
 }
 
 /*
@@ -734,7 +732,7 @@ static void jl_main_resz_jl(jvct_t* _jlc, u16_t x, u16_t y) {
 	// Update the size of the background.
 	_jl_sg_resz(_jlc->jlc);
 	// Update the size of foreground objects.
-	_jl_gr_resz(_jlc->jlc);	
+	_jl_gr_resz(_jlc);	
 }
 
 void main_resz(jvct_t* _jlc, u16_t x, u16_t y) {
@@ -753,27 +751,22 @@ static inline void _jl_sg_init_libs(jvct_t *_jlc) {
 	_jl_sg_inita(_jlc); //Load default graphics from package.
 	jl_io_printc(_jlc->jlc, "Initializing GL...\n");
 	_jl_gl_init(_jlc); //Drawing Set-up
-	jl_io_printc(_jlc->jlc, "Initialized GL!\n");
-	jl_io_printc(_jlc->jlc, "Initializing GR....\n");
+	jl_io_printc(_jlc->jlc, "Initialized GL! / Initializing GR....\n");
 	jl_gr_inita_(_jlc); //Set-up sprites & menubar
-	jl_io_printc(_jlc->jlc, "Initializing SG....\n");
-	_jl_sg_initb(_jlc);
-	jl_io_printc(_jlc->jlc, "Still Initializing GR....\n");
-	jl_gr_initb_(_jlc);
 	jl_io_printc(_jlc->jlc, "Initialized GR!\n");
-	jl_main_resz_jl(_jlc, _jlc->dl.full_w, _jlc->dl.full_h);
-	jl_io_printc(_jlc->jlc, "Completed First Frame!\n");
 	_jl_sg_init_done(_jlc); //Draw "loading jl_lib" on the screen.
 	jl_io_printc(_jlc->jlc, "Initializing CT...\n");
+	jl_gr_draw_msge(_jlc->jlc, "Can't read input....", 0, 0, 0);
 	_jl_ct_init(_jlc); //Prepare to read input.
+	jl_gr_draw_msge(_jlc->jlc, "Can read input!", 0, 0, 0);
 	jl_io_printc(_jlc->jlc, "Initialized CT!\n");
 	_jl_sg_initc(_jlc);
 	jl_io_printc(_jlc->jlc, "Initialized SG!\n");
 	_jl_fl_initb(_jlc);
-	jl_io_printc(_jlc->jlc, "Initialized FL!\n");
-	jl_io_printc(_jlc->jlc, "Initializing AU....\n");
+	jl_io_printc(_jlc->jlc, "Initialized FL! / Initializing AU....\n");
 	_jl_au_init(_jlc); //Load audiostuffs from packages
 	jl_io_printc(_jlc->jlc, "Initialized AU!\n");
+	jl_gr_draw_msge(_jlc->jlc, "INITIALIZATION COMPLETE!", 0, 0, 0);
 }
 
 static inline void _jl_ini(jvct_t *_jlc) {
@@ -782,9 +775,6 @@ static inline void _jl_ini(jvct_t *_jlc) {
 	_jl_sg_init_libs(_jlc);
 	hack_user_init(_jlc->jlc);
 	_jlc->sg.mode.tclp[JL_SG_WM_RESZ](_jlc->jlc);
-
-	jl_io_offset(_jlc->jlc, JL_IO_SIMPLE, "JLLB"); //"JLLB" to SIMPLE
-	jl_io_printc(_jlc->jlc, "Init5...\n");
 	
 	jl_io_offset(_jlc->jlc, JL_IO_MINIMAL, "JLLB"); //"JLLB" to MINIMAL
 	jl_io_printc(_jlc->jlc, "Initialized!\n");

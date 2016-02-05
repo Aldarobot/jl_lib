@@ -17,7 +17,9 @@
 
 	void jl_dont(jl_t* jlc);
 // "me.c"
-	uint32_t jl_me_tbiu(void);
+	u64_t jl_me_tbiu(void);
+	void jl_me_leak_init(jl_t* jlc);
+	void jl_me_leak_fail(jl_t* jlc, str_t fn_name);
 	void jl_me_clr(void *pmem, uint64_t size);
 	void jl_me_copyto(const void *src, void* dest, size_t size);
 	void * jl_me_copy(jl_t* jlc, const void *src, size_t size);
@@ -51,15 +53,19 @@
 // "cl.c"
 	void jl_cl_list_alphabetize(struct cl_list *list);
 // "gl.c"
+	void jl_gl_pbo_new(jl_t* jlc, jl_tex_t* texture, u8_t* pixels,
+		u16_t w, u16_t h, u8_t bpp);
+	void jl_gl_pbo_set(jl_t* jlc, jl_tex_t* texture, u8_t* pixels,
+		u16_t w, u16_t h, u8_t bpp);
 	jl_vo_t *jl_gl_vo_make(jl_t* jlc, u32_t count);
 	void jl_gl_vo_txmap(jl_t* jlc, jl_vo_t* pv, u8_t map);
 	void jl_gl_maketexture(jl_t* jlc, uint16_t gid, uint16_t id,
-		void *pixels, int width, int height);
+		void* pixels, int width, int height, u8_t bytepp);
 	double jl_gl_ar(jl_t* jlc);
 	void jl_gl_clear(jl_t* jlc, uint8_t r, uint8_t g, uint8_t b, uint8_t a);
 	void jl_gl_pr_rsz(jl_t* jlc, jl_pr_t *pr, f32_t w, f32_t h, u16_t w_px);
 	jl_pr_t * jl_gl_pr_new(jl_t* jlc, f32_t w, f32_t h, u16_t w_px);
-	void jl_gl_pr_draw(jl_t* jlc, jl_pr_t* pr, jl_vec3_t* vec);
+	void jl_gl_pr_draw(jl_t* jlc, jl_pr_t* pr, jl_vec3_t* vec, jl_vec3_t* scl);
 	void jl_gl_pr(jl_t* jlc, jl_pr_t * pr, jl_simple_fnt par__redraw);
 // "sg.c"
 	void jl_sg_mode_init(jl_t* jlc, u8_t mdec);
@@ -94,6 +100,8 @@
 		uint8_t multicolor);
 	void jl_gr_vos_image(jl_t* jlc, jl_vo_t *pv, jl_rect_t rc,
 		u16_t g, u16_t i, u8_t c, u8_t a);
+	void jl_gr_vos_texture(jl_t* jlc, jl_vo_t *pv, jl_rect_t rc,
+		jl_tex_t* tex, u8_t c, u8_t a);
 	void jl_gr_vo_old(jl_t* jlc, jl_vo_t* pv);
 	void jl_gr_sp_rsz(jl_t* jlc, jl_sprite_t *spr);
 	void jl_gr_sp_rdr(jl_t* jlc, jl_sprite_t *spr);

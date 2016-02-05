@@ -15,6 +15,7 @@ STATIC = $(BUILD)/jl.a
 
 # Locations
 LIBZIP = build/android/jni/src/lib/libzip/
+SRC_NDK = android-ndk-r10e
 
 # The Set-Up Options.
 init-all: init-build init-deps-all
@@ -105,24 +106,20 @@ init-build: init-build-wo-android init-build-android
 init-build-wo-android: init-build-folder
 
 init-build-folder:
-	mkdir build/
-	mkdir build/deps/
-	mkdir build/obj/
+	mkdir -p build/deps/
+	mkdir -p build/obj/
 
 init-build-android:
-	mkdir build/android/
-	mkdir build/android/jni/
-	mkdir build/android/jni/src/
-	mkdir build/android/src/
-	mkdir build/android/src/org/
-	mkdir build/android/src/org/libsdl/
-	mkdir build/android/src/org/libsdl/app/
-	mkdir build/android/res/
-	mkdir build/android/res/values/
-	mkdir build/android/res/drawable/
+	mkdir -p build/android/jni/src/
+	mkdir -p build/android/src/org/libsdl/app/
+	mkdir -p build/android/res/values/
+	mkdir -p build/android/res/drawable/
+	mkdir -p build/android/gcc/
+	cp -t build/android/gcc/ \
+	 `find deps/$(SRC_NDK)/toolchains -type f -name '*gcc' | grep 4.9`
 
 init-deps:
-	mkdir deps/
+	mkdir -p deps/
 
 init-deps-sdl:
 	cd deps/ && \
@@ -167,11 +164,11 @@ init-deps-ems:
 
 init-deps-ndk:
 	cd deps/ && \
-	wget http://dl.google.com/android/ndk/android-ndk-r10e-linux-x86_64.bin\
+	wget http://dl.google.com/android/ndk/$SRC_NDK-linux-x86_64.bin\
 	 --progress=bar && \
-	chmod a+x android-ndk-r10e-linux-x86_64.bin && \
-	./android-ndk-r10e-linux-x86_64.bin && \
-	rm android-ndk-r10e-linux-x86_64.bin
+	chmod a+x $SRC_NDK-linux-x86_64.bin && \
+	./$SRC_NDK-linux-x86_64.bin && \
+	rm $SRC_NDK-linux-x86_64.bin
 
 init-deps-sdk:
 	cd deps/ && \
