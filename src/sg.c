@@ -90,18 +90,19 @@ void jl_gl_pr_scr_set(jvct_t *_jlc, jl_vo_t* vo);
 	
 //Functions:
 
-static void _jl_sg_mode_add(jvct_t* _jlc, u8_t mode) {
-	// Add a mode.
-	_jlc->jlc->mdec++;
+static void _jl_sg_mode_add(jvct_t* _jlc) {
 	// Allocate a new mode.
-	jl_me_alloc(_jlc->jlc, (void**)&(_jlc->sg.mdes),
-		_jlc->jlc->mdec * sizeof(__sg_mode_t), 0);
+	jl_me_alloc(_jlc->jlc, (void**)&_jlc->sg.mdes,
+		(_jlc->jlc->mdec + 1) * sizeof(__sg_mode_t),
+		_jlc->jlc->mdec * sizeof(__sg_mode_t));
 	// Set the mode.
-	_jlc->sg.mdes[mode].tclp[JL_SG_WM_EXIT] = jl_sg_exit;
-	_jlc->sg.mdes[mode].tclp[JL_SG_WM_UP] = jl_dont;
-	_jlc->sg.mdes[mode].tclp[JL_SG_WM_DN] = jl_dont;
-	_jlc->sg.mdes[mode].tclp[JL_SG_WM_TERM] = jl_dont;
-	_jlc->sg.mdes[mode].tclp[JL_SG_WM_RESZ] = jl_dont;
+	_jlc->sg.mdes[_jlc->jlc->mdec].tclp[JL_SG_WM_EXIT] = jl_sg_exit;
+	_jlc->sg.mdes[_jlc->jlc->mdec].tclp[JL_SG_WM_UP] = jl_dont;
+	_jlc->sg.mdes[_jlc->jlc->mdec].tclp[JL_SG_WM_DN] = jl_dont;
+	_jlc->sg.mdes[_jlc->jlc->mdec].tclp[JL_SG_WM_TERM] = jl_dont;
+	_jlc->sg.mdes[_jlc->jlc->mdec].tclp[JL_SG_WM_RESZ] = jl_dont;
+	// Add to mode count.
+	_jlc->jlc->mdec++;
 }
 
 /**
@@ -130,7 +131,7 @@ void jl_sg_mode_set(jl_t* jlc, u8_t mode, u8_t wm, jl_simple_fnt loop) {
 	jvct_t* _jlc = jlc->_jlc;
 
 	jl_gr_draw_msge(jlc, "Switching Mode...", 0, 0, 0);
-	while(mode >= _jlc->jlc->mdec) _jl_sg_mode_add(_jlc, mode);
+	while(mode >= _jlc->jlc->mdec) _jl_sg_mode_add(_jlc);
 	_jlc->sg.mdes[mode].tclp[wm] = loop;
 	// Reset things
 	_jlc->ct.heldDown = 0;
@@ -680,7 +681,7 @@ static inline void _jl_sg_inita(jvct_t * _jlc) {
 	_jlc->jlc->mode = 0;
 	_jlc->jlc->mdec = 0;
 	_jlc->sg.mdes = NULL;
-	_jl_sg_mode_add(_jlc, 0);
+	_jl_sg_mode_add(_jlc);
 	// Clear User Loops
 	for(i = 0; i < JL_SG_WM_MAX; i++) _jlc->sg.mode.tclp[i] = jl_dont;
 }

@@ -13,8 +13,7 @@
 /*** Static Functions ***/
 /************************/
 
-// TODO: Remove dependencies on this function.  jl_me_alloc() should replace.
-static void *_jl_me_hydd_allc(jvct_t* _jlc, void *a, uint32_t size) {
+static void *jl_me_realloc__(jvct_t* _jlc, void *a, uint32_t size) {
 	if((a = realloc(a, size)) == NULL) {
 		_jl_fl_errf(_jlc, "realloc() memory error!\n");
 		jl_sg_kill(_jlc->jlc);
@@ -155,9 +154,9 @@ void jl_me_alloc(jl_t* jlc, void **a, uint32_t size, uint32_t oldsize) {
 		free(*a);
 		*a = NULL;
 	}else{
-		void *old = *a;
-		void *new = jl_me_copy(jlc, old, size);
-		*a = new;
+		*a = jl_me_realloc__(jlc->_jlc, *a, size + 1);
+	//	memset(newptr + oldsize, 0, size - oldsize);
+	//	*a = newptr;
 	}
 }
 
@@ -286,7 +285,7 @@ void jl_me_strt_delete_byte(jl_t *jlc, strt pstr) {
 		pstr->data[i] = pstr->data[i+1];
 	pstr->size--;
 	pstr->data[pstr->size] = '\0';
-	pstr->data = _jl_me_hydd_allc(jlc->_jlc, pstr->data, pstr->size+1);
+	pstr->data = jl_me_realloc__(jlc->_jlc, pstr->data, pstr->size+1);
 	_jl_me_truncate_curs(pstr);
 }
 
@@ -298,7 +297,7 @@ void jl_me_strt_insert_byte(jl_t *jlc, strt pstr, uint8_t pvalue) {
 	if(strlen((char*)pstr->data) == pstr->size) {
 		pstr->size++;
 		pstr->data =
-			_jl_me_hydd_allc(jlc->_jlc, pstr->data, pstr->size+1);
+			jl_me_realloc__(jlc->_jlc, pstr->data, pstr->size+1);
 	}
 	if(jl_me_strt_byte(pstr) == '\0') {
 		jl_me_strt_add_byte(pstr, pvalue);
@@ -338,7 +337,7 @@ void jl_me_strt_strt(jl_t *jlc, strt a, strt b, uint64_t bytes) {
 		jl_sg_kill(jlc);
 	}
 	if(sizeb > size) size = sizeb;
-	a->data = _jl_me_hydd_allc(jlc->_jlc, a->data, size + 1);
+	a->data = jl_me_realloc__(jlc->_jlc, a->data, size + 1);
 	for(i = 0; i < bytes; i++) {
 		a->data[i + a->curs] = b->data[i + b->curs];
 	}
@@ -366,7 +365,7 @@ void jl_me_strt_merg(jl_t *jlc, strt a, strt b) {
 void jl_me_strt_trunc(jl_t *jlc, strt a, uint32_t size) {
 	a->curs = 0;
 	a->size = size;
-	a->data = _jl_me_hydd_allc(jlc->_jlc, a->data, a->size + 1);
+	a->data = jl_me_realloc__(jlc->_jlc, a->data, a->size + 1);
 }
 
 // Print a number out as a string and return it (Type=STRT_TEMP)
