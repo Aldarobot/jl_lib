@@ -103,7 +103,7 @@ $(BUILD_DEPS)/%.o: build-deps-var/%.o $(CFILE_DEPS)
 	printf "[COMP] Linking ....\n"
 	gcc $(OBJS) $(LIB) -o $(JL_OUT) $(CFLAGS) $(JL_DEBUG)\
 		 -lm -lz -ldl -lpthread -L/usr/local/lib/  \
-		-lopencv_core -lopencv_highgui -lopencv_videoio -lopencv_imgproc
+		-lopencv_imgcodecs -lopencv_imgproc -lopencv_core -lopencv_videoio
 	printf "[COMP] Done [ OpenGL Version = $(GL_VERSION) ]!\n"
 build/:
 	# Generated Files

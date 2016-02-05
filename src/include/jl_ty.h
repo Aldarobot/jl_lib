@@ -58,17 +58,17 @@ typedef struct {
 }jl_window_t;
 
 typedef struct {
+	m_u32_t gl_texture;
+	m_u32_t gl_buffer;
+	m_u16_t w, h;
+	void* pixels;
+}jl_tex_t;
+
+typedef struct {
 	// What to render
 	uint32_t tx;	// ID to texture.
-#if JL_GLRTEX == JL_GLRTEX_EGL
-	EGLSurface pb;	// The PixelBuffer.
-#elif JL_GLRTEX == JL_GLRTEX_SDL
-	jl_window_t* sw; // The hidden SDL_Window.
-	void* px;	// Pixel Data
-#else
 	uint32_t db;	// ID to Depth Buffer
 	uint32_t fb;	// ID to Frame Buffer
-#endif
 	uint16_t w, h;	// Width and hieght of texture
 	// Render Area
 	uint32_t gl;	// GL Vertex Buffer Object [ 0 = Not Enabled ]
@@ -110,6 +110,11 @@ typedef struct{
 typedef struct{
 	float x, y, z;
 }jl_vec3_t;
+
+typedef struct{
+	jl_vec3_t pt1;
+	jl_vec3_t pt2;
+}jl_line_t;
 
 typedef struct {
 	m_i32_t g, i; // Group ID, Image ID

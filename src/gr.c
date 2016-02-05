@@ -567,6 +567,24 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 		pv->cb.w = rc.w, pv->cb.h = rc.h, pv->cb.d = 0.f;
 	}
 
+	void jl_gr_vos_texture(jl_t* jlc, jl_vo_t *pv, jl_rect_t rc,
+		jl_tex_t* tex, u8_t c, u8_t a)
+	{
+		//From bottom left & clockwise
+		float Oone[] = {
+			rc.x,		rc.h+rc.y,	0.f,
+			rc.x,		rc.y,		0.f,
+			rc.w+rc.x,	rc.y,		0.f,
+			rc.w+rc.x,	rc.h+rc.y,	0.f };
+		// Overwrite the vertex object
+		jl_gl_poly(jlc->_jlc, pv, 4, Oone);
+		// Texture the vertex object
+		jl_gl_txtr_(jlc->_jlc, pv, c, a, tex->gl_texture);
+		// Set collision box.
+		pv->cb.x = rc.x, pv->cb.y = rc.y, pv->cb.z = 0.f;
+		pv->cb.w = rc.w, pv->cb.h = rc.h, pv->cb.d = 0.f;
+	}
+
 	/**
 	 * Free a vertex object.
 	 * @param jlc: The library context
