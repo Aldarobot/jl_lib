@@ -36,7 +36,7 @@ clean-deps:
 	rm -r deps/
 
 # The Build Options.
-build-depends: build-libzip build-sdl-net build-sdl-image build-clump
+build-depends: src/lib/include/ build-sdl build-libzip build-sdl-net build-sdl-image build-clump
 build-android:
 	# Copy android build files into android build project.
 	cp -u -t build/android/jni/ android-src/*.mk
@@ -80,6 +80,8 @@ build-android:
 	 deps/SDL2_net-2.0.0/*.c
 	cp -u --recursive -t build/android/jni/src/lib/sdl-net/\
 	 deps/SDL2_net-2.0.0/*.h
+src/lib/include/:
+	mkdir -p src/lib/include/
 	###
 
 $(BUILD)/%.o: $(SRC)/%.c $(SRC)/**/*
@@ -197,8 +199,8 @@ build-libzip:
 build-sdl:
 	printf "[COMP] compiling SDL...\n" && \
 	cd deps/SDL2-2.0.3/ && \
-	sh configure && \
-	make && \
+	sh configure --prefix=`pwd`/usr_local/ && \
+	make && make install && \
 	ld -r build/.libs/*.o -o ../../build/deps/lib_SDL.o && \
 	cp include/*.h ../../src/lib/include/ && \
 	printf "[COMP] done!\n"
@@ -213,6 +215,7 @@ build-sdl-image:
 build-sdl-net:
 	printf "[COMP] compiling SDL_net...\n" && \
 	cd deps/SDL2_net-2.0.0/ && \
+	export SDL2_CONFIG=`pwd`/../SDL2-2.0.3/usr_local/bin/sdl2-config && \
 	sh configure && \
 	make && \
 	ar csr ../../build/deps/lib_SDL_net.o .libs/*.o && \
