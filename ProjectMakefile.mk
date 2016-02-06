@@ -24,21 +24,20 @@ OBJS = $(addprefix $(BUILD)/, $(addsuffix .o, $(MODULES)))
 TEST = $(addprefix $(BUILD_TEST)/, $(addsuffix .o, $(MODULES)))
 LIB = $(shell echo $(JLL_HOME))/build/jl.o\
 	$(shell find $(BUILD_DEPS)/ -type f -name '*.o')
-CFLAGS = $(CFLAGS_INCLUDES) $(GL_VERSION) -Wall
-COMPILE = printf "[COMP] Compiling $< -to- $@....\n";$(CC) $(CFLAGS) -o $@ -c $<
+COMPILE = printf "[COMP/PROJ] Compiling $< -to- $@....\n";$(CC)
 # target: init
 FOLDERS = build/ libs/ media/ src/
 
 ################################################################################
 
-test: -debug $(TEST) $(OBJS_DEPS) -build
+test: $(FOLDERS) -debug $(TEST) $(OBJS_DEPS) -build
 	./$(JL_OUT)
 
 android:
 	sh $(shell echo $(JLL_HOME))/compile-scripts/jl_android\
 	 $(shell echo $(JLL_HOME))
 
-install: -publish $(OBJS) -build
+install: $(FOLDERS) -publish $(OBJS) -build
 	printf "Installing....\n"
 	if [ -z "$(JLL_PATH)" ]; then \
 		printf "Where to install? ( hint: /bin or $$HOME/bin ) [ Set"\
@@ -55,17 +54,17 @@ init: $(FOLDERS)
 ################################################################################
 
 $(BUILD)/%.o: $(SRC)/%.c
-	$(COMPILE) $(JL_DEBUG)
+	$(COMPILE) $(CFLAGS) -o $@ -c $< $(JL_DEBUG)
 $(BUILD)/%.o: $(SRC)/*/%.c
-	$(COMPILE) $(JL_DEBUG)
+	$(COMPILE) $(CFLAGS) -o $@ -c $< $(JL_DEBUG)
 $(BUILD)/%.o: $(SRC)/*/*/%.c
-	$(COMPILE) $(JL_DEBUG)
+	$(COMPILE) $(CFLAGS) -o $@ -c $< $(JL_DEBUG)
 $(BUILD_TEST)/%.o: $(SRC)/%.c
-	$(COMPILE) $(JL_DEBUG)
+	$(COMPILE) $(CFLAGS) -o $@ -c $< $(JL_DEBUG)
 $(BUILD_TEST)/%.o: $(SRC)/*/%.c
-	$(COMPILE) $(JL_DEBUG)
+	$(COMPILE) $(CFLAGS) -o $@ -c $< $(JL_DEBUG)
 $(BUILD_TEST)/%.o: $(SRC)/*/*/%.c
-	$(COMPILE) $(JL_DEBUG)
+	$(COMPILE) $(CFLAGS) -o $@ -c $< $(JL_DEBUG)
 
 build-deps-var/%.o:
 	$(eval CFILE_DEPS = $(subst .o,, $(addprefix $(SRC_DEPS)/, \
@@ -75,18 +74,22 @@ build-deps-var/%.o:
 
 $(BUILD_DEPS)/%.o: build-deps-var/%.o $(CFILE_DEPS)
 #	echo CFILE_DEPS = $(CFILE_DEPS)
-	printf "[COMP] Compiling \"$(CFILE_DEPS)\" -to- \"$@\"....\n";
-	$(CC) $(CFLAGS) -o $@ -c $(CFILE_DEPS) -O3 -iquote $(INCLUDES_DEPS)
+	printf "[COMP/DEPS] Compiling \"$(CFILE_DEPS)\" -to- \"$@\"....\n";
+	$(CC) -o $@ -c $(CFILE_DEPS) -O3 $(CFLAGS)
 
 -init-vars:
 	# Build Project
 	$(eval INCLUDES_DEPS=\
+#		$(addprefix -I, $(shell find deps/ -type d -name "include")) \
 		$(addprefix -I, $(shell find $(SRC_DEPS)/ -type d)))
 	$(eval CFLAGS_INCLUDES=\
 		-I$(shell echo $(JLL_HOME))/src/include/\
 		-I$(shell echo $(JLL_HOME))/src/lib/include/\
-		-Isrc/ $(addprefix -I, $(shell find src/ -type d ))\
-		-iquote $(INCLUDES_DEPS))
+		-iquote $(addprefix -I, $(shell find src/ -type d ))\
+		$(addprefix -I, $(shell find $(SRC_DEPS)/ -type d)))
+	$(eval CFLAGS=\
+		$(CFLAGS_INCLUDES) -Wall)
+	echo the in $(CFLAGS)
 
 -debug: -init-vars
 #	$(eval GL_VERSION=-lGL) ## OpenGL
@@ -101,9 +104,12 @@ $(BUILD_DEPS)/%.o: build-deps-var/%.o $(CFILE_DEPS)
 	$(eval JL_OUT=build/bin/$(shell echo `sed -n '4p' data.txt`))
 -build:
 	printf "[COMP] Linking ....\n"
-	gcc $(OBJS) $(LIB) -o $(JL_OUT) $(CFLAGS) $(JL_DEBUG)\
-		 -lm -lz -ldl -lpthread -L/usr/local/lib/  \
-		-lopencv_imgcodecs -lopencv_imgproc -lopencv_core -lopencv_videoio
+	gcc $(OBJS) $(LIB) -o $(JL_OUT) $(CFLAGS) \
+		-L/opt/vc/lib/ -lm -lz -ldl -lpthread \
+		$(GL_VERSION) $(JL_DEBUG) \
+		`pkg-config --libs opencv`
+#		-lopencv_imgcodecs -lopencv_imgproc -lopencv_core -lopencv_videoio
+#		-lcv -lhighgui -lcvaux -lopencv_imgproc -lopencv_core -lopencv_highgui -lopencv_video -lopencv_video_proc -lopencv_calib3d -lopencv_imgcodecs
 	printf "[COMP] Done [ OpenGL Version = $(GL_VERSION) ]!\n"
 build/:
 	# Generated Files
