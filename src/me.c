@@ -14,7 +14,7 @@
 /************************/
 
 static void *jl_me_realloc__(jvct_t* _jlc, void *a, uint32_t size) {
-	if((a = realloc(a, size)) == NULL) {
+	if((a = realloc(a, size + 1)) == NULL) {
 		_jl_fl_errf(_jlc, "realloc() memory error!\n");
 		jl_sg_kill(_jlc->jlc);
 	}
@@ -154,7 +154,7 @@ void jl_me_alloc(jl_t* jlc, void **a, uint32_t size, uint32_t oldsize) {
 		free(*a);
 		*a = NULL;
 	}else{
-		*a = jl_me_realloc__(jlc->_jlc, *a, size + 1);
+		*a = jl_me_realloc__(jlc->_jlc, *a, size);
 	//	memset(newptr + oldsize, 0, size - oldsize);
 	//	*a = newptr;
 	}
@@ -285,7 +285,7 @@ void jl_me_strt_delete_byte(jl_t *jlc, strt pstr) {
 		pstr->data[i] = pstr->data[i+1];
 	pstr->size--;
 	pstr->data[pstr->size] = '\0';
-	pstr->data = jl_me_realloc__(jlc->_jlc, pstr->data, pstr->size+1);
+	pstr->data = jl_me_realloc__(jlc->_jlc, pstr->data, pstr->size);
 	_jl_me_truncate_curs(pstr);
 }
 
@@ -297,7 +297,7 @@ void jl_me_strt_insert_byte(jl_t *jlc, strt pstr, uint8_t pvalue) {
 	if(strlen((char*)pstr->data) == pstr->size) {
 		pstr->size++;
 		pstr->data =
-			jl_me_realloc__(jlc->_jlc, pstr->data, pstr->size+1);
+			jl_me_realloc__(jlc->_jlc, pstr->data, pstr->size);
 	}
 	if(jl_me_strt_byte(pstr) == '\0') {
 		jl_me_strt_add_byte(pstr, pvalue);
@@ -337,7 +337,7 @@ void jl_me_strt_strt(jl_t *jlc, strt a, strt b, uint64_t bytes) {
 		jl_sg_kill(jlc);
 	}
 	if(sizeb > size) size = sizeb;
-	a->data = jl_me_realloc__(jlc->_jlc, a->data, size + 1);
+	a->data = jl_me_realloc__(jlc->_jlc, a->data, size);
 	for(i = 0; i < bytes; i++) {
 		a->data[i + a->curs] = b->data[i + b->curs];
 	}
@@ -365,7 +365,7 @@ void jl_me_strt_merg(jl_t *jlc, strt a, strt b) {
 void jl_me_strt_trunc(jl_t *jlc, strt a, uint32_t size) {
 	a->curs = 0;
 	a->size = size;
-	a->data = jl_me_realloc__(jlc->_jlc, a->data, a->size + 1);
+	a->data = jl_me_realloc__(jlc->_jlc, a->data, a->size);
 }
 
 // Print a number out as a string and return it (Type=STRT_TEMP)

@@ -834,14 +834,28 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 				1. / ((float)(strlen(str)))} );
 	}
 
+	/**
+	 * Draw a background on the screen
+	**/
+	void jl_gr_draw_bg(jl_t* jlc, u16_t g, u16_t i, u8_t c) {
+		jl_gr_fill_image_set(jlc, g, i, c, 127);
+		jl_gr_fill_image_draw(jlc);
+	}
+
+	void jl_gr_draw_loadingbar(jl_t* jlc, f64_t loaded) {
+		jl_rect_t bar = { .05, jl_gl_ar(jlc)*.4,.95,jl_gl_ar(jlc)*.45};
+		u8_t colors[] = { 0, 255, 0, 255};
+
+		jl_gr_vos_rec(jlc, NULL, bar, colors, 0);
+	}
+
 	//TODO: MOVE
 	void jl_gr_draw_msge__(jl_t* jlc) {
 		jvct_t* _jlc = jlc->_jlc;
 
 		jl_gl_pr_scr(_jlc);
-		jl_gr_fill_image_set(jlc, _jlc->gr.msge.g, _jlc->gr.msge.i,
-			_jlc->gr.msge.c, 127);
-		jl_gr_fill_image_draw(jlc);
+		jl_gr_draw_bg(jlc, _jlc->gr.msge.g, _jlc->gr.msge.i,
+			_jlc->gr.msge.c);
 		if(_jlc->gr.msge.message)
 			jl_gr_draw_ctxt(jlc, _jlc->gr.msge.message, 9./32.,
 				jlc->fontcolor);
