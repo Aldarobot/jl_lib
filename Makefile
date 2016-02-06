@@ -1,4 +1,4 @@
-HEADER = -Isrc/lib/include/
+HEADER = -Isrc/lib/include/ -I/opt/vc/include/
 CFLAGS_MEDIA = $(HEADER) -O3
 CFLAGS_DEBUG = $(HEADER) -Wall -g
 CFLAGS_RELEASE = $(HEADER) -O3
@@ -191,7 +191,7 @@ build-libzip:
 	sh configure && \
 	make && \
 	ld -r lib/*.o -o ../../build/deps/lib_zip.o && \
-	cp lib/zip.h ../../src/lib/include/ && \
+	cp lib/*.h ../../src/lib/include/ && \
 	printf "[COMP] done!\n"
 build-sdl:
 	printf "[COMP] compiling SDL...\n" && \
@@ -202,7 +202,7 @@ build-sdl:
 	cp include/*.h ../../src/lib/include/ && \
 	printf "[COMP] done!\n"
 build-sdl-image:
-	printf "[COMP] compiling SDL_image...\n" && \
+	export PATH=$$PATH:`pwd`/deps/SDL2-2.0.3/usr_local/bin/ && printf "[COMP] compiling SDL_image...\n" && \
 	cd deps/SDL2_image-2.0.0/ && \
 	sh configure && \
 	make && \
@@ -219,7 +219,7 @@ build-sdl-net:
 	cp SDL_net.h ../../src/lib/include/ && \
 	printf "[COMP] done!\n"
 build-sdl-mixer:
-	printf "[COMP] compiling SDL_mixer...\n" && \
+	export PATH=$$PATH:`pwd`/deps/SDL2-2.0.3/usr_local/bin/ && printf "[COMP] compiling SDL_mixer...\n" && \
 	cd deps/SDL2_mixer-2.0.0/ && \
 	sh configure && \
 	make && \

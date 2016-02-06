@@ -17,11 +17,7 @@
 
 // SDL OpenGLES 2
 #if JL_GLTYPE == JL_GLTYPE_SDL_ES2
-	#if JL_PLAT == JL_PLAT_COMPUTER
-		#include <SDL2/SDL_opengles2.h>
-	#else
-		#include "SDL_opengles2.h"
-	#endif
+	#include "SDL_opengles2.h"
 #endif
 	
 // OpenGLES 2
