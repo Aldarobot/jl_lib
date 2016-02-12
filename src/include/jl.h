@@ -21,7 +21,7 @@
 	void jl_me_leak_init(jl_t* jlc);
 	void jl_me_leak_fail(jl_t* jlc, str_t fn_name);
 	void jl_me_clr(void *pmem, uint64_t size);
-	void jl_me_copyto(const void *src, void* dest, size_t size);
+	#define jl_me_copyto(src, dest, size) memcpy(dest, src, size)
 	void * jl_me_copy(jl_t* jlc, const void *src, size_t size);
 	void jl_me_alloc(jl_t* jlc, void **a, uint32_t size, uint32_t oldsize);
 	#define List(x) jl_me_list_allc(sizeof(void*)*x)
@@ -38,6 +38,7 @@
 	char* jl_me_string_fnum(jl_t* jlc, int32_t a);
 	const char* jl_me_string_fnum_tmp(jl_t* jlc, int32_t a);
 	char* jl_me_string_fstrt(jl_t* jlc, strt a);
+	m_str_t jl_me_format(jl_t* jlc, str_t format, ... );
 	uint8_t jl_me_string_print(jl_t* jlc, char *string, const char* format,
 		const char *var, u64_t n);
 	u8_t jl_me_strt_byte(strt pstr);
@@ -118,7 +119,9 @@
 	void jl_gr_draw_text_area(jl_t* jlc, jl_sprite_t * spr, str_t txt);
 	void jl_gr_draw_text_sprite(jl_t* jlc,jl_sprite_t * spr, str_t txt);
 	void jl_gr_draw_ctxt(jl_t* jlc, char *str, float yy, uint8_t* color);
-	void jl_gr_draw_msge(jl_t* jlc, char* message, u16_t g, u16_t i,u8_t c);
+	void jl_gr_draw_msge_(jl_t* jlc,u16_t g,u16_t i,u8_t c,m_str_t message);
+	#define jl_gr_draw_msge(jlc,g,i,c,...);\
+		jl_gr_draw_msge_(jlc,g,i,c,jl_me_format(jlc, __VA_ARGS__));
 	void jl_gr_term_msge(jl_t* jlc, char* message);
 	void jl_gr_slidebtn_rsz(jl_t* jlc, jl_sprite_t * spr, str_t txt);
 	void jl_gr_slidebtn_rnl(jl_t* jlc, jl_sprite_t * spr,  float defaultx,
@@ -144,6 +147,8 @@
 	void jl_io_printt(jl_t *jlc, uint8_t a, const char *print);
 	void jl_io_printi(jl_t *jlc, int print);
 	void jl_io_printd(jl_t *jlc, double print);
+	#define jl_io_print(jlc, ...);\
+		jl_io_printc(jlc, jl_me_format(jlc, __VA_ARGS__));
 	void jl_io_function(jl_t* jlc, const char* fn_name);
 	void jl_io_return(jl_t* jlc, const char* fn_name);
 	void jl_io_stacktrace(jl_t* jlc);

@@ -459,6 +459,7 @@ void jl_ct_getevents_(jvct_t* _jlc) {
 }
 
 void jl_ct_quickloop_(jvct_t* _jlc) {
+	_jlc->has.quickloop = 1;
 	if(_jlc->has.input) {
 		jl_ct_getevents_(_jlc);
 		if(_jlc->ct.back == 1) jl_sg_exit(_jlc->jlc);
@@ -470,6 +471,7 @@ void jl_ct_quickloop_(jvct_t* _jlc) {
 
 //Main Input Loop
 void _jl_ct_loop(jvct_t* _jlc) {
+	_jlc->has.quickloop = 0;
 	//Get the information on current events
 	jl_ct_getevents_(_jlc);
 	_jl_ct_process_events(_jlc);

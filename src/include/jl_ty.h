@@ -3,10 +3,9 @@
  * 	Variable Types.
 **/
 
-// Get EGL types.
-	#if JL_GLRTEX == JL_GLRTEX_EGL
-		#include <EGL/egl.h>
-	#endif
+#if JL_GLRTEX == JL_GLRTEX_EGL
+	#include <EGL/egl.h>
+#endif
 #include "jl_sdl.h"
 
 typedef float jl_ccolor_t;
@@ -152,6 +151,7 @@ typedef struct{
 	}ctrl;
 	uint8_t fontcolor[4];
 	jl_font_t font;
+	char temp[256];
 }jl_t;
 
 typedef void(*jl_simple_fnt)(jl_t* jlc);

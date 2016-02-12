@@ -117,10 +117,6 @@ void jl_me_clr(void *pmem, uint64_t size) {
 	}
 }
 
-void jl_me_copyto(const void *src, void* dest, size_t size) {
-	memcpy(dest, src, size);
-}
-
 /**
  * Copy "size" bytes of "src" to a new pointer of "size" bytes and return it.
  * @param jlc: The library context.
@@ -399,6 +395,18 @@ char* jl_me_string_fstrt(jl_t* jlc, strt a) {
 	char *rtn = jl_me_copy(jlc, (char*)(a->data), a->size);
 	jl_me_strt_free(a);
 	return rtn;
+}
+
+/**
+ * Format a string.
+**/
+m_str_t jl_me_format(jl_t* jlc, str_t format, ... ) {
+	va_list arglist;
+
+	va_start( arglist, format );
+	vsprintf( jlc->temp, format, arglist );
+	va_end( arglist );
+	return jlc->temp;
 }
 
 /**

@@ -88,7 +88,7 @@ $(BUILD_DEPS)/%.o: build-deps-var/%.o $(CFILE_DEPS)
 		-iquote $(addprefix -I, $(shell find src/ -type d ))\
 		$(addprefix -I, $(shell find $(SRC_DEPS)/ -type d)))
 	$(eval CFLAGS=\
-		$(CFLAGS_INCLUDES) -Wall)
+		$(CFLAGS_INCLUDES) -Wall -Werror)
 	echo the in $(CFLAGS)
 
 -debug: -init-vars

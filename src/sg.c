@@ -130,7 +130,7 @@ static void _jl_sg_mode_add(jvct_t* _jlc) {
 void jl_sg_mode_set(jl_t* jlc, u8_t mode, u8_t wm, jl_simple_fnt loop) {
 	jvct_t* _jlc = jlc->_jlc;
 
-	jl_gr_draw_msge(jlc, "Switching Mode...", 0, 0, 0);
+	jl_gr_draw_msge(jlc, 0, 0, 0, "Switching Mode...");
 	while(mode >= _jlc->jlc->mdec) _jl_sg_mode_add(_jlc);
 	_jlc->sg.mdes[mode].tclp[wm] = loop;
 	// Reset things
@@ -218,33 +218,29 @@ void _jl_sg_load_jlpx(jvct_t* _jlc,strt data,void **pixels,int *w,int *h) {
 		strlen(JL_IMG_HEADER));
 	testing[strlen(JL_IMG_HEADER)] = '\0';
 	jl_io_offset(_jlc->jlc, JL_IO_SIMPLE, "JLPX"); // =
-	jl_io_printc(_jlc->jlc, "header=\"");
-	jl_io_printc(_jlc->jlc, testing);
-	jl_io_printc(_jlc->jlc, "\" @");
-	jl_io_printi(_jlc->jlc, _jlc->sg.init_image_location);
-	jl_io_printc(_jlc->jlc, "\n");
+	jl_io_print(_jlc->jlc, "header=\"%s\" @%d\n", testing,
+		_jlc->sg.init_image_location);
 
 	if(strcmp(testing, JL_IMG_HEADER) != 0) {
-		jl_io_printc(_jlc->jlc, ":error: bad file type:\n:");
-		jl_io_printc(_jlc->jlc, testing);
-		jl_io_printc(_jlc->jlc, "\n:!=\n:");
-		jl_io_printc(_jlc->jlc, JL_IMG_HEADER);
-		jl_io_printc(_jlc->jlc, "\ncouldn't load image #");
-		jl_io_printi(_jlc->jlc, _jlc->sg.image_id);
-		jl_io_printc(_jlc->jlc, "\n");
+		jl_io_print(_jlc->jlc, ":error: bad file type:\n:");
+		jl_io_print(_jlc->jlc, "%s\n", testing);
+		jl_io_print(_jlc->jlc, "!=\n:%s", JL_IMG_HEADER);
+		jl_io_print(_jlc->jlc, "\ncouldn't load image #%d",
+			_jlc->sg.image_id);
+		jl_io_print(_jlc->jlc, "\n");
 		jl_sg_kill(_jlc->jlc);
 	}
 	uint8_t tester = data->data[_jlc->sg.init_image_location+strlen(JL_IMG_HEADER)];
 	uint32_t FSIZE;
 	if(tester == JL_IMG_FORMAT_IMG) { //Normal Quality[Lowy]
 		FSIZE = IMG_SIZE_LOW;
-		jl_io_printc(_jlc->jlc, "normal quality\n");
+		jl_io_print(_jlc->jlc, "normal quality\n");
 	}else if(tester == JL_IMG_FORMAT_HQB) { //High Quality[Norm]
 		FSIZE = IMG_FORMAT_MED;
-		jl_io_printc(_jlc->jlc, "high quality\n");
+		jl_io_print(_jlc->jlc, "high quality\n");
 	}else if(tester == JL_IMG_FORMAT_PIC) { //Picture[High]
 		FSIZE = IMG_FORMAT_PIC;
-		jl_io_printc(_jlc->jlc, "pic quality\n");
+		jl_io_print(_jlc->jlc, "pic quality\n");
 	}else if(tester == JL_IMG_FORMAT_FLS) {
 		SDL_Surface *image;
 		SDL_RWops *rw;
@@ -252,19 +248,19 @@ void _jl_sg_load_jlpx(jvct_t* _jlc,strt data,void **pixels,int *w,int *h) {
 		uint32_t color = 0;
 		strt pixel_data;
 
-		jl_io_printc(_jlc->jlc, "png/gif/jpeg etc.\n");
+		jl_io_print(_jlc->jlc, "png/gif/jpeg etc.\n");
 		data->curs = _jlc->sg.init_image_location+strlen(JL_IMG_HEADER)+1;
 		jl_me_strt_loadto(data, 4, &FSIZE);
-		jl_io_printc(_jlc->jlc, "File Size = ");
+		jl_io_print(_jlc->jlc, "File Size = ");
 		jl_io_printi(_jlc->jlc, FSIZE);
-		jl_io_printc(_jlc->jlc, "\n");
+		jl_io_print(_jlc->jlc, "\n");
 		jl_me_alloc(_jlc->jlc, &img_file, FSIZE, 0);
 		jl_me_strt_loadto(data, FSIZE, img_file);
 		rw = SDL_RWFromMem(img_file, FSIZE);
 		if ((image = IMG_Load_RW(rw, 1)) == NULL) {
-			jl_io_printc(_jlc->jlc, "Couldn't load image: ");
-			jl_io_printc(_jlc->jlc, IMG_GetError());
-			jl_io_printc(_jlc->jlc, "\n");
+			jl_io_print(_jlc->jlc, "Couldn't load image: ");
+			jl_io_print(_jlc->jlc, IMG_GetError());
+			jl_io_print(_jlc->jlc, "\n");
 			jl_sg_kill(_jlc->jlc);
 		}
 		// Covert SDL_Surface.
@@ -285,9 +281,9 @@ void _jl_sg_load_jlpx(jvct_t* _jlc,strt data,void **pixels,int *w,int *h) {
 		return;
 	}else{
 		jl_io_offset(_jlc->jlc, JL_IO_MINIMAL, "JLPX");
-		jl_io_printc(_jlc->jlc, "bad file type(must be 1-4) is: ");
+		jl_io_print(_jlc->jlc, "bad file type(must be 1-4) is: ");
 		jl_io_printi(_jlc->jlc, tester);
-		jl_io_printc(_jlc->jlc, "\n");
+		jl_io_print(_jlc->jlc, "\n");
 		_jl_fl_errf(_jlc, ":bad file type(must be 1-4)\n");
 		jl_sg_kill(_jlc->jlc);
 	}
@@ -312,7 +308,7 @@ void _jl_sg_load_jlpx(jvct_t* _jlc,strt data,void **pixels,int *w,int *h) {
 	}
 	_jlc->sg.init_image_location+=FSIZE+1;
 	jl_io_offset(_jlc->jlc, JL_IO_SIMPLE, "JLPX");
-	jl_io_printc(_jlc->jlc, "creating texture...\n");
+	jl_io_print(_jlc->jlc, "creating texture...\n");
 
 	uint8_t *tex_pixels = NULL;
 	//R(1)+G(1)+B(1)+A(1) = 4
@@ -343,30 +339,30 @@ static inline uint8_t _jl_sg_load_next_img(jvct_t * _jlc) {
 	int fh;
 	jl_io_offset(_jlc->jlc, JL_IO_PROGRESS, "IMGS");
 	_jl_sg_load_jlpx(_jlc, _jlc->sg.image_data, &fpixels, &fw, &fh);
-	jl_io_printc(_jlc->jlc, "{IMGS}\n");
+	jl_io_print(_jlc->jlc, "{IMGS}\n");
 	if(fpixels == NULL) {
-		jl_io_printc(_jlc->jlc, "loaded ");
+		jl_io_print(_jlc->jlc, "loaded ");
 		jl_io_printi(_jlc->jlc, _jlc->sg.image_id);
-		jl_io_printc(_jlc->jlc, "images!\n");
+		jl_io_print(_jlc->jlc, "images!\n");
 		_jlc->jlc->info = _jlc->sg.image_id;
 		jl_io_close_block(_jlc->jlc); //Close Block "IMGS"
-		jl_io_printc(_jlc->jlc, "IL\n");
+		jl_io_print(_jlc->jlc, "IL\n");
 		return 0;
 	}else{
-		jl_io_printc(_jlc->jlc, "creating image #");
+		jl_io_print(_jlc->jlc, "creating image #");
 		jl_io_printi(_jlc->jlc, _jlc->sg.igid);
-		jl_io_printc(_jlc->jlc, "!\n");
+		jl_io_print(_jlc->jlc, "!\n");
 		jl_gl_maketexture(_jlc->jlc, _jlc->sg.igid,
 			_jlc->sg.image_id, fpixels, fw, fh, 0);
-		jl_io_printc(_jlc->jlc, "created image #");
+		jl_io_print(_jlc->jlc, "created image #");
 		jl_io_printi(_jlc->jlc, _jlc->sg.igid);
-		jl_io_printc(_jlc->jlc, ":");
+		jl_io_print(_jlc->jlc, ":");
 		jl_io_printi(_jlc->jlc, _jlc->sg.image_id);
-		jl_io_printc(_jlc->jlc, "!\n");
+		jl_io_print(_jlc->jlc, "!\n");
 //		#endif
 		_jlc->sg.image_id++;
 		jl_io_close_block(_jlc->jlc); //Close Block "IMGS"
-		jl_io_printc(_jlc->jlc, "IL____\n");
+		jl_io_print(_jlc->jlc, "IL____\n");
 		return 1;
 	}
 }
@@ -388,12 +384,12 @@ static inline void _jl_sg_init_images(jvct_t * _jlc,strt data,u16_t gi,u16_t x){
 	_jlc->sg.image_data = data;
 
 	jl_io_offset(_jlc->jlc, JL_IO_PROGRESS, "INIM");
-	jl_io_printc(_jlc->jlc, "loading images...\n");
+	jl_io_print(_jlc->jlc, "loading images...\n");
 	jl_io_offset(_jlc->jlc, JL_IO_SIMPLE, "INIM");
 	stringlength = jl_me_string_fnum(_jlc->jlc, data->size);
-	jl_io_printc(_jlc->jlc, "lne ");
-	jl_io_printc(_jlc->jlc, stringlength);
-	jl_io_printc(_jlc->jlc, "\n");
+	jl_io_print(_jlc->jlc, "lne ");
+	jl_io_print(_jlc->jlc, stringlength);
+	jl_io_print(_jlc->jlc, "\n");
 	free(stringlength);
 	jl_io_close_block(_jlc->jlc); //Close Block "INIM"
 //load textures
@@ -402,7 +398,7 @@ static inline void _jl_sg_init_images(jvct_t * _jlc,strt data,u16_t gi,u16_t x){
 }
 
 static uint32_t _jl_sg_quit(jvct_t* _jlc, int rc) {
-	jl_gr_draw_msge(_jlc->jlc, "Quiting JL-Lib....", 0, 0, 0);
+	jl_gr_draw_msge(_jlc->jlc, 0, 0, 0, "Quiting JL-Lib....");
 	jl_io_offset(_jlc->jlc, JL_IO_SIMPLE, "KILL"); // {
 	if(_jlc->me.status == JL_STATUS_EXIT) {
 		rc = JL_RTN_FAIL_IN_FAIL_EXIT;
@@ -440,7 +436,7 @@ void jl_sg_kill(jl_t* jlc) {
 	_jl_fl_errf(jlc->_jlc, ":Quitting On Error...\n");
 	jl_io_offset(jlc, JL_IO_INTENSE, "ERQT");
 	strt error_string = jl_fl_load(jlc, _jlc->fl.paths.errf);
-	jl_io_printc(jlc, (void*)error_string->data);
+	jl_io_print(jlc, (void*)error_string->data);
 //	jl_io_stacktrace(jlc);
 	_jl_sg_quit(jlc->_jlc, JL_RTN_FAIL);
 	jl_io_close_block(jlc); //Close Block "ERQT"
@@ -471,30 +467,25 @@ void jl_dont(jl_t* jlc) { }
 
 //void sgrp_
 
-static void _sg_time_reset(jvct_t* _jlc, u32_t this_tick, u8_t on_time) {
-	_jlc->sg.prev_tick = this_tick;
+static void sg_time_reset__(jvct_t* _jlc, u8_t on_time) {
+	_jlc->sg.prev_tick = _jlc->sg.this_tick;
 	if((_jlc->sg.changed = ( _jlc->sg.on_time != on_time)))
 		_jlc->sg.on_time = on_time;
 }
 
+float jl_sg_seconds_past_(jvct_t* _jlc) {
+	_jlc->sg.this_tick = SDL_GetTicks();
+	// milliseconds / 1000 to get seconds
+	return ((float)(_jlc->sg.this_tick - _jlc->sg.prev_tick)) / 1000.f;
+}
+
 //return how many seconds passed since last call
-static inline double _jl_sg_seconds_passed(jvct_t* _jlc) {
-	u32_t this_tick = SDL_GetTicks();
-
-	_jlc->sg.processingTimeMillis = this_tick - _jlc->sg.prev_tick;
-	if(_jlc->sg.processingTimeMillis <= JL_MAIN_SAPT) {
-		u32_t left_over_time = JL_MAIN_SAPT -
-			_jlc->sg.processingTimeMillis;
-
-		if(left_over_time) SDL_Delay(left_over_time);
-		_sg_time_reset(_jlc, this_tick, 1);
-		return 1. / ((float)JL_MAIN_SFPS);
-	}else{
-		double frames = ((double)_jlc->sg.processingTimeMillis)/1000.;
-
-		_sg_time_reset(_jlc, this_tick, 0);
-		return frames / ((float)JL_MAIN_SFPS);
-	}
+static inline void jl_sg_seconds_passed__(jvct_t* _jlc) {
+	_jlc->jlc->psec = jl_sg_seconds_past_(_jlc);
+	_jlc->sg.fps = (_jlc->sg.fps +
+		(1000/(_jlc->sg.this_tick - _jlc->sg.prev_tick)))/2;
+	// Tell if fps is 60 fps or better
+	sg_time_reset__(_jlc, _jlc->sg.fps >= JL_FPS);
 }
 
 static void jl_sg_add_image__(jl_t* jlc, str_t pzipfile, u16_t pigid, u8_t x) {
@@ -503,13 +494,13 @@ static void jl_sg_add_image__(jl_t* jlc, str_t pzipfile, u16_t pigid, u8_t x) {
 	strt img = jl_fl_media(jlc, "jlex/2/_img", pzipfile,
 		jl_gem(), jl_gem_size());
 
-	jl_io_printc(jlc, "Loading Images...\n");
+	jl_io_print(jlc, "Loading Images...\n");
 	if(img != NULL)
 		_jl_sg_init_images(jlc->_jlc, img, pigid, x);
 	else
-		jl_io_printc(jlc, "Loaded 0 images!\n");
+		jl_io_print(jlc, "Loaded 0 images!\n");
 	jl_io_offset(jlc, JL_IO_PROGRESS, "LIMG"); // {
-	jl_io_printc(jlc, "Loaded Images...\n");
+	jl_io_print(jlc, "Loaded Images...\n");
 	jl_io_close_block(jlc); // }
 }
 
@@ -585,7 +576,7 @@ static void jl_sg_init_ds_(jl_t* jlc) {
 	uint8_t rclr_up[4] = { 127,	127,	127,	255 };
 	uint8_t rclr_dn[4] = { 0,	127,	0,	255 };
 	
-	jl_io_printc(_jlc->jlc, "{{{ 2 Screen init\n");
+	jl_io_print(_jlc->jlc, "{{{ 2 Screen init\n");
 	// Update the rectangle backgrounds.
 	jl_gr_vos_rec(jlc, _jlc->sg.bg.up, rcrd, rclr_up, 0);
 	jl_gr_pr_new(jlc, _jlc->sg.bg.up, _jlc->dl.current.w);
@@ -598,7 +589,7 @@ static void jl_sg_init_ds_(jl_t* jlc) {
 	_jlc->sg.bg.dn->pr->ar = _jlc->dl.aspect / 2.;
 	
 	_jlc->sg.screen_height = rcrd.h;
-	jl_io_printc(_jlc->jlc, "{{{ 2 Screen init'd\n");
+	jl_io_print(_jlc->jlc, "{{{ 2 Screen init'd\n");
 }
 
 static void jl_sg_init_ss_(jl_t* jlc) {
@@ -612,7 +603,7 @@ static void jl_sg_init_ss_(jl_t* jlc) {
 	};
 	uint8_t rclr_bg[4] = { 0,	255,	0,	255 };
 	
-	jl_io_printc(jlc, "{{{ 1 Screen init\n");
+	jl_io_print(jlc, "{{{ 1 Screen init\n");
 	// Update the rectangle backgrounds.
 	jl_gr_vos_rec(jlc, _jlc->sg.bg.dn, rcrd, rclr_bg, 0);
 	jl_gr_pr_new(jlc, _jlc->sg.bg.dn, _jlc->dl.current.w);
@@ -651,6 +642,7 @@ static inline void _jl_sg_initc(jvct_t * _jlc) {
 	// Set Default Window To Terminal
 	_jlc->jlc->loop = JL_SG_WM_TERM;
 	_jlc->sg.prev_tick = 0;
+	_jlc->sg.fps = JL_FPS;
 }
 
 static inline void _jl_sg_inita(jvct_t * _jlc) {
@@ -694,19 +686,19 @@ static inline void _jl_sg_inita(jvct_t * _jlc) {
 //NON_USER FUNCTION
 
 static inline void _jl_sg_init_done(jvct_t *_jlc) {
-	jl_io_printc(_jlc->jlc, "turning on display....\n");
+	jl_io_print(_jlc->jlc, "turning on display....\n");
 	_jlc->has.graphics = 1; //Graphics Now Available For Use
-	jl_io_printc(_jlc->jlc, "printing to the screen....\n");
-	jl_gr_draw_msge(_jlc->jlc, "LOADING JLLIB....", 0, 0, 0);
-	jl_io_printc(_jlc->jlc, "offsetting....\n");
+	jl_io_print(_jlc->jlc, "printing to the screen....\n");
+	jl_gr_draw_msge(_jlc->jlc, 0, 0, 0, "LOADING JLLIB....");
+	jl_io_print(_jlc->jlc, "offsetting....\n");
 	jl_io_offset(_jlc->jlc, JL_IO_MINIMAL, "JLLB"); //"JLLB" to SIMPLE
-	jl_io_printc(_jlc->jlc, "started up display ");
-	jl_io_printc(_jlc->jlc,
+	jl_io_print(_jlc->jlc, "started up display ");
+	jl_io_print(_jlc->jlc,
 		jl_me_string_fnum_tmp(_jlc->jlc, _jlc->dl.full_w));
-	jl_io_printc(_jlc->jlc, "x");
-	jl_io_printc(_jlc->jlc,
+	jl_io_print(_jlc->jlc, "x");
+	jl_io_print(_jlc->jlc,
 		jl_me_string_fnum_tmp(_jlc->jlc, _jlc->dl.full_h));
-	jl_io_printc(_jlc->jlc, "\n");
+	jl_io_print(_jlc->jlc, "\n");
 }
 
 // Main.c
@@ -744,44 +736,44 @@ void main_resz(jvct_t* _jlc, u16_t x, u16_t y) {
 }
 
 static inline void _jl_sg_init_libs(jvct_t *_jlc) {
-	jl_io_printc(_jlc->jlc, "Initializing DL...\n");
+	jl_io_print(_jlc->jlc, "Initializing DL...\n");
 	_jl_dl_inita(_jlc); //create the window.
-	jl_io_printc(_jlc->jlc, "Initializing FL...\n");
+	jl_io_print(_jlc->jlc, "Initializing FL...\n");
 	_jl_fl_inita(_jlc); //prepare for loading media packages.
-	jl_io_printc(_jlc->jlc, "Initializing SG...\n");
+	jl_io_print(_jlc->jlc, "Initializing SG...\n");
 	_jl_sg_inita(_jlc); //Load default graphics from package.
-	jl_io_printc(_jlc->jlc, "Initializing GL...\n");
+	jl_io_print(_jlc->jlc, "Initializing GL...\n");
 	_jl_gl_init(_jlc); //Drawing Set-up
-	jl_io_printc(_jlc->jlc, "Initialized GL! / Initializing GR....\n");
+	jl_io_print(_jlc->jlc, "Initialized GL! / Initializing GR....\n");
 	jl_gr_inita_(_jlc); //Set-up sprites & menubar
-	jl_io_printc(_jlc->jlc, "Initialized GR!\n");
+	jl_io_print(_jlc->jlc, "Initialized GR!\n");
 	_jl_sg_init_done(_jlc); //Draw "loading jl_lib" on the screen.
-	jl_io_printc(_jlc->jlc, "Initializing CT...\n");
-	jl_gr_draw_msge(_jlc->jlc, "Can't read input....", 0, 0, 0);
+	jl_io_print(_jlc->jlc, "Initializing CT...\n");
+	jl_gr_draw_msge(_jlc->jlc, 0, 0, 0, "Can't read input....");
 	_jl_ct_init(_jlc); //Prepare to read input.
-	jl_gr_draw_msge(_jlc->jlc, "Can read input!", 0, 0, 0);
-	jl_io_printc(_jlc->jlc, "Initialized CT!\n");
+	jl_gr_draw_msge(_jlc->jlc, 0, 0, 0, "Can read input!");
+	jl_io_print(_jlc->jlc, "Initialized CT!\n");
 	_jl_sg_initc(_jlc);
-	jl_io_printc(_jlc->jlc, "Initialized SG!\n");
+	jl_io_print(_jlc->jlc, "Initialized SG!\n");
 	_jl_fl_initb(_jlc);
-	jl_io_printc(_jlc->jlc, "Initialized FL! / Initializing AU....\n");
+	jl_io_print(_jlc->jlc, "Initialized FL! / Initializing AU....\n");
 	_jl_au_init(_jlc); //Load audiostuffs from packages
-	jl_io_printc(_jlc->jlc, "Initialized AU!\n");
-	jl_gr_draw_msge(_jlc->jlc, "INITIALIZATION COMPLETE!", 0, 0, 0);
+	jl_io_print(_jlc->jlc, "Initialized AU!\n");
+	jl_gr_draw_msge(_jlc->jlc, 0, 0, 0, "INITIALIZATION COMPLETE!");
 }
 
 static inline void _jl_ini(jvct_t *_jlc) {
-	jl_io_printc(_jlc->jlc, "STARTING JL_lib Version "JL_VERSION"....\n");
+	jl_io_print(_jlc->jlc, "STARTING JL_lib Version "JL_VERSION"....\n");
 
 	_jl_sg_init_libs(_jlc);
 	hack_user_init(_jlc->jlc);
 	_jlc->sg.mode.tclp[JL_SG_WM_RESZ](_jlc->jlc);
 	
 	jl_io_offset(_jlc->jlc, JL_IO_MINIMAL, "JLLB"); //"JLLB" to MINIMAL
-	jl_io_printc(_jlc->jlc, "Initialized!\n");
+	jl_io_print(_jlc->jlc, "Initialized!\n");
 }
 
-static inline void _main_loop(jvct_t* _jlc) {
+static inline void main_loop__(jvct_t* _jlc) {
 	_jl_fl_errf(_jlc, ":going into loop....\n");
 	while(1) {
 		//Update events.
@@ -789,7 +781,7 @@ static inline void _main_loop(jvct_t* _jlc) {
 		// Deselect any pre-renderer.
 		_jlc->gl.cp = NULL;
 		//Check the amount of time passed since last frame.
-		_jlc->jlc->psec = _jl_sg_seconds_passed(_jlc);
+		jl_sg_seconds_passed__(_jlc);
 		//Redraw screen.
 		_jl_sg_loop(_jlc);
 		//Update Screen.
@@ -817,7 +809,7 @@ int32_t main(int argc, char *argv[]) {
 	// Initialize JL_lib!
 	_jl_ini(_jlc);
 	// Run the Loop
-	if(_jlc->jlc->mdec) _main_loop(_jlc);
+	if(_jlc->jlc->mdec) main_loop__(_jlc);
 	// Kill the program
 	_jl_sg_quit(_jlc, JL_RTN_SUPER_IMPOSSIBLE);
 	// Impossible to reach this point
