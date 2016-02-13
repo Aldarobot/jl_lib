@@ -99,7 +99,7 @@ static inline void _jlvm_crea_wind(jvct_t *_jlc) {
 		SDL_WINDOWPOS_UNDEFINED,		// initial x position
 		SDL_WINDOWPOS_UNDEFINED,		// initial y position
 		_jlc->dl.current.w, _jlc->dl.current.h,	// width and height
-		SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE
+		SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_FULLSCREEN
     	);
 
 	if(_jlc->dl.displayWindow == NULL)

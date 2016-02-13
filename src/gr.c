@@ -177,7 +177,7 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 		jvct_t* _jlc = jlc->_jlc;
 		jl_taskbar_t* ctx = _jlc->gr.taskbar->data.ctx;
 
-		if(_jlc->sg.changed) ctx->redraw = 1;
+		if(_jlc->sg.changed || !_jlc->sg.on_time) ctx->redraw = 1;
 	}
 
 	//TODO: Move

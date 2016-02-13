@@ -11,7 +11,6 @@
 		jl_io_print_fnt *printfn;
 		uint16_t maxtag;
 		int16_t tag[16];
-		char buffer[80];
 //		#if JL_IO_DEBUG == 1
 		char stack[50][30];
 		uint8_t level;

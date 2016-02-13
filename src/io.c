@@ -7,11 +7,9 @@
 #include "header/jl_pr.h"
 
 #if JL_PLAT == JL_PLAT_COMPUTER
-	#define JL_IO_PRINTF1(X) printf(X)
-	#define JL_IO_PRINTF2(X, Y) printf(X, Y)
+	#define JL_IO_PRINTF(...) printf(__VA_ARGS__)
 #else
-	#define JL_IO_PRINTF1(X) SDL_Log(X)
-	#define JL_IO_PRINTF2(X, Y) SDL_Log(X, Y)
+	#define JL_IO_PRINTF(...) SDL_Log(__VA_ARGS__)
 #endif
 
 // 0 = release
@@ -19,9 +17,6 @@
 #define JL_IO_DEBUG 1
 
 //PROTOTYPES:
-static void _jl_io_indt(jl_t* jlc);
-static void jl_io_add_to_buffer2_(jl_t* jlc, const char* x, const char* y);
-static void jl_io_add_to_buffer_(jl_t* jlc, const char* what_to_add);
 static void _jl_io_current(jl_t *jlc);
 
 static inline void _jl_io_new_block(jl_t *jlc) {
@@ -30,12 +25,12 @@ static inline void _jl_io_new_block(jl_t *jlc) {
 	i8_t ofs2 = _jlc->io.ofs2;
 
 	_jlc->io.ofs2 = 0;
-	jl_io_add_to_buffer_(jlc, "[");
+	JL_IO_PRINTF("[");
 	for(i = _jlc->io.offs - ofs2; i < _jlc->io.offs; i++) {
-		jl_io_add_to_buffer_(jlc, "/");
-		jl_io_add_to_buffer2_(jlc, "%4s", _jlc->io.head[i+1]);
+		JL_IO_PRINTF("/");
+		JL_IO_PRINTF("%4s", _jlc->io.head[i+1]);
 	}
-	jl_io_add_to_buffer_(jlc, "]");
+	JL_IO_PRINTF("]");
 	_jl_io_current(jlc);
 }
 
@@ -45,108 +40,85 @@ static inline void _jl_io_old_block(jl_t *jlc) {
 	i8_t ofs2 = _jlc->io.ofs2;
 
 	_jlc->io.ofs2 = 0;
-	jl_io_add_to_buffer_(jlc, "[\\");
+	JL_IO_PRINTF("[\\");
 	for(i = _jlc->io.offs; i > _jlc->io.offs + ofs2; i--) {
-		jl_io_add_to_buffer2_(jlc, "%4s", _jlc->io.head[i+1]);
-		jl_io_add_to_buffer_(jlc, "\\");
+		JL_IO_PRINTF("%4s", _jlc->io.head[i+1]);
+		JL_IO_PRINTF("\\");
 	}
-	jl_io_add_to_buffer_(jlc, "\b]");
+	JL_IO_PRINTF("\b]");
 	_jl_io_current(jlc);
 }
 
 static inline void jl_io_print_descriptor_(jvct_t *_jlc) {
-	if(_jlc->io.ofs2 > 0) {
+	if(_jlc->io.ofs2 > 0)
 		_jl_io_new_block(_jlc->jlc);
-	}else if(_jlc->io.ofs2 < 0) {
+	else if(_jlc->io.ofs2 < 0)
 		_jl_io_old_block(_jlc->jlc);
-	}else{
-		jl_io_add_to_buffer2_(_jlc->jlc, "[%4s] ",
-			_jlc->io.head[_jlc->io.offs]);
-	}
-}
-
-static void jl_io_reset_print_descriptor_(jvct_t *_jlc) {
-	// Clear the buffer
-	jl_me_clr(_jlc->io.buffer, 81);
-	// Pre-write to the buffer
-	_jl_io_indt(_jlc->jlc);
-	// Print the print descriptor.
-	jl_io_print_descriptor_(_jlc);
-}
-
-static void jl_io_if_newline(jvct_t *_jlc) {
-	// Print the buffer
-	JL_IO_PRINTF2("%s", _jlc->io.buffer);
-	// Clear and reset the print buffer
-	jl_io_reset_print_descriptor_(_jlc);
-}
-
-// If last thing printed ends in a newline - print the whole line.
-static void jl_io_test_if_newline(jvct_t *_jlc, const char* what_to_add) {
-	if(what_to_add[strlen(what_to_add) - 1] == '\n' ||
-		_jlc->io.buffer[strlen(_jlc->io.buffer) - 1] == '\n')
-	{
-		jl_io_if_newline(_jlc);
-	}
-}
-
-static void jl_io_add_to_buffer_(jl_t* jlc, const char* what_to_add) {
-	jvct_t *_jlc = jlc->_jlc;
-
-	if(jl_me_string_print(jlc, _jlc->io.buffer, "%s", what_to_add, 80)) {
-		jl_io_if_newline(_jlc);
-		jl_io_add_to_buffer_(jlc, "\n");
-	}
-	jl_io_test_if_newline(_jlc, what_to_add);
-}
-
-static void jl_io_add_to_buffer2_(jl_t* jlc, const char* x, const char* y) {
-	jvct_t *_jlc = jlc->_jlc;
-
-	if(jl_me_string_print(jlc, _jlc->io.buffer, x, y, 80)) {
-		jl_io_if_newline(_jlc);
-		jl_io_add_to_buffer_(jlc, "\n");
-	}
-	jl_io_test_if_newline(_jlc, x);
+	else
+		JL_IO_PRINTF("[%4s] ", _jlc->io.head[_jlc->io.offs]);
 }
 
 static void jl_io_test_overreach(jl_t* jlc) {
 	jvct_t *_jlc = jlc->_jlc;
 	
 	if(_jlc->io.offs > 15) {
-		JL_IO_PRINTF2("\nOverreached block count %d!!!\n", _jlc->io.offs);
+		JL_IO_PRINTF("\nOverreached block count %d!!!\n", _jlc->io.offs);
 		_jlc->io.offs = 15;
 		_jl_io_current(jlc);
-		JL_IO_PRINTF1("\nQuitting...\n");
+		JL_IO_PRINTF("\nQuitting...\n");
 		exit(0);
 	}
 }
 
-static void _jl_io_indt(jl_t* jlc) {
-	jvct_t* _jlc = jlc->_jlc;
+static void jl_io_reset_print_descriptor_(jvct_t *_jlc) {
 	int i;
 
 	// Check to see if too many blocks are open.
-	jl_io_test_overreach(jlc);
+	jl_io_test_overreach(_jlc->jlc);
 	// Print enough spaces for the open blocks.
-	for(i = 0; i < _jlc->io.offs; i++)
-		jl_me_string_print(jlc, _jlc->io.buffer, " ", NULL, 80);
+	for(i = 0; i < _jlc->io.offs; i++) JL_IO_PRINTF(" ");
+	// Print the print descriptor.
+	jl_io_print_descriptor_(_jlc);
 }
 
 static void _jl_io_current(jl_t *jlc) {
 	jvct_t *_jlc = jlc->_jlc;
 	int i;
 
-	jl_io_add_to_buffer_(jlc, " <");
+	JL_IO_PRINTF(" <");
 	for(i = 0; i < _jlc->io.offs; i++) {
-		jl_io_add_to_buffer2_(jlc, "%4s", _jlc->io.head[i+1]);
-		jl_io_add_to_buffer_(jlc, "/");
+		JL_IO_PRINTF(jl_me_format(jlc, "%4s",
+			_jlc->io.head[i+1]));
+		JL_IO_PRINTF("/");
 	}
-	jl_io_add_to_buffer_(jlc, "\b>\n");
+	JL_IO_PRINTF("\b>\n");
 }
 
-void _jl_io_printc(jl_t* jlc, const char * print) {
-	jl_io_add_to_buffer2_(jlc, "%s", print);
+void _jl_io_printc(jl_t* jlc, const char * input) {
+	jvct_t *_jlc = jlc->_jlc;
+	int i = 0;
+
+	while(i != -1) {
+		str_t text = input + (80 * i);
+		// If string is empty; quit
+		if((!text) || (!text[0])) break;
+		// Clear and reset the print buffer
+		jl_io_reset_print_descriptor_(_jlc);
+		// Print upto 80 characters to the terminal
+		int chr_cnt;
+		char convert[10];
+		if(strlen(text) > chr_cnt - 1) {
+			chr_cnt = 73 - _jlc->io.offs;
+//			i++;
+		}else{
+			chr_cnt = strlen(text);
+			i = -1; // break
+		}
+
+		sprintf(convert, "%%%ds\n", chr_cnt);
+
+		JL_IO_PRINTF(convert, text);
+	}
 }
 
 void _jl_io_print_no(jl_t* jlc, const char * print) { }
@@ -244,7 +216,7 @@ void jl_io_close_block(jl_t* jlc) {
 	if(_jlc->io.offs != 1) {
 		_jlc->io.offs -= 1;
 	}else{
-		JL_IO_PRINTF1("[EXIT] ");
+		JL_IO_PRINTF("[EXIT] ");
 	}
 }
 

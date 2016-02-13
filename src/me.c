@@ -410,27 +410,6 @@ m_str_t jl_me_format(jl_t* jlc, str_t format, ... ) {
 }
 
 /**
- * Print to a string.
- * @param jlc: The library context.
- * @param string: The string to print to.
- * @param format: The format string
- * @param var: The variable to put into the format string.
- * @param n: The number of allocated bytes in "string"
- * @returns: 1 if it hit the limit, 0 if there's still room.
-**/
-uint8_t jl_me_string_print(jl_t* jlc, char *string, const char* format,
-	const char *var, u64_t n)
-{
-	jvct_t * _jlc = jlc->_jlc;
-
-	if((!format) || (!format[0])) return 0;
-	jl_me_clr((void*)_jlc->me.temp_buff, 30);
-	sprintf((void*)_jlc->me.temp_buff, format, var);
-	strncat(string, (void*)_jlc->me.temp_buff, n - strlen(string));
-	return (strlen(string) > n - 1);
-}
-
-/**
  * Generate a random integer from 0 to "a"
  * @param a: 1 more than the maximum # to return
  * @returns: a random integer from 0 to "a"
