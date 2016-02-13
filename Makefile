@@ -1,3 +1,14 @@
+ifneq ($(shell uname | grep Linux), "")
+ ifneq ($(shell uname -m | grep arm), "")
+  include compile-scripts/rpi.mk
+ else
+  include compile-scripts/linux.mk
+ endif
+else
+ $(error "Platform is not supported")
+endif
+#TODO: Darwin is mac OS for uname
+
 HEADER = -Isrc/lib/include/ -I/opt/vc/include/
 CFLAGS_MEDIA = $(HEADER) -O3
 CFLAGS_DEBUG = $(HEADER) -Wall -g
@@ -93,8 +104,11 @@ build/jl.o: $(BUILD) $(BUILD)/*.o
 	printf "[COMP] compiling singular jl_lib object file....\n"
 	ar csr build/jl.o build/obj/*.o build/deps/*.o
 
+build-notify:
+	printf "[COMP] Building jl_lib for target=$(PLATFORM)\n"
+
 # Build modules.
-build-library: $(OBJS) build/jl.o
+build-library: build-notify $(OBJS) build/jl.o
 	# Make "jl.o"
 	printf "[COMP] done!\n"
 
@@ -192,14 +206,6 @@ build-libzip:
 	make && \
 	ld -r lib/*.o -o ../../build/deps/lib_zip.o && \
 	cp lib/*.h ../../src/lib/include/ && \
-	printf "[COMP] done!\n"
-build-sdl:
-	printf "[COMP] compiling SDL...\n" && \
-	cd deps/SDL2-2.0.3/ && \
-	sh configure --prefix=`pwd`/usr_local/ && \
-	make && make install && \
-	ld -r build/.libs/*.o -o ../../build/deps/lib_SDL.o && \
-	cp include/*.h ../../src/lib/include/ && \
 	printf "[COMP] done!\n"
 build-sdl-image:
 	export PATH=$$PATH:`pwd`/deps/SDL2-2.0.3/usr_local/bin/ && printf "[COMP] compiling SDL_image...\n" && \

@@ -141,9 +141,9 @@ void jl_au_mus_play(jl_t* jlc, uint32_t p_IDinStack,
 /** @cond **/
 void _jl_au_loop(jvct_t* _jlc) {
 	//If Music Isn't playing AND Music isn't disabled: play music
-	if ( !Mix_PlayingMusic() && (_jlc->au.idis!=UINT32_MAX)) {
+/*	if ( !Mix_PlayingMusic() && (_jlc->au.idis!=UINT32_MAX)) {
 		_jl_au_play(_jlc);
-	}
+	}*/
 }
 /** @endcond **/
 
@@ -217,7 +217,8 @@ void _jl_au_init(jvct_t *_jlc) {
 		_jl_fl_errf(_jlc, ":Couldn't set 11025 Hz 16-bit audio because:");
 		_jl_fl_errf(_jlc, (char *)SDL_GetError());
 		_jl_fl_errf(_jlc, "\n");
-		jl_sg_kill(_jlc->jlc);
+		return;
+//		jl_sg_kill(_jlc->jlc);
 	}else{
 		jl_io_printc(_jlc->jlc, "audio has been set.\n");
 	}

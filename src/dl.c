@@ -36,17 +36,37 @@ uint16_t jl_dl_geth(jl_t *jlc) {
 }
 
 //STATIC FUNCTIONS
+static void jl_dl_killedit(jvct_t* _jlc, char *str) {
+	_jl_fl_errf(_jlc, str);
+	_jl_fl_errf(_jlc, SDL_GetError());
+	jl_sg_kill(_jlc->jlc);
+}
+
+static SDL_Window* jl_dl_mkwindow(jvct_t* _jlc) {
+	SDL_Window* rtn = SDL_CreateWindow(
+		"SDL2 Window",				// window title
+		SDL_WINDOWPOS_UNDEFINED,		// initial x position
+		SDL_WINDOWPOS_UNDEFINED,		// initial y position
+		_jlc->dl.current.w, _jlc->dl.current.h,	// width and height
+		SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE
+    	);
+	if(rtn == NULL) jl_dl_killedit(_jlc, "SDL_CreateWindow");
+	return rtn;
+}
+
+static SDL_GLContext* jl_dl_gl_context(jvct_t* _jlc) {
+	SDL_GLContext* rtn = SDL_GL_CreateContext(_jlc->dl.displayWindow->w);
+	if(rtn == NULL) jl_dl_killedit(_jlc, "SDL_GL_CreateContext");
+	return rtn;
+}
+
 static void _jl_dl_fscreen(jvct_t* _jlc, uint8_t a) {
 	// Make sure the fullscreen value is either a 1 or a 0.
 	_jlc->dl.fullscreen = !!a;
 	// Actually set whether fullscreen or not.
 	if(SDL_SetWindowFullscreen(_jlc->dl.displayWindow->w,
-		JL_DL_FULLSCREEN * _jlc->dl.fullscreen))
-	{
-		_jl_fl_errf(_jlc, SDL_GetError());
-		_jl_fl_errf(_jlc, "\n");
-		jl_sg_kill(_jlc->jlc);
-	}
+	 JL_DL_FULLSCREEN * _jlc->dl.fullscreen))
+		jl_dl_killedit(_jlc, "SDL_SetWindowFullscreen");
 }
 
 static inline void jlvmpi_ini_sdl(jvct_t* _jlc) {
@@ -93,25 +113,22 @@ static inline void _jlvm_crea_wind(jvct_t *_jlc) {
 	// Allocate space for "displayWindow"
 	jl_me_alloc(_jlc->jlc, (void**)&_jlc->dl.displayWindow,
 		sizeof(jl_window_t), 0);
-	// Create window.
-	_jlc->dl.displayWindow->w = SDL_CreateWindow(
-		"¡SDL2 Window!",			// window title
-		SDL_WINDOWPOS_UNDEFINED,		// initial x position
-		SDL_WINDOWPOS_UNDEFINED,		// initial y position
-		_jlc->dl.current.w, _jlc->dl.current.h,	// width and height
-		SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE
-    	);
+	//
+	SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
+	SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
+	SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
+	SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 16);
+	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 
-	if(_jlc->dl.displayWindow == NULL)
-	{
-		_jl_fl_errf(_jlc, ":Failed to create display window:\n:");
-		_jl_fl_errf(_jlc, (char *)SDL_GetError());
-		_jl_fl_errf(_jlc, "\n");
-		jl_sg_kill(_jlc->jlc);
-	}
-	SDL_GL_SetAttribute(SDL_GL_SHARE_WITH_CURRENT_CONTEXT, 0);
-	_jlc->dl.displayWindow->c =
-		SDL_GL_CreateContext(_jlc->dl.displayWindow->w);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
+	// Create window.
+	_jlc->dl.displayWindow->w = jl_dl_mkwindow(_jlc);
+//	SDL_GL_SetAttribute(SDL_GL_SHARE_WITH_CURRENT_CONTEXT, 0);
+	
+	_jlc->dl.displayWindow->c = jl_dl_gl_context(_jlc);
+		
 	// Clear and update
 	jl_gl_clear(_jlc->jlc, 2, 255, 5, 255);
 	_jl_dl_loop(_jlc);

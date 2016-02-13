@@ -135,7 +135,7 @@ static void _jl_gl_viewport(jvct_t* _jlc, uint16_t w, uint16_t h);
 #ifdef JL_DEBUG_LIB
 	static void jl_gl_get_error___(jvct_t* _jlc, int width, char *fname) {
 		GLenum err= glGetError();
-		if(err==0) return;
+		if(err == GL_NO_ERROR) return;
 		char *fstrerr;
 		if(err == GL_INVALID_ENUM) {
 			fstrerr = "opengl: invalid enum";
@@ -146,6 +146,9 @@ static void _jl_gl_viewport(jvct_t* _jlc, uint16_t w, uint16_t h);
 		}else if(err == GL_OUT_OF_MEMORY) {
 			fstrerr = "opengl: out of memory ): "
 				"!! (Texture too big?)\n";
+			GLint a;
+			glGetIntegerv(GL_MAX_TEXTURE_SIZE, &a);
+			printf("Max texture size: %d/%d\n", width, a);
 		}else{
 			fstrerr = "opengl: unknown error!\n";
 		}
@@ -183,10 +186,11 @@ static void jl_gl_buffer_set__(jvct_t* _jlc, uint32_t buffer,
 	JL_GL_ERROR(_jlc, buffer_size, "buffer data");
 }
 
-static void jl_gl_buffer_new__(jvct_t* _jlc, uint32_t *buffer) {
+static void jl_gl_buffer_new__(jvct_t* _jlc, GLuint *buffer) {
 	glGenBuffers(1, buffer);
 	JL_GL_ERROR(_jlc, 0,"buffer gen");
-	if(*buffer == 0) {
+	if((*buffer) == 0) {
+		printf("%d\n", sizeof(GLuint));
 		_jl_fl_errf(_jlc, ":buffer is made wrongly!\n");
 		jl_sg_kill(_jlc->jlc);
 	}
@@ -313,6 +317,7 @@ static void jl_gl_texture_set__(jvct_t* _jlc, u8_t* pm, u16_t w, u16_t h,
 {
 	GLenum format = GL_RGBA;
 	if(bytepp == 3)	format = GL_RGB;
+	JL_GL_ERROR(_jlc, w, "before texture image 2D");
 	glTexImage2D(
 		GL_TEXTURE_2D, 0,		/* target, level */
 		format,				/* internal format */
@@ -320,7 +325,7 @@ static void jl_gl_texture_set__(jvct_t* _jlc, u8_t* pm, u16_t w, u16_t h,
 		format, GL_UNSIGNED_BYTE,	/* external format, type */
 		pm				/* pixels */
 	);
-	JL_GL_ERROR(_jlc, 0,"texture image 2D");
+	JL_GL_ERROR(_jlc, w, "texture image 2D");
 }
 
 static void jl_gl_texpar_set__(jvct_t* _jlc) {
@@ -615,9 +620,9 @@ static void jl_gl_framebuffer_use__(jvct_t* _jlc, u32_t fb, u32_t db, u32_t tx,
 	if(fb == 0) {
 		_jl_fl_errf(_jlc, "jl_gl_framebuffer_use__: GL FB = 0");
 		jl_sg_kill(_jlc->jlc);
-	}else if(db == 0) {
-		_jl_fl_errf(_jlc, "jl_gl_framebuffer_use__: GL DB = 0");
-		jl_sg_kill(_jlc->jlc);
+//	}else if(db == 0) {
+//		_jl_fl_errf(_jlc, "jl_gl_framebuffer_use__: GL DB = 0");
+//		jl_sg_kill(_jlc->jlc);
 	}else if(tx == 0) {
 		_jl_fl_errf(_jlc, "jl_gl_framebuffer_use__: GL TX = 0");
 		jl_sg_kill(_jlc->jlc);
@@ -631,7 +636,7 @@ static void jl_gl_framebuffer_use__(jvct_t* _jlc, u32_t fb, u32_t db, u32_t tx,
 	// Bind the texture.
 	jl_gl_texture_bind__(_jlc, tx);
 	// Bind the depthbuffer.
-	_jl_gl_depthbuffer_bind(_jlc, db);
+	//_jl_gl_depthbuffer_bind(_jlc, db);
 	// Bind the framebuffer.
 	glBindFramebuffer(GL_FRAMEBUFFER, fb);
 	JL_GL_ERROR(_jlc, fb,"glBindFramebuffer");
@@ -898,8 +903,8 @@ static void _jl_gl_pr_obj_make(jvct_t* _jlc, jl_pr_t *pr) {
 	// Make the texture.
 	jl_gl_pr_obj_make_tx__(_jlc, pr);
 	// Make a new Depthbuffer.
-	jl_gl_depthbuffer_new__(_jlc, &(pr->db), pr->w, pr->h);
-	jl_gl_depthbuffer_off__(_jlc);
+	//jl_gl_depthbuffer_new__(_jlc, &(pr->db), pr->w, pr->h);
+	//jl_gl_depthbuffer_off__(_jlc);
 	// Make & Bind a new Framebuffer.
 	jl_gl_framebuffer_new__(_jlc, &(pr->fb), pr->tx, pr->db, pr->w, pr->h);
 	// Set Viewport to image and clear.
@@ -996,17 +1001,17 @@ uint8_t jl_gl_pr_isi_(jvct_t* _jlc, jl_pr_t* pr) {
 #elif JL_GLRTEX == JL_GLRTEX_SDL
 		return !!pr->tx;
 #else
-		if(pr->tx && pr->db && pr->fb) {
+		if(pr->tx && /*pr->db &&*/ pr->fb) {
 			return 1;
-		}else if((!pr->db) && (!pr->fb)) {
+		}else if(/*(!pr->db) && */(!pr->fb)) {
 			return 0;
 		}else{
 			if(pr->tx)
 				jl_io_printc(_jlc->jlc, "[OK] pr->tx\n");
 			else jl_io_printc(_jlc->jlc, "[FAIL] pr->tx\n");
-			if(pr->db)
-				jl_io_printc(_jlc->jlc, "[OK] pr->db\n");
-			else jl_io_printc(_jlc->jlc, "[FAIL] pr->db\n");
+//			if(pr->db)
+//				jl_io_printc(_jlc->jlc, "[OK] pr->db\n");
+//			else jl_io_printc(_jlc->jlc, "[FAIL] pr->db\n");
 			if(pr->fb)
 				jl_io_printc(_jlc->jlc, "[OK] pr->fb\n");
 			else jl_io_printc(_jlc->jlc, "[FAIL] pr->fb\n");

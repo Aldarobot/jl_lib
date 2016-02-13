@@ -31,7 +31,7 @@ FOLDERS = build/ libs/ media/ src/
 ################################################################################
 
 test: $(FOLDERS) -debug $(TEST) $(OBJS_DEPS) -build
-	./$(JL_OUT)
+	sudo ./$(JL_OUT)
 
 android:
 	sh $(shell echo $(JLL_HOME))/compile-scripts/jl_android\
@@ -107,7 +107,8 @@ $(BUILD_DEPS)/%.o: build-deps-var/%.o $(CFILE_DEPS)
 	gcc $(OBJS) $(LIB) -o $(JL_OUT) $(CFLAGS) \
 		-L/opt/vc/lib/ -lm -lz -ldl -lpthread \
 		$(GL_VERSION) $(JL_DEBUG) \
-		`pkg-config --libs opencv`
+		`pkg-config --libs opencv` \
+		`$(shell echo $(JLL_HOME))/deps/SDL2-2.0.3/sdl2-config --libs` -lbcm_host
 #		-lopencv_imgcodecs -lopencv_imgproc -lopencv_core -lopencv_videoio
 #		-lcv -lhighgui -lcvaux -lopencv_imgproc -lopencv_core -lopencv_highgui -lopencv_video -lopencv_video_proc -lopencv_calib3d -lopencv_imgcodecs
 	printf "[COMP] Done [ OpenGL Version = $(GL_VERSION) ]!\n"
