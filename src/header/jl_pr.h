@@ -79,7 +79,6 @@ uint32_t jl_gem_size(void);
 
 //OTHER LIB STUFF
 void main_resz(jvct_t* _jlc, u16_t x, u16_t y);
-void _jl_fl_errf(jvct_t * _jlc, const char *msg);
 //GL
 void jl_gl_viewport_screen(jvct_t *_jlc);
 //

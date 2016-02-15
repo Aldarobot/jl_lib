@@ -105,9 +105,9 @@ $(BUILD_DEPS)/%.o: build-deps-var/%.o $(CFILE_DEPS)
 -build:
 	printf "[COMP] Linking ....\n"
 	gcc $(OBJS) $(LIB) -o $(JL_OUT) $(CFLAGS) \
-		-L/opt/vc/lib/ -lm -lz -ldl -lpthread \
+		-L/opt/vc/lib/ -lm -lz -ldl -lpthread -lstdc++ \
 		$(GL_VERSION) $(JL_DEBUG) \
-		`pkg-config --libs opencv`
+		`pkg-config --libs opencv --cflags`
 #		-lopencv_imgcodecs -lopencv_imgproc -lopencv_core -lopencv_videoio
 #		-lcv -lhighgui -lcvaux -lopencv_imgproc -lopencv_core -lopencv_highgui -lopencv_video -lopencv_video_proc -lopencv_calib3d -lopencv_imgcodecs
 	printf "[COMP] Done [ OpenGL Version = $(GL_VERSION) ]!\n"

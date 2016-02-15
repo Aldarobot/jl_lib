@@ -8,13 +8,13 @@
 		uint8_t offs;
 		int8_t ofs2;
 		char head[16][5];
-		jl_io_print_fnt *printfn;
-		uint16_t maxtag;
+		jl_io_print_fnt printfn;
 		int16_t tag[16];
 //		#if JL_IO_DEBUG == 1
 		char stack[50][30];
 		uint8_t level;
 //		#endif
+		char buffer[256];
 	}_io_t;
 
 	typedef struct {
@@ -55,7 +55,7 @@ typedef struct {
 	
 	// Memory
 	struct {
-		uint8_t temp_buff[30];
+		char buffer[256];
 		void * tmp_ptr[16];
 		m_u8_t status;
 		m_u64_t usedmem;

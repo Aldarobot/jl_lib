@@ -34,9 +34,6 @@
 	void jl_me_strt_strt(jl_t*jlc, strt a, strt b, uint64_t p);
 	void jl_me_strt_merg(jl_t *jlc, strt a, strt b);
 	void jl_me_strt_trunc(jl_t *jlc, strt a, uint32_t size);
-	strt jl_me_strt_fnum(i32_t a);
-	char* jl_me_string_fnum(jl_t* jlc, int32_t a);
-	const char* jl_me_string_fnum_tmp(jl_t* jlc, int32_t a);
 	char* jl_me_string_fstrt(jl_t* jlc, strt a);
 	m_str_t jl_me_format(jl_t* jlc, str_t format, ... );
 	uint8_t jl_me_string_print(jl_t* jlc, char *string, const char* format,
@@ -139,20 +136,20 @@
 // "ct.c"
 // "io.c"
 	void jl_io_tag(jl_t* jlc, i16_t tag);
-	void jl_io_offset(jl_t* jlc, i16_t tag, char * this);
+	void jl_io_offset(jl_t* jlc, i16_t tag, char * thisp);
 	void jl_io_close_block(jl_t* jlc);
-	void jl_io_tag_set(jl_t* jlc,
-		int16_t tag, uint8_t shouldprint, jl_io_print_fnt tagfn);
+	void jl_io_tag_set(jl_t* jlc, jl_io_print_fnt tagfn);
 	void jl_io_printc(jl_t* jlc, const char * print);
 	void jl_io_printt(jl_t *jlc, uint8_t a, const char *print);
 	void jl_io_printi(jl_t *jlc, int print);
 	void jl_io_printd(jl_t *jlc, double print);
-	#define jl_io_print(jlc, ...);\
-		jl_io_printc(jlc, jl_me_format(jlc, __VA_ARGS__));
-	void jl_io_function(jl_t* jlc, const char* fn_name);
-	void jl_io_return(jl_t* jlc, const char* fn_name);
+	#define jl_io_print(jlc, ...)\
+		jl_io_printc(jlc, jl_me_format(jlc, __VA_ARGS__))
+	void jl_io_function(jl_t* jlc, str_t fn_name);
+	void jl_io_return(jl_t* jlc, str_t fn_name);
 	void jl_io_stacktrace(jl_t* jlc);
 // "fl.c"
+	void jl_fl_print(jl_t* jlc, str_t fname, str_t msg);
 	u8_t jl_fl_exist(jl_t* jlc, str_t path);
 	void jl_fl_save(jl_t* jlc, const void *file, const char *name,
 		uint32_t bytes);

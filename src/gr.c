@@ -408,7 +408,7 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 	void jl_gr_pr_new(jl_t* jlc, jl_vo_t* pv, u16_t xres) {
 		uint8_t isi = jl_gl_pr_isi(jlc->_jlc, pv);
 		if(isi == 2) {
-			_jl_fl_errf(jlc->_jlc, "jl_gr_pr_new: VO is NULL\n");
+			jl_io_print(jlc, "jl_gr_pr_new: VO is NULL");
 			jl_sg_kill(jlc);
 		}
 		// If prender is already initialized, resize, otherwise init.
@@ -416,11 +416,11 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 		else pv->pr = jl_gl_pr_new(jlc, pv->cb.w, pv->cb.h, xres);
 		// Check if pre-renderer is initialized.
 		if(!pv->pr) {
-			_jl_fl_errf(jlc->_jlc,"Prerender Failed Allocation.\n");
+			jl_io_print(jlc, "Prerender Failed Allocation.");
 			jl_sg_kill(jlc);
 		}
 		if(!jl_gl_pr_isi(jlc->_jlc, pv)) {
-			_jl_fl_errf(jlc->_jlc, "jl_gr_pr_new: didn't make!\n");
+			jl_io_print(jlc, "jl_gr_pr_new: didn't make!");
 			jl_sg_kill(jlc);
 		}
 	}
@@ -671,8 +671,7 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 		jl_pr_t *pr = spr->pr;
 
 		if(!pr) {
-			_jl_fl_errf(jlc->_jlc,
-				"jl_gr_sp_drw: not init'd!");
+			jl_io_print(jlc, "jl_gr_sp_drw: not init'd!");
 			jl_sg_kill(jlc);
 		}
 		jl_gl_transform_pr_(jlc->_jlc, pr, spr->data.tr.x,
@@ -920,7 +919,7 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 	 */
 	void jl_gr_term_msge(jl_t* jlc, char *message) {
 		jl_gr_draw_msge(jlc, 0, JL_IMGI_ICON, 1, message);
-		_jl_fl_errf(jlc->_jlc, message);
+		jl_io_print(jlc, message);
 		jl_sg_kill(jlc);
 	}
 

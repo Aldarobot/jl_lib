@@ -19,6 +19,12 @@
 //PROTOTYPES:
 static void _jl_io_current(jl_t *jlc);
 
+static void jl_io_indent__(jvct_t *_jlc, i8_t o) {
+	int i;
+	// Print enough spaces for the open blocks.
+	for(i = 0; i < _jlc->io.offs + o; i++) JL_IO_PRINTF(" ");
+}
+
 static inline void _jl_io_new_block(jl_t *jlc) {
 	jvct_t *_jlc = jlc->_jlc;
 	int i;
@@ -28,7 +34,7 @@ static inline void _jl_io_new_block(jl_t *jlc) {
 	JL_IO_PRINTF("[");
 	for(i = _jlc->io.offs - ofs2; i < _jlc->io.offs; i++) {
 		JL_IO_PRINTF("/");
-		JL_IO_PRINTF("%4s", _jlc->io.head[i+1]);
+		JL_IO_PRINTF("%s", _jlc->io.stack[i+1]);
 	}
 	JL_IO_PRINTF("]");
 	_jl_io_current(jlc);
@@ -42,7 +48,7 @@ static inline void _jl_io_old_block(jl_t *jlc) {
 	_jlc->io.ofs2 = 0;
 	JL_IO_PRINTF("[\\");
 	for(i = _jlc->io.offs; i > _jlc->io.offs + ofs2; i--) {
-		JL_IO_PRINTF("%4s", _jlc->io.head[i+1]);
+		JL_IO_PRINTF("%s", _jlc->io.stack[i+1]);
 		JL_IO_PRINTF("\\");
 	}
 	JL_IO_PRINTF("\b]");
@@ -50,12 +56,15 @@ static inline void _jl_io_old_block(jl_t *jlc) {
 }
 
 static inline void jl_io_print_descriptor_(jvct_t *_jlc) {
-	if(_jlc->io.ofs2 > 0)
+	if(_jlc->io.ofs2 > 0) {
+		jl_io_indent__(_jlc, -1);
 		_jl_io_new_block(_jlc->jlc);
-	else if(_jlc->io.ofs2 < 0)
+	}else if(_jlc->io.ofs2 < 0) {
+		jl_io_indent__(_jlc, 0);
 		_jl_io_old_block(_jlc->jlc);
-	else
-		JL_IO_PRINTF("[%4s] ", _jlc->io.head[_jlc->io.offs]);
+	}
+	jl_io_indent__(_jlc, 0);
+	JL_IO_PRINTF("[%s] ", _jlc->io.stack[_jlc->io.level]);
 }
 
 static void jl_io_test_overreach(jl_t* jlc) {
@@ -71,12 +80,8 @@ static void jl_io_test_overreach(jl_t* jlc) {
 }
 
 static void jl_io_reset_print_descriptor_(jvct_t *_jlc) {
-	int i;
-
 	// Check to see if too many blocks are open.
 	jl_io_test_overreach(_jlc->jlc);
-	// Print enough spaces for the open blocks.
-	for(i = 0; i < _jlc->io.offs; i++) JL_IO_PRINTF(" ");
 	// Print the print descriptor.
 	jl_io_print_descriptor_(_jlc);
 }
@@ -87,19 +92,20 @@ static void _jl_io_current(jl_t *jlc) {
 
 	JL_IO_PRINTF(" <");
 	for(i = 0; i < _jlc->io.offs; i++) {
-		JL_IO_PRINTF(jl_me_format(jlc, "%4s",
-			_jlc->io.head[i+1]));
+		JL_IO_PRINTF(jl_me_format(jlc, "%s",
+			_jlc->io.stack[i+1]));
 		JL_IO_PRINTF("/");
 	}
 	JL_IO_PRINTF("\b>\n");
 }
 
-void _jl_io_printc(jl_t* jlc, const char * input) {
+void _jl_io_printc(jl_t* jlc, str_t input) {
 	jvct_t *_jlc = jlc->_jlc;
 	int i = 0;
 
+	jl_me_copyto(input, _jlc->me.buffer, strlen(input) + 1);
 	while(i != -1) {
-		str_t text = input + (80 * i);
+		str_t text = _jlc->me.buffer + (80 * i);
 		// If string is empty; quit
 		if((!text) || (!text[0])) break;
 		// Clear and reset the print buffer
@@ -118,10 +124,12 @@ void _jl_io_printc(jl_t* jlc, const char * input) {
 		sprintf(convert, "%%%ds\n", chr_cnt);
 
 		JL_IO_PRINTF(convert, text);
+		jl_fl_print(jlc, _jlc->fl.paths.errf,
+			jl_me_format(jlc, convert, text));
 	}
 }
 
-void _jl_io_print_no(jl_t* jlc, const char * print) { }
+void jl_io_print_no(jl_t* jlc, const char * print) { }
 
 /**
  * Create a new printing tag.
@@ -130,24 +138,13 @@ void _jl_io_print_no(jl_t* jlc, const char * print) { }
  * @param shouldprint: whether this tag is enabled.
  * @param tagfn: the function to run when printing.  For default use NULL.
 */
-void jl_io_tag_set(jl_t* jlc,
-	int16_t tag, uint8_t shouldprint, jl_io_print_fnt tagfn)
-{
+void jl_io_tag_set(jl_t* jlc, jl_io_print_fnt tagfn) {
 	jvct_t *_jlc = jlc->_jlc;
-	uint16_t realtag = tag + _JL_IO_MAX;
 
-	if(realtag > _jlc->io.maxtag) {
-		_jlc->io.maxtag = realtag;
-		_jlc->io.printfn = realloc(_jlc->io.printfn,
-			(sizeof(void *) * (_jlc->io.maxtag+1)) + 1);
-	}
-	if(tagfn) { //User-Defined function
-		if(shouldprint) _jlc->io.printfn[realtag] = tagfn;
-		else _jlc->io.printfn[realtag] = _jl_io_print_no;	
-	}else{ //NULL
-		if(shouldprint) _jlc->io.printfn[realtag] = _jl_io_printc;
-		else _jlc->io.printfn[realtag] = _jl_io_print_no;
-	}
+	if(tagfn) //User-Defined function
+		_jlc->io.printfn = tagfn;
+	else //NULL
+		_jlc->io.printfn = _jl_io_printc;
 }
 
 /**
@@ -156,13 +153,10 @@ void jl_io_tag_set(jl_t* jlc,
  * @param print: the string to print.
 */
 void jl_io_printc(jl_t* jlc, const char * print) {
-	jvct_t *_jlc = jlc->_jlc;
-
 	// Check to see if too many blocks are open.
 	jl_io_test_overreach(jlc);
 	// Skip over hidden values
-	_jlc->io.printfn[_jlc->io.tag[_jlc->io.offs] + _JL_IO_MAX]
-		(jlc, print);
+	_jl_io_printc(jlc, print);
 }
 
 /**
@@ -238,98 +232,62 @@ void jl_io_tag(jl_t* jlc, i16_t tag) {
  * @param tag: the tag attached to the block.
 */
 void jl_io_offset(jl_t* jlc, i16_t tag, char * this) {
-	jvct_t *_jlc = jlc->_jlc;
-	int i = 0;
-
-	if(this == NULL) return;
-	if(strncmp(this, _jlc->io.head[_jlc->io.offs], 4) != 0) {
-		//extend
-		_jlc->io.offs++;
-		_jlc->io.ofs2++;
-		for(i = 0; i < 4; i++) {
-			_jlc->io.head[_jlc->io.offs][i] = this[i];
-		}
-		_jlc->io.head[_jlc->io.offs][4] = '\0';
-	}
-	jl_io_tag(jlc, tag);
+	jl_io_function(jlc, this);
 	return;
 }
 
-void jl_io_function(jl_t* jlc, const char* fn_name) {
-	#if JL_IO_DEBUG == 1
+void jl_io_function(jl_t* jlc, str_t fn_name) {
 	jvct_t* _jlc = jlc->_jlc;
 	
 	_jlc->io.level++;
+	_jlc->io.offs++;
+	_jlc->io.ofs2++;
 	jl_me_copyto(fn_name, _jlc->io.stack[_jlc->io.level], 30);
-	#endif
 }
 
-void jl_io_return(jl_t* jlc, const char* fn_name) {
-	#if JL_IO_DEBUG == 1
+void jl_io_return(jl_t* jlc, str_t fn_name) {
 	jvct_t* _jlc = jlc->_jlc;
 
 	if(strcmp(fn_name, _jlc->io.stack[_jlc->io.level])) {
-		_jl_fl_errf(jlc->_jlc, "Function \"");
-		_jl_fl_errf(jlc->_jlc, _jlc->io.stack[_jlc->io.level]);
-		_jl_fl_errf(jlc->_jlc, "\" didn't return.");
+		jl_io_print(jlc, "Function \"%4s\" didn't return.",
+			_jlc->io.stack[_jlc->io.level]);
 		jl_sg_kill(jlc);
 	}
 	jl_me_clr(_jlc->io.stack[_jlc->io.level], 30);
 	_jlc->io.level--;
-	#endif
 }
 
 void jl_io_stacktrace(jl_t* jlc) {
-	#if JL_IO_DEBUG == 1
 	jvct_t* _jlc = jlc->_jlc;
 	int i;
 
-	_jl_fl_errf(jlc->_jlc, "Stacktrace:\n");
+	jl_io_print(jlc, "Stacktrace:");
 	for(i = 0; i <= _jlc->io.level; i++) {
-		_jl_fl_errf(jlc->_jlc, _jlc->io.stack[i]);
-		_jl_fl_errf(jlc->_jlc, "\n");
+		jl_io_print(jlc, _jlc->io.stack[i]);
 	}
-	#else
-	jl_sg_kill(jlc, "No stacktrace in non-debug mode.");
-	#endif
 }
 
 void _jl_io_init(jvct_t * _jlc) {
-	int i, j;
+	int i;
 
 	#if JL_PLAT == JL_PLAT_PHONE
 	// Enable standard application logging
 	SDL_LogSetPriority(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_INFO);
 	#endif
-	for(i = 1; i < 16; i++) {
-		for(j = 0; j < 5; j++) {
-			_jlc->io.head[i][j] = '\0';
-		}
-		_jlc->io.tag[i] = 0;
-	}
-	#if JL_IO_DEBUG == 1
 	for(i = 0; i < 50; i++) {
-		for(j = 0; j < 30; j++) {
-			_jlc->io.stack[i][j] = 0;
-		}
+		jl_me_clr(_jlc->io.stack[i], 30);
 	}
 	_jlc->io.level = 0;
-	#endif
-	_jlc->io.maxtag = 0;
 	_jlc->io.printfn = malloc(sizeof(void *));
 	_jlc->io.offs = 0;
 	_jlc->io.ofs2 = 0;
-	jl_io_tag_set(_jlc->jlc, JL_IO_MINIMAL, 1, NULL);
-	jl_io_tag_set(_jlc->jlc, JL_IO_PROGRESS, 1, NULL);
-	jl_io_tag_set(_jlc->jlc, JL_IO_SIMPLE, 1, NULL);
-	jl_io_tag_set(_jlc->jlc, JL_IO_INTENSE, 1, NULL);
-	jl_io_offset(_jlc->jlc, JL_IO_MINIMAL, "JLLB\0");
-	// Clear & Print to the print buffer.
-	jl_io_reset_print_descriptor_(_jlc);
+	jl_io_tag_set(_jlc->jlc, NULL);
+	jl_io_function(_jlc->jlc, "JL_Lib");
 }
 
 void _jl_io_kill(jl_t * jlc) {
 	jl_io_close_block(jlc); //Close Block "KILL"
-	jl_io_printc(jlc, "Killed Program\n");
-	jl_io_close_block(jlc); //Close Block "JLVM"
+	jl_io_print(jlc, "Killed Program!");
+	jl_io_close_block(jlc); //Close Block "JLLB"
+	jl_io_return(jlc, "JL_Lib");
 }

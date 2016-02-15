@@ -43,17 +43,16 @@ static void _jl_dl_fscreen(jvct_t* _jlc, uint8_t a) {
 	if(SDL_SetWindowFullscreen(_jlc->dl.displayWindow->w,
 		JL_DL_FULLSCREEN * _jlc->dl.fullscreen))
 	{
-		_jl_fl_errf(_jlc, SDL_GetError());
-		_jl_fl_errf(_jlc, "\n");
+		jl_io_print(_jlc->jlc,"failed to fullscreen:%s",SDL_GetError());
 		jl_sg_kill(_jlc->jlc);
 	}
 }
 
 static inline void jlvmpi_ini_sdl(jvct_t* _jlc) {
 	jl_io_offset(_jlc->jlc, JL_IO_SIMPLE, "ISDL"); // {
-	jl_io_printc(_jlc->jlc, "Starting up...\n");
+	jl_io_print(_jlc->jlc, "Starting up....");
 	SDL_Init(JL_DL_INIT);
-	jl_io_printc(_jlc->jlc, "input...\n");
+	jl_io_print(_jlc->jlc, "input....");
 	#if JL_PLAT == JL_PLAT_COMPUTER
 	SDL_ShowCursor(SDL_DISABLE);
 	SDL_EventState(SDL_KEYDOWN, SDL_IGNORE);
@@ -65,18 +64,12 @@ static inline void jlvmpi_ini_sdl(jvct_t* _jlc) {
 //Update the SDL_displayMode structure
 static void _jlvm_curd_mode(jvct_t *_jlc) {
 	if(SDL_GetCurrentDisplayMode(0, &_jlc->dl.current)) {
-		_jl_fl_errf(_jlc, ":failed to get current display mode:\n:");
-		_jl_fl_errf(_jlc, (char *)SDL_GetError());
-		_jl_fl_errf(_jlc, "\n");
+		jl_io_print(_jlc->jlc, "failed to get current display mode:%s",
+			(char *)SDL_GetError());
 		jl_sg_kill(_jlc->jlc);
 	}
 	jl_io_offset(_jlc->jlc, JL_IO_SIMPLE, "CURD"); // {
-	jl_io_printc(_jlc->jlc,
-		jl_me_string_fnum(_jlc->jlc, _jlc->dl.current.w));
-	jl_io_printc(_jlc->jlc, ",");
-	jl_io_printc(_jlc->jlc,
-		jl_me_string_fnum(_jlc->jlc, _jlc->dl.current.h));
-	jl_io_printc(_jlc->jlc, "\n");
+	jl_io_print(_jlc->jlc, "%d,%d", _jlc->dl.current.w, _jlc->dl.current.h);
 	jl_io_close_block(_jlc->jlc); // }
 }
 
@@ -104,9 +97,8 @@ static inline void _jlvm_crea_wind(jvct_t *_jlc) {
 
 	if(_jlc->dl.displayWindow == NULL)
 	{
-		_jl_fl_errf(_jlc, ":Failed to create display window:\n:");
-		_jl_fl_errf(_jlc, (char *)SDL_GetError());
-		_jl_fl_errf(_jlc, "\n");
+		jl_io_print(_jlc->jlc, "Failed to create display window:",
+			(char *)SDL_GetError());
 		jl_sg_kill(_jlc->jlc);
 	}
 	SDL_GL_SetAttribute(SDL_GL_SHARE_WITH_CURRENT_CONTEXT, 0);
@@ -260,10 +252,10 @@ void _jl_dl_inita(jvct_t* _jlc) {
 }
 
 void _jl_dl_kill(jvct_t* _jlc) {
-	jl_io_printc(_jlc->jlc, "killing SDL...\n");
+	jl_io_print(_jlc->jlc, "killing SDL....");
 	if (_jlc->dl.displayWindow->c != NULL) {
 		SDL_free(_jlc->dl.displayWindow->c);
 		SDL_free(_jlc->dl.displayWindow->w);
 	}
-	jl_io_printc(_jlc->jlc, "killed SDL!\n");
+	jl_io_print(_jlc->jlc, "killed SDL!");
 }

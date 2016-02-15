@@ -149,13 +149,7 @@ static void _jl_gl_viewport(jvct_t* _jlc, uint16_t w, uint16_t h);
 		}else{
 			fstrerr = "opengl: unknown error!\n";
 		}
-		_jl_fl_errf(_jlc, ":");
-		_jl_fl_errf(_jlc, fname);
-		_jl_fl_errf(_jlc, "\n:");
-		_jl_fl_errf(_jlc, fstrerr);
-		_jl_fl_errf(_jlc, ":\n:");
-		_jl_fl_errf(_jlc, (void*)jl_me_strt_fnum(width)->data);
-		_jl_fl_errf(_jlc, "\n");
+		jl_io_print(_jlc->jlc, "error: %s:%s (%d)",fname,fstrerr,width);
 		jl_sg_kill(_jlc->jlc);
 	}
 #endif
@@ -163,7 +157,7 @@ static void _jl_gl_viewport(jvct_t* _jlc, uint16_t w, uint16_t h);
 static void jl_gl_buffer_use__(jvct_t* _jlc, uint32_t buffer) {
 	// Check For Deleted Buffer
 	if(buffer == 0) {
-		_jl_fl_errf(_jlc, ":buffer got deleted!\n");
+		jl_io_print(_jlc->jlc, "buffer got deleted!");
 		jl_sg_kill(_jlc->jlc);
 	}
 	// bind the buffer
@@ -187,7 +181,7 @@ static void jl_gl_buffer_new__(jvct_t* _jlc, uint32_t *buffer) {
 	glGenBuffers(1, buffer);
 	JL_GL_ERROR(_jlc, 0,"buffer gen");
 	if(*buffer == 0) {
-		_jl_fl_errf(_jlc, ":buffer is made wrongly!\n");
+		jl_io_print(_jlc->jlc, "buffer is made wrongly!");
 		jl_sg_kill(_jlc->jlc);
 	}
 }
@@ -220,10 +214,9 @@ GLuint jl_gl_load_shader(jvct_t* _jlc, GLenum shaderType, const char* pSource) {
 				buf = (char*) malloc(infoLen);
 				if (buf) {
 					glGetShaderInfoLog(shader, infoLen, NULL, buf);
-					_jl_fl_errf(_jlc, ":Could not compile shader:\n:");
-					_jl_fl_errf(_jlc, buf);
+					jl_io_print(_jlc->jlc,
+						"Could not compile shader:%s",buf);
 					free(buf);
-					_jl_fl_errf(_jlc, "\n");
 					jl_sg_kill(_jlc->jlc);
 				}
 				glDeleteShader(shader);
@@ -239,13 +232,13 @@ GLuint jl_gl_glsl_prg_create(jvct_t* _jlc, const char* pVertexSource,
 {
 	GLuint vertexShader = jl_gl_load_shader(_jlc, GL_VERTEX_SHADER, pVertexSource);
 	if (!vertexShader) {
-		_jl_fl_errf(_jlc, ":couldn't load vertex shader\n");
+		jl_io_print(_jlc->jlc, "couldn't load vertex shader");
 		jl_sg_kill(_jlc->jlc);
 	}
 
 	GLuint pixelShader = jl_gl_load_shader(_jlc, GL_FRAGMENT_SHADER, pFragmentSource);
 	if (!pixelShader) {
-		_jl_fl_errf(_jlc, ":couldn't load fragment shader\n");
+		jl_io_print(_jlc->jlc, "couldn't load fragment shader");
 		jl_sg_kill(_jlc->jlc);
 	}
 
@@ -274,24 +267,23 @@ GLuint jl_gl_glsl_prg_create(jvct_t* _jlc, const char* pVertexSource,
 				buf = (char*) malloc(bufLength);
 				if (buf) {
 					glGetProgramInfoLog(program, bufLength, NULL, buf);
-					_jl_fl_errf(_jlc, "Could not link program:\n");
-					_jl_fl_errf(_jlc, buf);
-					_jl_fl_errf(_jlc, "\n");
+					jl_io_print(_jlc->jlc,
+						"Could not link program:%s",buf);
 					free(buf);
 					jl_sg_kill(_jlc->jlc);
 				}else{
-					_jl_fl_errf(_jlc, ":failed malloc\n");
+					jl_io_print(_jlc->jlc, "failed malloc");
 					jl_sg_kill(_jlc->jlc);
 				}
 			}else{
 				glDeleteProgram(program);
-				_jl_fl_errf(_jlc, ":no info log\n");
+				jl_io_print(_jlc->jlc, "no info log");
 				jl_sg_kill(_jlc->jlc);
 			}
 		}
 	}
 	if (program == 0) {
-		_jl_fl_errf(_jlc, "Failed to load program\n");
+		jl_io_print(_jlc->jlc, "Failed to load program");
 		jl_sg_kill(_jlc->jlc);
 	}
 	return program;
@@ -301,7 +293,7 @@ static void jl_gl_texture_make__(jvct_t* _jlc, uint32_t *tex) {
 	glGenTextures(1, tex);
 	if(!(*tex)) {
 		JL_GL_ERROR(_jlc, 0, "jl_gl_texture_make__: glGenTextures");
-		_jl_fl_errf(_jlc, "jl_gl_texture_make__: GL tex = 0");
+		jl_io_print(_jlc->jlc, "jl_gl_texture_make__: GL tex = 0");
 		jl_sg_kill(_jlc->jlc);
 	}
 	JL_GL_ERROR(_jlc, 0, "jl_gl_texture_make__: glGenTextures");
@@ -342,7 +334,7 @@ static void jl_gl_texture__bind__(jvct_t* _jlc, uint32_t tex) {
 // Bind a texture.
 static void jl_gl_texture_bind__(jvct_t* _jlc, uint32_t tex) {
 	if(tex == 0) {
-		_jl_fl_errf(_jlc, "jl_gl_texture_bind__: GL tex = 0");
+		jl_io_print(_jlc->jlc, "jl_gl_texture_bind__: GL tex = 0");
 		jl_sg_kill(_jlc->jlc);
 	}
 	jl_gl_texture__bind__(_jlc, tex);
@@ -357,18 +349,18 @@ static void jl_gl_texture_off__(jvct_t* _jlc) {
 static void jl_gl_texture_new__(jvct_t* _jlc, m_u32_t *tex, u8_t* px,
 	u16_t w, u16_t h, u8_t bytepp)
 {
-	jl_io_printc(_jlc->jlc, "make tx\n");
+	jl_io_print(_jlc->jlc, "make tx");
 	// Make the texture
 	jl_gl_texture_make__(_jlc, tex);
 	// Bind the texture
 	jl_gl_texture_bind__(_jlc, *tex);
-	jl_io_printc(_jlc->jlc, "set tx\n");
+	jl_io_print(_jlc->jlc, "set tx");
 	// Set texture
 	jl_gl_texture_set__(_jlc, px, w, h, bytepp);
-	jl_io_printc(_jlc->jlc, "set txpar\n");
+	jl_io_print(_jlc->jlc, "set txpar");
 	// Set the texture parametrs.
 	jl_gl_texpar_set__(_jlc);
-	jl_io_printc(_jlc->jlc, "setd tx\n");
+	jl_io_print(_jlc->jlc, "setd tx");
 }
 
 #if JL_GLRTEX == JL_GLRTEX_EGL
@@ -393,7 +385,7 @@ void jl_gl_maketexture(jl_t* jlc, uint16_t gid, uint16_t id,
 
 	jl_io_offset(_jlc->jlc, JL_IO_SIMPLE, "MKTX");
 	if (!pixels) {
-		_jl_fl_errf(_jlc, "null pixels\n");
+		jl_io_print(_jlc->jlc, "null pixels");
 		jl_sg_kill(jlc);
 	}
 	if (_jlc->gl.allocatedg < gid + 1) {
@@ -417,11 +409,7 @@ void jl_gl_maketexture(jl_t* jlc, uint16_t gid, uint16_t id,
 				sizeof(GLint) * (id+1));
 		_jlc->gl.allocatedi = id + 1;
 	}
-	jl_io_printc(_jlc->jlc, "generating texture (");
-	jl_io_printi(_jlc->jlc, width);
-	jl_io_printc(_jlc->jlc, ",");
-	jl_io_printi(_jlc->jlc, height);
-	jl_io_printc(_jlc->jlc, ")\n");
+	jl_io_print(_jlc->jlc, "generating texture (%d,%d)",width,height);
 	// Make the texture.
 	jl_gl_texture_new__(_jlc, &_jlc->gl.textures[gid][id], pixels, width,
 		height, bytepp);
@@ -431,7 +419,7 @@ void jl_gl_maketexture(jl_t* jlc, uint16_t gid, uint16_t id,
 //Lower Level Stuff
 static void _jl_gl_usep(jvct_t* _jlc, GLuint prg) {
 	if(!prg) {
-		_jl_fl_errf(_jlc, ":program ain't a prg!\n");
+		jl_io_print(_jlc->jlc, ":program ain't a prg!");
 		jl_sg_kill(_jlc->jlc);
 	}
 	glUseProgram(prg);
@@ -603,7 +591,7 @@ static void jl_gl_framebuffer_free__(jvct_t* _jlc, m_u32_t *fb) {
 static void jl_gl_framebuffer_make__(jvct_t* _jlc, m_u32_t *fb) {
 	glGenFramebuffers(1, fb);
 	if(!(*fb)) {
-		_jl_fl_errf(_jlc, "jl_gl_framebuffer_make__: GL FB = 0\n");
+		jl_io_print(_jlc->jlc, "jl_gl_framebuffer_make__: GL FB = 0");
 		jl_sg_kill(_jlc->jlc);
 	}
 	JL_GL_ERROR(_jlc, *fb,"glGenFramebuffers");
@@ -613,19 +601,19 @@ static void jl_gl_framebuffer_use__(jvct_t* _jlc, u32_t fb, u32_t db, u32_t tx,
 	u16_t w, u16_t h)
 {
 	if(fb == 0) {
-		_jl_fl_errf(_jlc, "jl_gl_framebuffer_use__: GL FB = 0");
+		jl_io_print(_jlc->jlc, "jl_gl_framebuffer_use__: GL FB = 0");
 		jl_sg_kill(_jlc->jlc);
 	}else if(db == 0) {
-		_jl_fl_errf(_jlc, "jl_gl_framebuffer_use__: GL DB = 0");
+		jl_io_print(_jlc->jlc, "jl_gl_framebuffer_use__: GL DB = 0");
 		jl_sg_kill(_jlc->jlc);
 	}else if(tx == 0) {
-		_jl_fl_errf(_jlc, "jl_gl_framebuffer_use__: GL TX = 0");
+		jl_io_print(_jlc->jlc, "jl_gl_framebuffer_use__: GL TX = 0");
 		jl_sg_kill(_jlc->jlc);
 	}else if(w == 0) {
-		_jl_fl_errf(_jlc, "jl_gl_framebuffer_use__: GL W = 0");
+		jl_io_print(_jlc->jlc, "jl_gl_framebuffer_use__: GL W = 0");
 		jl_sg_kill(_jlc->jlc);
 	}else if(h == 0) {
-		_jl_fl_errf(_jlc, "jl_gl_framebuffer_use__: GL H = 0");
+		jl_io_print(_jlc->jlc, "jl_gl_framebuffer_use__: GL H = 0");
 		jl_sg_kill(_jlc->jlc);
 	}
 	// Bind the texture.
@@ -669,7 +657,7 @@ static void jl_gl_framebuffer_adddb__(jvct_t* _jlc, u32_t db) {
 static void jl_gl_framebuffer_status__(jvct_t* _jlc) {
 	// Check to see if framebuffer was made properly.
 	if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE){
-		_jl_fl_errf(_jlc, "Frame buffer not complete!\n");
+		jl_io_print(_jlc->jlc, "Frame buffer not complete!");
 		jl_sg_kill(_jlc->jlc);
 	}
 }
@@ -699,44 +687,41 @@ static void jl_gl_egl_geterror__(jvct_t* _jlc, i32_t x, str_t fname) {
 	
 	if(err == EGL_SUCCESS) return;
 	
-	_jl_fl_errf(_jlc, ":source: paraphrased from www.khronos.org: \n:\"");
-	_jl_fl_errf(_jlc, fname);
-	_jl_fl_errf(_jlc, "\"\n:");
+	jl_io_print(_jlc->jlc, ":source: paraphrased from www.khronos.org:");
+	jl_io_print(_jlc->jlc, "\"%s\"", fname);
 
 	if(err == EGL_NOT_INITIALIZED)
-		_jl_fl_errf(_jlc, "EGL couldn't initialize or isn't init'd");
+		jl_io_print(_jlc->jlc,"EGL couldn't initialize or isn't init'd");
 	else if(err == EGL_BAD_ACCESS)
-		_jl_fl_errf(_jlc, "EGL can't access a resource. (Threads?)");
+		jl_io_print(_jlc->jlc,"EGL can't access a resource. (Threads?)");
 	else if(err == EGL_BAD_ALLOC)
-		_jl_fl_errf(_jlc, "EGL failed to allocate resources.");
+		jl_io_print(_jlc->jlc,"EGL failed to allocate resources.");
 	else if(err == EGL_BAD_ATTRIBUTE)
-		_jl_fl_errf(_jlc, "Attribute not recognized (value or/ list).");
+		jl_io_print(_jlc->jlc,
+			"Attribute not recognized (value or/ list).");
 	else if(err == EGL_BAD_CONFIG)
-		_jl_fl_errf(_jlc, "EGLConfig argument is invalid.");
+		jl_io_print(_jlc->jlc, "EGLConfig argument is invalid.");
 	else if(err == EGL_BAD_CONTEXT)
-		_jl_fl_errf(_jlc, "EGLContext argument is invalid.");
+		jl_io_print(_jlc->jlc, "EGLContext argument is invalid.");
 	else if(err == EGL_BAD_CURRENT_SURFACE)
-		_jl_fl_errf(_jlc, "Surface passed is invalid.");
+		jl_io_print(_jlc->jlc, "Surface passed is invalid.");
 	else if(err == EGL_BAD_DISPLAY)
-		_jl_fl_errf(_jlc, "EGLDisplay argument is invalid.");
+		jl_io_print(_jlc->jlc, "EGLDisplay argument is invalid.");
 	else if(err == EGL_BAD_MATCH)
-		_jl_fl_errf(_jlc, "EGLContext requires buffers not alloc'd.");
+		jl_io_print(_jlc->jlc, "EGLContext requires buffers not alloc'd.");
 	else if(err == EGL_BAD_NATIVE_PIXMAP)
-		_jl_fl_errf(_jlc, "EGLNativePixmapType argument is invalid.");
+		jl_io_print(_jlc->jlc, "EGLNativePixmapType argument is invalid.");
 	else if(err == EGL_BAD_NATIVE_WINDOW)
-		_jl_fl_errf(_jlc, "EGLNativeWindowType argument is invalid.");
+		jl_io_print(_jlc->jlc, "EGLNativeWindowType argument is invalid.");
 	else if(err == EGL_BAD_PARAMETER)
-		_jl_fl_errf(_jlc, "1 or more argument values are invalid.");
+		jl_io_print(_jlc->jlc, "1 or more argument values are invalid.");
 	else if(err == EGL_BAD_SURFACE)
-		_jl_fl_errf(_jlc, "EGLSurface argument is an invalid surface.");
+		jl_io_print(_jlc->jlc, "EGLSurface argument is an invalid surface.");
 	else if(err == EGL_CONTEXT_LOST)
-		_jl_fl_errf(_jlc, "A power management event has occurred.");
+		jl_io_print(_jlc->jlc, "A power management event has occurred.");
 	else
-		_jl_fl_errf(_jlc, "Unknown error.");
-
-	_jl_fl_errf(_jlc, ":\n:");
-	_jl_fl_errf(_jlc, (void*)jl_me_strt_fnum(x)->data);
-	_jl_fl_errf(_jlc, "\n");
+		jl_io_print(_jlc->jlc, "Unknown error.");
+	jl_io_print(_jlc->jlc, ":%d", (void*)jl_me_strt_fnum(x)->data);
 	jl_sg_kill(_jlc->jlc);
 }
 
@@ -782,7 +767,7 @@ static void _jl_gl_depthbuffer_free(jvct_t* _jlc, uint32_t *db) {
 static void _jl_gl_depthbuffer_make(jvct_t* _jlc, uint32_t *db) {
 	glGenRenderbuffers(1, db);
 	if(!(*db)) {
-		_jl_fl_errf(_jlc, "_jl_gl_depthbuffer_make: GL buff=0\n");
+		jl_io_print(_jlc->jlc, "_jl_gl_depthbuffer_make: GL buff=0");
 		jl_sg_kill(_jlc->jlc);
 	}
 	JL_GL_ERROR(_jlc,*db,"make pr: glGenRenderbuffers");
@@ -790,11 +775,11 @@ static void _jl_gl_depthbuffer_make(jvct_t* _jlc, uint32_t *db) {
 
 static void jl_gl_depthbuffer_set__(jvct_t* _jlc, u16_t w, u16_t h) {
 	if(!w) {
-		_jl_fl_errf(_jlc, "jl_gl_depthbuffer_set: w = 0\n");
+		jl_io_print(_jlc->jlc, "jl_gl_depthbuffer_set: w = 0");
 		jl_sg_kill(_jlc->jlc);
 	}
 	if(!h) {
-		_jl_fl_errf(_jlc, "jl_gl_depthbuffer_set: h = 0\n");
+		jl_io_print(_jlc->jlc, "jl_gl_depthbuffer_set: h = 0");
 		jl_sg_kill(_jlc->jlc);
 	}
 	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT16, w, h);
@@ -803,7 +788,7 @@ static void jl_gl_depthbuffer_set__(jvct_t* _jlc, u16_t w, u16_t h) {
 
 static void _jl_gl_depthbuffer_bind(jvct_t* _jlc, uint32_t db) {
 	if(db == 0) {
-		_jl_fl_errf(_jlc, "_jl_gl_depthbuffer_bind: GL db = 0\n");
+		jl_io_print(_jlc->jlc, "_jl_gl_depthbuffer_bind: GL db = 0");
 		jl_sg_kill(_jlc->jlc);
 	}
 	glBindRenderbuffer(GL_RENDERBUFFER, db);
@@ -858,25 +843,19 @@ static void jl_gl_pr_obj_make_tx__(jvct_t* _jlc, jl_pr_t *pr) {
 static void _jl_gl_pr_obj_make(jvct_t* _jlc, jl_pr_t *pr) {
 	_jlc->gl.cp = NULL;
 	if(pr->w < 1) {
-		_jl_fl_errf(_jlc, ":_jl_gl_pr_obj_make() failed:\n:");
-		_jl_fl_errf(_jlc, ": 'w' must be more than 1\n");
+		jl_io_print(_jlc->jlc,
+			"_jl_gl_pr_obj_make() failed: 'w' must be more than 1");
 		jl_sg_kill(_jlc->jlc);
 	}
 	if(pr->h < 1) {
-		_jl_fl_errf(_jlc, ":_jl_gl_pr_obj_make() failed:\n:");
-		_jl_fl_errf(_jlc, ": 'h' must be more than 1\n");
+		jl_io_print(_jlc->jlc,
+			"_jl_gl_pr_obj_make() failed: 'h' must be more than 1");
 		jl_sg_kill(_jlc->jlc);
 	}
 	if((pr->w > GL_MAX_TEXTURE_SIZE) || (pr->h > GL_MAX_TEXTURE_SIZE)) {
-		char *wmsg = jl_me_string_fnum(_jlc->jlc, pr->w);
-		char *hmsg = jl_me_string_fnum(_jlc->jlc, pr->h);
-		_jl_fl_errf(_jlc, ":_jl_gl_pr_obj_make() failed:\n");
-		_jl_fl_errf(_jlc, ":w = ");
-		_jl_fl_errf(_jlc, wmsg);
-		_jl_fl_errf(_jlc, "\n:h = ");
-		_jl_fl_errf(_jlc, hmsg);
-		_jl_fl_errf(_jlc, "\n");
-		_jl_fl_errf(_jlc, ": texture is too big for graphics card.\n");
+		jl_io_print(_jlc->jlc, "_jl_gl_pr_obj_make() failed:");
+		jl_io_print(_jlc->jlc, "w = %d,h = %d", pr->w, pr->h);
+		jl_io_print(_jlc->jlc, "texture is too big for graphics card.");
 		jl_sg_kill(_jlc->jlc);
 	}
 #if JL_GLRTEX == JL_GLRTEX_EGL
@@ -983,7 +962,7 @@ void jl_gl_pr_old_(jvct_t* _jlc, jl_pr_t** pr) {
 // Free a pr for a vertex object
 void jl_gl_pr_old(jvct_t* _jlc, jl_vo_t* pv) {
 	if(pv->pr == NULL) {
-		_jl_fl_errf(_jlc, "pr(): double free!\n");
+		jl_io_print(_jlc->jlc, "pr(): double free!");
 		jl_sg_kill(_jlc->jlc);
 	}
 	jl_gl_pr_old_(_jlc, &(pv->pr));
@@ -1002,15 +981,14 @@ uint8_t jl_gl_pr_isi_(jvct_t* _jlc, jl_pr_t* pr) {
 			return 0;
 		}else{
 			if(pr->tx)
-				jl_io_printc(_jlc->jlc, "[OK] pr->tx\n");
-			else jl_io_printc(_jlc->jlc, "[FAIL] pr->tx\n");
+				jl_io_print(_jlc->jlc, "[OK] pr->tx");
+			else jl_io_print(_jlc->jlc, "[FAIL] pr->tx");
 			if(pr->db)
-				jl_io_printc(_jlc->jlc, "[OK] pr->db\n");
-			else jl_io_printc(_jlc->jlc, "[FAIL] pr->db\n");
+				jl_io_print(_jlc->jlc, "[OK] pr->db");
+			else jl_io_print(_jlc->jlc, "[FAIL] pr->db");
 			if(pr->fb)
-				jl_io_printc(_jlc->jlc, "[OK] pr->fb\n");
-			else jl_io_printc(_jlc->jlc, "[FAIL] pr->fb\n");
-			_jl_fl_errf(_jlc, "\n");
+				jl_io_print(_jlc->jlc, "[OK] pr->fb");
+			else jl_io_print(_jlc->jlc, "[FAIL] pr->fb");
 			jl_sg_kill(_jlc->jlc);
 		}
 #endif
@@ -1046,7 +1024,7 @@ void jl_gl_pr_use_(jvct_t* _jlc, jl_pr_t* pr) {
 void jl_gl_pr_use(jvct_t* _jlc, jl_vo_t* pv) {
 	pv->a = 1.f;
 	if(!pv->pr) {
-		_jl_fl_errf(_jlc, "jl_gl_pr_use: pre-renderer not created\n");
+		jl_io_print(_jlc->jlc,"jl_gl_pr_use: pre-renderer not created");
 		jl_sg_kill(_jlc->jlc);
 	}
 	jl_gl_pr_use_(_jlc, pv->pr);
@@ -1196,8 +1174,8 @@ void jl_gl_transform_pr_(jvct_t* _jlc, jl_pr_t* pr, float x, float y, float z,
 	f64_t ar = jl_gl_ar(_jlc->jlc);
 
 	if(!jl_gl_pr_isi_(_jlc, pr)) {
-		_jl_fl_errf(_jlc, "jl_gl_translate_pr: "
-			"Pre-renderer Not Initialized!\n");
+		jl_io_print(_jlc->jlc, "jl_gl_translate_pr: "
+			"Pre-renderer Not Initialized!");
 		jl_sg_kill(_jlc->jlc);
 	}
 	jl_gl_translate__(_jlc, _jlc->gl.prm.uniforms.translate, JL_GL_SLPR_PRM,
@@ -1288,7 +1266,7 @@ void jl_gl_draw_pr_(jl_t* jlc, jl_pr_t* pr) {
 
 	// Fail if no pre-rendered texture.
 	if(!jl_gl_pr_isi_(_jlc, pr)) {
-		_jl_fl_errf(_jlc, "Pre-renderer Not Initialized!\n");
+		jl_io_print(_jlc->jlc, "Pre-renderer Not Initialized!");
 		jl_sg_kill(jlc);
 	}
 	// Use pre-mixed texturing shader.
@@ -1306,9 +1284,7 @@ void jl_gl_draw_pr_(jl_t* jlc, jl_pr_t* pr) {
 int32_t _jl_gl_getu(jvct_t* _jlc, GLuint prg, char *var) {
 	int32_t a = 0;
 	if((a = glGetUniformLocation(prg, var)) == -1) {
-		_jl_fl_errf(_jlc, ":opengl: bad name; is:\n:");
-		_jl_fl_errf(_jlc, var);
-		_jl_fl_errf(_jlc, "\n");
+		jl_io_print(_jlc->jlc, ":opengl: bad name; is: %s", var);
 		jl_sg_kill(_jlc->jlc);
 	}
 	JL_GL_ERROR(_jlc, a,"glGetUniformLocation");
@@ -1317,7 +1293,7 @@ int32_t _jl_gl_getu(jvct_t* _jlc, GLuint prg, char *var) {
 
 void _jl_gl_geta(jvct_t* _jlc, GLuint prg, m_i32_t *attrib, const char *title) {
 	if((*attrib = glGetAttribLocation(prg, title)) == -1) {
-		_jl_fl_errf(_jlc,
+		jl_io_print(_jlc->jlc, 
 			"attribute name is either reserved or non-existant");
 		jl_sg_kill(_jlc->jlc);
 	}
@@ -1329,18 +1305,18 @@ void _jl_gl_geta(jvct_t* _jlc, GLuint prg, m_i32_t *attrib, const char *title) {
 /************************/
 
 static inline void _jl_gl_init_setup_gl(jvct_t* _jlc) {
-	jl_io_printc(_jlc->jlc, "setting properties...\n");
+	jl_io_print(_jlc->jlc, "setting properties....");
 	//Disallow Dither & Depth Test
 	_jl_gl_init_disable_extras(_jlc);
 	//Set alpha=0 to transparent
 	_jl_gl_init_enable_alpha(_jlc);
 	glPixelStorei(GL_PACK_ALIGNMENT, 1);
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-	jl_io_printc(_jlc->jlc, "set glproperties.\n");
+	jl_io_print(_jlc->jlc, "set glproperties.");
 }
 
 static inline void _jl_gl_init_shaders(jvct_t* _jlc) {
-	jl_io_printc(_jlc->jlc, "making GLSL programs....\n");
+	jl_io_print(_jlc->jlc, "making GLSL programs....");
 	_jlc->gl.prgs[JL_GL_SLPR_PRM] = jl_gl_glsl_prg_create(_jlc,
 		source_vert_tex, source_frag_tex);
 	_jlc->gl.prgs[JL_GL_SLPR_TEX] = jl_gl_glsl_prg_create(_jlc,
@@ -1349,11 +1325,11 @@ static inline void _jl_gl_init_shaders(jvct_t* _jlc) {
 		source_vert_tex, source_frag_tex_charmap);
 	_jlc->gl.prgs[JL_GL_SLPR_CLR] = jl_gl_glsl_prg_create(_jlc,
 		source_vert_clr, source_frag_clr);
-	jl_io_printc(_jlc->jlc, "made programs.\n");
+	jl_io_print(_jlc->jlc, "made programs.");
 
-	jl_io_printc(_jlc->jlc, "setting up shaders....\n");
+	jl_io_print(_jlc->jlc, "setting up shaders....");
 	if(_jlc->gl.tex.uniforms.textures == NULL) {
-		_jl_fl_errf(_jlc, "Couldn't create uniforms");
+		jl_io_print(_jlc->jlc, "Couldn't create uniforms");
 		jl_sg_kill(_jlc->jlc);
 	}
 	// Texture
@@ -1392,27 +1368,27 @@ static inline void _jl_gl_init_shaders(jvct_t* _jlc) {
 	_jlc->gl.chr.uniforms.new_color =
 		_jl_gl_getu(_jlc, _jlc->gl.prgs[JL_GL_SLPR_CHR], "new_color");
 	//
-	jl_io_printc(_jlc->jlc, "setting up prm shader attrib's....\n");
+	jl_io_print(_jlc->jlc, "setting up prm shader attrib's....");
 	_jl_gl_geta(_jlc, _jlc->gl.prgs[JL_GL_SLPR_PRM],
 		&_jlc->gl.prm.attr.position, "position");
 	_jl_gl_geta(_jlc, _jlc->gl.prgs[JL_GL_SLPR_PRM],
 		&_jlc->gl.prm.attr.texpos, "texpos");
-	jl_io_printc(_jlc->jlc, "setting up tex shader attrib's....\n");
+	jl_io_print(_jlc->jlc, "setting up tex shader attrib's....");
 	_jl_gl_geta(_jlc, _jlc->gl.prgs[JL_GL_SLPR_TEX],
 		&_jlc->gl.tex.attr.position, "position");
 	_jl_gl_geta(_jlc, _jlc->gl.prgs[JL_GL_SLPR_TEX],
 		&_jlc->gl.tex.attr.texpos, "texpos");
-	jl_io_printc(_jlc->jlc, "setting up chr shader attrib's....\n");
+	jl_io_print(_jlc->jlc, "setting up chr shader attrib's....");
 	_jl_gl_geta(_jlc, _jlc->gl.prgs[JL_GL_SLPR_CHR],
 		&_jlc->gl.chr.attr.position, "position");
 	_jl_gl_geta(_jlc, _jlc->gl.prgs[JL_GL_SLPR_CHR],
 		&_jlc->gl.chr.attr.texpos, "texpos");
-	jl_io_printc(_jlc->jlc, "setting up clr shader attrib's....\n");
+	jl_io_print(_jlc->jlc, "setting up clr shader attrib's....");
 	_jl_gl_geta(_jlc, _jlc->gl.prgs[JL_GL_SLPR_CLR],
 		&_jlc->gl.clr.attr.position, "position");
 	_jl_gl_geta(_jlc, _jlc->gl.prgs[JL_GL_SLPR_CLR],
 		&_jlc->gl.clr.attr.acolor, "acolor");
-	jl_io_printc(_jlc->jlc, "set up shaders.\n");
+	jl_io_print(_jlc->jlc, "set up shaders.");
 }
 
 #if JL_GLRTEX == JL_GLRTEX_EGL
@@ -1471,13 +1447,13 @@ static inline void _jl_gl_make_res(jvct_t* _jlc) {
 	// Create shaders and set up attribute/uniform variable communication
 	_jl_gl_init_shaders(_jlc);
 	//
-	jl_io_printc(_jlc->jlc, "making temporary vertex object....\n");
+	jl_io_print(_jlc->jlc, "making temporary vertex object....");
 	_jlc->gl.temp_vo = jl_gl_vo_make(_jlc->jlc, 1);
-	jl_io_printc(_jlc->jlc, "making default texc buff!\n");
+	jl_io_print(_jlc->jlc, "making default texc buff!");
 	// Default GL Texture Coordinate Buffer
 	jl_gl_buffer_new__(_jlc, &(_jlc->gl.default_tc));
 	jl_gl_buffer_set__(_jlc, _jlc->gl.default_tc, DEFAULT_TC, 8);
-	jl_io_printc(_jlc->jlc, "made temp vo & default tex. c. buff!\n");
+	jl_io_print(_jlc->jlc, "made temp vo & default tex. c. buff!");
 	jl_io_close_block(_jlc->jlc); //Close Block "GLIN"
 }
 
@@ -1685,7 +1661,7 @@ void jl_gl_pr_draw(jl_t* jlc, jl_pr_t* pr, jl_vec3_t* vec, jl_vec3_t* scl) {
 
 void jl_gl_pr(jl_t* jlc, jl_pr_t * pr, jl_simple_fnt par__redraw) {
 	if(!pr) {
-		_jl_fl_errf(jlc->_jlc, "Drawing on lost pre-renderer.\n");
+		jl_io_print(jlc, "Drawing on lost pre-renderer.");
 		jl_sg_kill(jlc);
 	}
 	// Use the vo's pr
@@ -1712,7 +1688,7 @@ void _jl_gl_init(jvct_t* _jlc) {
 #ifdef JL_GLTYPE_HAS_GLEW
 	printf(" [JLVM/GLEW] init\n");
 	if(glewInit()!=GLEW_OK) {
-		_jl_fl_errf(_jlc, "glew fail!(no sticky)\n");
+		jl_io_print(_jlc->jlc, "glew fail!(no sticky)");
 		jl_sg_kill(_jlc->jlc);
 	}
 #endif
