@@ -74,10 +74,10 @@ static int jl_fl_save_(jl_t* jlc, const void *file_data, const char *file_name,
 	if(fd <= 0) {
 		errsv = errno;
 
-		jl_io_print(jlc, "Save[open]:");
-		jl_io_print(jlc, " Failed to open file:");
-		jl_io_print(jlc, "\t%s", converted_filename);
-		jl_io_print(jlc, " Write failed: %s", strerror(errsv));
+		jl_io_print(jlc, "Save/Open: ");
+		jl_io_print(jlc, "\tFailed to open file: \"%s\"",
+			converted_filename);
+		jl_io_print(jlc, "\tWrite failed: %s", strerror(errsv));
 		jl_sg_kill(jlc);
 	}
 	int at = lseek(fd, 0, SEEK_END);
@@ -236,11 +236,14 @@ strt jl_fl_load(jl_t* jlc, str_t file_name) {
 	int fd = open(converted_filename, O_RDWR);
 	
 	//Open Block FLLD
-	jl_io_offset(jlc, JL_IO_SIMPLE, "FLLD");
+	jl_io_function(jlc, "FL_Load");
 	
 	if(fd <= 0) {
-		jl_io_print(jlc, "failed to open: \"%s\"", file_name);
-		jl_io_print(jlc, "file_file_load: Failed to open file.");
+		int errsv = errno;
+
+		jl_io_print(jlc, "jl_fl_load/open: ");
+		jl_io_print(jlc, "\tFailed to open file: \"%s\"", file_name);
+		jl_io_print(jlc, "\tLoad failed because: %s", strerror(errsv));
 		jl_sg_kill(jlc);
 	}
 	int Read = read(fd, file, MAXFILELEN);
@@ -252,7 +255,7 @@ strt jl_fl_load(jl_t* jlc, str_t file_name) {
 	strt rtn = jlc->info ?
 		jl_me_strt_mkfrom_data(jlc, jlc->info, file) : NULL;
 	
-	jl_io_close_block(jlc); //Close Block "FLLD"
+	jl_io_return(jlc, "FL_Load"); //Close Block "FLLD"
 	return rtn;
 }
 
@@ -272,12 +275,12 @@ char jl_fl_pk_save(jl_t* jlc, str_t packageFileName, str_t fileName,
 {
 	str_t converted = jl_fl_convert__(jlc, packageFileName);
 
-	jl_io_offset(jlc, JL_IO_SIMPLE, "PKSV"); // {
+	jl_io_function(jlc, "FL_PkSave");
 	jl_io_print(jlc, "opening \"%s\"....", converted);
 	struct zip *archive = zip_open(converted, ZIP_CREATE 
 		/*| ZIP_CHECKCONS*/, NULL);
 	if(archive == NULL) {
-		jl_io_close_block(jlc); // !}
+		jl_io_return(jlc, "FL_PkSave");
 		return 1;
 	}else{
 		jl_io_print(jlc, "opened package, \"%d\".", converted);
@@ -288,6 +291,7 @@ char jl_fl_pk_save(jl_t* jlc, str_t packageFileName, str_t fileName,
 		zip_source_free(s);
 		jl_io_print(jlc, "[JL_FL_PK_SAVE] src null error[replace]: %s",
 			(char *)zip_strerror(archive));
+		jl_io_return(jlc, "FL_PkSave");
 		jl_sg_kill(jlc);
 	}
 //	printf("%d,%d,%d\n",archive,sb.index,s);
@@ -298,12 +302,12 @@ char jl_fl_pk_save(jl_t* jlc, str_t packageFileName, str_t fileName,
 	}
 	zip_close(archive);
 	jl_io_print(jlc, "DONE!");
-	jl_io_close_block(jlc); // }
+	jl_io_return(jlc, "FL_PkSave");
 	return 0;
 }
 
 static void _jl_fl_pk_load_quit(jl_t* jlc) {
-	jl_io_close_block(jlc); //Close Block "PKLD"
+	jl_io_return(jlc, "FL_PkLd"); //Close Block "FL_PkLd"
 }
 
 /**
@@ -325,7 +329,7 @@ strt jl_fl_pk_load(jl_t* jlc, const char *packageFileName,
 	int zerror = 0;
 
 	jlc->errf = JL_ERR_NERR;
-	jl_io_offset(jlc, JL_IO_SIMPLE, "PKLD"); // { : PKLD
+	jl_io_function(jlc, "FL_PkLd");
 
 	jl_io_print(jlc, "loading package:\"%s\"...", converted);
 	jl_io_print(jlc, "error check 1.");
@@ -339,8 +343,18 @@ strt jl_fl_pk_load(jl_t* jlc, const char *packageFileName,
 	}
 	jl_io_print(jlc, "error check 3.");
 	if(zipfile == NULL) {
-		jl_io_print(jlc, "couldn't load pckg \"%s\"", packageFileName);
+		jl_io_print(jlc, "couldn't load pckg \"%s\" because: ",
+			packageFileName);
+		if(zerror == ZIP_ER_INCONS) {
+			jl_io_print(jlc, "\tcorrupt file", packageFileName);
+		}else if(zerror == ZIP_ER_NOZIP) {
+			jl_io_print(jlc, "\tnot a zip file", packageFileName);
+		}else{
+			jl_io_print(jlc, "\tunknown error", packageFileName);
+		}
+		_jl_fl_pk_load_quit(jlc);
 		jl_sg_kill(jlc);
+		return NULL; // Shouldn't happen
 	}
 	jl_io_print(jlc, "error check 4.");
 	jl_io_print(jlc, (char *)zip_strerror(zipfile));
@@ -360,10 +374,12 @@ strt jl_fl_pk_load(jl_t* jlc, const char *packageFileName,
 	jl_io_print(jlc, "opened file in package / reading opened file....");
 	if((jlc->info = zip_fread(file, fileToLoad, PKFMAX)) == -1) {
 		jl_io_print(jlc, "file reading failed");
+		_jl_fl_pk_load_quit(jlc);
 		jl_sg_kill(jlc);
 	}
 	if(jlc->info == 0) {
 		jl_io_print(jlc, "empty file, returning NULL.");
+		_jl_fl_pk_load_quit(jlc);
 		return NULL;
 	}
 	jl_io_print(jlc, "jl_fl_pk_load: read %d bytes", jlc->info);
@@ -390,7 +406,7 @@ strt jl_fl_pk_load(jl_t* jlc, const char *packageFileName,
 u8_t jl_fl_mkdir(jl_t* jlc, str_t path) {
 	m_u8_t rtn = 255;
 
-	jl_io_offset(jlc, JL_IO_SIMPLE, "MDIR"); // {
+	jl_io_function(jlc, "FL_MkDir");
 	if(mkdir(path, JL_FL_PERMISSIONS)) {
 		int errsv = errno;
 		if(errsv == EEXIST) {
@@ -404,7 +420,7 @@ u8_t jl_fl_mkdir(jl_t* jlc, str_t path) {
 	}else{
 		rtn = 0;
 	}
-	jl_io_close_block(jlc); // } : MDIR
+	jl_io_return(jlc, "FL_MkDir");
 	// Return
 	return rtn;
 }
@@ -425,7 +441,7 @@ strt jl_fl_mkfile(jl_t* jlc, str_t pzipfile, str_t pfilebase,
 	strt rtn;
 
 	//Create Block "MKFL"
-	jl_io_offset(jlc, JL_IO_SIMPLE, "MKFL"); // {
+	jl_io_function(jlc, "FL_MkFl");
 
 	jl_io_print(jlc, "Creating File....");
 	jl_fl_save(jlc, contents, pzipfile, size);
@@ -437,11 +453,12 @@ strt jl_fl_mkfile(jl_t* jlc, str_t pzipfile, str_t pfilebase,
 		(jlc->errf == JL_ERR_FIND) )//Package still doesn't exist!!
 	{
 		jl_io_print(jlc, "Failed To Create file");
+		jl_io_return(jlc, "FL_MkFl");
 		jl_sg_kill(jlc);
 	}
 	jl_io_print(jlc, "Good loading!");
 	//Close Block "MKFL"
-	jl_io_close_block(jlc); // }
+	jl_io_return(jlc, "FL_MkFl");
 	jl_io_print(jlc, "File Made!");
 	return rtn;
 }
@@ -486,7 +503,7 @@ str_t jl_fl_get_resloc(jl_t* jlc, str_t prg_folder, str_t fname) {
 	str_t rtn = NULL;
 	
 	//Open Block "FLBS"
-	jl_io_offset(jlc, JL_IO_SIMPLE, "FLBS"); // {
+	jl_io_function(jlc, "FL_Base");
 	
 	jl_io_print(jlc, "Getting Resource Location....");
 	// Append 'prg_folder' onto 'resloc'
@@ -507,7 +524,7 @@ str_t jl_fl_get_resloc(jl_t* jlc, str_t prg_folder, str_t fname) {
 	// Free pfstrt & fnstrt & filesr
 	jl_me_strt_free(pfstrt),jl_me_strt_free(fnstrt),jl_me_strt_free(filesr);
 	// Close Block "FLBS"
-	jl_io_close_block(jlc); // }
+	jl_io_return(jlc, "FL_Base");
 	jl_io_print(jlc, "finished resloc w/ \"%s\"", rtn); 
 	return rtn;
 }
@@ -858,7 +875,7 @@ void _jl_fl_initb(jvct_t * _jlc) {
 }
 
 void _jl_fl_inita(jvct_t * _jlc) {
-	jl_io_offset(_jlc->jlc, JL_IO_INTENSE, "flIa");
+	jl_io_function(_jlc->jlc, "FL_InitA");
 	// Find out the native file separator.
 	_jlc->fl.separator = jl_me_strt_mkfrom_str("/");
 	// Get ( and if need be, make ) the directory for everything.
@@ -870,7 +887,6 @@ void _jl_fl_inita(jvct_t * _jlc) {
 	jl_fl_get_errf__(_jlc);
 	jl_io_print(_jlc->jlc, "Complete!");
 	//
-	jl_io_tag(_jlc->jlc, JL_IO_SIMPLE);
 	_jlc->has.filesys = 1;
 	jl_io_print(_jlc->jlc, "program name:");
 	jl_dl_progname(_jlc->jlc, Strt("JL_Lib"));
@@ -881,5 +897,5 @@ void _jl_fl_inita(jvct_t * _jlc) {
 	truncate(_jlc->fl.paths.errf, 0);
 	jl_io_print(_jlc->jlc, "Starting....");
 	jl_io_print(_jlc->jlc, "finished file init");
-	jl_io_close_block(_jlc->jlc);
+	jl_io_return(_jlc->jlc, "FL_InitA");
 }

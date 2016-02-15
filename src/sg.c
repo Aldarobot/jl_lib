@@ -208,7 +208,7 @@ void _jl_sg_load_jlpx(jvct_t* _jlc,strt data,void **pixels,int *w,int *h) {
 		return;
 	}
 
-	jl_io_offset(_jlc->jlc, JL_IO_PROGRESS, "JLPX"); // {
+	jl_io_function(_jlc->jlc, "SG_Jlpx"); // {
 	
 	//Check If File Is Of Correct Format
 	char *testing = malloc(strlen(JL_IMG_HEADER)+1);
@@ -217,7 +217,6 @@ void _jl_sg_load_jlpx(jvct_t* _jlc,strt data,void **pixels,int *w,int *h) {
 	jl_me_copyto(data->data + _jlc->sg.init_image_location, testing,
 		strlen(JL_IMG_HEADER));
 	testing[strlen(JL_IMG_HEADER)] = '\0';
-	jl_io_offset(_jlc->jlc, JL_IO_SIMPLE, "JLPX"); // =
 	jl_io_print(_jlc->jlc, "header=\"%s\" @%d", testing,
 		_jlc->sg.init_image_location);
 
@@ -275,9 +274,9 @@ void _jl_sg_load_jlpx(jvct_t* _jlc,strt data,void **pixels,int *w,int *h) {
 		*h = image->h;
 		// Clean-up
 		SDL_free(image);
+		jl_io_return(_jlc->jlc, "SG_Jlpx");
 		return;
 	}else{
-		jl_io_offset(_jlc->jlc, JL_IO_MINIMAL, "JLPX");
 		jl_io_print(_jlc->jlc, "bad file type(must be 1-4) is: %d", tester);
 		jl_sg_kill(_jlc->jlc);
 	}
@@ -295,13 +294,11 @@ void _jl_sg_load_jlpx(jvct_t* _jlc,strt data,void **pixels,int *w,int *h) {
 		image->key[i].a = data->data[_jlc->sg.init_image_location+ki];
 		ki++;
 	}
-	jl_io_offset(_jlc->jlc, JL_IO_INTENSE, "JLPX");
 	for(i = 0; i < TEXTURE_WH; i++) {
 		image->tex_pixels[i] = data->data[_jlc->sg.init_image_location+ki];
 		ki++;
 	}
 	_jlc->sg.init_image_location+=FSIZE+1;
-	jl_io_offset(_jlc->jlc, JL_IO_SIMPLE, "JLPX");
 	jl_io_print(_jlc->jlc, "creating texture...");
 
 	uint8_t *tex_pixels = NULL;
@@ -323,7 +320,7 @@ void _jl_sg_load_jlpx(jvct_t* _jlc,strt data,void **pixels,int *w,int *h) {
 	*h = a[1];
 	//Cleanup
 	free(image);
-	jl_io_close_block(_jlc->jlc); // } :Close Block "JLPX"
+	jl_io_return(_jlc->jlc, "SG_Jlpx");
 }
 
 //loads next image in the currently loaded file.
@@ -331,15 +328,13 @@ static inline uint8_t _jl_sg_load_next_img(jvct_t * _jlc) {
 	void *fpixels = NULL;
 	int fw;
 	int fh;
-	jl_io_offset(_jlc->jlc, JL_IO_PROGRESS, "IMGS");
+	jl_io_function(_jlc->jlc, "SG_Imgs");
 	_jl_sg_load_jlpx(_jlc, _jlc->sg.image_data, &fpixels, &fw, &fh);
-	jl_io_print(_jlc->jlc, "{IMGS}");
 	if(fpixels == NULL) {
 		jl_io_print(_jlc->jlc, "loaded %d", _jlc->sg.image_id);
 		_jlc->jlc->info = _jlc->sg.image_id;
-		jl_io_close_block(_jlc->jlc); //Close Block "IMGS"
 		jl_io_print(_jlc->jlc, "IL");
-		jl_io_close_block(_jlc->jlc); //Close Block "IMGS"
+		jl_io_return(_jlc->jlc, "SG_Imgs");
 		return 0;
 	}else{
 		jl_io_print(_jlc->jlc, "creating image #%d....", _jlc->sg.igid);
@@ -349,7 +344,7 @@ static inline uint8_t _jl_sg_load_next_img(jvct_t * _jlc) {
 			_jlc->sg.image_id);
 //		#endif
 		_jlc->sg.image_id++;
-		jl_io_close_block(_jlc->jlc); //Close Block "IMGS"
+		jl_io_return(_jlc->jlc, "SG_Imgs");
 		return 1;
 	}
 }
@@ -368,19 +363,18 @@ static inline void _jl_sg_init_images(jvct_t * _jlc,strt data,u16_t gi,u16_t x){
 	_jlc->sg.igid = gi;
 	_jlc->sg.image_data = data;
 
-	jl_io_offset(_jlc->jlc, JL_IO_PROGRESS, "INIM");
+	jl_io_function(_jlc->jlc, "SG_InitImgs");
 	jl_io_print(_jlc->jlc, "loading images....");
-	jl_io_offset(_jlc->jlc, JL_IO_SIMPLE, "INIM");
 	jl_io_print(_jlc->jlc, "stringlength = %d", data->size);
-	jl_io_close_block(_jlc->jlc); //Close Block "INIM"
 //load textures
 	if(x) jl_sg_add_some_imgs_(_jlc, x);
 	else while(_jl_sg_load_next_img(_jlc));
+	jl_io_return(_jlc->jlc, "SG_InitImgs");
 }
 
 static uint32_t _jl_sg_quit(jvct_t* _jlc, int rc) {
+	jl_io_function(_jlc->jlc, "SG_Kill");
 	jl_gr_draw_msge(_jlc->jlc, 0, 0, 0, "Quiting JL-Lib....");
-	jl_io_offset(_jlc->jlc, JL_IO_SIMPLE, "KILL"); // {
 	if(_jlc->me.status == JL_STATUS_EXIT) {
 		rc = JL_RTN_FAIL_IN_FAIL_EXIT;
 		printf("\n!! double error!\n");
@@ -397,6 +391,7 @@ static uint32_t _jl_sg_quit(jvct_t* _jlc, int rc) {
 	jl_io_print(_jlc->jlc, ":Quit successfully!"); //Exited properly
 	_jl_io_kill(_jlc->jlc);
 	_jl_me_kill(_jlc);
+	printf("[\\JL_Lib] ");
 	if(!rc) printf("| No errors ");
 	printf("| Exiting with return value %d |\n", rc);
 	exit(rc);
@@ -415,12 +410,11 @@ void jl_sg_kill(jl_t* jlc) {
 	jvct_t * _jlc = jlc->_jlc;
 	
 	jl_io_print(jlc, "Quitting On Error....");
-	jl_io_offset(jlc, JL_IO_INTENSE, "ERQT");
 	strt error_string = jl_fl_load(jlc, _jlc->fl.paths.errf);
 	jl_io_print(jlc, (void*)error_string->data);
 //	jl_io_stacktrace(jlc);
 	_jl_sg_quit(jlc->_jlc, JL_RTN_FAIL);
-	jl_io_close_block(jlc); //Close Block "ERQT"
+	// Program is stopped at this point.
 }
 
 /**
@@ -470,7 +464,7 @@ static inline void jl_sg_seconds_passed__(jvct_t* _jlc) {
 }
 
 static void jl_sg_add_image__(jl_t* jlc, str_t pzipfile, u16_t pigid, u8_t x) {
-	jl_io_offset(jlc, JL_IO_PROGRESS, "LIMG");
+	jl_io_function(jlc, "SG_LImg");
 	//Load Graphics
 	strt img = jl_fl_media(jlc, "jlex/2/_img", pzipfile,
 		jl_gem(), jl_gem_size());
@@ -480,9 +474,8 @@ static void jl_sg_add_image__(jl_t* jlc, str_t pzipfile, u16_t pigid, u8_t x) {
 		_jl_sg_init_images(jlc->_jlc, img, pigid, x);
 	else
 		jl_io_print(jlc, "Loaded 0 images!");
-	jl_io_offset(jlc, JL_IO_PROGRESS, "LIMG"); // {
 	jl_io_print(jlc, "Loaded Images...");
-	jl_io_close_block(jlc); // }
+	jl_io_return(jlc, "SG_LImg"); // }
 }
 
 /**
@@ -671,8 +664,6 @@ static inline void _jl_sg_init_done(jvct_t *_jlc) {
 	_jlc->has.graphics = 1; //Graphics Now Available For Use
 	jl_io_print(_jlc->jlc, "printing to the screen....");
 	jl_gr_draw_msge(_jlc->jlc, 0, 0, 0, "LOADING JLLIB....");
-	jl_io_print(_jlc->jlc, "offsetting....");
-	jl_io_offset(_jlc->jlc, JL_IO_MINIMAL, "JLLB"); //"JLLB" to SIMPLE
 	jl_io_print(_jlc->jlc, "started up display %dx%d",
 		_jlc->dl.full_w, _jlc->dl.full_h);
 }
@@ -744,8 +735,7 @@ static inline void _jl_ini(jvct_t *_jlc) {
 	_jl_sg_init_libs(_jlc);
 	hack_user_init(_jlc->jlc);
 	_jlc->sg.mode.tclp[JL_SG_WM_RESZ](_jlc->jlc);
-	
-	jl_io_offset(_jlc->jlc, JL_IO_MINIMAL, "JLLB"); //"JLLB" to MINIMAL
+
 	jl_io_print(_jlc->jlc, "Initialized!");
 }
 

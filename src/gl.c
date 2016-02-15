@@ -383,7 +383,7 @@ void jl_gl_maketexture(jl_t* jlc, uint16_t gid, uint16_t id,
 {
 	jvct_t* _jlc = jlc->_jlc;
 
-	jl_io_offset(_jlc->jlc, JL_IO_SIMPLE, "MKTX");
+	jl_io_function(_jlc->jlc, "GL_MkTex");
 	if (!pixels) {
 		jl_io_print(_jlc->jlc, "null pixels");
 		jl_sg_kill(jlc);
@@ -413,7 +413,7 @@ void jl_gl_maketexture(jl_t* jlc, uint16_t gid, uint16_t id,
 	// Make the texture.
 	jl_gl_texture_new__(_jlc, &_jlc->gl.textures[gid][id], pixels, width,
 		height, bytepp);
-	jl_io_close_block(_jlc->jlc); //Close Block "MKTX"
+	jl_io_return(_jlc->jlc, "GL_MkTex");
 }
 
 //Lower Level Stuff
@@ -1434,7 +1434,7 @@ static inline void jl_gl_init_egl(jvct_t* _jlc) {
 
 //Load and create all resources
 static inline void _jl_gl_make_res(jvct_t* _jlc) {
-	jl_io_offset(_jlc->jlc, JL_IO_SIMPLE, "GLIN");
+	jl_io_function(_jlc->jlc, "GL_Init");
 #if JL_GLRTEX == JL_GLRTEX_EGL
 	// Initialize EGL.
 	jl_gl_init_egl(_jlc);
@@ -1454,7 +1454,7 @@ static inline void _jl_gl_make_res(jvct_t* _jlc) {
 	jl_gl_buffer_new__(_jlc, &(_jlc->gl.default_tc));
 	jl_gl_buffer_set__(_jlc, _jlc->gl.default_tc, DEFAULT_TC, 8);
 	jl_io_print(_jlc->jlc, "made temp vo & default tex. c. buff!");
-	jl_io_close_block(_jlc->jlc); //Close Block "GLIN"
+	jl_io_return(_jlc->jlc, "GL_Init");
 }
 
 static inline void _jl_gl_vo_make(jvct_t* _jlc, jl_vo_t* vo, u32_t nc) {

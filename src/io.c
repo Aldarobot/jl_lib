@@ -22,7 +22,7 @@ static void _jl_io_current(jl_t *jlc);
 static void jl_io_indent__(jvct_t *_jlc, i8_t o) {
 	int i;
 	// Print enough spaces for the open blocks.
-	for(i = 0; i < _jlc->io.offs + o; i++) JL_IO_PRINTF(" ");
+	for(i = 0; i < _jlc->io.level + o; i++) JL_IO_PRINTF(" ");
 }
 
 static inline void _jl_io_new_block(jl_t *jlc) {
@@ -32,7 +32,7 @@ static inline void _jl_io_new_block(jl_t *jlc) {
 
 	_jlc->io.ofs2 = 0;
 	JL_IO_PRINTF("[");
-	for(i = _jlc->io.offs - ofs2; i < _jlc->io.offs; i++) {
+	for(i = _jlc->io.level - ofs2; i < _jlc->io.level; i++) {
 		JL_IO_PRINTF("/");
 		JL_IO_PRINTF("%s", _jlc->io.stack[i+1]);
 	}
@@ -47,7 +47,7 @@ static inline void _jl_io_old_block(jl_t *jlc) {
 
 	_jlc->io.ofs2 = 0;
 	JL_IO_PRINTF("[\\");
-	for(i = _jlc->io.offs; i > _jlc->io.offs + ofs2; i--) {
+	for(i = _jlc->io.level; i > _jlc->io.level + ofs2; i--) {
 		JL_IO_PRINTF("%s", _jlc->io.stack[i+1]);
 		JL_IO_PRINTF("\\");
 	}
@@ -70,11 +70,9 @@ static inline void jl_io_print_descriptor_(jvct_t *_jlc) {
 static void jl_io_test_overreach(jl_t* jlc) {
 	jvct_t *_jlc = jlc->_jlc;
 	
-	if(_jlc->io.offs > 15) {
-		JL_IO_PRINTF("\nOverreached block count %d!!!\n", _jlc->io.offs);
-		_jlc->io.offs = 15;
-		_jl_io_current(jlc);
-		JL_IO_PRINTF("\nQuitting...\n");
+	if(_jlc->io.level > 49) {
+		JL_IO_PRINTF("Overreached block count %d!!!\n", _jlc->io.level);
+		JL_IO_PRINTF("Quitting....\n");
 		exit(0);
 	}
 }
@@ -91,7 +89,7 @@ static void _jl_io_current(jl_t *jlc) {
 	int i;
 
 	JL_IO_PRINTF(" <");
-	for(i = 0; i < _jlc->io.offs; i++) {
+	for(i = 0; i < _jlc->io.level; i++) {
 		JL_IO_PRINTF(jl_me_format(jlc, "%s",
 			_jlc->io.stack[i+1]));
 		JL_IO_PRINTF("/");
@@ -114,7 +112,7 @@ void _jl_io_printc(jl_t* jlc, str_t input) {
 		int chr_cnt;
 		char convert[10];
 		if(strlen(text) > chr_cnt - 1) {
-			chr_cnt = 73 - _jlc->io.offs;
+			chr_cnt = 73 - _jlc->io.level;
 //			i++;
 		}else{
 			chr_cnt = strlen(text);
@@ -199,62 +197,28 @@ void jl_io_printd(jl_t *jlc, double print) {
 	free(string);
 }
 
-/**
- * Close an offset block.
- * @param jlc: the library context.
-*/
-void jl_io_close_block(jl_t* jlc) {
-	jvct_t *_jlc = jlc->_jlc;
-
-	_jlc->io.ofs2 -= 1;
-	if(_jlc->io.offs != 1) {
-		_jlc->io.offs -= 1;
-	}else{
-		JL_IO_PRINTF("[EXIT] ");
-	}
-}
-
-/**
- * Change the tag of the current block.
- * @param jlc: the library context.
- * @param tag: the tag attached to the block.
-**/
-void jl_io_tag(jl_t* jlc, i16_t tag) {
-	jvct_t *_jlc = jlc->_jlc;
-
-	_jlc->io.tag[_jlc->io.offs] = tag;
-}
-
-/**
- * Open an offset block.
- * @param jlc: the library context.
- * @param this: the name of the block.
- * @param tag: the tag attached to the block.
-*/
-void jl_io_offset(jl_t* jlc, i16_t tag, char * this) {
-	jl_io_function(jlc, this);
-	return;
-}
-
 void jl_io_function(jl_t* jlc, str_t fn_name) {
 	jvct_t* _jlc = jlc->_jlc;
+	i32_t size = strlen(fn_name);
 	
 	_jlc->io.level++;
-	_jlc->io.offs++;
 	_jlc->io.ofs2++;
-	jl_me_copyto(fn_name, _jlc->io.stack[_jlc->io.level], 30);
+	jl_me_copyto(fn_name, _jlc->io.stack[_jlc->io.level], size);
+	_jlc->io.stack[_jlc->io.level][size] = '\0';
 }
 
 void jl_io_return(jl_t* jlc, str_t fn_name) {
 	jvct_t* _jlc = jlc->_jlc;
 
 	if(strcmp(fn_name, _jlc->io.stack[_jlc->io.level])) {
-		jl_io_print(jlc, "Function \"%4s\" didn't return.",
+		jl_io_print(jlc, "Error returning \"%s\":\n", fn_name);
+		jl_io_print(jlc, "\tFunction \"%s\" didn't return.",
 			_jlc->io.stack[_jlc->io.level]);
 		jl_sg_kill(jlc);
 	}
 	jl_me_clr(_jlc->io.stack[_jlc->io.level], 30);
 	_jlc->io.level--;
+	_jlc->io.ofs2 -= 1;
 }
 
 void jl_io_stacktrace(jl_t* jlc) {
@@ -279,15 +243,13 @@ void _jl_io_init(jvct_t * _jlc) {
 	}
 	_jlc->io.level = 0;
 	_jlc->io.printfn = malloc(sizeof(void *));
-	_jlc->io.offs = 0;
 	_jlc->io.ofs2 = 0;
 	jl_io_tag_set(_jlc->jlc, NULL);
 	jl_io_function(_jlc->jlc, "JL_Lib");
 }
 
 void _jl_io_kill(jl_t * jlc) {
-	jl_io_close_block(jlc); //Close Block "KILL"
+	jl_io_return(jlc, "SG_Kill");
 	jl_io_print(jlc, "Killed Program!");
-	jl_io_close_block(jlc); //Close Block "JLLB"
 	jl_io_return(jlc, "JL_Lib");
 }

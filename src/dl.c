@@ -49,7 +49,7 @@ static void _jl_dl_fscreen(jvct_t* _jlc, uint8_t a) {
 }
 
 static inline void jlvmpi_ini_sdl(jvct_t* _jlc) {
-	jl_io_offset(_jlc->jlc, JL_IO_SIMPLE, "ISDL"); // {
+	jl_io_function(_jlc->jlc, "InitSDL"); // {
 	jl_io_print(_jlc->jlc, "Starting up....");
 	SDL_Init(JL_DL_INIT);
 	jl_io_print(_jlc->jlc, "input....");
@@ -58,7 +58,7 @@ static inline void jlvmpi_ini_sdl(jvct_t* _jlc) {
 	SDL_EventState(SDL_KEYDOWN, SDL_IGNORE);
 	SDL_EventState(SDL_KEYUP, SDL_IGNORE);
 	#endif
-	jl_io_close_block(_jlc->jlc); // }
+	jl_io_return(_jlc->jlc, "InitSDL"); // }
 }
 
 //Update the SDL_displayMode structure
@@ -68,9 +68,9 @@ static void _jlvm_curd_mode(jvct_t *_jlc) {
 			(char *)SDL_GetError());
 		jl_sg_kill(_jlc->jlc);
 	}
-	jl_io_offset(_jlc->jlc, JL_IO_SIMPLE, "CURD"); // {
+	jl_io_function(_jlc->jlc, "SDL_cdm");
 	jl_io_print(_jlc->jlc, "%d,%d", _jlc->dl.current.w, _jlc->dl.current.h);
-	jl_io_close_block(_jlc->jlc); // }
+	jl_io_return(_jlc->jlc, "SDL_cdm");
 }
 
 //This is the code that actually creates the window by accessing SDL

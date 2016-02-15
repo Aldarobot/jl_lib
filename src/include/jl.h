@@ -135,9 +135,6 @@
 	void jl_gr_addicon_name(jl_t* jlc);
 // "ct.c"
 // "io.c"
-	void jl_io_tag(jl_t* jlc, i16_t tag);
-	void jl_io_offset(jl_t* jlc, i16_t tag, char * thisp);
-	void jl_io_close_block(jl_t* jlc);
 	void jl_io_tag_set(jl_t* jlc, jl_io_print_fnt tagfn);
 	void jl_io_printc(jl_t* jlc, const char * print);
 	void jl_io_printt(jl_t *jlc, uint8_t a, const char *print);
