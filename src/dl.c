@@ -36,10 +36,10 @@ uint16_t jl_dl_geth(jl_t *jlc) {
 }
 
 //STATIC FUNCTIONS
-static void jl_dl_killedit(jvct_t* _jlc, char *str) {
-	_jl_fl_errf(_jlc, str);
-	_jl_fl_errf(_jlc, SDL_GetError());
-	jl_sg_kill(_jlc->jlc);
+static void jl_dl_killedit(jl_t* jlc, char *str) {
+	jl_io_print(jlc, str);
+	jl_io_print(jlc, SDL_GetError());
+	jl_sg_kill(jlc);
 }
 
 static SDL_Window* jl_dl_mkwindow(jvct_t* _jlc) {
@@ -50,13 +50,13 @@ static SDL_Window* jl_dl_mkwindow(jvct_t* _jlc) {
 		_jlc->dl.current.w, _jlc->dl.current.h,	// width and height
 		SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE
     	);
-	if(rtn == NULL) jl_dl_killedit(_jlc, "SDL_CreateWindow");
+	if(rtn == NULL) jl_dl_killedit(_jlc->jlc, "SDL_CreateWindow");
 	return rtn;
 }
 
 static SDL_GLContext* jl_dl_gl_context(jvct_t* _jlc) {
 	SDL_GLContext* rtn = SDL_GL_CreateContext(_jlc->dl.displayWindow->w);
-	if(rtn == NULL) jl_dl_killedit(_jlc, "SDL_GL_CreateContext");
+	if(rtn == NULL) jl_dl_killedit(_jlc->jlc, "SDL_GL_CreateContext");
 	return rtn;
 }
 
@@ -66,38 +66,32 @@ static void _jl_dl_fscreen(jvct_t* _jlc, uint8_t a) {
 	// Actually set whether fullscreen or not.
 	if(SDL_SetWindowFullscreen(_jlc->dl.displayWindow->w,
 	 JL_DL_FULLSCREEN * _jlc->dl.fullscreen))
-		jl_dl_killedit(_jlc, "SDL_SetWindowFullscreen");
+		jl_dl_killedit(_jlc->jlc, "SDL_SetWindowFullscreen");
 }
 
 static inline void jlvmpi_ini_sdl(jvct_t* _jlc) {
-	jl_io_offset(_jlc->jlc, JL_IO_SIMPLE, "ISDL"); // {
-	jl_io_printc(_jlc->jlc, "Starting up...\n");
+	jl_io_function(_jlc->jlc, "InitSDL"); // {
+	jl_io_print(_jlc->jlc, "Starting up....");
 	SDL_Init(JL_DL_INIT);
-	jl_io_printc(_jlc->jlc, "input...\n");
+	jl_io_print(_jlc->jlc, "input....");
 	#if JL_PLAT == JL_PLAT_COMPUTER
 	SDL_ShowCursor(SDL_DISABLE);
 	SDL_EventState(SDL_KEYDOWN, SDL_IGNORE);
 	SDL_EventState(SDL_KEYUP, SDL_IGNORE);
 	#endif
-	jl_io_close_block(_jlc->jlc); // }
+	jl_io_return(_jlc->jlc, "InitSDL"); // }
 }
 
 //Update the SDL_displayMode structure
 static void _jlvm_curd_mode(jvct_t *_jlc) {
 	if(SDL_GetCurrentDisplayMode(0, &_jlc->dl.current)) {
-		_jl_fl_errf(_jlc, ":failed to get current display mode:\n:");
-		_jl_fl_errf(_jlc, (char *)SDL_GetError());
-		_jl_fl_errf(_jlc, "\n");
+		jl_io_print(_jlc->jlc, "failed to get current display mode:%s",
+			(char *)SDL_GetError());
 		jl_sg_kill(_jlc->jlc);
 	}
-	jl_io_offset(_jlc->jlc, JL_IO_SIMPLE, "CURD"); // {
-	jl_io_printc(_jlc->jlc,
-		jl_me_string_fnum(_jlc->jlc, _jlc->dl.current.w));
-	jl_io_printc(_jlc->jlc, ",");
-	jl_io_printc(_jlc->jlc,
-		jl_me_string_fnum(_jlc->jlc, _jlc->dl.current.h));
-	jl_io_printc(_jlc->jlc, "\n");
-	jl_io_close_block(_jlc->jlc); // }
+	jl_io_function(_jlc->jlc, "SDL_cdm");
+	jl_io_print(_jlc->jlc, "%d,%d", _jlc->dl.current.w, _jlc->dl.current.h);
+	jl_io_return(_jlc->jlc, "SDL_cdm");
 }
 
 //This is the code that actually creates the window by accessing SDL
@@ -136,7 +130,6 @@ static inline void _jlvm_crea_wind(jvct_t *_jlc) {
 //	SDL_GL_SetAttribute(SDL_GL_SHARE_WITH_CURRENT_CONTEXT, 0);
 	
 	_jlc->dl.displayWindow->c = jl_dl_gl_context(_jlc);
-		
 	// Clear and update
 	jl_gl_clear(_jlc->jlc, 2, 255, 5, 255);
 	_jl_dl_loop(_jlc);
@@ -285,10 +278,10 @@ void _jl_dl_inita(jvct_t* _jlc) {
 }
 
 void _jl_dl_kill(jvct_t* _jlc) {
-	jl_io_printc(_jlc->jlc, "killing SDL...\n");
+	jl_io_print(_jlc->jlc, "killing SDL....");
 	if (_jlc->dl.displayWindow->c != NULL) {
 		SDL_free(_jlc->dl.displayWindow->c);
 		SDL_free(_jlc->dl.displayWindow->w);
 	}
-	jl_io_printc(_jlc->jlc, "killed SDL!\n");
+	jl_io_print(_jlc->jlc, "killed SDL!");
 }

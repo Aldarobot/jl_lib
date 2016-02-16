@@ -15,7 +15,7 @@
 
 static void *jl_me_realloc__(jvct_t* _jlc, void *a, uint32_t size) {
 	if((a = realloc(a, size + 1)) == NULL) {
-		_jl_fl_errf(_jlc, "realloc() memory error!\n");
+		jl_io_print(_jlc->jlc, "realloc() memory error!");
 		jl_sg_kill(_jlc->jlc);
 	}
 	return a;
@@ -47,12 +47,12 @@ static void _jl_me_init_alloc(void **a, uint32_t size) {
 
 static void _jl_me_alloc_malloc(jl_t* jlc, void **a, uint32_t size) {
 	if(size == 0) {
-		_jl_fl_errf(jlc->_jlc, "Double Free or free on NULL pointer\n");
+		jl_io_print(jlc, "Double Free or free on NULL pointer");
 		jl_sg_kill(jlc);
 	}
 	*a = malloc(size);
 	if(*a == NULL) {
-		_jl_fl_errf(jlc->_jlc, "jl_me_alloc: Out Of Memory!\n");
+		jl_io_print(jlc, "jl_me_alloc: Out Of Memory!");
 		jl_sg_kill(jlc);
 	}
 	jl_me_clr(*a, size);
@@ -98,8 +98,7 @@ void jl_me_leak_fail(jl_t* jlc, str_t fn_name) {
 	jvct_t * jlc_ = jlc->_jlc;
 
 	if(jl_me_tbiu() != jlc_->me.usedmem) {
-		jl_io_printc(jlc, fn_name);
-		jl_io_printc(jlc, ": Memory Leak Fail");
+		jl_io_print(jlc, "%s: Memory Leak Fail", fn_name);
 		jl_sg_kill(jlc);
 	}
 }
@@ -326,10 +325,10 @@ void jl_me_strt_strt(jl_t *jlc, strt a, strt b, uint64_t bytes) {
 	uint32_t sizeb = a->curs + bytes;
 
 	if(a == NULL) {
-		_jl_fl_errf(jlc->_jlc, "NULL A STRING");
+		jl_io_print(jlc, "NULL A STRING");
 		jl_sg_kill(jlc);
 	}else if(b == NULL) {
-		_jl_fl_errf(jlc->_jlc, "NULL B STRING");
+		jl_io_print(jlc, "NULL B STRING");
 		jl_sg_kill(jlc);
 	}
 	if(sizeb > size) size = sizeb;
@@ -362,27 +361,6 @@ void jl_me_strt_trunc(jl_t *jlc, strt a, uint32_t size) {
 	a->curs = 0;
 	a->size = size;
 	a->data = jl_me_realloc__(jlc->_jlc, a->data, a->size);
-}
-
-// Print a number out as a string and return it (Type=STRT_TEMP)
-strt jl_me_strt_fnum(i32_t a) {
-	strt new = jl_me_strt_make(30);
-	sprintf((void*)new->data, "%d", a);
-	return new;
-}
-
-char* jl_me_string_fnum(jl_t* jlc, int32_t a) {
-	char *string = NULL;
-	jl_me_alloc(jlc, (void**)&string, 30, 0);
-	sprintf(string, "%d", a);
-	return string;
-}
-
-const char* jl_me_string_fnum_tmp(jl_t* jlc, int32_t a) {
-	jvct_t * _jlc = jlc->_jlc;
-	jl_me_clr((void*)_jlc->me.temp_buff, 30);
-	sprintf((void*)_jlc->me.temp_buff, "%d", a);
-	return (void*)_jlc->me.temp_buff;
 }
 
 /**
