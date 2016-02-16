@@ -15,6 +15,8 @@
 //1=format,4=size,x=data
 #define JL_IMG_SIZE_FLS 5 // How many bytes start for images.
 
+	void jl_kill(jl_t* jlc, int rc);
+	void jl_init(jl_simple_fnt _fnc_init_);
 	void jl_dont(jl_t* jlc);
 // "me.c"
 	u64_t jl_me_tbiu(void);

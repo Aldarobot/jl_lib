@@ -1180,6 +1180,12 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 		// Set the mouse's collision width and height to 0
 		mouse->data.cb.w = 0.f;
 		mouse->data.cb.h = 0.f;
+		// Turn on graphics - Graphics Now Available For Use
+		_jlc->has.graphics = 1;
+		// Draw message on the screen
+		jl_gr_draw_msge(_jlc->jlc, 0, 0, 0, "LOADING JLLIB....");
+		jl_io_print(_jlc->jlc, "started up display %dx%d",
+			_jlc->dl.full_w, _jlc->dl.full_h);
 	}
 
 /**      @endcond      **/

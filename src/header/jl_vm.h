@@ -5,19 +5,6 @@
 //IO:
 
 	typedef struct {
-		uint8_t offs;
-		int8_t ofs2;
-		char head[16][5];
-		jl_io_print_fnt printfn;
-		int16_t tag[16];
-//		#if JL_IO_DEBUG == 1
-		char stack[50][30];
-		uint8_t level;
-//		#endif
-		char buffer[256];
-	}_io_t;
-
-	typedef struct {
 		m_u32_t var_set_count;
 		void **vars;
 	}_sg_sprt_t;
@@ -61,8 +48,18 @@ typedef struct {
 		m_u64_t usedmem;
 	}me;
 
-	_io_t io; //Terminal Data
-	//Window Info
+	// Terminal Data
+	struct {
+		int8_t ofs2;
+		char head[16][5];
+		jl_io_print_fnt printfn;
+		int16_t tag[16];
+		char stack[50][30];
+		uint8_t level;
+		char buffer[256];
+	}io;
+
+	// Window Info
 	struct {
 		__sg_mode_t *mdes; // Array Sizof Number Of Modes
 		__sg_mode_t mode; // Current Mode Data

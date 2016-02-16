@@ -71,8 +71,6 @@
 // target frames per second
 #define JL_FPS 60
 
-//USER's Functions
-void hack_user_init(jl_t* jlc);
 // Media To Include
 char *jl_gem(void);
 uint32_t jl_gem_size(void);
@@ -114,3 +112,36 @@ void jl_sg_add_some_imgs_(jvct_t * _jlc, u16_t x);
 void _jl_sg_loop(jvct_t *_jlc);
 float jl_sg_seconds_past_(jvct_t* _jlc);
 void jl_ct_quickloop_(jvct_t* _jlc);
+
+// Main - Prototypes
+	// LIB INITIALIZATION fn(Context)
+	void _jl_cm_init(jvct_t* _jlc);
+	void _jl_au_init(jvct_t* _jlc);
+	void _jl_fl_inita(jvct_t* _jlc);
+	void _jl_fl_initb(jvct_t* _jlc);
+	void jl_gr_inita_(jvct_t* _jlc);
+	void _jl_ct_init(jvct_t* _jlc);
+	void _jl_gl_init(jvct_t* _jlc);
+	void _jl_dl_inita(jvct_t* _jlc);
+	jvct_t* _jl_me_init(void);
+	void _jl_io_init(jl_t* jlc);
+	void jl_sg_inita_(jvct_t * _jlc);
+	void jl_sg_initb_(jvct_t * _jlc);
+
+	//LIB LOOPS
+	void _jl_ct_loop(jvct_t* _jlc);
+	void _jl_sg_loop(jvct_t* _jlc);
+	void _jl_dl_loop(jvct_t* _jlc);
+	void _jl_au_loop(jvct_t* _jlc);
+
+	// LIB KILLS
+	void _jl_dl_kill(jvct_t* _jlc);
+	void _jl_me_kill(jvct_t* jprg);
+	void _jl_fl_kill(jvct_t* _jlc);
+	void _jl_io_kill(jl_t* jlc);
+	void _jl_au_kill(jvct_t* _jlc);
+	void _jl_sg_kill(jl_t* jlc);
+
+	//LIB RESIZES
+	void jl_gl_resz_(jvct_t* _jlc);
+	void _jl_sg_resz(jl_t* jlc);

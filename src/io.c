@@ -231,7 +231,8 @@ void jl_io_stacktrace(jl_t* jlc) {
 	}
 }
 
-void _jl_io_init(jvct_t * _jlc) {
+void _jl_io_init(jl_t* jlc) {
+	jvct_t * _jlc = jlc->_jlc;
 	int i;
 
 	#if JL_PLAT == JL_PLAT_PHONE
@@ -244,8 +245,8 @@ void _jl_io_init(jvct_t * _jlc) {
 	_jlc->io.level = 0;
 	_jlc->io.printfn = malloc(sizeof(void *));
 	_jlc->io.ofs2 = 0;
-	jl_io_tag_set(_jlc->jlc, NULL);
-	jl_io_function(_jlc->jlc, "JL_Lib");
+	jl_io_tag_set(jlc, NULL);
+	jl_io_function(jlc, "JL_Lib");
 }
 
 void _jl_io_kill(jl_t * jlc) {

@@ -15,37 +15,7 @@
 // SG Prototypes
 void jl_gl_draw_prendered(jvct_t *_jlc, jl_vo_t* pv);
 void jl_gl_pr_scr_set(jvct_t *_jlc, jl_vo_t* vo);
-
-//Prototypes
-	//LIB INITIALIZATION fn(Context)
-	void _jl_cm_init(jvct_t* _jlc);
-	void _jl_au_init(jvct_t* _jlc);
-	void _jl_fl_inita(jvct_t* _jlc);
-	void _jl_fl_initb(jvct_t* _jlc);
-	void jl_gr_inita_(jvct_t* _jlc);
-	void _jl_ct_init(jvct_t* _jlc);
-	void _jl_gl_init(jvct_t* _jlc);
-	void _jl_io_init(jvct_t* _jlc);
-	void _jl_dl_inita(jvct_t* _jlc);
-	jvct_t* _jl_me_init(void);
-
-	//LIB LOOPS: parameter is context
-	void _jl_gr_loopa(jl_t* jlc);
-	void _jl_ct_loop(jvct_t* _jlc);
-	void _jl_sg_loop(jvct_t* _jlc);
-	void _jl_dl_loop(jvct_t* _jlc);
-	void _jl_au_loop(jvct_t* _jlc);
-
-	//LIB KILLS
-	void _jl_dl_kill(jvct_t* _jlc);
-	void _jl_me_kill(jvct_t* jprg);
-	void _jl_fl_kill(jvct_t* _jlc);
-	void _jl_io_kill(jl_t* jlc);
-	void _jl_au_kill(jvct_t* _jlc);
-	void _jl_sg_kill(jl_t* jlc);
-	
-	//LIB RESIZES
-	void jl_gl_resz_(jvct_t* _jlc);
+void _jl_gr_loopa(jl_t* jlc);
 
 // Constants
 	//ALL IMAGES: 1024x1024
@@ -372,35 +342,8 @@ static inline void _jl_sg_init_images(jvct_t * _jlc,strt data,u16_t gi,u16_t x){
 	jl_io_return(_jlc->jlc, "SG_InitImgs");
 }
 
-static uint32_t _jl_sg_quit(jvct_t* _jlc, int rc) {
-	jl_io_function(_jlc->jlc, "SG_Kill");
-	jl_gr_draw_msge(_jlc->jlc, 0, 0, 0, "Quiting JL-Lib....");
-	if(_jlc->me.status == JL_STATUS_EXIT) {
-		rc = JL_RTN_FAIL_IN_FAIL_EXIT;
-		printf("\n!! double error!\n");
-		printf("!! exiting with return value %d\n", rc);
-		exit(rc);
-	}
-	// Set status to Exiting
-	_jlc->me.status = JL_STATUS_EXIT;
-	jl_io_print(_jlc->jlc, "Quitting...."); //Exited properly
-	_jl_au_kill(_jlc);
-	_jl_fl_kill(_jlc);
-	_jl_sg_kill(_jlc->jlc);
-	_jl_dl_kill(_jlc);
-	jl_io_print(_jlc->jlc, ":Quit successfully!"); //Exited properly
-	_jl_io_kill(_jlc->jlc);
-	_jl_me_kill(_jlc);
-	printf("[\\JL_Lib] ");
-	if(!rc) printf("| No errors ");
-	printf("| Exiting with return value %d |\n", rc);
-	exit(rc);
-	jl_io_print(_jlc->jlc, ":What The Hell?  This is an impossible error!");
-	return JL_RTN_IMPOSSIBLE;
-}
-
 /**
- * Show Error On Screen if screen is available.  Also store error in errf.txt.
+ * Show Error On Screen if screen is available, otherwise print it out.
  * Quit, And Return -1 to show there was an error.
 */
 void jl_sg_kill(jl_t* jlc) {
@@ -413,7 +356,7 @@ void jl_sg_kill(jl_t* jlc) {
 	strt error_string = jl_fl_load(jlc, _jlc->fl.paths.errf);
 	jl_io_print(jlc, (void*)error_string->data);
 //	jl_io_stacktrace(jlc);
-	_jl_sg_quit(jlc->_jlc, JL_RTN_FAIL);
+	jl_kill(jlc, JL_RTN_FAIL);
 	// Program is stopped at this point.
 }
 
@@ -422,7 +365,7 @@ void jl_sg_kill(jl_t* jlc) {
  */
 void jl_sg_exit(jl_t* jlc) {
 	if(jlc->loop == JL_SG_WM_EXIT)
-		_jl_sg_quit(jlc->_jlc, JL_RTN_SUCCESS);
+		jl_kill(jlc, JL_RTN_SUCCESS);
 	else
 		jlc->loop = JL_SG_WM_EXIT;
 }
@@ -435,32 +378,12 @@ void _jl_sg_kill(jl_t* jlc) {
 	jl_gr_pr_old(jlc, _jlc->sg.bg.dn);
 }
 
-/**
- * Do Nothing
- */
-void jl_dont(jl_t* jlc) { }
-
 //void sgrp_
-
-static void sg_time_reset__(jvct_t* _jlc, u8_t on_time) {
-	_jlc->sg.prev_tick = _jlc->sg.this_tick;
-	if((_jlc->sg.changed = ( _jlc->sg.on_time != on_time)))
-		_jlc->sg.on_time = on_time;
-}
 
 float jl_sg_seconds_past_(jvct_t* _jlc) {
 	_jlc->sg.this_tick = SDL_GetTicks();
 	// milliseconds / 1000 to get seconds
 	return ((float)(_jlc->sg.this_tick - _jlc->sg.prev_tick)) / 1000.f;
-}
-
-//return how many seconds passed since last call
-static inline void jl_sg_seconds_passed__(jvct_t* _jlc) {
-	_jlc->jlc->psec = jl_sg_seconds_past_(_jlc);
-	_jlc->sg.fps = (_jlc->sg.fps +
-		(1000/(_jlc->sg.this_tick - _jlc->sg.prev_tick)))/2;
-	// Tell if fps is 60 fps or better
-	sg_time_reset__(_jlc, _jlc->sg.fps >= JL_FPS);
 }
 
 static void jl_sg_add_image__(jl_t* jlc, str_t pzipfile, u16_t pigid, u8_t x) {
@@ -609,7 +532,7 @@ void _jl_sg_resz(jl_t* jlc) {
 	jl_gl_pr_scr(_jlc);
 }
 
-static inline void _jl_sg_initc(jvct_t * _jlc) {
+void jl_sg_initb_(jvct_t * _jlc) {
 	// No error
 	_jlc->jlc->errf = JL_ERR_NERR;
 	_jlc->jlc->psec = 0.f;
@@ -619,7 +542,7 @@ static inline void _jl_sg_initc(jvct_t * _jlc) {
 	_jlc->sg.fps = JL_FPS;
 }
 
-static inline void _jl_sg_inita(jvct_t * _jlc) {
+void jl_sg_inita_(jvct_t * _jlc) {
 	m_u16_t i;
 
 	//Set Up Variables
@@ -650,136 +573,6 @@ static inline void _jl_sg_inita(jvct_t * _jlc) {
 	_jl_sg_mode_add(_jlc);
 	// Clear User Loops
 	for(i = 0; i < JL_SG_WM_MAX; i++) _jlc->sg.mode.tclp[i] = jl_dont;
-}
-
-/*
-	x 0-255
-	y 0-191(upper screen), 192-383(lower screen)
-*/
-
-//NON_USER FUNCTION
-
-static inline void _jl_sg_init_done(jvct_t *_jlc) {
-	jl_io_print(_jlc->jlc, "turning on display....");
-	_jlc->has.graphics = 1; //Graphics Now Available For Use
-	jl_io_print(_jlc->jlc, "printing to the screen....");
-	jl_gr_draw_msge(_jlc->jlc, 0, 0, 0, "LOADING JLLIB....");
-	jl_io_print(_jlc->jlc, "started up display %dx%d",
-		_jlc->dl.full_w, _jlc->dl.full_h);
-}
-
-// Main.c
-#if JL_PLAT == JL_PLAT_PHONE
-	#include <jni.h>
-#endif
-
-// void _jl_sg_resz(jl_t* jlc);
-
-//Initialize The Libraries Needed At Very Beginning: The Base Of It All
-static inline jvct_t* jl_sg_init_essential__(void) {
-	// Memory
-	jvct_t* _jlc = _jl_me_init(); // Create The Library Context
-	// Printing to terminal
-	_jl_io_init(_jlc);
-	return _jlc;
-}
-
-static void jl_main_resz_jl(jvct_t* _jlc, u16_t x, u16_t y) {
-	// Reset aspect ratio stuff.
-	jl_gl_resz_(_jlc);
-	// Update the actual window.
-	_jl_dl_resz(_jlc, x, y);
-	// Update the size of the background.
-	_jl_sg_resz(_jlc->jlc);
-	// Update the size of foreground objects.
-	_jl_gr_resz(_jlc);	
-}
-
-void main_resz(jvct_t* _jlc, u16_t x, u16_t y) {
-	// Allow subsystems to adjust to the new window.
-	jl_main_resz_jl(_jlc, x, y);
-	// Allow the user to update their graphics.
-	_jlc->sg.mode.tclp[JL_SG_WM_RESZ](_jlc->jlc);
-}
-
-static inline void _jl_sg_init_libs(jvct_t *_jlc) {
-	jl_io_print(_jlc->jlc, "Initializing DL....");
-	_jl_dl_inita(_jlc); //create the window.
-	jl_io_print(_jlc->jlc, "Initializing FL....");
-	_jl_fl_inita(_jlc); //prepare for loading media packages.
-	jl_io_print(_jlc->jlc, "Initializing SG....");
-	_jl_sg_inita(_jlc); //Load default graphics from package.
-	jl_io_print(_jlc->jlc, "Initializing GL....");
-	_jl_gl_init(_jlc); //Drawing Set-up
-	jl_io_print(_jlc->jlc, "Initialized GL! / Initializing GR....");
-	jl_gr_inita_(_jlc); //Set-up sprites & menubar
-	jl_io_print(_jlc->jlc, "Initialized GR!");
-	_jl_sg_init_done(_jlc); //Draw "loading jl_lib" on the screen.
-	jl_io_print(_jlc->jlc, "Initializing CT....");
-	jl_gr_draw_msge(_jlc->jlc, 0, 0, 0, "Can't read input....");
-	_jl_ct_init(_jlc); //Prepare to read input.
-	jl_gr_draw_msge(_jlc->jlc, 0, 0, 0, "Can read input!");
-	jl_io_print(_jlc->jlc, "Initialized CT!");
-	_jl_sg_initc(_jlc);
-	jl_io_print(_jlc->jlc, "Initialized SG!");
-	_jl_fl_initb(_jlc);
-	jl_io_print(_jlc->jlc, "Initialized FL! / Initializing AU....");
-	_jl_au_init(_jlc); //Load audiostuffs from packages
-	jl_io_print(_jlc->jlc, "Initialized AU!");
-	jl_gr_draw_msge(_jlc->jlc, 0, 0, 0, "INITIALIZATION COMPLETE!");
-}
-
-static inline void _jl_ini(jvct_t *_jlc) {
-	jl_io_print(_jlc->jlc, "STARTING JL_lib Version "JL_VERSION"....");
-
-	_jl_sg_init_libs(_jlc);
-	hack_user_init(_jlc->jlc);
-	_jlc->sg.mode.tclp[JL_SG_WM_RESZ](_jlc->jlc);
-
-	jl_io_print(_jlc->jlc, "Initialized!");
-}
-
-static inline void main_loop__(jvct_t* _jlc) {
-	jl_io_print(_jlc->jlc, "going into loop....");
-	while(1) {
-		//Update events.
-		_jl_ct_loop(_jlc);
-		// Deselect any pre-renderer.
-		_jlc->gl.cp = NULL;
-		//Check the amount of time passed since last frame.
-		jl_sg_seconds_passed__(_jlc);
-		//Redraw screen.
-		_jl_sg_loop(_jlc);
-		//Update Screen.
-		_jl_dl_loop(_jlc);
-		//Play Audio.
-		_jl_au_loop(_jlc);
-	}
-}
-
-#if JL_PLAT == JL_PLAT_PHONE
-
-JNIEXPORT void JNICALL
-Java_org_libsdl_app_SDLActivity_nativeJlSendData(
-	JNIEnv *env, jobject obj, jstring data)
-{
-	JL_FL_BASE = (*env)->GetStringUTFChars(env, data, 0);
-	SDL_Log("nativeJlSendData \"%s\"\n", JL_FL_BASE);
-}
-
-#endif
-
-int32_t main(int argc, char *argv[]) {
-	jvct_t* _jlc = jl_sg_init_essential__(); //Set Up Memory And Logging
-
-	// Initialize JL_lib!
-	_jl_ini(_jlc);
-	// Run the Loop
-	if(_jlc->jlc->mdec) main_loop__(_jlc);
-	// Kill the program
-	_jl_sg_quit(_jlc, JL_RTN_SUPER_IMPOSSIBLE);
-	// Impossible to reach this point
-	return JL_RTN_COMPLETE_IMPOSSIBLE;
 }
 
 /**
