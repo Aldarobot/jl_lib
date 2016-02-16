@@ -104,14 +104,12 @@ $(BUILD_DEPS)/%.o: build-deps-var/%.o $(CFILE_DEPS)
 	$(eval JL_OUT=build/bin/$(shell echo `sed -n '4p' data.txt`))
 -build:
 	printf "[COMP] Linking ....\n"
+	echo $(LINKER_LIBS)
 	gcc $(OBJS) $(LIB) -o $(JL_OUT) $(CFLAGS) \
 		-L/opt/vc/lib/ -lm -lz -ldl -lpthread -lstdc++ \
 		$(GL_VERSION) $(JL_DEBUG) \
-		`pkg-config --libs opencv --cflags` \
 		`$(shell echo $(JLL_HOME))/deps/SDL2-2.0.3/sdl2-config --libs` \
-		-lbcm_host -lntcore
-#		-lopencv_imgcodecs -lopencv_imgproc -lopencv_core -lopencv_videoio
-#		-lcv -lhighgui -lcvaux -lopencv_imgproc -lopencv_core -lopencv_highgui -lopencv_video -lopencv_video_proc -lopencv_calib3d -lopencv_imgcodecs
+		$(LINKER_LIBS) #-lbcm_host
 	printf "[COMP] Done [ OpenGL Version = $(GL_VERSION) ]!\n"
 build/:
 	# Generated Files
