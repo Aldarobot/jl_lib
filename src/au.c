@@ -229,7 +229,7 @@ void _jl_au_init(jvct_t *_jlc) {
 	_jlc->au.smax = 0;
 	_jlc->au.idis = UINT32_MAX; 
 	//
-	jl_gr_draw_msge(_jlc->jlc, "LOADED AUDIOSTUFFS!", 0, 0, 0);
+	jl_gr_draw_msge(_jlc->jlc, 0, 0, 0, "LOADED AUDIOSTUFFS!");
 	//Close Block AUDI
 	jl_io_close_block(_jlc->jlc);
 }

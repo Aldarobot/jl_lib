@@ -105,7 +105,7 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 			_jlc->gr.textbox_string->curs++;
 	}
 
-	static void jl_gr_draw_icon__(jl_t* jlc, uint16_t g, uint16_t i,
+	static void jl_gr_taskbar_icon__(jl_t* jlc, uint16_t g, uint16_t i,
 		uint8_t c)
 	{
 		jvct_t *_jlc = jlc->_jlc;
@@ -116,9 +116,19 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 		jl_gr_vos_image(jlc, &(ctx->icon[1]), rc_icon, g, i, c, 255);
 		jl_gr_draw_vo(jlc, &(ctx->icon[1]), &tr);
 	}
+
+	static void jl_gr_taskbar_text__(jl_t* jlc, m_u8_t* color, str_t text) {
+		jvct_t *_jlc = jlc->_jlc;
+		jl_taskbar_t* ctx = _jlc->gr.taskbar->data.ctx;
+		jl_vec3_t tr = { .9 - (.1 * ctx->cursor), 0., 0. };
+
+		jl_gr_draw_text(jlc, text, tr,
+			(jl_font_t) { 0, JL_IMGI_ICON, 0, color, 
+				.1 / strlen(text)});
+	}
 	
 	static void jl_gr_menu_flip_draw__(jl_t* jlc) {
-		jl_gr_draw_icon__(jlc, 0, JL_IMGI_ICON, JLGR_ID_FLIP_IMAGE);
+		jl_gr_taskbar_icon__(jlc, 0, JL_IMGI_ICON, JLGR_ID_FLIP_IMAGE);
 	}
 
 	static void jl_gr_menu_flip_press__(jl_t* jlc) {
@@ -129,7 +139,7 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 	}
 	
 	static void jl_gr_menu_name_draw2__(jl_t* jlc) {
-		jl_gr_draw_icon__(jlc, 0, JL_IMGI_ICON, JLGR_ID_UNKNOWN);
+		jl_gr_taskbar_icon__(jlc, 0, JL_IMGI_ICON, JLGR_ID_UNKNOWN);
 	}
 
 	static void jl_gr_menu_name_draw__(jl_t* jlc) {
@@ -152,20 +162,22 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 
 	static void _jl_gr_menu_slow_draw(jl_t* jlc) {
 		jvct_t *_jlc = jlc->_jlc;
+		m_u8_t color[] = { 255, 255, 255, 255 };
 
+		// Draw the icon based on whether on time or not.
+		jl_gr_taskbar_icon__(jlc, 0, JL_IMGI_ICON, _jlc->sg.on_time ?
+			JLGR_ID_GOOD_IMAGE : JLGR_ID_SLOW_IMAGE);
 		// If not on time report the seconds that passed.
 		if(!_jlc->sg.on_time)
-			sprintf(_jlc->dl.windowTitle[1],"%f",(float)jlc->psec);
-		// Draw the icon based on whether on time or not.
-		jl_gr_draw_icon__(jlc, 0, JL_IMGI_ICON, _jlc->sg.on_time ?
-			JLGR_ID_GOOD_IMAGE : JLGR_ID_SLOW_IMAGE);
+			jl_gr_taskbar_text__(jlc, color,
+				jl_me_format(jlc, "%d fps", _jlc->sg.fps));
 	}
 
 	static void _jl_gr_menu_slow_loop(jl_t* jlc) {
 		jvct_t* _jlc = jlc->_jlc;
 		jl_taskbar_t* ctx = _jlc->gr.taskbar->data.ctx;
 
-		if(_jlc->sg.changed) ctx->redraw = 1;
+		if(_jlc->sg.changed || !_jlc->sg.on_time) ctx->redraw = 1;
 	}
 
 	//TODO: Move
@@ -866,8 +878,14 @@ static void _jl_gr_popup_loop(jl_t* jlc);
    	 * @param 'jlc': library context.
 	 * @param 'message': the message 
 	 */
-	void jl_gr_draw_msge(jl_t* jlc, char* message, u16_t g, u16_t i,u8_t c){
+	void jl_gr_draw_msge_(jl_t* jlc,u16_t g,u16_t i,u8_t c,m_str_t message){
 		jvct_t* _jlc = jlc->_jlc;
+		if(_jlc->has.quickloop) {
+			if(jl_sg_seconds_past_(jlc->_jlc) < (1.f/(float)JL_FPS))
+				return;
+			else
+				_jlc->sg.prev_tick = _jlc->sg.this_tick;
+		}
 		u8_t prev_loop = jlc->loop;
 		u8_t prev_flin = _jlc->fl.inloop;
 
@@ -885,9 +903,9 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 			jl_ct_quickloop_(jlc->_jlc);
 			// Deselect any pre-renderer.
 			_jlc->gl.cp = NULL;
-			//Redraw screen.
+			// Redraw screen.
 			_jl_sg_loop(_jlc);
-			//Update Screen.
+			// Update Screen.
 			_jl_dl_loop(_jlc);
 		// Return to original loop mode.
 		jlc->loop = prev_loop;
@@ -901,7 +919,7 @@ static void _jl_gr_popup_loop(jl_t* jlc);
  	 * @param 'message': the message 
 	 */
 	void jl_gr_term_msge(jl_t* jlc, char *message) {
-		jl_gr_draw_msge(jlc, message, 0, JL_IMGI_ICON, 1);
+		jl_gr_draw_msge(jlc, 0, JL_IMGI_ICON, 1, message);
 		_jl_fl_errf(jlc->_jlc, message);
 		jl_sg_kill(jlc);
 	}
@@ -1142,7 +1160,7 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 		// Resize screen
 		main_resz(_jlc, _jlc->dl.full_w, _jlc->dl.full_h);
 		// Draw Loading Screen
-		jl_gr_draw_msge(_jlc->jlc, NULL, 0, 0, 0);
+		jl_gr_draw_msge(_jlc->jlc, 0, 0, 0, NULL);
 		// Create Font
 		_jlc->jlc->fontcolor[0] = 0;
 		_jlc->jlc->fontcolor[1] = 0;
@@ -1152,12 +1170,10 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 			{ 0, JL_IMGI_FONT, 0, _jlc->jlc->fontcolor, .04 };
 		jl_sg_add_some_imgs_(_jlc, 1);
 		//
-		jl_gr_draw_msge(_jlc->jlc, "LOADING JL_LIB GRAPHICS...",
-			0, 0, 0);
+		jl_gr_draw_msge(_jlc->jlc,0,0,0,"LOADING JL_LIB GRAPHICS...");
 		// Load the other images.
 		jl_sg_add_some_imgs_(_jlc, 2);
-		jl_gr_draw_msge(_jlc->jlc, "LOADED JL_LIB GRAPHICS!",
-			0, 0, 0);
+		jl_gr_draw_msge(_jlc->jlc, 0, 0, 0, "LOADED JL_LIB GRAPHICS!");
 		// Create the Mouse
 		_jl_gr_mouse_init(_jlc);
 		mouse = _jlc->jlc->mouse;

@@ -1,11 +1,11 @@
 // Version Definitions
-#define JL_VERSION "5.2.9"
+#define JL_VERSION "5.3.1"
 /*
  * Version System:
  * 	major version "." minor version "." debug version "."
  *
- *	A new major version is made every time the current API changes.
- *	A new minor version is made every time new API is added.
+ *	A new major version is made every time your code will break.
+ *	A new minor version is made every time new features are added.
  *	A new debug version is made for every commit.
  */
 

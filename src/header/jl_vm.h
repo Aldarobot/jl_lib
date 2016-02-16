@@ -11,7 +11,6 @@
 		jl_io_print_fnt *printfn;
 		uint16_t maxtag;
 		int16_t tag[16];
-		char buffer[80];
 //		#if JL_IO_DEBUG == 1
 		char stack[50][30];
 		uint8_t level;
@@ -70,8 +69,12 @@ typedef struct {
 		
 		uint32_t taskbar[5];
 		uint32_t init_image_location;
+
+		// FPS
 		uint32_t prev_tick;
-		uint32_t processingTimeMillis;
+		uint32_t this_tick;
+		uint16_t fps;
+		// If Matching FPS
 		uint8_t on_time;
 		uint8_t changed;
 		
@@ -277,6 +280,7 @@ typedef struct {
 		uint8_t fileviewer; //Fileviewer is enabled
 		uint8_t filesys; // Filesystem is enabled.
 		uint8_t input; // Input is enabled.
+		uint8_t quickloop; // Quickloop is enabled
 	}has;
 
 	uint64_t cprg; //current program ID

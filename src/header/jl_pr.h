@@ -68,10 +68,8 @@
 
 //Replacement for NULL
 #define STRT_NULL "(NULL)"
-//screen frames per second
-#define JL_MAIN_SFPS 30
-//Allowed Processing Time
-#define JL_MAIN_SAPT 1000/JL_MAIN_SFPS
+// target frames per second
+#define JL_FPS 60
 
 //USER's Functions
 void hack_user_init(jl_t* jlc);
@@ -115,4 +113,5 @@ void _jl_dl_loop(jvct_t* _jlc);
 void _jl_gr_resz(jvct_t* _jlc);
 void jl_sg_add_some_imgs_(jvct_t * _jlc, u16_t x);
 void _jl_sg_loop(jvct_t *_jlc);
+float jl_sg_seconds_past_(jvct_t* _jlc);
 void jl_ct_quickloop_(jvct_t* _jlc);

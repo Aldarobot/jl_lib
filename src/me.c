@@ -117,10 +117,6 @@ void jl_me_clr(void *pmem, uint64_t size) {
 	}
 }
 
-void jl_me_copyto(const void *src, void* dest, size_t size) {
-	memcpy(dest, src, size);
-}
-
 /**
  * Copy "size" bytes of "src" to a new pointer of "size" bytes and return it.
  * @param jlc: The library context.
@@ -402,24 +398,15 @@ char* jl_me_string_fstrt(jl_t* jlc, strt a) {
 }
 
 /**
- * Print to a string.
- * @param jlc: The library context.
- * @param string: The string to print to.
- * @param format: The format string
- * @param var: The variable to put into the format string.
- * @param n: The number of allocated bytes in "string"
- * @returns: 1 if it hit the limit, 0 if there's still room.
+ * Format a string.
 **/
-uint8_t jl_me_string_print(jl_t* jlc, char *string, const char* format,
-	const char *var, u64_t n)
-{
-	jvct_t * _jlc = jlc->_jlc;
+m_str_t jl_me_format(jl_t* jlc, str_t format, ... ) {
+	va_list arglist;
 
-	if((!format) || (!format[0])) return 0;
-	jl_me_clr((void*)_jlc->me.temp_buff, 30);
-	sprintf((void*)_jlc->me.temp_buff, format, var);
-	strncat(string, (void*)_jlc->me.temp_buff, n - strlen(string));
-	return (strlen(string) > n - 1);
+	va_start( arglist, format );
+	vsprintf( jlc->temp, format, arglist );
+	va_end( arglist );
+	return jlc->temp;
 }
 
 /**

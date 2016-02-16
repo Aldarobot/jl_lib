@@ -119,6 +119,14 @@ static inline void _jlvm_crea_wind(jvct_t *_jlc) {
 	SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
 	SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 16);
 	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+	// Create window.
+	_jlc->dl.displayWindow->w = SDL_CreateWindow(
+		"¡SDL2 Window!",			// window title
+		SDL_WINDOWPOS_UNDEFINED,		// initial x position
+		SDL_WINDOWPOS_UNDEFINED,		// initial y position
+		_jlc->dl.current.w, _jlc->dl.current.h,	// width and height
+		SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_FULLSCREEN
+    	);
 
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
