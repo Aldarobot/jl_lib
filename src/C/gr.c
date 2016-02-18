@@ -1190,3 +1190,9 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 
 /**      @endcond      **/
 /***   #End of File   ***/
+
+strt jl_vi_make_jpeg_(jl_t* jlc,i32_t quality,m_u8_t* pxdata,u16_t w,u16_t h);
+
+strt jl_vi_make_jpeg(jl_t* jlc,i32_t quality,m_u8_t* pxdata,u16_t w,u16_t h) {
+	return jl_vi_make_jpeg_(jlc, quality, pxdata, w, h);
+}

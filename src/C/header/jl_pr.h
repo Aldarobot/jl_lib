@@ -3,7 +3,7 @@
 // LIBZIP
 	#define ZIP_DISABLE_DEPRECATED //Don't allow the old functions.
 	#if JL_PLAT == JL_PLAT_COMPUTER
-		#include "../../deps/libzip-1.0.1/lib/zip.h"
+		#include "zip.h"
 	#elif JL_PLAT == JL_PLAT_PHONE
 		#include <zip.h>
 	#endif

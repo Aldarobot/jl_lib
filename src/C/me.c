@@ -307,6 +307,14 @@ void jl_me_strt_insert_byte(jl_t *jlc, strt pstr, uint8_t pvalue) {
 	}
 }
 
+void jl_me_strt_insert_data(jl_t *jlc, strt pstr, void* data, u32_t size) {
+	int i;
+	uint8_t* data2 = data;
+	for(i = 0; i < size; i++) {
+		jl_me_strt_insert_byte(jlc, pstr, data2[i]);
+	}
+}
+
 /**
  * At the cursor in string 'a' replace 'bytes' bytes of 'b' at it's cursor.
  * jl_me_strt_strt(jlc, { data="HELLO", curs=2 }, { "WORLD", curs=2 }, 2);

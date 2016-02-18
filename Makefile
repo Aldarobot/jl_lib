@@ -1,5 +1,7 @@
-ifneq ($(shell uname | grep Linux), "")
- ifneq ($(shell uname -m | grep arm), "")
+# Makefile to build the C version of jl_lib.
+
+ifneq ("$(shell uname | grep Linux)", "")
+ ifneq ("$(shell uname -m | grep arm)", "")
   include compile-scripts/rpi.mk
  else
   include compile-scripts/linux.mk
@@ -9,7 +11,7 @@ else
 endif
 #TODO: Darwin is mac OS for uname
 
-HEADER = -Isrc/lib/include/ -I/opt/vc/include/
+HEADER = -Isrc/lib/ -Isrc/lib/include/ -I/opt/vc/include/
 CFLAGS_MEDIA = $(HEADER) -O3
 CFLAGS_DEBUG = $(HEADER) -Wall -g
 CFLAGS_RELEASE = $(HEADER) -O3
@@ -17,9 +19,15 @@ CFLAGS_RELEASE = $(HEADER) -O3
 CC = gcc
 CFLAGS = $(CFLAGS_DEBUG)
 
-SRC = src
+SRC = src/C
 BUILD = build/obj
-MODULES = me cl io fl cm ct sg gl dl gr vi au Main media
+# 
+MODULES = $(subst .c,, $(shell basename -a \
+	$(shell find $(SRC)/ -type f -name '*.c')))
+HEADERS = $(shell find $(SRC)/ -type f -name '*.h')
+# Special MAKE variable - do not rename.
+VPATH = $(shell find $(SRC)/ -type d)
+#
 OBJS = $(addprefix $(BUILD)/, $(addsuffix .o,$(MODULES)))
 SHARED = $(BUILD)/jl.so
 STATIC = $(BUILD)/jl.a
@@ -96,7 +104,7 @@ src/lib/include/:
 	mkdir -p src/lib/include/
 	###
 
-$(BUILD)/%.o: $(SRC)/%.c $(SRC)/**/*
+$(BUILD)/%.o: %.c $(HEADERS)
 	printf "[COMP] compiling $<....\n"
 	$(CC) $(CFLAGS) -o $@ -c $<
 
@@ -105,6 +113,9 @@ build/jl.o: $(BUILD) $(BUILD)/*.o
 	ar csr build/jl.o build/obj/*.o build/deps/*.o
 
 build-notify:
+	echo Modules: $(MODULES)
+	echo Headers: $(HEADERS)
+	echo Folders: $(VPATH)
 	printf "[COMP] Building jl_lib for target=$(PLATFORM)\n"
 
 # Build modules.
@@ -210,10 +221,12 @@ build-libzip:
 build-sdl-image:
 	export PATH=$$PATH:`pwd`/deps/SDL2-2.0.3/usr_local/bin/ && printf "[COMP] compiling SDL_image...\n" && \
 	cd deps/SDL2_image-2.0.0/ && \
+#	autoreconf -vfi && \
 	sh configure && \
 	make && \
 	ld -r .libs/*.o -o ../../build/deps/lib_SDL_image.o && \
-	cp SDL_image.h ../../src/lib/include/ && \
+	cp -t ../../src/lib/include/ SDL_image.h external/jpeg-9/jpeglib.h \
+		external/jpeg-9/jconfig.h external/jpeg-9/jmorecfg.h && \
 	printf "[COMP] done!\n"
 build-sdl-net:
 	printf "[COMP] compiling SDL_net...\n" && \

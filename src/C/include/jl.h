@@ -49,6 +49,7 @@
 	void jl_me_strt_add_byte(strt pstr, u8_t pvalue);
 	void jl_me_strt_delete_byte(jl_t *jlc, strt pstr);
 	void jl_me_strt_insert_byte(jl_t *jlc, strt pstr, uint8_t pvalue);
+	void jl_me_strt_insert_data(jl_t *jlc, strt pstr, void* data, u32_t size);
 	u32_t jl_me_random_int(u32_t a);
 	u8_t jl_me_test_next(strt script, str_t particle);
 	strt jl_me_read_upto(jl_t* jlc, strt script, u8_t end, u32_t psize);
@@ -170,6 +171,8 @@
 	char *jl_fl_user_select_get(jl_t* jlc);
 // "cm.c"
 // "vi.c"
+	strt jl_vi_make_jpeg(jl_t* jlc,i32_t quality,m_u8_t* pxdata,u16_t w,
+		u16_t h);
 // "au.c"
 	void jl_au_mus_play(jl_t* jlc, uint32_t p_IDinStack,
 		uint8_t p_secondsOfFadeOut, uint8_t p_secondsOfFadeIn);

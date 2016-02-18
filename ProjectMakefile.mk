@@ -17,21 +17,25 @@ SRC_DEPS = libs
 BUILD = build/objs
 BUILD_TEST = build/test
 BUILD_DEPS = build/deps
+# Special MAKE variable - do not rename.
+VPATH = $(shell find $(SRC)/ -type d) $(shell find $(SRC_DEPS)/ -type d)
 #
 MODULES = $(shell basename -a $(subst .c,,\
 	$(shell find $(SRC)/ -type f -name '*.c')))
+HEADERS = $(shell find $(SRC)/ -type f -name '*.h')
 OBJS = $(addprefix $(BUILD)/, $(addsuffix .o, $(MODULES)))
 TEST = $(addprefix $(BUILD_TEST)/, $(addsuffix .o, $(MODULES)))
 LIB = $(shell echo $(JLL_HOME))/build/jl.o\
 	$(shell find $(BUILD_DEPS)/ -type f -name '*.o')
-COMPILE = printf "[COMP/PROJ] Compiling $< -to- $@....\n";$(CC)
+COMPILE = printf "[COMP/PROJ] Compiling $<....\n";$(CC) # -to- $@.
 # target: init
 FOLDERS = build/ libs/ media/ src/
 
 ################################################################################
 
 test: $(FOLDERS) -debug $(TEST) $(OBJS_DEPS) -build
-	sudo ./$(JL_OUT)
+	echo run
+#	./$(JL_OUT)
 
 android:
 	sh $(shell echo $(JLL_HOME))/compile-scripts/jl_android\
@@ -53,17 +57,9 @@ init: $(FOLDERS)
 
 ################################################################################
 
-$(BUILD)/%.o: $(SRC)/%.c
+$(BUILD)/%.o: %.c $(HEADERS)
 	$(COMPILE) $(CFLAGS) -o $@ -c $< $(JL_DEBUG)
-$(BUILD)/%.o: $(SRC)/*/%.c
-	$(COMPILE) $(CFLAGS) -o $@ -c $< $(JL_DEBUG)
-$(BUILD)/%.o: $(SRC)/*/*/%.c
-	$(COMPILE) $(CFLAGS) -o $@ -c $< $(JL_DEBUG)
-$(BUILD_TEST)/%.o: $(SRC)/%.c
-	$(COMPILE) $(CFLAGS) -o $@ -c $< $(JL_DEBUG)
-$(BUILD_TEST)/%.o: $(SRC)/*/%.c
-	$(COMPILE) $(CFLAGS) -o $@ -c $< $(JL_DEBUG)
-$(BUILD_TEST)/%.o: $(SRC)/*/*/%.c
+$(BUILD_TEST)/%.o: %.c $(HEADERS)
 	$(COMPILE) $(CFLAGS) -o $@ -c $< $(JL_DEBUG)
 
 build-deps-var/%.o:
@@ -83,13 +79,13 @@ $(BUILD_DEPS)/%.o: build-deps-var/%.o $(CFILE_DEPS)
 #		$(addprefix -I, $(shell find deps/ -type d -name "include")) \
 		$(addprefix -I, $(shell find $(SRC_DEPS)/ -type d)))
 	$(eval CFLAGS_INCLUDES=\
-		-I$(shell echo $(JLL_HOME))/src/include/\
+		-I$(shell echo $(JLL_HOME))/src/C/include/\
 		-I$(shell echo $(JLL_HOME))/src/lib/include/\
 		-iquote $(addprefix -I, $(shell find src/ -type d ))\
 		$(addprefix -I, $(shell find $(SRC_DEPS)/ -type d)))
 	$(eval CFLAGS=\
 		$(CFLAGS_INCLUDES) -Wall -Werror)
-	echo the in $(CFLAGS)
+#	echo the in $(CFLAGS)
 
 -debug: -init-vars
 #	$(eval GL_VERSION=-lGL) ## OpenGL
@@ -104,9 +100,9 @@ $(BUILD_DEPS)/%.o: build-deps-var/%.o $(CFILE_DEPS)
 	$(eval JL_OUT=build/bin/$(shell echo `sed -n '4p' data.txt`))
 -build:
 	printf "[COMP] Linking ....\n"
-	echo $(LINKER_LIBS)
+#	echo $(LINKER_LIBS)
 	gcc $(OBJS) $(LIB) -o $(JL_OUT) $(CFLAGS) \
-		-L/opt/vc/lib/ -lm -lz -ldl -lpthread -lstdc++ \
+		-L/opt/vc/lib/ -lm -lz -ldl -lpthread -lstdc++ -ljpeg \
 		$(GL_VERSION) $(JL_DEBUG) \
 		`$(shell echo $(JLL_HOME))/deps/SDL2-2.0.3/sdl2-config --libs` \
 		$(LINKER_LIBS) #-lbcm_host

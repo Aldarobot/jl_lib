@@ -1,6 +1,6 @@
 #include <stdint.h>
 #include <stdlib.h>
-#include "../lib/clump/clump.h"
+#include "clump/clump.h"
 
 //IO:
 
