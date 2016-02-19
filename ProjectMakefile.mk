@@ -34,8 +34,8 @@ FOLDERS = build/ libs/ media/ src/
 ################################################################################
 
 test: $(FOLDERS) -debug $(TEST) $(OBJS_DEPS) -build
-	echo run
-#	./$(JL_OUT)
+#	echo run
+	./$(JL_OUT)
 
 android:
 	sh $(shell echo $(JLL_HOME))/compile-scripts/jl_android\

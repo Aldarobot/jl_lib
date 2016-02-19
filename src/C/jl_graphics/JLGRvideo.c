@@ -3,7 +3,7 @@
 
 		VIDE is for editing sounds and graphics.
 */
-#include "header/jl_pr.h"
+#include "jl_pr.h"
 
 #undef HAVE_STDLIB_H
 #include <jpeglib.h>
@@ -18,6 +18,8 @@
 strt jl_vi_make_jpeg_(jl_t* jlc,i32_t quality,m_u8_t* pxdata,u16_t w,u16_t h) {
 	uint8_t* data = NULL;
 	m_u64_t data_size = 0;
+
+	jl_io_print(jlc, "w:%d h:%d", w, h);
 
 	/* This struct contains the JPEG compression parameters and pointers to
 	 * working space (which is allocated as needed by the JPEG library).

@@ -7,7 +7,7 @@
  *	A High Level Graphics Library that supports sprites, texture loading,
  *	2D rendering & 3D rendering.
  */
-#include "header/jl_pr.h"
+#include "jl_pr.h"
 
 typedef enum{
 	JLGR_ID_NULL,

@@ -4,7 +4,7 @@
  * trace
 */
 
-#include "header/jl_pr.h"
+#include "jl_pr.h"
 
 #if JL_PLAT == JL_PLAT_COMPUTER
 	#define JL_IO_PRINTF(...) printf(__VA_ARGS__)

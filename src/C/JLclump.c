@@ -10,7 +10,7 @@
  *		structures which are: Bitarrays, Linked List, Hash Tables,
  *		Data Trees and Huffman Codecs.
 */
-#include "header/jl_pr.h"
+#include "jl_pr.h"
 
 static inline void *_jl_cl_list_alphabetize_lowest(struct cl_list *list) {
 	int i, j, k;

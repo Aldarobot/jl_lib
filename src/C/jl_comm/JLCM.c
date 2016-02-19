@@ -4,7 +4,7 @@
  * It lets you send network packets.  It uses SDL_net.
 */
 
-#include "header/jl_pr.h"
+#include "jl_pr.h"
 
 void _jl_cm_init(jvct_t* _jlc) {
 	

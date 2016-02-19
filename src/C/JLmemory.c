@@ -6,7 +6,7 @@
  * the variables.  Has a specialized string type.
 */
 
-#include "header/jl_pr.h"
+#include "jl_pr.h"
 #include <malloc.h>
 
 /************************/
@@ -159,9 +159,10 @@ void jl_me_alloc(jl_t* jlc, void **a, uint32_t size, uint32_t oldsize) {
  * Clears an already existing string and resets it's cursor value.
  * @param pa: string to clear.
 */
-void jl_me_strt_clear(strt pa) {
+void jl_me_strt_clear(jl_t* jlc, strt pa) {
 	pa->curs = 0;
-	jl_me_clr(pa->data, pa->size + 1);
+	jl_me_strt_resize(jlc, pa, 0);
+//	jl_me_clr(pa->data, pa->size + 1);
 }
 
 /**
@@ -175,7 +176,7 @@ strt jl_me_strt_make(u32_t size) {
 	a->data = malloc(size+1);
 	a->size = size;
 	a->curs = 0;
-	jl_me_strt_clear(a);
+	jl_me_clr(a->data, a->size + 1);
 	return a;
 }
 
@@ -284,15 +285,18 @@ void jl_me_strt_delete_byte(jl_t *jlc, strt pstr) {
 	_jl_me_truncate_curs(pstr);
 }
 
+void jl_me_strt_resize(jl_t *jlc, strt pstr, u32_t newsize) {
+	pstr->size = newsize;
+	pstr->data = jl_me_realloc__(jlc->_jlc, pstr->data, pstr->size);
+}
+
 /**
  * Inserts a byte at cursor in string pstr.  If not enough size is available,
  * the new memory will be allocated. Value 0 is treated as null byte - dont use.
 */
 void jl_me_strt_insert_byte(jl_t *jlc, strt pstr, uint8_t pvalue) {
 	if(strlen((char*)pstr->data) == pstr->size) {
-		pstr->size++;
-		pstr->data =
-			jl_me_realloc__(jlc->_jlc, pstr->data, pstr->size);
+		jl_me_strt_resize(jlc, pstr, pstr->size + 1);
 	}
 	if(jl_me_strt_byte(pstr) == '\0') {
 		jl_me_strt_add_byte(pstr, pvalue);
@@ -308,11 +312,18 @@ void jl_me_strt_insert_byte(jl_t *jlc, strt pstr, uint8_t pvalue) {
 }
 
 void jl_me_strt_insert_data(jl_t *jlc, strt pstr, void* data, u32_t size) {
-	int i;
-	uint8_t* data2 = data;
-	for(i = 0; i < size; i++) {
-		jl_me_strt_insert_byte(jlc, pstr, data2[i]);
-	}
+//	int i;
+//	uint8_t* data2 = data;
+
+	// Add size
+	jl_me_strt_resize(jlc, pstr, pstr->size + size);
+	// Copy data.
+	jl_me_copyto(data, pstr->data + pstr->curs, size);
+	// Increase cursor
+	pstr->curs+=size;
+//	for(i = 0; i < size; i++) {
+//		jl_me_strt_insert_byte(jlc, pstr, data2[i]);
+//	}
 }
 
 /**

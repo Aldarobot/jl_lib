@@ -1,5 +1,5 @@
-#include "header/jl_pr.h"
-#include "header/jl_opengl.h"
+#include "jl_pr.h"
+#include "jl_opengl.h"
 
 // Shader Code
 

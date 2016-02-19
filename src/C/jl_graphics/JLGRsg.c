@@ -10,7 +10,7 @@
  *	of a game and the actual game would be on different modes.
 **/
 
-#include "header/jl_pr.h"
+#include "jl_pr.h"
 
 // SG Prototypes
 void jl_gl_draw_prendered(jvct_t *_jlc, jl_vo_t* pv);

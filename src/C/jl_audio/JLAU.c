@@ -3,11 +3,11 @@
  * Copyright (c) 2015 Jeron A. Lau 
 */
 /** \file
- * au.c
- *	JLVM BaseLibrary: Audio
- * 		This library can play and record / music or sound effects.
+ * JLAU.c
+ *	Audio
+ * 		This library can play/record music/sound effects.
 */
-#include "header/jl_pr.h"
+#include "jl_pr.h"
 
 
 /**

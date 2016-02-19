@@ -1,11 +1,11 @@
 /*
- * dl: upper level SDL2
+ * JLGRsdl.c: upper level SDL2
  *	LSDL AKA. SDL or Simple Direct Media Layer:  SDL is a popular library
  *	for making games.
 */
 
-#include "header/jl_pr.h"
-#include "header/jl_opengl.h"
+#include "jl_pr.h"
+#include "jl_opengl.h"
 
 #define JL_DL_INIT SDL_INIT_AUDIO|SDL_INIT_VIDEO
 #define JL_DL_FULLSCREEN SDL_WINDOW_FULLSCREEN_DESKTOP

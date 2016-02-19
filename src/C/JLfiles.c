@@ -6,7 +6,7 @@
  * fl.c
  * 	This allows you to modify the file system.  It uses libzip.
  */
-#include "header/jl_pr.h"
+#include "jl_pr.h"
 #if JL_PLAT == JL_PLAT_PHONE
 	#include <sys/stat.h>
 #endif

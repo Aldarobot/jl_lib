@@ -11,7 +11,7 @@ else
 endif
 #TODO: Darwin is mac OS for uname
 
-HEADER = -Isrc/lib/ -Isrc/lib/include/ -I/opt/vc/include/
+HEADER = -Isrc/lib/ -Isrc/lib/include/ -I/opt/vc/include/ -Isrc/C/header/
 CFLAGS_MEDIA = $(HEADER) -O3
 CFLAGS_DEBUG = $(HEADER) -Wall -g
 CFLAGS_RELEASE = $(HEADER) -O3
@@ -219,7 +219,8 @@ build-libzip:
 	cp lib/*.h ../../src/lib/include/ && \
 	printf "[COMP] done!\n"
 build-sdl-image:
-	export PATH=$$PATH:`pwd`/deps/SDL2-2.0.3/usr_local/bin/ && printf "[COMP] compiling SDL_image...\n" && \
+	export PATH=$$PATH:`pwd`/deps/SDL2-2.0.3/usr_local/bin/ && \
+	printf "[COMP] compiling SDL_image...\n" && \
 	cd deps/SDL2_image-2.0.0/ && \
 #	autoreconf -vfi && \
 	sh configure && \

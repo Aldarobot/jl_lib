@@ -30,7 +30,7 @@
 	void * jl_me_copy(jl_t* jlc, const void *src, size_t size);
 	void jl_me_alloc(jl_t* jlc, void **a, uint32_t size, uint32_t oldsize);
 	#define List(x) jl_me_list_allc(sizeof(void*)*x)
-	void jl_me_strt_clear(strt pa);
+	void jl_me_strt_clear(jl_t* jlc, strt pa);
 	strt jl_me_strt_make(u32_t size);
 	void jl_me_strt_free(strt pstr);
 	strt jl_me_strt_mkfrom_str(str_t string);
@@ -48,6 +48,7 @@
 	void jl_me_strt_saveto(strt pstr, u32_t varsize, const void* var);
 	void jl_me_strt_add_byte(strt pstr, u8_t pvalue);
 	void jl_me_strt_delete_byte(jl_t *jlc, strt pstr);
+	void jl_me_strt_resize(jl_t *jlc, strt pstr, u32_t newsize);
 	void jl_me_strt_insert_byte(jl_t *jlc, strt pstr, uint8_t pvalue);
 	void jl_me_strt_insert_data(jl_t *jlc, strt pstr, void* data, u32_t size);
 	u32_t jl_me_random_int(u32_t a);
