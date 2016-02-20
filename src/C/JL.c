@@ -32,19 +32,18 @@ static inline void jl_init_libs__(jvct_t *_jlc) {
 	jl_sg_initb_(_jlc);
 	jl_io_print(_jlc->jlc, "Initialized SG!");
 	_jl_fl_initb(_jlc);
-	jl_io_print(_jlc->jlc, "Initialized FL! / Initializing AU....");
-	_jl_au_init(_jlc); //Load audiostuffs from packages
-	jl_io_print(_jlc->jlc, "Initialized AU!");
+	jl_io_print(_jlc->jlc, "Initialized FL!");
 	jl_gr_draw_msge(_jlc->jlc, 0, 0, 0, "INITIALIZATION COMPLETE!");
 }
 
-static inline void _jl_ini(jvct_t *_jlc, jl_simple_fnt _fnc_init_) {
+static inline void _jl_ini(jvct_t *_jlc, jl_fnct _fnc_init_) {
 	jl_io_print(_jlc->jlc, "STARTING JL_lib Version "JL_VERSION"....");
 
 	jl_init_libs__(_jlc);
+	// Run the users loop & resize functions
 	_fnc_init_(_jlc->jlc);
 	_jlc->sg.mode.tclp[JL_SG_WM_RESZ](_jlc->jlc);
-
+	//
 	jl_io_print(_jlc->jlc, "Initialized!");
 }
 
@@ -94,8 +93,6 @@ static inline void main_loop__(jvct_t* _jlc) {
 		_jl_sg_loop(_jlc);
 		//Update Screen.
 		_jl_dl_loop(_jlc);
-		//Play Audio.
-		_jl_au_loop(_jlc);
 	}
 }
 
@@ -121,7 +118,6 @@ void jl_kill(jl_t* jlc, int rc) {
 	// Set status to Exiting
 	_jlc->me.status = JL_STATUS_EXIT;
 	jl_io_print(jlc, "Quitting...."); //Exited properly
-	_jl_au_kill(_jlc);
 	_jl_fl_kill(_jlc);
 	_jl_sg_kill(jlc);
 	_jl_dl_kill(_jlc);
@@ -138,7 +134,7 @@ void jl_kill(jl_t* jlc, int rc) {
 /**
  * Initialize JL_Lib.
 **/
-void jl_init(jl_simple_fnt _fnc_init_) {
+void jl_init(jl_fnct _fnc_init_) {
 	//Set Up Memory And Logging
 	jvct_t* _jlc = jl_init_essential__();
 

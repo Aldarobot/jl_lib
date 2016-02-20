@@ -154,9 +154,9 @@ typedef struct{
 	char temp[256];
 }jl_t;
 
-typedef void(*jl_simple_fnt)(jl_t* jlc);
+typedef void(*jl_fnct)(jl_t* jlc);
 typedef void(*jl_gr_sp_fnt)(jl_t* jlc, jl_sprd_t* spr);
-typedef void(*jl_ct_event_fnt)(jl_t* jlc, jl_simple_fnt prun,jl_simple_fnt pno);
+typedef void(*jl_ct_event_fnt)(jl_t* jlc, jl_fnct prun,jl_fnct pno);
 typedef void(*jl_io_print_fnt)(jl_t* jlc, const char * print);
 
 typedef struct{
@@ -168,5 +168,5 @@ typedef struct{
 
 typedef struct{
 	char *opt;
-	jl_simple_fnt run;
+	jl_fnct run;
 }jl_popup_button_t;

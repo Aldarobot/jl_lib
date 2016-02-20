@@ -1,12 +1,13 @@
 // Version Definitions
-#define JL_VERSION "5.3.7"
+#define JL_VERSION "6.0.0-1 alpha"
 /*
  * Version System:
  * 	major version "." minor version "." debug version "."
  *
  *	A new major version is made every time your code will break.
  *	A new minor version is made every time new features are added.
- *	A new debug version is made for every commit.
+ *	A new debug version is made for every debug.
+ *	A new -x version is made for every commit with alpha/beta extension.
  */
 
 // Uncommented for debugging ( GL/SDL error check && verbose printing. )

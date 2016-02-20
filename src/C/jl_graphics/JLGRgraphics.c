@@ -1,5 +1,5 @@
 /*
- * JL_lib
+ * JL_Lib
  * Copyright (c) 2015 Jeron A. Lau 
 */
 /** \file
@@ -28,7 +28,7 @@ typedef struct{
 	// Used for all icons on the taskbar.
 	jl_vo_t* icon;
 	// Not Pressed & Pressed & Redraw Functions for 10 icons.
-	jl_simple_fnt func[3][10];
+	jl_fnct func[3][10];
 	// Redraw? - 0 = no, 1 = yes
 	m_u8_t redraw;
 	// Cursor
@@ -431,7 +431,7 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 	 * @param vo: The vertex object that contains the pre-renderer.
 	 * @param par__redraw: The redraw functions for the pre-renderer.
 	**/
-	void jl_gr_pr(jl_t *jlc, jl_vo_t* vo, jl_simple_fnt par__redraw) {
+	void jl_gr_pr(jl_t *jlc, jl_vo_t* vo, jl_fnct par__redraw) {
 		jl_gl_pr(jlc, vo->pr, par__redraw);
 	}
 
@@ -958,7 +958,7 @@ static void _jl_gr_popup_loop(jl_t* jlc);
  	 * @param 'prun': the function to run when pressed.
 	**/
 	void jl_gr_slidebtn_rnl(jl_t* jlc, jl_sprite_t * spr,  float defaultx,
-		float slidex, jl_simple_fnt prun)
+		float slidex, jl_fnct prun)
 	{
 		spr->data.tr.x = defaultx;
 		if(jl_gr_sprite_collide(jlc, jlc->mouse, spr)) {
@@ -976,7 +976,7 @@ static void _jl_gr_popup_loop(jl_t* jlc);
  	 * @param 'prun': the function to run when pressed.
 	**/
 	void jl_gr_draw_glow_button(jl_t* jlc, jl_sprite_t * spr,
-		char *txt, jl_simple_fnt prun)
+		char *txt, jl_fnct prun)
 	{
 		jvct_t* _jlc = jlc->_jlc;
 
@@ -1060,8 +1060,8 @@ static void _jl_gr_popup_loop(jl_t* jlc);
 	 * @param fnc: the function to run when the icon is pressed.
 	 * @param rdr: the function to run when redraw is called.
 	**/
-	void jl_gr_addicon(jl_t* jlc, jl_simple_fnt fno, jl_simple_fnt fnc,
-		jl_simple_fnt rdr)
+	void jl_gr_addicon(jl_t* jlc, jl_fnct fno, jl_fnct fnc,
+		jl_fnct rdr)
 	{
 		jvct_t *_jlc = jlc->_jlc;
 		jl_taskbar_t* ctx = _jlc->gr.taskbar->data.ctx;

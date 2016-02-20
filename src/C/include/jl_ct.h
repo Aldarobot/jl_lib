@@ -193,7 +193,7 @@
  * Run prun if event pevent is active.
 */
 void jl_ct_run_event(jl_t *pusr, uint8_t pevent,
-	jl_simple_fnt prun, jl_simple_fnt pno);
+	jl_fnct prun, jl_fnct pno);
 
 /**
  * Allocate space for how many controls you want.
@@ -247,7 +247,7 @@ void jl_ct_updm(uint8_t mode);
  *			JL_CT_ANDR_TFUP), //Returns event for platform
  *		USR_DEFINED_EVENT1, onEvent);
 */
-//void jl_ct_mode_addi(jl_t *pusr, uint8_t libevent, jl_simple_fnt fn);
+//void jl_ct_mode_addi(jl_t *pusr, uint8_t libevent, jl_fnct fn);
 /**
  * This adds a directional button (A Joystick/Arrow Keys/WASD etc.)
  * This function has 4 directions: UP/DOWN/LEFT/RIGHT

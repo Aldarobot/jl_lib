@@ -12,24 +12,8 @@
 	//Standard Mode Class
 	typedef struct {
 		//Standard Functions
-		jl_simple_fnt tclp[JL_SG_WM_MAX];
+		jl_fnct tclp[JL_SG_WM_MAX];
 	}__sg_mode_t;
-
-//AU:
-	typedef struct {
-		Mix_Music *_MUS;
-		char _VOL;
-	}__mixr_jmus;
-
-	typedef struct {
-		uint32_t idis; //Which music to play next
-		uint8_t sofi; //Seconds Of Fade In
-		uint8_t sofo; //Seconds Of Fade Out
-
-		int smax; //Music Stack Maximum Music pieces
-		__mixr_jmus *jmus; //Pointer Of "smax" Music Pieces
-		double pofr; //Point Of Return (Where Music Should Start)
-	}_au_t;
 
 //OTHER:
 typedef struct {
@@ -91,7 +75,7 @@ typedef struct {
 
 		float screen_height;
 
-		jl_simple_fnt loop;
+		jl_fnct loop;
 	}sg;
 	
 	//Input Information
@@ -136,8 +120,6 @@ typedef struct {
 		uint8_t text_input[32];
 		uint8_t read_cursor;
 	}ct;
-	
-	_au_t au; //Audio Info
 	
 	//Opengl Data
 	struct {

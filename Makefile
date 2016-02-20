@@ -11,7 +11,8 @@ else
 endif
 #TODO: Darwin is mac OS for uname
 
-HEADER = -Isrc/lib/ -Isrc/lib/include/ -I/opt/vc/include/ -Isrc/C/header/
+HEADER = -Isrc/lib/ -Isrc/lib/include/ -I/opt/vc/include/ -Isrc/C/header/\
+	-Isrc/C/include
 CFLAGS_MEDIA = $(HEADER) -O3
 CFLAGS_DEBUG = $(HEADER) -Wall -g
 CFLAGS_RELEASE = $(HEADER) -O3
@@ -19,14 +20,18 @@ CFLAGS_RELEASE = $(HEADER) -O3
 CC = gcc
 CFLAGS = $(CFLAGS_DEBUG)
 
+CLUMP_SRC = src/lib/clump
+
 SRC = src/C
 BUILD = build/obj
 # 
 MODULES = $(subst .c,, $(shell basename -a \
-	$(shell find $(SRC)/ -type f -name '*.c')))
+	$(shell find $(SRC)/ -type f -name '*.c') \
+	$(shell find $(CLUMP_SRC)/ -type f -name '*.c') \
+))
 HEADERS = $(shell find $(SRC)/ -type f -name '*.h')
 # Special MAKE variable - do not rename.
-VPATH = $(shell find $(SRC)/ -type d)
+VPATH = $(shell find $(SRC)/ -type d) $(shell find $(CLUMP_SRC)/ -type d)
 #
 OBJS = $(addprefix $(BUILD)/, $(addsuffix .o,$(MODULES)))
 SHARED = $(BUILD)/jl.so
@@ -42,16 +47,17 @@ init-all-wo-android: init-build-wo-android init-deps-most
 
 # The Clean Options.
 clean-all: clean-build clean-deps
-clean-build-all:
-	rm -r build/
-clean-build-comp:
+clean-build:
 	# Empty directory: build/obj/
 	printf "[COMP] Cleaning up....\n"
-	rm -r build/obj/
-	mkdir build/obj/
+	rm -f -r build/obj/
+	mkdir -p build/obj/
+	rm -f build/*.o
 	printf "[COMP] Done!\n"
+clean-build-all:
+	rm -r build/
 clean-build-andr:
-	
+	rm -r build/android/
 clean-deps:
 	rm -r deps/
 
@@ -108,7 +114,7 @@ $(BUILD)/%.o: %.c $(HEADERS)
 	printf "[COMP] compiling $<....\n"
 	$(CC) $(CFLAGS) -o $@ -c $<
 
-build/jl.o: $(BUILD) $(BUILD)/*.o
+build/jl.o: $(BUILD) $(OBJS)
 	printf "[COMP] compiling singular jl_lib object file....\n"
 	ar csr build/jl.o build/obj/*.o build/deps/*.o
 
@@ -119,7 +125,7 @@ build-notify:
 	printf "[COMP] Building jl_lib for target=$(PLATFORM)\n"
 
 # Build modules.
-build-library: build-notify $(OBJS) build/jl.o
+build-library: build-notify build/jl.o
 	# Make "jl.o"
 	printf "[COMP] done!\n"
 

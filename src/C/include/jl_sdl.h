@@ -1,4 +1,3 @@
-#include "SDL_mixer.h"
 #include "SDL_image.h"
 #if JL_PLAT == JL_PLAT_COMPUTER
 	#include "SDL.h"

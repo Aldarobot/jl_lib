@@ -1664,7 +1664,7 @@ void jl_gl_pr_draw(jl_t* jlc, jl_pr_t* pr, jl_vec3_t* vec, jl_vec3_t* scl) {
 	jl_gl_draw_pr_(jlc, pr);
 }
 
-void jl_gl_pr(jl_t* jlc, jl_pr_t * pr, jl_simple_fnt par__redraw) {
+void jl_gl_pr(jl_t* jlc, jl_pr_t * pr, jl_fnct par__redraw) {
 	if(!pr) {
 		jl_io_print(jlc, "Drawing on lost pre-renderer.");
 		jl_sg_kill(jlc);

@@ -19,7 +19,7 @@
 #define JL_IMG_SIZE_FLS 5 // How many bytes start for images.
 
 	void jl_kill(jl_t* jlc, int rc);
-	void jl_init(jl_simple_fnt _fnc_init_);
+	void jl_init(jl_fnct _fnc_init_);
 	void jl_dont(jl_t* jlc);
 // "me.c"
 	u64_t jl_me_tbiu(void);
@@ -71,11 +71,11 @@
 	void jl_gl_pr_rsz(jl_t* jlc, jl_pr_t *pr, f32_t w, f32_t h, u16_t w_px);
 	jl_pr_t * jl_gl_pr_new(jl_t* jlc, f32_t w, f32_t h, u16_t w_px);
 	void jl_gl_pr_draw(jl_t* jlc, jl_pr_t* pr, jl_vec3_t* vec, jl_vec3_t* scl);
-	void jl_gl_pr(jl_t* jlc, jl_pr_t * pr, jl_simple_fnt par__redraw);
+	void jl_gl_pr(jl_t* jlc, jl_pr_t * pr, jl_fnct par__redraw);
 // "sg.c"
 	void jl_sg_mode_init(jl_t* jlc, u8_t mdec);
-	void jl_sg_mode_set(jl_t* jlc, u8_t mode, u8_t wm, jl_simple_fnt loop);
-	void jl_sg_mode_override(jl_t* jlc, uint8_t wm, jl_simple_fnt loop);
+	void jl_sg_mode_set(jl_t* jlc, u8_t mode, u8_t wm, jl_fnct loop);
+	void jl_sg_mode_override(jl_t* jlc, uint8_t wm, jl_fnct loop);
 	void jl_sg_mode_reset(jl_t* jlc);
 	void jl_sg_mode_switch(jl_t* jlc, uint8_t mode, jl_sg_wm_t loop);
 	void jl_sg_kill(jl_t* jlc);
@@ -93,7 +93,7 @@
 	void jl_gr_fill_image_draw(jl_t *jlc);
 	void jl_gr_pr_old(jl_t* jlc, jl_vo_t* pv);
 	void jl_gr_pr_new(jl_t* jlc, jl_vo_t* pv, u16_t xres);
-	void jl_gr_pr(jl_t *jlc, jl_vo_t* vo, jl_simple_fnt par__redraw);
+	void jl_gr_pr(jl_t *jlc, jl_vo_t* vo, jl_fnct par__redraw);
 	void jl_gr_pr_draw(jl_t* jlc, jl_vo_t* pv, jl_vec3_t* vec);
 	jl_ccolor_t* jl_gr_convert_color(jl_t* jlc, uint8_t *rgba, uint32_t vc,
 		uint8_t gradient);
@@ -129,14 +129,14 @@
 	void jl_gr_term_msge(jl_t* jlc, char* message);
 	void jl_gr_slidebtn_rsz(jl_t* jlc, jl_sprite_t * spr, str_t txt);
 	void jl_gr_slidebtn_rnl(jl_t* jlc, jl_sprite_t * spr,  float defaultx,
-		float slidex, jl_simple_fnt prun);
+		float slidex, jl_fnct prun);
 	void jl_gr_draw_glow_button(jl_t* jlc, jl_sprite_t * spr,
-		char *txt, jl_simple_fnt prun);
+		char *txt, jl_fnct prun);
 	uint8_t jl_gr_draw_textbox(jl_t*jlc, float x, float y, float w,
 		float h, strt *string);
 	void jl_gr_togglemenubar(jl_t* jlc);
-	void jl_gr_addicon(jl_t* jlc, jl_simple_fnt fno, jl_simple_fnt fnc,
-		jl_simple_fnt rdr);
+	void jl_gr_addicon(jl_t* jlc, jl_fnct fno, jl_fnct fnc,
+		jl_fnct rdr);
 	void jl_gr_addicon_flip(jl_t* jlc);
 	void jl_gr_addicon_slow(jl_t* jlc);
 	void jl_gr_addicon_name(jl_t* jlc);
@@ -175,13 +175,7 @@
 	strt jl_vi_make_jpeg(jl_t* jlc,i32_t quality,m_u8_t* pxdata,u16_t w,
 		u16_t h);
 // "au.c"
-	void jl_au_mus_play(jl_t* jlc, uint32_t p_IDinStack,
-		uint8_t p_secondsOfFadeOut, uint8_t p_secondsOfFadeIn);
-	void jl_au_mus_halt(u8_t p_secondsOfFadeOut);
-	uint8_t jl_au_mus_playing(void);
-	void jl_au_panning(uint8_t left, uint8_t toCenter);
-	void jl_au_panning_default(void);
-	void jl_au_add_audio(jl_t* jlc, str_t pzipfile, uint16_t pigid);
+
 
 #endif
 /*

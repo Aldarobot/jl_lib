@@ -3,7 +3,7 @@
  * Copyright (c) 2015 Jeron A. Lau 
 */
 /** \file
- * fl.c
+ * JLfiles.c
  * 	This allows you to modify the file system.  It uses libzip.
  */
 #include "jl_pr.h"
@@ -55,7 +55,8 @@ static int jl_fl_save_(jl_t* jlc, const void *file_data, const char *file_name,
 	int fd;
 	
 	if(file_name == NULL) {
-		jl_io_print(jlc, "Save[==]: file_name is Null");
+		jl_io_print(jlc, "Save[file_name]: is Null");
+		exit(-1);
 		jl_sg_kill(jlc);
 		return -1;
 	}else if(strlen(file_name) == 0) {
@@ -167,7 +168,7 @@ void jl_fl_print(jl_t* jlc, str_t fname, str_t msg) {
 	jvct_t * _jlc = jlc->_jlc;
 
 	// Write to the errf file
-	if(_jlc->has.filesys)
+	if(_jlc->has.filesys && fname)
 		jl_fl_save_(_jlc->jlc, msg, fname, strlen(msg));
 }
 

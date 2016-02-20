@@ -1,5 +1,5 @@
 /*
- * JL_lib
+ * JL_Lib
  * Copyright (c) 2015 Jeron A. Lau 
 */
 /** \file
@@ -97,7 +97,7 @@ static void _jl_sg_mode_add(jvct_t* _jlc) {
  *	JL_SG_WM_RESZ: This loop is called when the window is resized.
  * @param loop: What to change the loop to.
 */
-void jl_sg_mode_set(jl_t* jlc, u8_t mode, u8_t wm, jl_simple_fnt loop) {
+void jl_sg_mode_set(jl_t* jlc, u8_t mode, u8_t wm, jl_fnct loop) {
 	jvct_t* _jlc = jlc->_jlc;
 
 	jl_gr_draw_msge(jlc, 0, 0, 0, "Switching Mode...");
@@ -113,7 +113,7 @@ void jl_sg_mode_set(jl_t* jlc, u8_t mode, u8_t wm, jl_simple_fnt loop) {
  * @param wm: the loop to override
  * @param loop: the overriding function 
  */
-void jl_sg_mode_override(jl_t* jlc, uint8_t wm, jl_simple_fnt loop) {
+void jl_sg_mode_override(jl_t* jlc, uint8_t wm, jl_fnct loop) {
 	jvct_t* _jlc = jlc->_jlc;
 
 	_jlc->sg.mode.tclp[wm] = loop;
@@ -350,11 +350,7 @@ void jl_sg_kill(jl_t* jlc) {
 	//TODO: Make Screen With Window Saying Error Message Followed By Prompt.
 	//	Also, don't automatically quit, like it does now!  ERQT can be
 	//	inline at that point.
-	jvct_t * _jlc = jlc->_jlc;
-	
 	jl_io_print(jlc, "Quitting On Error....");
-	strt error_string = jl_fl_load(jlc, _jlc->fl.paths.errf);
-	jl_io_print(jlc, (void*)error_string->data);
 //	jl_io_stacktrace(jlc);
 	jl_kill(jlc, JL_RTN_FAIL);
 	// Program is stopped at this point.
