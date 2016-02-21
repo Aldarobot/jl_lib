@@ -1155,6 +1155,6 @@ static void _jl_gr_textbox_lt(jl_gr_t* jl_gr);
 /**      @endcond      **/
 /***   #End of File   ***/
 
-strt jl_vi_make_jpeg(jl_gr_t* jl_gr,i32_t quality,m_u8_t* pxdata,u16_t w,u16_t h) {
-	return jl_vi_make_jpeg_(jl_gr, quality, pxdata, w, h);
+strt jl_vi_make_jpeg(jl_t* jlc,i32_t quality,m_u8_t* pxdata,u16_t w,u16_t h) {
+	return jl_vi_make_jpeg_(jlc, quality, pxdata, w, h);
 }

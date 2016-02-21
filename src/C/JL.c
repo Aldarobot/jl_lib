@@ -72,7 +72,7 @@ static inline void main_loop__(jvct_t* _jlc) {
 		// Check the amount of time passed since last frame.
 		jl_seconds_passed__(_jlc);
 		// Run the user's mode loop.
-		
+		_jlc->mode.mode.tclp[_jlc->jlc->loop](_jlc->jlc);
 	}
 }
 

@@ -291,8 +291,7 @@ jl_pr_t * jl_gl_pr_new(jl_gr_t* jl_gr, f32_t w, f32_t h, u16_t w_px);
 void jl_gl_pr_draw(jl_gr_t* jl_gr, jl_pr_t* pr, jl_vec3_t* vec, jl_vec3_t* scl);
 void jl_gl_pr(jl_gr_t* jl_gr, jl_pr_t * pr, jl_fnct par__redraw);
 // video
-strt jl_vi_make_jpeg(jl_gr_t* jl_gr,i32_t quality,m_u8_t* pxdata,u16_t w,
-	u16_t h);
+strt jl_vi_make_jpeg(jl_t* jlc,i32_t quality,m_u8_t* pxdata,u16_t w,u16_t h);
 // SG
 void jl_sg_kill(jl_t* jlc);
 void jl_sg_exit(jl_t* jlc);

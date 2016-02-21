@@ -405,8 +405,8 @@ static void _jl_sg_screen_draw(jl_t* jlc, f32_t ytrans, jl_vo_t* bg, u8_t lp) {
 	// Clear the screen.
 	jl_gl_clear(jl_gr, (ytrans > 0.1 ) * 255, (ytrans > 0.1 ) * 255,
 		(ytrans > 0.1 ) * 255, 255);
-	// Run the screen's loop
-	_jlc->mode.mode.tclp[lp](jlc);
+	// TODO: Run the screen's redraw function
+	
 	// If BG is lower screen: Draw Menu Bar & Mouse - on lower screen
 	if(bg == jl_gr->sg.bg.dn && _jlc->has.graphics) _jl_gr_loopa(jlc);
 	// Turn off the pre-renderer.

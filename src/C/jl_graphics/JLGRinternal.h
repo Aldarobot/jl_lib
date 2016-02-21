@@ -41,7 +41,7 @@ void jl_gl_pr_scr(jl_gr_t* jl_gr);
 void _jl_dl_loop(jvct_t* _jlc);
 void _jl_sg_loop(jl_gr_t* jl_gr);
 float jl_sg_seconds_past_(jl_t* jlc);
-strt jl_vi_make_jpeg_(jl_gr_t* jl_gr,i32_t quality,m_u8_t* pxdata,u16_t w,u16_t h);
+strt jl_vi_make_jpeg_(jl_t* jlc,i32_t quality,m_u8_t* pxdata,u16_t w,u16_t h);
 
 // Resize function
 void jl_dl_resz__(jl_gr_t* jl_gr, uint16_t x, uint16_t y);
