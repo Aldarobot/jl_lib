@@ -526,7 +526,7 @@ str_t jl_fl_get_resloc(jl_t* jlc, str_t prg_folder, str_t fname) {
 	jl_me_strt_free(pfstrt),jl_me_strt_free(fnstrt),jl_me_strt_free(filesr);
 	// Close Block "FLBS"
 	jl_io_return(jlc, "FL_Base");
-	jl_io_print(jlc, "finished resloc w/ \"%s\"", rtn); 
+	//jl_io_print(jlc, "finished resloc w/ \"%s\"", rtn); 
 	return rtn;
 }
 

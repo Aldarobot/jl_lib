@@ -102,10 +102,10 @@ $(BUILD_DEPS)/%.o: build-deps-var/%.o $(CFILE_DEPS)
 	printf "[COMP] Linking ....\n"
 #	echo $(LINKER_LIBS)
 	gcc $(OBJS) $(LIB) -o $(JL_OUT) $(CFLAGS) \
-		-L/opt/vc/lib/ -lm -lz -ldl -lpthread -lstdc++ -ljpeg \
+		-L/opt/vc/lib/ -lm -lz -ldl -lpthread -lstdc++ \
 		$(GL_VERSION) $(JL_DEBUG) \
 		`$(shell echo $(JLL_HOME))/deps/SDL2-2.0.3/sdl2-config --libs` \
-		$(LINKER_LIBS) #-lbcm_host
+		$(LINKER_LIBS) -lbcm_host -ljpeg
 	printf "[COMP] Done [ OpenGL Version = $(GL_VERSION) ]!\n"
 build/:
 	# Generated Files

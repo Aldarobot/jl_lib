@@ -6,7 +6,7 @@
 #include "jl_pr.h"
 
 #undef HAVE_STDLIB_H
-#include <jpeglib.h>
+#include "jpeglib.h"
 
 /**
  * Save a JPEG to data

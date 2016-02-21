@@ -21,6 +21,7 @@ CC = gcc
 CFLAGS = $(CFLAGS_DEBUG)
 
 CLUMP_SRC = src/lib/clump
+JPEG_SRC = src/lib/jpeg-9
 
 SRC = src/C
 BUILD = build/obj
@@ -31,7 +32,9 @@ MODULES = $(subst .c,, $(shell basename -a \
 ))
 HEADERS = $(shell find $(SRC)/ -type f -name '*.h')
 # Special MAKE variable - do not rename.
-VPATH = $(shell find $(SRC)/ -type d) $(shell find $(CLUMP_SRC)/ -type d)
+VPATH = \
+	$(shell find $(SRC)/ -type d) \
+	$(shell find $(CLUMP_SRC)/ -type d)
 #
 OBJS = $(addprefix $(BUILD)/, $(addsuffix .o,$(MODULES)))
 SHARED = $(BUILD)/jl.so
@@ -232,8 +235,13 @@ build-sdl-image:
 	sh configure && \
 	make && \
 	ld -r .libs/*.o -o ../../build/deps/lib_SDL_image.o && \
-	cp -t ../../src/lib/include/ SDL_image.h external/jpeg-9/jpeglib.h \
-		external/jpeg-9/jconfig.h external/jpeg-9/jmorecfg.h && \
+#	printf "[COMP] compiling libjpeg...\n" && \
+#	cp external/jpeg-9/ ../../src/lib/ -r && \
+#	rm -f ../../src/lib/jpeg-9/jmemmac.c ../../src/lib/jpeg-9/jmem-android.c \
+#		../../src/lib/jpeg-9/jmemdos.c ../../src/lib/jpeg-9/example.c \
+#		../../src/lib/jpeg-9/jmemname.c && \
+#	cp -t ../../src/lib/include/ SDL_image.h external/jpeg-9/jpeglib.h \
+#		external/jpeg-9/jconfig.h external/jpeg-9/jmorecfg.h && \
 	printf "[COMP] done!\n"
 build-sdl-net:
 	printf "[COMP] compiling SDL_net...\n" && \
