@@ -1,5 +1,5 @@
-#ifndef JLGR
-#define JLGR
+#ifndef JLAU
+#define JLAU
 
 #include "jl.h"
 #include "SDL_mixer.h"

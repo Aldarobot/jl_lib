@@ -134,7 +134,12 @@ typedef struct{
 	uint8_t smde; //Whether 2 or 1 Screens are showing.
 	uint32_t info; //@startup:# images loaded from media.zip.Set by others.
 	jl_err_t errf; //Set if error
-	float psec; //seconds since last loop
+	struct{
+		float psec; // Seconds since last frame.
+		uint32_t prev_tick; // Time 1 frame ago started
+		uint32_t this_tick; // Time this frame started
+		uint16_t fps; // Frames per second.
+	}time;
 	uint8_t mdec; //Number of Modes
 	uint8_t mode; //Current Mode
 	jl_sg_wm_t loop; //[WINDOW MODE] ( terminal,up,down,exit screen)
@@ -152,21 +157,11 @@ typedef struct{
 	uint8_t fontcolor[4];
 	jl_font_t font;
 	char temp[256];
+	// Built-in library pointers.
+	void* jl_gr;
+	void* jl_au;
 }jl_t;
 
 typedef void(*jl_fnct)(jl_t* jlc);
-typedef void(*jl_gr_sp_fnt)(jl_t* jlc, jl_sprd_t* spr);
-typedef void(*jl_ct_event_fnt)(jl_t* jlc, jl_fnct prun,jl_fnct pno);
 typedef void(*jl_io_print_fnt)(jl_t* jlc, const char * print);
-
-typedef struct{
-	jl_sprd_t data;		// Sprite Data
-	jl_gr_sp_fnt loop;	// Loop function
-	jl_gr_sp_fnt draw;	// Draw function
-	jl_pr_t *pr;		// Pre-renderer.
-}jl_sprite_t;
-
-typedef struct{
-	char *opt;
-	jl_fnct run;
-}jl_popup_button_t;
+//

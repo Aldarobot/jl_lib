@@ -211,7 +211,7 @@ jl_au_t* jl_au_init(jl_t* jlc) {
 	}
 	//Load Sound Effects & Music
 	jl_au_add_audio(jlc,jl_fl_get_resloc(jlc, JL_MAIN_DIR, JL_MAIN_MEF), 0);
-	jl_gr_draw_msge(jlc, 0, 0, 0, "LOADED AUDIOSTUFFS!");
+//	jl_gr_draw_msge(jlc, 0, 0, 0, "LOADED AUDIOSTUFFS!");
 	//Close Block AUDI
 	_jl_au_print_closeblock(jlc);
 	// Return the context.

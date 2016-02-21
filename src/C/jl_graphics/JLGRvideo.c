@@ -15,11 +15,11 @@
  * @param w: The width
  * @param h: THe height
 **/
-strt jl_vi_make_jpeg_(jl_t* jlc,i32_t quality,m_u8_t* pxdata,u16_t w,u16_t h) {
+strt jl_vi_make_jpeg_(jl_gr_t* jl_gr,i32_t quality,m_u8_t* pxdata,u16_t w,u16_t h) {
 	uint8_t* data = NULL;
 	m_u64_t data_size = 0;
 
-	jl_io_print(jlc, "w:%d h:%d", w, h);
+	jl_io_print(jl_gr->jlc, "w:%d h:%d", w, h);
 
 	/* This struct contains the JPEG compression parameters and pointers to
 	 * working space (which is allocated as needed by the JPEG library).
@@ -111,5 +111,5 @@ strt jl_vi_make_jpeg_(jl_t* jlc,i32_t quality,m_u8_t* pxdata,u16_t w,u16_t h) {
 	jpeg_destroy_compress(&cinfo);
 
 	/* And we're done! */
-	return jl_me_strt_mkfrom_data(jlc, data_size, data);
+	return jl_me_strt_mkfrom_data(jl_gr->jlc, data_size, data);
 }

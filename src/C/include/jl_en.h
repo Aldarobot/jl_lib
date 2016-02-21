@@ -22,10 +22,8 @@ typedef enum{
 
 // [WINDOW MODE]
 typedef enum{
-	JL_SG_WM_UP, //Run When In Upper Graphical Window
-	JL_SG_WM_DN, //Run When In Lower Graphical Window
-	JL_SG_WM_TERM, //Run When In Terminal Window
-	JL_SG_WM_EXIT, //Run When Not In This Program's Window
+	JL_SG_WM_LOOP, //Run When The mode is selected.
+	JL_SG_WM_EXIT, //Run When User requests to go back / quit.
 	JL_SG_WM_RESZ, //Run When Window is Resized
 	JL_SG_WM_MAX,
 }jl_sg_wm_t;

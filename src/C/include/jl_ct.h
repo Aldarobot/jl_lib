@@ -190,12 +190,6 @@
 #define JL_CT_SELECT JL_CT_ALLP(JL_CT_GAME_BTNA,JL_CT_COMP_RETN,JL_CT_ANDR_TCCR)
 
 /**
- * Run prun if event pevent is active.
-*/
-void jl_ct_run_event(jl_t *pusr, uint8_t pevent,
-	jl_fnct prun, jl_fnct pno);
-
-/**
  * Allocate space for how many controls you want.
  * The Maximum is 255.  You won't need that much ever!!!
  * You can set controls with:
@@ -263,9 +257,3 @@ void jl_ct_adds(void);
 void jl_ct_adde(void);
 void jl_ct_addn(void);
 void jl_ct_adda(void);
-
-float jl_ct_gmousex(jl_t *pusr);
-float jl_ct_gmousey(jl_t *pusr);
-
-uint8_t jl_ct_typing_get(jl_t *pusr);
-void jl_ct_typing_disable(jl_t *pusr);

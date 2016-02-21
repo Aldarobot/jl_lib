@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include "clump/clump.h"
+#include "JLgr.h"
 
 //IO:
 
@@ -23,7 +24,12 @@ typedef struct {
 //JLVM Context Structure
 typedef struct {
 	jl_t * jlc; // JL_Lib context
-	
+
+	struct {
+		__sg_mode_t *mdes; // Array Sizof Number Of Modes
+		__sg_mode_t mode; // Current Mode Data
+	}mode;
+
 	// Memory
 	struct {
 		char buffer[256];
@@ -42,149 +48,6 @@ typedef struct {
 		uint8_t level;
 		char buffer[256];
 	}io;
-
-	// Window Info
-	struct {
-		__sg_mode_t *mdes; // Array Sizof Number Of Modes
-		__sg_mode_t mode; // Current Mode Data
-		
-		uint32_t taskbar[5];
-		uint32_t init_image_location;
-
-		// FPS
-		uint32_t prev_tick;
-		uint32_t this_tick;
-		uint16_t fps;
-		// If Matching FPS
-		uint8_t on_time;
-		uint8_t changed;
-		
-		//For loading images
-		uint16_t image_id;
-		uint16_t igid;
-		strt image_data;
-		
-		// Offset x and y
-		float offsx, offsy;
-		
-		// 1 Background for each screen
-		struct {
-			jl_vo_t* up;
-			jl_vo_t* dn;
-		}bg;
-
-		float screen_height;
-
-		jl_fnct loop;
-	}sg;
-	
-	//Input Information
-	struct {
-		jl_ct_event_fnt getEvents[JL_CT_MAXX];
-
-		float msx, msy;
-		int msxi, msyi;
-
-		SDL_Event event;
-		
-		#if JL_PLAT == JL_PLAT_PHONE
-		uint8_t menu;
-
-		#elif JL_PLAT == JL_PLAT_COMPUTER
-		const Uint8 *keys;
-		#endif
-		
-		struct {
-			#if JL_PLAT == JL_PLAT_PHONE
-			uint8_t finger;
-			uint8_t menu;
-			uint8_t back;
-			#elif JL_PLAT == JL_PLAT_COMPUTER
-			uint8_t click_left; // Or Click
-			uint8_t click_right; // Or Ctrl-Click
-			uint8_t click_middle; // Or Shift-Click
-			#endif
-			//Multi-Platform
-			uint8_t scroll_right;
-			uint8_t scroll_left;
-			uint8_t scroll_up;
-			uint8_t scroll_down;
-		}input;
-
-		uint8_t back; //Back Key, Escape Key, Start Button
-		uint8_t heldDown;
-		uint8_t keyDown[255];
-		uint32_t sd; //NYI: stylus delete
-		
-		uint8_t sc;
-		uint8_t text_input[32];
-		uint8_t read_cursor;
-	}ct;
-	
-	//Opengl Data
-	struct {
-		uint32_t **textures;
-		uint16_t allocatedg;
-		uint16_t allocatedi;
-		uint8_t whichprg;
-		m_u32_t prgs[JL_GL_SLPR_MAX];
-		//PRG: TEX
-		struct {
-			struct {
-				m_i32_t position;
-				m_i32_t texpos;
-			} attr;
-			struct {
-				m_i32_t **textures;
-				m_i32_t multiply_alpha;
-				m_i32_t translate;
-				m_i32_t transform;
-			} uniforms;
-		} tex;
-		//PRG: PRM
-		struct {
-			struct {
-				m_i32_t position;
-				m_i32_t texpos;
-			} attr;
-			struct {
-				m_i32_t textures;
-				m_i32_t translate;
-				m_i32_t transform;
-			} uniforms;
-		} prm;
-		//PRG: CHR
-		struct {
-			struct {
-				m_i32_t position;
-				m_i32_t texpos;
-			} attr;
-			struct {
-				m_i32_t textures;
-				m_i32_t multiply_alpha;
-				m_i32_t new_color;
-				m_i32_t translate;
-				m_i32_t transform;
-			} uniforms;
-		} chr;
-		//PRG: CLR
-		struct {
-			struct {
-				m_i32_t position;
-				m_i32_t acolor;
-			} attr;
-			struct {
-				m_i32_t translate;
-				m_i32_t transform;
-			} uniforms;
-		} clr;
-		jl_vo_t *temp_vo;
-		// Default texture coordinates.
-		uint32_t default_tc;
-		
-		jl_pr_t* cp; // Renderer currently being drawn on.
-		jl_pr_t* bg; // Screen currently being drawn on.
-	}gl;
 	
 	struct {
 		struct cl_list *filelist; //List of all files in working dir.
@@ -208,50 +71,6 @@ typedef struct {
 			char* errf; // The error file "-- JL_Lib/errf.txt"
 		}paths; // Paths to different files.
 	}fl; //File Manager
-	
-	//Graphics
-	struct {
-		jl_gr_sp_fnt menuoverlay;
-		jl_sprite_t *taskbar;
-		struct {
-			char* window_name;
-			char* message;
-			jl_popup_button_t* btns;
-		}popup;
-		struct {
-			jl_vo_t *whole_screen;
-		}vos;
-		struct {
-			m_str_t message;
-			m_u16_t g;
-			m_u16_t i;
-			m_u8_t c;
-		}msge;
-		strt textbox_string;
-	}gr;
-
-	// SDL
-	struct {
-		uint8_t fullscreen;
-
-		char windowTitle[2][16];
-
-		SDL_DisplayMode current;
-		jl_window_t* displayWindow;
-	#if JL_GLRTEX == JL_GLRTEX_SDL
-		jl_window_t* whichwindow;
-	#endif
-
-		float shifty;
-		float shiftx;
-		
-		jl_rect_t window;
-		
-		// The complete width and height of the window.
-		uint16_t full_w, full_h;
-		double aspect;
-		uint16_t inner_y;
-	}dl;
 
 	//in: What's Available
 	struct {
