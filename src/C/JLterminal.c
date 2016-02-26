@@ -157,46 +157,6 @@ void jl_io_printc(jl_t* jlc, const char * print) {
 	_jl_io_printc(jlc, print);
 }
 
-/**
- * Print truncated text to the terminal.
- * @param jlc: the library context.
- * @param a: the truncating string.
- * @param print: the string to print.
-*/
-void jl_io_printt(jl_t *jlc, uint8_t a, const char *print) {
-	char *string = NULL; jl_me_alloc(jlc, (void**)&string, strlen(print) + 1, 0);
-	char *string2= NULL; jl_me_alloc(jlc, (void**)&string2, 6, 0);
-	sprintf(string2, "%%%ds", a);
-	sprintf(string, string2, print);
-	jl_io_printc(jlc, string);
-	free(string);
-	free(string2);
-}
-
-/**
- * Print an integer to the terminal.
- * @param jlc: the library context.
- * @param print: the number to print.
-*/
-void jl_io_printi(jl_t *jlc, int print) {
-	char *string = NULL; jl_me_alloc(jlc, (void**) &string, 10, 0);
-	sprintf(string, "%d", print);
-	jl_io_printc(jlc, string);
-	free(string);
-}
-
-/**
- * Print a double to the terminal.
- * @param jlc: the library context.
- * @param print: the number to print.
-*/
-void jl_io_printd(jl_t *jlc, double print) {
-	char *string = NULL; jl_me_alloc(jlc, (void**)&string, 20, 0);
-	sprintf(string, "%f", print);
-	jl_io_printc(jlc, string);
-	free(string);
-}
-
 void jl_io_function(jl_t* jlc, str_t fn_name) {
 	jvct_t* _jlc = jlc->_jlc;
 	i32_t size = strlen(fn_name);

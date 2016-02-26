@@ -68,7 +68,7 @@ static void _jl_gr_textbox_lt(jl_gr_t* jl_gr);
 	static void jl_gr_sprite_draw_to_pr__(jl_t *jlc) {
 		jl_sprite_t *spr = jl_me_tmp_ptr(jlc, 0, NULL);
 
-		spr->draw(jlc, &(spr->data));
+		spr->draw(jlc->jl_gr, &(spr->data));
 	}
 
 	static void _jl_gr_popup_loop(jl_t *jlc) {
@@ -1157,4 +1157,8 @@ static void _jl_gr_textbox_lt(jl_gr_t* jl_gr);
 
 strt jl_vi_make_jpeg(jl_t* jlc,i32_t quality,m_u8_t* pxdata,u16_t w,u16_t h) {
 	return jl_vi_make_jpeg_(jlc, quality, pxdata, w, h);
+}
+
+m_u8_t* jl_gr_load_image(jl_t* jlc, strt data, m_u16_t* w, m_u16_t* h) {
+	return jl_vi_load_(jlc, data, w, h);
 }

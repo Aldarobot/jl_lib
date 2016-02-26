@@ -4,6 +4,7 @@
 		VIDE is for editing sounds and graphics.
 */
 #include "jl_pr.h"
+#include "JLGRinternal.h"
 
 #undef HAVE_STDLIB_H
 #include <jpeglib.h>
@@ -14,6 +15,7 @@
  * @param pxdata: 3-byte item R,G,B pixel array
  * @param w: The width
  * @param h: THe height
+ * @returns: The data.
 **/
 strt jl_vi_make_jpeg_(jl_t* jlc,i32_t quality,m_u8_t* pxdata,u16_t w,u16_t h) {
 	uint8_t* data = NULL;
@@ -112,4 +114,61 @@ strt jl_vi_make_jpeg_(jl_t* jlc,i32_t quality,m_u8_t* pxdata,u16_t w,u16_t h) {
 
 	/* And we're done! */
 	return jl_me_strt_mkfrom_data(jlc, data_size, data);
+}
+
+//void memtester(jl_t* jlc, str_t name);
+
+/**
+ * Load an image from data.
+ * @param jlc: The library context.
+ * @param data: The data to read.
+ * @param w: Pointer to the width variable.
+ * @param h: Pointer to the height variable.
+ * @returns: Raw pixel data.
+**/
+m_u8_t* jl_vi_load_(jl_t* jlc, strt data, m_u16_t* w, m_u16_t* h) {
+	SDL_Surface *image; //  Free'd by SDL_free(image);
+	SDL_RWops *rw; // Free'd by SDL_RWFromMem
+	void* img_file = NULL; // Free'd by jl_me_alloc
+	strt pixel_data; // Free'd by jl_me_string_fstrt
+	void* rtn_pixels; // Returned so not free'd.
+	uint32_t color = 0;
+	u32_t FSIZE = data->size;
+	int i, j;
+	u32_t rgba = 3;
+
+//	memtester(jlc, "LoadImg/Start0");
+	jl_me_alloc(jlc, &img_file, FSIZE, 0);
+//	memtester(jlc, "LoadImg/Start1");
+	jl_me_strt_loadto(data, FSIZE, img_file);
+//	memtester(jlc, "LoadImg/Start2");
+	rw = SDL_RWFromMem(img_file, FSIZE);
+//	memtester(jlc, "LoadImg/Start3");
+	if ((image = IMG_Load_RW(rw, 0)) == NULL) {
+		jl_io_print(jlc, "Couldn't load image: %s", IMG_GetError());
+		jl_sg_kill(jlc);
+	}
+//	memtester(jlc, "LoadImg/Start4");
+	// Covert SDL_Surface.
+	pixel_data = jl_me_strt_make(image->w * image->h * rgba);
+	for(i = 0; i < image->h; i++) {
+		for(j = 0; j < image->w; j++) {
+			color = _jl_sg_gpix(image, j, i);
+			jl_me_strt_saveto(pixel_data, rgba, &color);
+		}
+	}
+//	memtester(jlc, "LoadImg/Start5");
+	//Set Return values
+	rtn_pixels = jl_me_string_fstrt(jlc, pixel_data);
+//	memtester(jlc, "LoadImg/End6");
+	*w = image->w;
+	*h = image->h;
+	// Clean-up
+	SDL_FreeSurface(image);
+//	memtester(jlc, "LoadImg/End4");
+	SDL_free(rw);
+//	memtester(jlc, "LoadImg/End3");
+	jl_me_alloc(jlc, &img_file, 0, 0);
+//	memtester(jlc, "LoadImg/End1");
+	return rtn_pixels;
 }

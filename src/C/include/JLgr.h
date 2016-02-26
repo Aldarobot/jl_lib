@@ -52,9 +52,15 @@ typedef struct{
 			jl_vo_t* dn;
 		}bg;
 
+		struct {
+			void* single;
+			void* lower;
+			void* upper;
+		}redraw;
+
 		float screen_height;
 
-		void* loop; // ( jl_gr_fnct )
+		void* loop; // ( jl_gr_fnct ) For upper or lower screen.
 		u8_t cscreen; // The current screen "jl_gr_which_screen_t"
 	}sg;
 
@@ -292,6 +298,7 @@ void jl_gl_pr_draw(jl_gr_t* jl_gr, jl_pr_t* pr, jl_vec3_t* vec, jl_vec3_t* scl);
 void jl_gl_pr(jl_gr_t* jl_gr, jl_pr_t * pr, jl_fnct par__redraw);
 // video
 strt jl_vi_make_jpeg(jl_t* jlc,i32_t quality,m_u8_t* pxdata,u16_t w,u16_t h);
+m_u8_t* jl_gr_load_image(jl_t* jlc, strt data, m_u16_t* w, m_u16_t* h);
 // SG
 void jl_sg_kill(jl_t* jlc);
 void jl_sg_exit(jl_t* jlc);

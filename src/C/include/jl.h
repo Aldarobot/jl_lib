@@ -38,7 +38,7 @@
 	void jl_me_strt_free(strt pstr);
 	strt jl_me_strt_mkfrom_str(str_t string);
 	#define Strt(x) jl_me_strt_mkfrom_str((const void*)x)
-	strt jl_me_strt_mkfrom_data(jl_t* jlc, uint32_t size, void *data);
+	strt jl_me_strt_mkfrom_data(jl_t* jlc, u32_t size, const void *data);
 	void jl_me_strt_strt(jl_t*jlc, strt a, strt b, uint64_t p);
 	void jl_me_strt_merg(jl_t *jlc, strt a, strt b);
 	void jl_me_strt_trunc(jl_t *jlc, strt a, uint32_t size);
@@ -67,7 +67,7 @@
 	void jl_sg_mode_set(jl_t* jlc, u8_t mode, u8_t wm, jl_fnct loop);
 	void jl_sg_mode_override(jl_t* jlc, uint8_t wm, jl_fnct loop);
 	void jl_sg_mode_reset(jl_t* jlc);
-	void jl_sg_mode_switch(jl_t* jlc, uint8_t mode, jl_sg_wm_t loop);
+	void jl_sg_mode_switch(jl_t* jlc, uint8_t mode);
 // "dl.c"
 	void jl_dl_setfullscreen(jl_t *jlc, uint8_t is);
 	void jl_dl_togglefullscreen(jl_t *jlc);
@@ -77,9 +77,6 @@
 // "io.c"
 	void jl_io_tag_set(jl_t* jlc, jl_io_print_fnt tagfn);
 	void jl_io_printc(jl_t* jlc, const char * print);
-	void jl_io_printt(jl_t *jlc, uint8_t a, const char *print);
-	void jl_io_printi(jl_t *jlc, int print);
-	void jl_io_printd(jl_t *jlc, double print);
 	#define jl_io_print(jlc, ...)\
 		jl_io_printc(jlc, jl_me_format(jlc, __VA_ARGS__))
 	void jl_io_function(jl_t* jlc, str_t fn_name);

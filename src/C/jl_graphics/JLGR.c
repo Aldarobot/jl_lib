@@ -54,7 +54,9 @@ jl_gr_t* jl_gr_init(jl_t* jlc, str_t window_name, u8_t fullscreen) {
 void jl_gr_loop_set(jl_gr_t* jl_gr, jl_fnct onescreen, jl_fnct upscreen,
 	jl_fnct downscreen)
 {
-	
+	jl_gr->sg.redraw.upper = upscreen;
+	jl_gr->sg.redraw.lower = downscreen;
+	jl_gr->sg.redraw.single = onescreen;
 }
 
 /**
@@ -69,7 +71,7 @@ void jl_gr_loop(jl_gr_t* jl_gr, void* data, u32_t dataSize) {
 	// Deselect any pre-renderer.
 	jl_gr->gl.cp = NULL;
 	//Redraw screen.
-	_jl_sg_loop(jl_gr->jlc->_jlc);
+	_jl_sg_loop(jl_gr);
 	//Update Screen.
 	jl_dl_loop__(jl_gr);
 }
@@ -79,13 +81,16 @@ void jl_gr_loop(jl_gr_t* jl_gr, void* data, u32_t dataSize) {
  * @param jl_gr: The library context.
 **/
 void jl_gr_resz(jl_gr_t* jl_gr, u16_t x, u16_t y) {
-	jl_taskbar_t *ctx = jl_gr->gr.taskbar->data.ctx;
+	jvct_t* _jlc = jl_gr->jlc->_jlc;
+	if(_jlc->has.graphics) {
+		jl_taskbar_t *ctx = jl_gr->gr.taskbar->data.ctx;
 
-	//Menu Bar
-	ctx->redraw = 2;
-	jl_gr_sp_rsz(jl_gr, jl_gr->gr.taskbar);
-	//Mouse
-	jl_gr_sp_rsz(jl_gr, jl_gr->jlc->mouse);
+		//Menu Bar
+		ctx->redraw = 2;
+		jl_gr_sp_rsz(jl_gr, jl_gr->gr.taskbar);
+		//Mouse
+		jl_gr_sp_rsz(jl_gr, jl_gr->jlc->mouse);
+	}
 	// Reset aspect ratio stuff.
 	jl_dl_resz__(jl_gr, x, y);
 	// Update the actual window.

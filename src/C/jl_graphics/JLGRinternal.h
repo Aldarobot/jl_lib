@@ -12,6 +12,7 @@ typedef struct{
 }jl_taskbar_t;
 
 void jl_sg_add_some_imgs_(jl_gr_t* jl_gr, u16_t x);
+uint32_t _jl_sg_gpix(/*in */ SDL_Surface* surface, int32_t x, int32_t y);
 void jl_gl_viewport_screen(jl_gr_t* jl_gr);
 void jl_gl_poly(jl_gr_t* jl_gr, jl_vo_t* pv, uint8_t vertices, const float *xyzw);
 void jl_gl_vect(jl_gr_t* jl_gr, jl_vo_t* pv, uint8_t vertices, const float *xyzw);
@@ -42,6 +43,7 @@ void _jl_dl_loop(jvct_t* _jlc);
 void _jl_sg_loop(jl_gr_t* jl_gr);
 float jl_sg_seconds_past_(jl_t* jlc);
 strt jl_vi_make_jpeg_(jl_t* jlc,i32_t quality,m_u8_t* pxdata,u16_t w,u16_t h);
+m_u8_t* jl_vi_load_(jl_t* jlc, strt data, m_u16_t* w, m_u16_t* h);
 
 // Resize function
 void jl_dl_resz__(jl_gr_t* jl_gr, uint16_t x, uint16_t y);

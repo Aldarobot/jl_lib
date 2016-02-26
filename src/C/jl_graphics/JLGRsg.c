@@ -69,8 +69,9 @@ static void _jl_sg_mode_add(jl_t* jlc) {
 		(jlc->mdec + 1) * sizeof(__sg_mode_t),
 		jlc->mdec * sizeof(__sg_mode_t));
 	// Set the mode.
-	_jlc->mode.mdes[jlc->mdec].tclp[JL_SG_WM_EXIT] = jl_sg_exit;
+	_jlc->mode.mdes[jlc->mdec].tclp[JL_SG_WM_INIT] = jl_dont;
 	_jlc->mode.mdes[jlc->mdec].tclp[JL_SG_WM_LOOP] = jl_dont;
+	_jlc->mode.mdes[jlc->mdec].tclp[JL_SG_WM_EXIT] = jl_sg_exit;
 	_jlc->mode.mdes[jlc->mdec].tclp[JL_SG_WM_RESZ] = jl_dont;
 	// Add to mode count.
 	jlc->mdec++;
@@ -82,6 +83,7 @@ static void _jl_sg_mode_add(jl_t* jlc) {
  * @param jlc: The library context.
  * @param mode: The mode to change the loop functions of.
  * @param wm: Which loop to change.
+ *	JL_SG_WM_INIT: Called when mode is switched in.
  *	JL_SG_WM_EXIT: Called when "Back Button" Is Pressed.  "Back Button" is:
  *		- 3DS/WiiU: Select
  *		- Android: Back
@@ -129,21 +131,24 @@ void jl_sg_mode_reset(jl_t* jlc) {
 }
 
 /**
- * Switch which mode is in use & the current mode loop.
+ * Switch which mode is in use.
  * @param jlc: The library context.
  * @param mode: The mode to switch to.
- * @param loop: The loop to switch to.
  */
-void jl_sg_mode_switch(jl_t* jlc, uint8_t mode, jl_sg_wm_t loop) {
+void jl_sg_mode_switch(jl_t* jlc, uint8_t mode) {
+	jvct_t* _jlc = jlc->_jlc;
+
+	// Switch mode
 	jlc->mode = mode;
-	jlc->loop = loop;
+	jlc->loop = JL_SG_WM_LOOP;
+	// Set the basic functions
 	jl_sg_mode_reset(jlc);
+	// Run user's intialization
+	_jlc->mode.mode.tclp[JL_SG_WM_INIT](_jlc->jlc);
 }
 
 //Get a pixels RGBA values from a surface and xy
-uint32_t _jl_sg_gpix(
-	/*in */ SDL_Surface* surface, int32_t x, int32_t y)
-{
+uint32_t _jl_sg_gpix(/*in */ SDL_Surface* surface, int32_t x, int32_t y) {
 	i32_t bpp = surface->format->BytesPerPixel;
 	u8_t *p = (uint8_t *)surface->pixels + (y * surface->pitch) + (x * bpp);
 	uint32_t color_orig;
@@ -389,7 +394,7 @@ void jl_sg_add_image(jl_t* jlc, str_t pzipfile, u16_t pigid) {
 	jl_sg_add_image__(jlc, pzipfile, pigid, 0);
 }
 
-static void _jl_sg_screen_draw(jl_t* jlc, f32_t ytrans, jl_vo_t* bg, u8_t lp) {
+static void _jl_sg_screen_draw(jl_t* jlc, f32_t ytrans, jl_vo_t* bg, jl_fnct f){
 	jl_gr_t* jl_gr = jlc->jl_gr;
 	jvct_t* _jlc = jlc->_jlc;
 	jl_vec3_t translate = { jl_gr->sg.offsx, jl_gr->sg.offsy + ytrans, 0. };
@@ -406,7 +411,7 @@ static void _jl_sg_screen_draw(jl_t* jlc, f32_t ytrans, jl_vo_t* bg, u8_t lp) {
 	jl_gl_clear(jl_gr, (ytrans > 0.1 ) * 255, (ytrans > 0.1 ) * 255,
 		(ytrans > 0.1 ) * 255, 255);
 	// TODO: Run the screen's redraw function
-	
+	f(jlc);
 	// If BG is lower screen: Draw Menu Bar & Mouse - on lower screen
 	if(bg == jl_gr->sg.bg.dn && _jlc->has.graphics) _jl_gr_loopa(jlc);
 	// Turn off the pre-renderer.
@@ -419,18 +424,19 @@ static void _jl_sg_screen_draw(jl_t* jlc, f32_t ytrans, jl_vo_t* bg, u8_t lp) {
 static void _jl_sg_loop_ds(jl_gr_t* jl_gr) {
 	// Draw lower screen - default screen
 	_jl_sg_screen_draw(jl_gr->jlc, 0.f, jl_gr->sg.bg.up,
-		(jl_gr->sg.cscreen == JL_SCR_UP) ? JL_SCR_DN : JL_SCR_UP);
+		(jl_gr->sg.cscreen == JL_SCR_UP) ? jl_gr->sg.redraw.lower :
+			 jl_gr->sg.redraw.upper);
 	// Draw upper screen - alternate screen
 	_jl_sg_screen_draw(jl_gr->jlc, jl_gr->sg.screen_height, jl_gr->sg.bg.dn,
-		jl_gr->sg.cscreen);
+		(jl_gr->sg.cscreen == JL_SCR_UP) ? jl_gr->sg.redraw.upper :
+			 jl_gr->sg.redraw.lower);
 }
 
 // Single screen loop
-static void _jl_sg_loop_ss(jl_t* jlc) {
-	jl_gr_t* jl_gr = jlc->jl_gr;
-
+static void _jl_sg_loop_ss(jl_gr_t* jl_gr) {
 	// Draw lower screen - default screen
-	_jl_sg_screen_draw(jlc, 0.f, jl_gr->sg.bg.dn, jlc->loop);
+	_jl_sg_screen_draw(jl_gr->jlc, 0.f, jl_gr->sg.bg.dn,
+		jl_gr->sg.redraw.single);
 }
 
 void _jl_sg_loop(jl_gr_t* jl_gr) {
@@ -514,8 +520,8 @@ void jl_sg_initb__(jl_gr_t* jl_gr) {
 	// No error
 	jl_gr->jlc->errf = JL_ERR_NERR;
 	jl_gr->jlc->time.psec = 0.f;
-	// Set Default Window To Terminal
-	jl_gr->jlc->loop = JL_SG_WM_LOOP;
+	// Set Default Loop To Initialize
+	jl_gr->jlc->loop = JL_SG_WM_INIT;
 	jl_gr->jlc->time.prev_tick = 0;
 	jl_gr->jlc->time.fps = JL_FPS;
 }
@@ -529,6 +535,9 @@ void jl_sg_inita__(jl_gr_t* jl_gr) {
 	jl_gr->gl.tex.uniforms.textures = NULL;
 	jl_gr->sg.image_id = 0; //Reset Image Id
 	jl_gr->sg.igid = 0; //Reset Image Group Id
+	jl_gr->sg.redraw.upper = jl_dont;
+	jl_gr->sg.redraw.lower = jl_dont;
+	jl_gr->sg.redraw.single = jl_dont;
 	// Load Graphics
 	jl_gr->gl.allocatedg = 0;
 	jl_gr->gl.allocatedi = 0;

@@ -190,28 +190,22 @@ void jl_me_strt_free(strt pstr) {
 }
 
 /**
- * convert "string" into a (temporary) strt and return it.
- * @param string: String to convert
- * @returns: new "strt" with same contents as "string".
+ *
 */
-strt jl_me_strt_mkfrom_str(str_t string) {
-	uint32_t size = strlen(string);
+strt jl_me_strt_mkfrom_data(jl_t* jlc, u32_t size, const void *data) {
 	strt a = jl_me_strt_make(size);
-	jl_me_copyto(string, a->data, size);
-	a->data[size] = '\0';
+	jl_me_copyto(data, a->data, size);
+	a->data[size] = '\0'; // Null terminalte
 	return a;
 }
 
 /**
- *
+ * Converts "string" into a strt and returns it.
+ * @param string: String to convert
+ * @returns: new "strt" with same contents as "string".
 */
-strt jl_me_strt_mkfrom_data(jl_t* jlc, uint32_t size, void *data) {
-	strt a = malloc(sizeof(strt_t));
-	a->data = jl_me_copy(jlc, data, size);
-	a->size = size;
-	a->curs = 0;
-	a->data[size] = '\0';
-	return a;
+strt jl_me_strt_mkfrom_str(str_t string) {
+	return jl_me_strt_mkfrom_data(NULL, strlen(string), string);
 }
 
 /**
@@ -389,8 +383,8 @@ void jl_me_strt_trunc(jl_t *jlc, strt a, uint32_t size) {
  * @returns: a new string (char *) with the same contents as "a"
 */
 char* jl_me_string_fstrt(jl_t* jlc, strt a) {
-	char *rtn = jl_me_copy(jlc, (char*)(a->data), a->size);
-	jl_me_strt_free(a);
+	char *rtn = (void*)a->data;
+	free(a);
 	return rtn;
 }
 
