@@ -1,5 +1,8 @@
 ################################################################################
 
+# Figure out which platform.
+include $(shell echo $(JLL_HOME))/compile-scripts/platform.mk
+
 # Dependencies
 SRCS_DEPS = \
 	$(shell find $(SRC_DEPS)/ -type f -name '*.c')\
@@ -100,12 +103,11 @@ $(BUILD_DEPS)/%.o: build-deps-var/%.o $(CFILE_DEPS)
 	$(eval JL_OUT=build/bin/$(shell echo `sed -n '4p' data.txt`))
 -build:
 	printf "[COMP] Linking ....\n"
-#	echo $(LINKER_LIBS)
 	gcc $(OBJS) $(LIB) -o $(JL_OUT) $(CFLAGS) \
-		-L/opt/vc/lib/ -lm -lz -ldl -lpthread -lstdc++ \
+		-lm -lz -ldl -lpthread -lstdc++ \
 		$(GL_VERSION) $(JL_DEBUG) \
 		`$(shell echo $(JLL_HOME))/deps/SDL2-2.0.3/sdl2-config --libs` \
-		$(LINKER_LIBS) -lbcm_host -ljpeg
+		$(LINKER_LIBS) $(PLATFORM_CFLAGS) -ljpeg
 	printf "[COMP] Done [ OpenGL Version = $(GL_VERSION) ]!\n"
 build/:
 	# Generated Files
