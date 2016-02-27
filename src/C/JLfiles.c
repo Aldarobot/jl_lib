@@ -114,6 +114,17 @@ static inline void jl_fl_get_root__(jvct_t * _jlc) {
 	jl_me_strt_merg(_jlc->jlc, root_path, root_dir);
 	jl_io_print(_jlc->jlc, "Free root_dir.");
 	jl_me_strt_free(root_dir);
+#elif JL_PLAT_RPI
+	strt root_dir;
+
+	jl_io_print(_jlc->jlc, "Get external storage directory.");
+	root_path = jl_me_strt_mkfrom_str("/home/pi/.local/share/");
+	jl_io_print(_jlc->jlc, "Append JL_ROOT_DIR.");
+	root_dir = jl_me_strt_mkfrom_str(JL_ROOT_DIR);
+	jl_io_print(_jlc->jlc, "Merging root_path and root_dir.");
+	jl_me_strt_merg(_jlc->jlc, root_path, root_dir);
+	jl_io_print(_jlc->jlc, "Free root_dir.");
+	jl_me_strt_free(root_dir);
 #else
 	// Get the operating systems prefered path
 	m_str_t pref_path = SDL_GetPrefPath(JL_ROOT_DIRNAME, "\0");

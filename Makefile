@@ -18,7 +18,7 @@ CFLAGS_DEBUG = $(HEADER) -Wall -g
 CFLAGS_RELEASE = $(HEADER) -O3
 
 CC = gcc
-CFLAGS = $(CFLAGS_DEBUG)
+CFLAGS = $(CFLAGS_DEBUG) $(PLATFORM_CFLAGS)
 
 CLUMP_SRC = src/lib/clump
 JPEG_SRC = src/lib/jpeg-9
@@ -240,8 +240,9 @@ build-sdl-image:
 #	rm -f ../../src/lib/jpeg-9/jmemmac.c ../../src/lib/jpeg-9/jmem-android.c \
 #		../../src/lib/jpeg-9/jmemdos.c ../../src/lib/jpeg-9/example.c \
 #		../../src/lib/jpeg-9/jmemname.c && \
-#	cp -t ../../src/lib/include/ SDL_image.h external/jpeg-9/jpeglib.h \
-#		external/jpeg-9/jconfig.h external/jpeg-9/jmorecfg.h && \
+	cp -t ../../src/lib/include/ SDL_image.h && \
+#external/jpeg-9/jpeglib.h \
+#external/jpeg-9/jconfig.h external/jpeg-9/jmorecfg.h && \
 	printf "[COMP] done!\n"
 build-sdl-net:
 	printf "[COMP] compiling SDL_net...\n" && \

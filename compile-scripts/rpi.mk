@@ -1,4 +1,5 @@
 PLATFORM = Raspberry Pi
+PLATFORM_CFLAGS = -DJL_PLAT_RPI
 
 build-sdl:
 	printf "[COMP] compiling SDL for $(PLATFORM)...\n" && \
