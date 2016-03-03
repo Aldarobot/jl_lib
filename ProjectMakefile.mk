@@ -47,8 +47,10 @@ FOLDERS = build/ libs/ media/ src/
 ################################################################################
 
 test: build-notify $(FOLDERS) -debug $(OBJS_PRG) -build
-#	echo run
 	./$(JL_OUT)
+
+debug: build-notify $(FOLDERS) -debug $(OBJS_PRG) -build
+	gdb ./$(JL_OUT)
 
 android:
 	sh $(shell echo $(JLL_HOME))/compile-scripts/jl_android\

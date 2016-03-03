@@ -67,13 +67,10 @@ static inline void jl_seconds_passed__(jvct_t* _jlc) {
 }
 
 static inline void main_loop__(jvct_t* _jlc) {
-	jl_io_print(_jlc->jlc, "going into loop....");
-	while(1) {
-		// Check the amount of time passed since last frame.
-		jl_seconds_passed__(_jlc);
-		// Run the user's mode loop.
-		_jlc->mode.mode.tclp[_jlc->jlc->loop](_jlc->jlc);
-	}
+	// Check the amount of time passed since last frame.
+	jl_seconds_passed__(_jlc);
+	// Run the user's mode loop.
+	_jlc->mode.mode.tclp[_jlc->jlc->loop](_jlc->jlc);
 }
 
 // EXPORT FUNCTIONS
@@ -83,7 +80,7 @@ static inline void main_loop__(jvct_t* _jlc) {
 **/
 void jl_dont(jl_t* jlc) { }
 
-void jl_kill(jl_t* jlc, int rc) {
+static inline int jl_kill__(jl_t* jlc, int rc) {
 	jvct_t* _jlc = jlc->_jlc;
 
 	jl_io_print(jlc, "Quitting...."); //Exited properly
@@ -105,25 +102,25 @@ void jl_kill(jl_t* jlc, int rc) {
 	printf("[\\JL_Lib] ");
 	if(!rc) printf("| No errors ");
 	printf("| Exiting with return value %d |\n", rc);
-	exit(rc);
-	jl_io_print(jlc, ":What The Hell?  This is an impossible error!");
+	return rc;
 }
 
 /**
- * Initialize JL_Lib.
+ * Start JL_Lib.  Returns when program is closed.
 **/
-void jl_init(jl_fnct _fnc_init_) {
+int jl_init(jl_fnct _fnc_init_, jl_fnct _fnc_kill_) {
 	//Set Up Memory And Logging
 	jvct_t* _jlc = jl_init_essential__();
 
 	// Initialize JL_lib!
 	_jl_ini(_jlc, _fnc_init_);
 	// Run the Loop
-	if(_jlc->jlc->mdec) main_loop__(_jlc);
+	jl_io_print(_jlc->jlc, "going into loop....");
+	while(_jlc->jlc->mdec) main_loop__(_jlc);
+	// Run Users Kill Routine
+	_fnc_kill_(_jlc->jlc);
 	// Kill the program
-	jl_kill(_jlc->jlc, JL_RTN_SUPER_IMPOSSIBLE);
-	// Impossible to reach this point
-	return;
+	return jl_kill__(_jlc->jlc, JL_RTN_SUCCESS);
 }
 
 #if JL_PLAT == JL_PLAT_PHONE

@@ -354,7 +354,7 @@ void jl_sg_kill(jl_t* jlc) {
 	//	inline at that point.
 	jl_io_print(jlc, "Quitting On Error....");
 //	jl_io_stacktrace(jlc);
-	jl_kill(jlc, JL_RTN_FAIL);
+	jlc->mdec = 0;
 	// Program is stopped at this point.
 }
 
@@ -363,7 +363,7 @@ void jl_sg_kill(jl_t* jlc) {
  */
 void jl_sg_exit(jl_t* jlc) {
 	if(jlc->loop == JL_SG_WM_EXIT)
-		jl_kill(jlc, JL_RTN_SUCCESS);
+		jlc->mdec = 0;
 	else
 		jlc->loop = JL_SG_WM_EXIT;
 }
