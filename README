@@ -88,7 +88,7 @@ opengl and opengles and sdl for android and sdl for PC.
 			// Where all the static functions go, inline first.
 		
 		/**      @endcond      **/
-		/************************/
+		/********	****************/
 		/*** Global Functions ***/
 		/************************/
 		

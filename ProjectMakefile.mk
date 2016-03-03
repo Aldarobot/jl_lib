@@ -3,40 +3,50 @@
 # Figure out which platform.
 include $(shell echo $(JLL_HOME))/compile-scripts/platform.mk
 
-# Dependencies
-SRCS_DEPS = \
-	$(shell find $(SRC_DEPS)/ -type f -name '*.c')\
-	$(shell find $(SRC_DEPS)/ -type f -name '*.cpp')
-MODULES_DEPS = \
-	$(subst .c,, $(subst .cpp,, \
-	$(subst /,-, $(SRCS_DEPS))))
-OBJS_DEPS = \
-	$(addprefix $(BUILD_DEPS)/, $(subst $(BUILD_DEPS)/libs-,,\
-	$(foreach x, $(MODULES_DEPS), $(BUILD_DEPS)/$(x).o)))
-
 # directories
 SRC = src
 SRC_DEPS = libs
-BUILD = build/objs
+BUILD_OBJS = build/objs
 BUILD_TEST = build/test
 BUILD_DEPS = build/deps
+
+# Dependencies
+#	$(shell find $(SRC_DEPS)/ -type f -name '*.cpp')
+MODULES_DEPS = $(subst .c,, $(shell basename -a $(subst .cpp,, \
+	$(shell find $(SRC_DEPS)/ -type f -name '*.c') \
+)))
+OBJS_DEPS = \
+	$(addprefix $(BUILD_DEPS)/, $(addsuffix .o,$(MODULES_DEPS)))
+
+# Program
+#	$(shell find $(SRC)/ -type f -name '*.cpp')
+MODULES_PRG = \
+	$(subst .c,, $(subst .cpp,, $(shell basename -a \
+	$(shell find $(SRC)/ -type f -name '*.c') \
+)))
+
+# Test & Release
+OBJS_PRG = \
+	$(OBJS_DEPS) \
+	$(addprefix $(BUILD_TEST)/, $(addsuffix .o,$(MODULES_PRG)))
+OBJS_RLS = \
+	$(OBJS_DEPS) \
+	$(addprefix $(BUILD_OBJS)/, $(addsuffix .o,$(MODULES_PRG)))
+
 # Special MAKE variable - do not rename.
-VPATH = $(shell find $(SRC)/ -type d) $(shell find $(SRC_DEPS)/ -type d)
+VPATH = \
+	$(shell find $(SRC)/ -type d) \
+	$(shell find $(SRC_DEPS)/ -type d)
 #
-MODULES = $(shell basename -a $(subst .c,,\
-	$(shell find $(SRC)/ -type f -name '*.c')))
 HEADERS = $(shell find $(SRC)/ -type f -name '*.h')
-OBJS = $(addprefix $(BUILD)/, $(addsuffix .o, $(MODULES)))
-TEST = $(addprefix $(BUILD_TEST)/, $(addsuffix .o, $(MODULES)))
-LIB = $(shell echo $(JLL_HOME))/build/jl.o\
-	$(shell find $(BUILD_DEPS)/ -type f -name '*.o')
+LIB = $(shell echo $(JLL_HOME))/build/jl.o
 COMPILE = printf "[COMP/PROJ] Compiling $<....\n";$(CC) # -to- $@.
 # target: init
 FOLDERS = build/ libs/ media/ src/
 
 ################################################################################
 
-test: $(FOLDERS) -debug $(TEST) $(OBJS_DEPS) -build
+test: build-notify $(FOLDERS) -debug $(OBJS_PRG) -build
 #	echo run
 	./$(JL_OUT)
 
@@ -44,7 +54,7 @@ android:
 	sh $(shell echo $(JLL_HOME))/compile-scripts/jl_android\
 	 $(shell echo $(JLL_HOME))
 
-install: $(FOLDERS) -publish $(OBJS) -build
+install: build-notify $(FOLDERS) -publish $(OBJS_RLS) -build
 	printf "Installing....\n"
 	if [ -z "$(JLL_PATH)" ]; then \
 		printf "Where to install? ( hint: /bin or $$HOME/bin ) [ Set"\
@@ -57,6 +67,16 @@ install: $(FOLDERS) -publish $(OBJS) -build
 
 init: $(FOLDERS)
 	printf "[COMPILE] Done!\n"
+
+build-notify:
+	echo Modules: $(MODULES_PRG) $(MODULES_DEPS)
+	echo Headers: $(HEADERS)
+	echo Folders: N/A #$(VPATH)
+	printf "[COMP] Building program for target=$(PLATFORM)....\n"
+
+clean:
+	rm -r build/bin/ build/deps build/objs/ build/test/
+	mkdir -p build/bin/ build/deps build/objs/ build/test/
 
 ################################################################################
 
@@ -71,10 +91,10 @@ build-deps-var/%.o:
 		$(subst -,/,$(subst build-deps-var/,,$@.c*))))))
 #	echo CFILE_DEPS = $(CFILE_DEPS)
 
-$(BUILD_DEPS)/%.o: build-deps-var/%.o $(CFILE_DEPS)
+$(BUILD_DEPS)/%.o: %.c $(HEADERS)
 #	echo CFILE_DEPS = $(CFILE_DEPS)
-	printf "[COMP/DEPS] Compiling \"$(CFILE_DEPS)\" -to- \"$@\"....\n";
-	$(CC) -o $@ -c $(CFILE_DEPS) -O3 $(CFLAGS)
+	printf "[COMP/DEPS] Compiling \"$<\" -to- \"$@\"....\n";
+	$(CC) -o $@ -c $< -O3 $(CFLAGS)
 
 -init-vars:
 	# Build Project
@@ -95,19 +115,20 @@ $(BUILD_DEPS)/%.o: build-deps-var/%.o $(CFILE_DEPS)
 	$(eval GL_VERSION=-lGLESv2) ## OpenGL ES
 	$(eval JL_DEBUG=-g)
 	$(eval JL_OUT=build/test.out)
-	$(eval OBJS=$(TEST))
+	$(eval OBJS=$(OBJS_PRG))
 -publish: -init-vars
 #	$(eval GL_VERSION=-lGL) ## OpenGL
 	$(eval GL_VERSION=-lGLESv2) ## OpenGL ES
 	$(eval JL_DEBUG=-O3)
 	$(eval JL_OUT=build/bin/$(shell echo `sed -n '4p' data.txt`))
+	$(eval OBJS=$(OBJS_RLS))
 -build:
 	printf "[COMP] Linking ....\n"
-	gcc $(OBJS) $(LIB) -o $(JL_OUT) $(CFLAGS) \
-		-lm -lz -ldl -lpthread -lstdc++ \
-		$(GL_VERSION) $(JL_DEBUG) \
+	$(CC) $(OBJS) $(LIB) -o $(JL_OUT) $(CFLAGS) \
+		-lm -lz -ldl -lpthread -lstdc++ -ljpeg \
 		`$(shell echo $(JLL_HOME))/deps/SDL2-2.0.3/sdl2-config --libs` \
-		$(LINKER_LIBS) $(PLATFORM_CFLAGS) -ljpeg
+		$(LINKER_LIBS) $(PLATFORM_CFLAGS) \
+		$(GL_VERSION) $(JL_DEBUG)
 	printf "[COMP] Done [ OpenGL Version = $(GL_VERSION) ]!\n"
 build/:
 	# Generated Files
