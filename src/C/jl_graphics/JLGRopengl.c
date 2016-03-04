@@ -1133,8 +1133,7 @@ void jl_gl_clrs(jl_gr_t* jl_gr, jl_vo_t* pv, u8_t *rgba) {
 }
 
 // Set texturing to a bitmap
-void jl_gl_txtr(jl_gr_t* jl_gr, jl_vo_t* pv, u8_t map, u8_t a, u16_t pgid, u16_t pi)
-{
+void jl_gl_txtr(jl_gr_t* jl_gr,jl_vo_t* pv,u8_t map,u8_t a,u16_t pgid,u16_t pi){
 	_jl_gl_txtr(jl_gr, &pv, a, 0);
 	pv->tx = jl_gr->gl.textures[pgid][pi];
 	jl_gl_vo_txmap(jl_gr, pv, map);

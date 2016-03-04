@@ -109,11 +109,10 @@ void _jl_io_printc(jl_t* jlc, str_t input) {
 		// Clear and reset the print buffer
 		jl_io_reset_print_descriptor_(_jlc);
 		// Print upto 80 characters to the terminal
-		int chr_cnt;
+		int chr_cnt = 73 - _jlc->io.level;
 		char convert[10];
 		if(strlen(text) > chr_cnt - 1) {
-			chr_cnt = 73 - _jlc->io.level;
-//			i++;
+			i++;
 		}else{
 			chr_cnt = strlen(text);
 			i = -1; // break
