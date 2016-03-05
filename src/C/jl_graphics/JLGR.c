@@ -106,7 +106,7 @@ void jl_gr_resz(jl_gr_t* jl_gr, u16_t x, u16_t y) {
 void jl_gr_kill(jl_gr_t* jl_gr) {
 	jl_gr_pr_old(jl_gr, jl_gr->sg.bg.up);
 	jl_gr_pr_old(jl_gr, jl_gr->sg.bg.dn);
-	jl_dl_kill__(jl_gr); // Remove window
+	jl_dl_kill__(jl_gr); // Kill window
 }
 
 // End of file.

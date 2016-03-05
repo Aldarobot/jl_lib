@@ -1,5 +1,5 @@
 // Version Definitions
-#define JL_VERSION "6.0.0-8 alpha"
+#define JL_VERSION "6.0.0-9 alpha"
 /*
  * Version System:
  * 	major version "." minor version "." debug version "."

@@ -17,6 +17,8 @@ MODULES_DEPS = $(subst .c,, $(shell basename -a $(subst .cpp,, \
 )))
 OBJS_DEPS = \
 	$(addprefix $(BUILD_DEPS)/, $(addsuffix .o,$(MODULES_DEPS)))
+HEADERS_DEPS = \
+	$(shell find $(SRC_DEPS)/ -type f -name '*.h')
 
 # Program
 #	$(shell find $(SRC)/ -type f -name '*.cpp')
@@ -24,6 +26,8 @@ MODULES_PRG = \
 	$(subst .c,, $(subst .cpp,, $(shell basename -a \
 	$(shell find $(SRC)/ -type f -name '*.c') \
 )))
+HEADERS_PRG = \
+	$(shell find $(SRC)/ -type f -name '*.h')
 
 # Test & Release
 OBJS_PRG = \
@@ -38,7 +42,6 @@ VPATH = \
 	$(shell find $(SRC)/ -type d) \
 	$(shell find $(SRC_DEPS)/ -type d)
 #
-HEADERS = $(shell find $(SRC)/ -type f -name '*.h')
 LIB = $(shell echo $(JLL_HOME))/build/jl.o
 COMPILE = printf "[COMP/PROJ] Compiling $<....\n";$(CC) # -to- $@.
 # target: init
@@ -72,7 +75,7 @@ init: $(FOLDERS)
 
 build-notify:
 	echo Modules: $(MODULES_PRG) $(MODULES_DEPS)
-	echo Headers: $(HEADERS)
+	echo Headers: $(HEADERS_PRG) / $(HEADERS_DEPS)
 	echo Folders: N/A #$(VPATH)
 	printf "[COMP] Building program for target=$(PLATFORM)....\n"
 
@@ -82,19 +85,11 @@ clean:
 
 ################################################################################
 
-$(BUILD)/%.o: %.c $(HEADERS)
+$(BUILD)/%.o: %.c $(HEADERS_PRG) $(HEADERS_DEPS)
 	$(COMPILE) $(CFLAGS) -o $@ -c $< $(JL_DEBUG)
-$(BUILD_TEST)/%.o: %.c $(HEADERS)
+$(BUILD_TEST)/%.o: %.c $(HEADERS_PRG) $(HEADERS_DEPS)
 	$(COMPILE) $(CFLAGS) -o $@ -c $< $(JL_DEBUG)
-
-build-deps-var/%.o:
-	$(eval CFILE_DEPS = $(subst .o,, $(addprefix $(SRC_DEPS)/, \
-		$(subst $(BUILD_DEPS)/,,	\
-		$(subst -,/,$(subst build-deps-var/,,$@.c*))))))
-#	echo CFILE_DEPS = $(CFILE_DEPS)
-
-$(BUILD_DEPS)/%.o: %.c $(HEADERS)
-#	echo CFILE_DEPS = $(CFILE_DEPS)
+$(BUILD_DEPS)/%.o: %.c $(HEADERS_DEPS)
 	printf "[COMP/DEPS] Compiling \"$<\" -to- \"$@\"....\n";
 	$(CC) -o $@ -c $< -O3 $(CFLAGS)
 
