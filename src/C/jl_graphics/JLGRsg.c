@@ -437,9 +437,11 @@ static void _jl_sg_loop_ss(jl_gr_t* jl_gr) {
 }
 
 void _jl_sg_loop(jl_gr_t* jl_gr) {
+	jl_io_function(jl_gr->jlc, "SG_LP");
 	jl_gr_fnct loop = jl_gr->sg.loop;
 	// Run the current loop.
 	loop(jl_gr);
+	jl_io_return(jl_gr->jlc, "SG_LP");
 }
 
 static void jl_sg_init_ds_(jl_t* jlc) {

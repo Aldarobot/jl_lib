@@ -417,6 +417,7 @@ void jl_ct_getevents_(jl_gr_t* jl_gr) {
 void jl_ct_quickloop_(jl_gr_t* jl_gr) {
 	jvct_t* _jlc = jl_gr->jlc->_jlc;
 
+	jl_io_function(jl_gr->jlc, "INPUT_QUICKLOOP");
 	_jlc->has.quickloop = 1;
 	if(_jlc->has.input) {
 		jl_ct_getevents_(jl_gr);
@@ -425,6 +426,7 @@ void jl_ct_quickloop_(jl_gr_t* jl_gr) {
 		while(SDL_PollEvent(&jl_gr->ct.event))
 			jl_ct_handle_resize__(jl_gr);
 	}
+	jl_io_return(jl_gr->jlc, "INPUT_QUICKLOOP");
 }
 
 //Main Input Loop

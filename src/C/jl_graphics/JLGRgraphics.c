@@ -843,13 +843,14 @@ static void _jl_gr_textbox_lt(jl_t* jl);
 	void jl_gr_draw_msge__(jl_t* jlc) {
 		jl_gr_t* jl_gr = jlc->jl_gr;
 
+		jl_io_function(jl_gr->jlc, "JLGR_MSGE2");
 		jl_gl_pr_scr(jl_gr);
 		jl_gr_draw_bg(jl_gr, jl_gr->gr.msge.g, jl_gr->gr.msge.i,
 			jl_gr->gr.msge.c);
 		if(jl_gr->gr.msge.message)
 			jl_gr_draw_ctxt(jl_gr, jl_gr->gr.msge.message, 9./32.,
 				jlc->fontcolor);
-
+		jl_io_return(jl_gr->jlc, "JLGR_MSGE2");
 	}
 
 	/**
@@ -860,14 +861,20 @@ static void _jl_gr_textbox_lt(jl_t* jl);
 	void jl_gr_draw_msge_(jl_gr_t* jl_gr,u16_t g,u16_t i,u8_t c,
 		m_str_t message)
 	{
+		jl_io_function(jl_gr->jlc, "JLGR_MSGE");
+		JL_IO_DEBUG(jl_gr->jlc, "Printing %p", message);
+
 		jvct_t* _jlc = jl_gr->jlc->_jlc;
 		if(_jlc->has.quickloop) {
 			if(jl_sdl_seconds_past__(jl_gr->jlc) <
-			 (1.f/(float)JL_FPS))
+				(1.f/(float)JL_FPS))
+			{
+				jl_io_return(jl_gr->jlc, "JLGR_MSGE");
 				return;
-			else
+			}else{
 				jl_gr->jlc->time.prev_tick =
 					jl_gr->jlc->time.this_tick;
+			}
 		}
 		jl_gr->gr.msge.message = message;
 		jl_gr->gr.msge.g = g;
@@ -883,23 +890,20 @@ static void _jl_gr_textbox_lt(jl_t* jl);
 			jl_gr_draw_msge__);
 		_jlc->fl.inloop = 1;
 		// Set mode to EXIT.
-		// Run Minimal
-			// Check the amount of time passed since last frame.
-	//		jl_seconds_passed__(_jlc);
-			// Run the loop.
-			jl_gr_loop(jl_gr, NULL, 0);
-		// Run Minimal Graphical Loop.
-			// Update events ( minimal )
-			jl_ct_quickloop_(jl_gr);
-			// Deselect any pre-renderer.
-			jl_gr->gl.cp = NULL;
-			// Redraw screen.
-			_jl_sg_loop(jl_gr);
-			// Update Screen.
-			jl_dl_loop__(jl_gr);
-		// Set old values
+		JL_IO_DEBUG(jl_gr->jlc, "Run Minimal Graphical Loop.");
+		// Update events ( minimal )
+		jl_ct_quickloop_(jl_gr);
+		// Deselect any pre-renderer.
+		jl_gr->gl.cp = NULL;
+		// Redraw screen.
+		_jl_sg_loop(jl_gr);
+		// Update Screen.
+		jl_dl_loop__(jl_gr);
+		//
+		JL_IO_DEBUG(jl_gr->jlc, "Set old values");
 		jl_gr_loop_set(jl_gr, onescreen, upscreen, downscreen);
 		_jlc->fl.inloop = inloop;
+		jl_io_return(jl_gr->jlc, "JLGR_MSGE");
 	}
 
 	/**
@@ -1120,22 +1124,22 @@ static void _jl_gr_textbox_lt(jl_t* jl);
 	void _jl_gr_loopa(jl_gr_t* jl_gr) {
 		jvct_t* _jlc = jl_gr->jlc->_jlc;
 
-		jl_io_function(jl_gr->jlc, "graphic loop");
+		jl_io_function(jl_gr->jlc, "GR_LP");
 		// Menu Bar
 		if(!_jlc->fl.inloop) jl_gr->gr.menuoverlay(jl_gr->jlc, NULL);
 		// Update mouse
 		if(jl_gr->jlc->mouse) jl_gr_sp_rnl(jl_gr, jl_gr->jlc->mouse);
 		// Update messages.
 		_jl_gr_loopb(jl_gr);
-		jl_io_return(jl_gr->jlc, "graphic loop");
+		jl_io_return(jl_gr->jlc, "GR_LP");
 	}
 	
 	void jl_gr_init__(jl_gr_t* jl_gr) {
 		jl_sprite_t* mouse = NULL;
 
 		_jl_gr_init_vos(jl_gr);
-		// Draw Loading Screen
-		jl_gr_draw_msge(jl_gr, 0, 0, 0, NULL);
+		JL_IO_DEBUG(jl_gr->jlc, "Draw Loading Screen");
+		jl_gr_draw_msge(jl_gr, 0, 0, 0, 0);
 		// Resize screen
 		//main_resz(jl_gr->jlc->_jlc,jl_gr->dl.full_w,jl_gr->dl.full_h);
 		// Create Font
@@ -1148,7 +1152,9 @@ static void _jl_gr_textbox_lt(jl_t* jl);
 		JL_IO_DEBUG(jl_gr->jlc, "Loading 1 image");
 		jl_sg_add_some_imgs_(jl_gr, 1);
 		//
+		JL_IO_DEBUG(jl_gr->jlc, "First font use try");
 		jl_gr_draw_msge(jl_gr,0,0,0,"LOADING JL_LIB GRAPHICS...");
+		JL_IO_DEBUG(jl_gr->jlc, "First font use succeed");
 		// Load the other images.
 		JL_IO_DEBUG(jl_gr->jlc, "Loading 2 image");
 		jl_sg_add_some_imgs_(jl_gr, 2);

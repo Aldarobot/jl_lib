@@ -1139,6 +1139,7 @@ void jl_gl_txtr(jl_gr_t* jl_gr,jl_vo_t* pv,u8_t map,u8_t a,u16_t pgid,u16_t pi){
 	pv->tx = jl_gr->gl.textures[pgid][pi];
 	if(!pv->tx) {
 		jl_io_print(jl_gr->jlc, "Error: No Texture @%d/%d", pgid, pi);
+		jl_io_stacktrace(jl_gr->jlc);
 		exit(-1);
 	}
 	jl_gl_vo_txmap(jl_gr, pv, map);

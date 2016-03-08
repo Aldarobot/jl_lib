@@ -392,12 +392,16 @@ char* jl_me_string_fstrt(jl_t* jlc, strt a) {
  * Format a string.
 **/
 m_str_t jl_me_format(jl_t* jlc, str_t format, ... ) {
-	va_list arglist;
+	if(format) {
+		va_list arglist;
 
-	va_start( arglist, format );
-	vsprintf( jlc->temp, format, arglist );
-	va_end( arglist );
-	return jlc->temp;
+		va_start( arglist, format );
+		vsprintf( jlc->temp, format, arglist );
+		va_end( arglist );
+		return jlc->temp;
+	}else{
+		return NULL;
+	}
 }
 
 /**

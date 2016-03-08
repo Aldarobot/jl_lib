@@ -61,6 +61,7 @@ static SDL_GLContext* jl_dl_gl_context(jl_gr_t* jl_gr) {
 	return rtn;
 }
 
+// Set fullscreen or not.
 static void _jl_dl_fscreen(jl_gr_t* jl_gr, uint8_t a) {
 	// Make sure the fullscreen value is either a 1 or a 0.
 	jl_gr->dl.fullscreen = !!a;
@@ -94,7 +95,8 @@ static void _jlvm_curd_mode(jl_gr_t* jl_gr) {
 		jl_sg_kill(jl_gr->jlc);
 	}
 	jl_io_function(jl_gr->jlc, "SDL_cdm");
-	JL_IO_DEBUG(jl_gr->jlc, "%d,%d", jl_gr->dl.current.w, jl_gr->dl.current.h);
+	JL_IO_DEBUG(jl_gr->jlc, "%d,%d", jl_gr->dl.current.w,
+		jl_gr->dl.current.h);
 	jl_io_return(jl_gr->jlc, "SDL_cdm");
 }
 

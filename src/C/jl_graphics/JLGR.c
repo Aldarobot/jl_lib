@@ -25,6 +25,8 @@ jl_gr_t* jl_gr_init(jl_t* jlc, str_t window_name, u8_t fullscreen) {
 	jl_me_alloc(jlc, (void**)&jl_gr, sizeof(jl_gr_t), 0);
 	jl_gr->jlc = jlc;
 	jlc->jl_gr = jl_gr;
+	jl_gr->gr.taskbar = NULL;
+	jl_gr->jlc->mouse = NULL;
 	// Initialize Subsystem
 	JL_IO_DEBUG(jlc, "Initializing SDL....");
 	jl_dl_init__(jl_gr); // create the window.
