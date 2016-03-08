@@ -849,6 +849,7 @@ static void _jl_gr_textbox_lt(jl_t* jl);
 		if(jl_gr->gr.msge.message)
 			jl_gr_draw_ctxt(jl_gr, jl_gr->gr.msge.message, 9./32.,
 				jlc->fontcolor);
+
 	}
 
 	/**
@@ -868,19 +869,26 @@ static void _jl_gr_textbox_lt(jl_t* jl);
 				jl_gr->jlc->time.prev_tick =
 					jl_gr->jlc->time.this_tick;
 		}
-		u8_t prev_loop = jl_gr->jlc->loop;
-		u8_t prev_flin = _jlc->fl.inloop;
-
 		jl_gr->gr.msge.message = message;
 		jl_gr->gr.msge.g = g;
 		jl_gr->gr.msge.i = i;
 		jl_gr->gr.msge.c = c;
-		// Set mode to EXIT.
+		// Get old values
+		jl_fnct upscreen = jl_gr->sg.redraw.upper;
+		jl_fnct downscreen  = jl_gr->sg.redraw.lower;
+		jl_fnct onescreen = jl_gr->sg.redraw.single;
+		u8_t inloop = _jlc->fl.inloop;
+		// Set Graphical loops.
+		jl_gr_loop_set(jl_gr, jl_gr_draw_msge__, jl_dont,
+			jl_gr_draw_msge__);
 		_jlc->fl.inloop = 1;
-		jl_gr->jlc->loop = JL_SG_WM_EXIT;
-		jl_sg_mode_reset(jl_gr->jlc);
-		jl_sg_mode_override(jl_gr->jlc, JL_SG_WM_EXIT, jl_gr_draw_msge__);
-		// Run Minimal loop.
+		// Set mode to EXIT.
+		// Run Minimal
+			// Check the amount of time passed since last frame.
+	//		jl_seconds_passed__(_jlc);
+			// Run the loop.
+			jl_gr_loop(jl_gr, NULL, 0);
+		// Run Minimal Graphical Loop.
 			// Update events ( minimal )
 			jl_ct_quickloop_(jl_gr);
 			// Deselect any pre-renderer.
@@ -889,10 +897,9 @@ static void _jl_gr_textbox_lt(jl_t* jl);
 			_jl_sg_loop(jl_gr);
 			// Update Screen.
 			jl_dl_loop__(jl_gr);
-		// Return to original loop mode.
-		jl_gr->jlc->loop = prev_loop;
-		_jlc->fl.inloop = prev_flin;
-		jl_sg_mode_reset(jl_gr->jlc);
+		// Set old values
+		jl_gr_loop_set(jl_gr, onescreen, upscreen, downscreen);
+		_jlc->fl.inloop = inloop;
 	}
 
 	/**
@@ -1127,10 +1134,10 @@ static void _jl_gr_textbox_lt(jl_t* jl);
 		jl_sprite_t* mouse = NULL;
 
 		_jl_gr_init_vos(jl_gr);
-		// Resize screen
-		main_resz(jl_gr->jlc->_jlc, jl_gr->dl.full_w, jl_gr->dl.full_h);
 		// Draw Loading Screen
 		jl_gr_draw_msge(jl_gr, 0, 0, 0, NULL);
+		// Resize screen
+		//main_resz(jl_gr->jlc->_jlc,jl_gr->dl.full_w,jl_gr->dl.full_h);
 		// Create Font
 		jl_gr->jlc->fontcolor[0] = 0;
 		jl_gr->jlc->fontcolor[1] = 0;

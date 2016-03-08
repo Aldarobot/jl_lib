@@ -457,8 +457,6 @@ strt jl_fl_mkfile(jl_t* jlc, str_t pzipfile, str_t pfilebase,
 
 	JL_IO_DEBUG(jlc, "Creating File....");
 	jl_fl_save(jlc, contents, pzipfile, size);
-	JL_IO_DEBUG(jlc, "Attempt Complete!");
-	SDL_Delay(1000); //give file system time to update
 	JL_IO_DEBUG(jlc, "Try loading....");
 	if(
 		((rtn = jl_fl_pk_load(jlc, pzipfile, pfilebase))== NULL) &&

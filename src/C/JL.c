@@ -27,6 +27,7 @@ static inline void _jl_ini(jvct_t *_jlc, jl_fnct _fnc_init_) {
 	// Run the users loop & resize functions
 	_fnc_init_(_jlc->jlc);
 	_jlc->mode.mode.tclp[JL_SG_WM_RESZ](_jlc->jlc);
+	jl_io_print(_jlc->jlc, "Started JL_Lib!");
 }
 
 static void jl_main_resz_jl(jvct_t* _jlc, u16_t x, u16_t y) {
@@ -56,10 +57,12 @@ static void jl_time_reset__(jl_t* jlc, u8_t on_time) {
 
 //return how many seconds passed since last call
 static inline void jl_seconds_passed__(jvct_t* _jlc) {
-	int diff = _jlc->jlc->time.this_tick - _jlc->jlc->time.prev_tick;
+	int diff;
+
 	_jlc->jlc->time.psec = jl_sdl_seconds_past__(_jlc->jlc);
-	if(diff) _jlc->jlc->time.fps = (_jlc->jlc->time.fps + (1000/ diff))/2;
-	else _jlc->jlc->time.fps = 1;
+	diff = _jlc->jlc->time.this_tick - _jlc->jlc->time.prev_tick;
+	if(diff) _jlc->jlc->time.fps = round(1000./((double)diff));
+	else _jlc->jlc->time.fps = 25000;
 	// Tell if fps is 60 fps or better
 	jl_time_reset__(_jlc->jlc, _jlc->jlc->time.fps >= JL_FPS);
 }
@@ -110,7 +113,6 @@ int jl_init(jl_fnct _fnc_init_, jl_fnct _fnc_kill_) {
 	// Initialize JL_lib!
 	_jl_ini(_jlc, _fnc_init_);
 	// Run the Loop
-	jl_io_print(_jlc->jlc, "Started JL_Lib!");
 	while(_jlc->jlc->mdec) main_loop__(_jlc);
 	// Run Users Kill Routine
 	_fnc_kill_(_jlc->jlc);

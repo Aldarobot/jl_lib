@@ -1447,9 +1447,6 @@ static inline void _jl_gl_make_res(jl_gr_t* jl_gr) {
 	// Initialize EGL.
 	jl_gl_init_egl(jl_gr);
 #endif
-	// Get GL Extensions.
-	// SDL_Log("GL_EXTENSIONS = \"%s\"\n", glGetString(GL_EXTENSIONS));
-	// JL_GL_ERROR(jl_gr, 0, "glGetString()");
 	// Setup opengl properties
 	_jl_gl_init_setup_gl(jl_gr);
 	// Create shaders and set up attribute/uniform variable communication
