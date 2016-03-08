@@ -1,5 +1,5 @@
 // Version Definitions
-#define JL_VERSION "6.0.0-10 alpha"
+#define JL_VERSION "6.0.0-11 alpha"
 /*
  * Version System:
  * 	major version "." minor version "." debug version "."
@@ -12,6 +12,10 @@
 
 // Uncommented for debugging ( GL/SDL error check && verbose printing. )
 #define JL_DEBUG_LIB
+
+#ifdef JL_DEBUG_LIB
+	#define DEBUG
+#endif
 
 //Platform Declarations
 #define JL_PLAT_COMPUTER 0 //PC/MAC

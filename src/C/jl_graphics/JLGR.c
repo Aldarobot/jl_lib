@@ -20,26 +20,28 @@
 jl_gr_t* jl_gr_init(jl_t* jlc, str_t window_name, u8_t fullscreen) {
 	jl_gr_t* jl_gr = NULL;
 
+	jl_io_function(jlc, "JL/GR/INIT");
 	// Allocate memory
 	jl_me_alloc(jlc, (void**)&jl_gr, sizeof(jl_gr_t), 0);
 	jl_gr->jlc = jlc;
 	jlc->jl_gr = jl_gr;
 	// Initialize Subsystem
-	jl_io_print(jlc, "Initializing SDL....");
+	JL_IO_DEBUG(jlc, "Initializing SDL....");
 	jl_dl_init__(jl_gr); // create the window.
-	jl_io_print(jlc, "Initializing SG....");
+	JL_IO_DEBUG(jlc, "Initializing SG....");
 	jl_sg_inita__(jl_gr); // Load default graphics from package.
-	jl_io_print(jlc, "Initializing GL....");
+	JL_IO_DEBUG(jlc, "Initializing GL....");
 	jl_gl_init__(jl_gr); // Drawing Set-up
-	jl_io_print(jlc, "Initialized GL! / Initializing GR....");
+	JL_IO_DEBUG(jlc, "Initialized GL! / Initializing GR....");
 	jl_gr_init__(jl_gr); // Set-up sprites & menubar
-	jl_io_print(jlc, "Initialized GR!");
+	JL_IO_DEBUG(jlc, "Initialized GR!");
 	jl_sg_initb__(jl_gr);
-	jl_io_print(jlc, "Initialized SG! / Initializing CT....");
+	JL_IO_DEBUG(jlc, "Initialized SG! / Initializing CT....");
 	jl_ct_init__(jl_gr); // Prepare to read input.
-	jl_io_print(jlc, "Initialized CT! / Initializing file viewer....");
+	JL_IO_DEBUG(jlc, "Initialized CT! / Initializing file viewer....");
 	jl_gr_fl_init(jl_gr);
-	jl_io_print(jlc, "Initializing file viewer!");
+	JL_IO_DEBUG(jlc, "Initializing file viewer!");
+	jl_io_return(jlc, "JL/GR/INIT");
 	return jl_gr;
 }
 

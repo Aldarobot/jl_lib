@@ -79,6 +79,12 @@
 	void jl_io_printc(jl_t* jlc, const char * print);
 	#define jl_io_print(jlc, ...)\
 		jl_io_printc(jlc, jl_me_format(jlc, __VA_ARGS__))
+	#ifdef DEBUG
+		#define JL_IO_DEBUG(jlc, ...)\
+			jl_io_printc(jlc, jl_me_format(jlc, __VA_ARGS__))
+	#else
+		#define JL_IO_DEBUG(jlc, ...)
+	#endif
 	void jl_io_function(jl_t* jlc, str_t fn_name);
 	void jl_io_return(jl_t* jlc, str_t fn_name);
 	void jl_io_stacktrace(jl_t* jlc);

@@ -188,7 +188,7 @@ void _jl_sg_load_jlpx(jl_gr_t* jl_gr,strt data,void **pixels,int *w,int *h) {
 	jl_me_copyto(data->data + jl_gr->sg.init_image_location, testing,
 		strlen(JL_IMG_HEADER));
 	testing[strlen(JL_IMG_HEADER)] = '\0';
-	jl_io_print(jl_gr->jlc, "header=\"%s\" @%d", testing,
+	JL_IO_DEBUG(jl_gr->jlc, "header=\"%s\" @%d", testing,
 		jl_gr->sg.init_image_location);
 
 	if(strcmp(testing, JL_IMG_HEADER) != 0) {
@@ -204,13 +204,13 @@ void _jl_sg_load_jlpx(jl_gr_t* jl_gr,strt data,void **pixels,int *w,int *h) {
 	uint32_t FSIZE;
 	if(tester == JL_IMG_FORMAT_IMG) { //Normal Quality[Lowy]
 		FSIZE = IMG_SIZE_LOW;
-		jl_io_print(jl_gr->jlc, "normal quality");
+		JL_IO_DEBUG(jl_gr->jlc, "normal quality");
 	}else if(tester == JL_IMG_FORMAT_HQB) { //High Quality[Norm]
 		FSIZE = IMG_FORMAT_MED;
-		jl_io_print(jl_gr->jlc, "high quality");
+		JL_IO_DEBUG(jl_gr->jlc, "high quality");
 	}else if(tester == JL_IMG_FORMAT_PIC) { //Picture[High]
 		FSIZE = IMG_FORMAT_PIC;
-		jl_io_print(jl_gr->jlc, "pic quality");
+		JL_IO_DEBUG(jl_gr->jlc, "pic quality");
 	}else if(tester == JL_IMG_FORMAT_FLS) {
 		SDL_Surface *image;
 		SDL_RWops *rw;
@@ -218,10 +218,10 @@ void _jl_sg_load_jlpx(jl_gr_t* jl_gr,strt data,void **pixels,int *w,int *h) {
 		uint32_t color = 0;
 		strt pixel_data;
 
-		jl_io_print(jl_gr->jlc, "png/gif/jpeg etc.");
+		JL_IO_DEBUG(jl_gr->jlc, "png/gif/jpeg etc.");
 		data->curs = jl_gr->sg.init_image_location+strlen(JL_IMG_HEADER)+1;
 		jl_me_strt_loadto(data, 4, &FSIZE);
-		jl_io_print(jl_gr->jlc, "File Size = %d", FSIZE);
+		JL_IO_DEBUG(jl_gr->jlc, "File Size = %d", FSIZE);
 		jl_me_alloc(jl_gr->jlc, &img_file, FSIZE, 0);
 		jl_me_strt_loadto(data, FSIZE, img_file);
 		rw = SDL_RWFromMem(img_file, FSIZE);
@@ -270,7 +270,7 @@ void _jl_sg_load_jlpx(jl_gr_t* jl_gr,strt data,void **pixels,int *w,int *h) {
 		ki++;
 	}
 	jl_gr->sg.init_image_location+=FSIZE+1;
-	jl_io_print(jl_gr->jlc, "creating texture...");
+	JL_IO_DEBUG(jl_gr->jlc, "creating texture...");
 
 	uint8_t *tex_pixels = NULL;
 	//R(1)+G(1)+B(1)+A(1) = 4
@@ -302,16 +302,16 @@ static inline uint8_t _jl_sg_load_next_img(jl_gr_t* jl_gr) {
 	jl_io_function(jl_gr->jlc, "SG_Imgs");
 	_jl_sg_load_jlpx(jl_gr, jl_gr->sg.image_data, &fpixels, &fw, &fh);
 	if(fpixels == NULL) {
-		jl_io_print(jl_gr->jlc, "loaded %d", jl_gr->sg.image_id);
+		JL_IO_DEBUG(jl_gr->jlc, "loaded %d", jl_gr->sg.image_id);
 		jl_gr->jlc->info = jl_gr->sg.image_id;
 		jl_io_print(jl_gr->jlc, "IL");
 		jl_io_return(jl_gr->jlc, "SG_Imgs");
 		return 0;
 	}else{
-		jl_io_print(jl_gr->jlc, "creating image #%d....", jl_gr->sg.igid);
+		JL_IO_DEBUG(jl_gr->jlc, "creating image #%d....", jl_gr->sg.igid);
 		jl_gl_maketexture(jl_gr, jl_gr->sg.igid,
 			jl_gr->sg.image_id, fpixels, fw, fh, 0);
-		jl_io_print(jl_gr->jlc, "created image #%d:%d!", jl_gr->sg.igid,
+		JL_IO_DEBUG(jl_gr->jlc, "created image #%d:%d!", jl_gr->sg.igid,
 			jl_gr->sg.image_id);
 //		#endif
 		jl_gr->sg.image_id++;
@@ -335,8 +335,8 @@ static inline void _jl_sg_init_images(jl_gr_t* jl_gr,strt data,u16_t gi,u16_t x)
 	jl_gr->sg.image_data = data;
 
 	jl_io_function(jl_gr->jlc, "SG_InitImgs");
-	jl_io_print(jl_gr->jlc, "loading images....");
-	jl_io_print(jl_gr->jlc, "stringlength = %d", data->size);
+	JL_IO_DEBUG(jl_gr->jlc, "loading images....");
+	JL_IO_DEBUG(jl_gr->jlc, "stringlength = %d", data->size);
 //load textures
 	if(x) jl_sg_add_some_imgs_(jl_gr, x);
 	else while(_jl_sg_load_next_img(jl_gr));
@@ -374,12 +374,12 @@ static void jl_sg_add_image__(jl_t* jlc, str_t pzipfile, u16_t pigid, u8_t x) {
 	strt img = jl_fl_media(jlc, "jlex/2/_img", pzipfile,
 		jl_gem(), jl_gem_size());
 
-	jl_io_print(jlc, "Loading Images....");
+	JL_IO_DEBUG(jlc, "Loading Images....");
 	if(img != NULL)
 		_jl_sg_init_images(jlc->jl_gr, img, pigid, x);
 	else
-		jl_io_print(jlc, "Loaded 0 images!");
-	jl_io_print(jlc, "Loaded Images...");
+		JL_IO_DEBUG(jlc, "Loaded 0 images!");
+	JL_IO_DEBUG(jlc, "Loaded Images...");
 	jl_io_return(jlc, "SG_LImg"); // }
 }
 
@@ -454,7 +454,6 @@ static void jl_sg_init_ds_(jl_t* jlc) {
 	uint8_t rclr_up[4] = { 127,	127,	127,	255 };
 	uint8_t rclr_dn[4] = { 0,	127,	0,	255 };
 	
-	jl_io_print(jl_gr->jlc, "2 Screen init");
 	// Update the rectangle backgrounds.
 	jl_gr_vos_rec(jl_gr, jl_gr->sg.bg.up, rcrd, rclr_up, 0);
 	jl_gr_pr_new(jl_gr, jl_gr->sg.bg.up, jl_gr->dl.current.w);
@@ -468,7 +467,6 @@ static void jl_sg_init_ds_(jl_t* jlc) {
 	jl_gr->sg.bg.dn->pr->ar = jl_gr->dl.aspect / 2.;
 	
 	jl_gr->sg.screen_height = rcrd.h;
-	jl_io_print(jl_gr->jlc, "2 Screen init'd");
 }
 
 static void jl_sg_init_ss_(jl_t* jlc) {
@@ -482,7 +480,6 @@ static void jl_sg_init_ss_(jl_t* jlc) {
 	};
 	uint8_t rclr_bg[4] = { 0,	255,	0,	255 };
 	
-	jl_io_print(jlc, "{{{ 1 Screen init");
 	// Update the rectangle backgrounds.
 	jl_gr_vos_rec(jl_gr, jl_gr->sg.bg.dn, rcrd, rclr_bg, 0);
 	jl_gr_pr_new(jl_gr, jl_gr->sg.bg.dn, jl_gr->dl.current.w);

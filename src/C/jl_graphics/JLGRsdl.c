@@ -75,9 +75,9 @@ static void _jl_dl_fscreen(jl_gr_t* jl_gr, uint8_t a) {
 
 static inline void jlvmpi_ini_sdl(jl_gr_t* jl_gr) {
 	jl_io_function(jl_gr->jlc, "InitSDL"); // {
-	jl_io_print(jl_gr->jlc, "Starting up....");
+	JL_IO_DEBUG(jl_gr->jlc, "Starting up....");
 	SDL_Init(JL_DL_INIT);
-	jl_io_print(jl_gr->jlc, "input....");
+	JL_IO_DEBUG(jl_gr->jlc, "input....");
 	#if JL_PLAT == JL_PLAT_COMPUTER
 	SDL_ShowCursor(SDL_DISABLE);
 	SDL_EventState(SDL_KEYDOWN, SDL_IGNORE);
@@ -94,7 +94,7 @@ static void _jlvm_curd_mode(jl_gr_t* jl_gr) {
 		jl_sg_kill(jl_gr->jlc);
 	}
 	jl_io_function(jl_gr->jlc, "SDL_cdm");
-	jl_io_print(jl_gr->jlc, "%d,%d", jl_gr->dl.current.w, jl_gr->dl.current.h);
+	JL_IO_DEBUG(jl_gr->jlc, "%d,%d", jl_gr->dl.current.w, jl_gr->dl.current.h);
 	jl_io_return(jl_gr->jlc, "SDL_cdm");
 }
 
@@ -274,10 +274,10 @@ void jl_dl_init__(jl_gr_t* jl_gr) {
 }
 
 void jl_dl_kill__(jl_gr_t* jl_gr) {
-	jl_io_print(jl_gr->jlc, "killing SDL....");
+	JL_IO_DEBUG(jl_gr->jlc, "killing SDL....");
 	if (jl_gr->dl.displayWindow->c != NULL) {
 		SDL_free(jl_gr->dl.displayWindow->c);
 		SDL_free(jl_gr->dl.displayWindow->w);
 	}
-	jl_io_print(jl_gr->jlc, "killed SDL!");
+	JL_IO_DEBUG(jl_gr->jlc, "killed SDL!");
 }

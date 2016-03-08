@@ -12,10 +12,6 @@
 	#define JL_IO_PRINTF(...) SDL_Log(__VA_ARGS__)
 #endif
 
-// 0 = release
-// 1 = enable program debugging
-#define JL_IO_DEBUG 1
-
 //PROTOTYPES:
 static void _jl_io_current(jl_t *jlc);
 
@@ -209,7 +205,5 @@ void _jl_io_init(jl_t* jlc) {
 }
 
 void _jl_io_kill(jl_t * jlc) {
-	jl_io_return(jlc, "SG_Kill");
-	jl_io_print(jlc, "Killed Program!");
 	jl_io_return(jlc, "JL_Lib");
 }

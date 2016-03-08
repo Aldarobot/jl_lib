@@ -356,18 +356,14 @@ static void jl_gl_texture_new__(jl_gr_t* jl_gr, m_u32_t *tex, u8_t* px,
 	u16_t w, u16_t h, u8_t bytepp)
 {
 	jl_io_function(jl_gr->jlc, "jl_gl_texture_new__");
-	jl_io_print(jl_gr->jlc, "make tx");
 	// Make the texture
 	jl_gl_texture_make__(jl_gr, tex);
 	// Bind the texture
 	jl_gl_texture_bind__(jl_gr, *tex);
-	jl_io_print(jl_gr->jlc, "set tx");
 	// Set texture
 	jl_gl_texture_set__(jl_gr, px, w, h, bytepp);
-	jl_io_print(jl_gr->jlc, "set txpar");
 	// Set the texture parametrs.
 	jl_gl_texpar_set__(jl_gr);
-	jl_io_print(jl_gr->jlc, "setd tx");
 	jl_io_return(jl_gr->jlc, "jl_gl_texture_new__");
 }
 
@@ -416,7 +412,7 @@ void jl_gl_maketexture(jl_gr_t* jl_gr, uint16_t gid, uint16_t id,
 				sizeof(GLint) * (id+1));
 		jl_gr->gl.allocatedi = id + 1;
 	}
-	jl_io_print(jl_gr->jlc, "generating texture (%d,%d)",width,height);
+	JL_IO_DEBUG(jl_gr->jlc, "generating texture (%d,%d)",width,height);
 	// Make the texture.
 	jl_gl_texture_new__(jl_gr, &jl_gr->gl.textures[gid][id], pixels, width,
 		height, bytepp);
@@ -489,9 +485,8 @@ static inline void _jl_gl_init_enable_alpha(jl_gr_t* jl_gr) {
 //	JL_GL_ERROR(jl_gr, 0,"glEnable( GL_CULL_FACE )");
 	glBlendColor(0.f,0.f,0.f,0.f);
 	JL_GL_ERROR(jl_gr, 0,"glBlendColor");
-	glBlendFuncSeparate(GL_ONE, GL_ONE_MINUS_SRC_ALPHA, GL_ONE_MINUS_DST_ALPHA, GL_ONE);
-//	glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA,
-//		GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
+	glBlendFuncSeparate(GL_ONE, GL_ONE_MINUS_SRC_ALPHA,
+		GL_ONE_MINUS_DST_ALPHA, GL_ONE);
 	JL_GL_ERROR(jl_gr, 0,"glBlendFunc");
 }
 
@@ -1318,18 +1313,18 @@ void _jl_gl_geta(jl_gr_t* jl_gr, GLuint prg, m_i32_t *attrib, const char *title)
 /************************/
 
 static inline void _jl_gl_init_setup_gl(jl_gr_t* jl_gr) {
-	jl_io_print(jl_gr->jlc, "setting properties....");
+	JL_IO_DEBUG(jl_gr->jlc, "setting properties....");
 	//Disallow Dither & Depth Test
 	_jl_gl_init_disable_extras(jl_gr);
 	//Set alpha=0 to transparent
 	_jl_gl_init_enable_alpha(jl_gr);
 	glPixelStorei(GL_PACK_ALIGNMENT, 1);
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-	jl_io_print(jl_gr->jlc, "set glproperties.");
+	JL_IO_DEBUG(jl_gr->jlc, "set glproperties.");
 }
 
 static inline void _jl_gl_init_shaders(jl_gr_t* jl_gr) {
-	jl_io_print(jl_gr->jlc, "making GLSL programs....");
+	JL_IO_DEBUG(jl_gr->jlc, "making GLSL programs....");
 	jl_gr->gl.prgs[JL_GL_SLPR_PRM] = jl_gl_glsl_prg_create(jl_gr,
 		source_vert_tex, source_frag_tex);
 	jl_gr->gl.prgs[JL_GL_SLPR_TEX] = jl_gl_glsl_prg_create(jl_gr,
@@ -1338,9 +1333,9 @@ static inline void _jl_gl_init_shaders(jl_gr_t* jl_gr) {
 		source_vert_tex, source_frag_tex_charmap);
 	jl_gr->gl.prgs[JL_GL_SLPR_CLR] = jl_gl_glsl_prg_create(jl_gr,
 		source_vert_clr, source_frag_clr);
-	jl_io_print(jl_gr->jlc, "made programs.");
+	JL_IO_DEBUG(jl_gr->jlc, "made programs.");
 
-	jl_io_print(jl_gr->jlc, "setting up shaders....");
+	JL_IO_DEBUG(jl_gr->jlc, "setting up shaders....");
 	if(jl_gr->gl.tex.uniforms.textures == NULL) {
 		jl_io_print(jl_gr->jlc, "Couldn't create uniforms");
 		jl_sg_kill(jl_gr->jlc);
@@ -1381,27 +1376,27 @@ static inline void _jl_gl_init_shaders(jl_gr_t* jl_gr) {
 	jl_gr->gl.chr.uniforms.new_color =
 		_jl_gl_getu(jl_gr, jl_gr->gl.prgs[JL_GL_SLPR_CHR], "new_color");
 	//
-	jl_io_print(jl_gr->jlc, "setting up prm shader attrib's....");
+	JL_IO_DEBUG(jl_gr->jlc, "setting up prm shader attrib's....");
 	_jl_gl_geta(jl_gr, jl_gr->gl.prgs[JL_GL_SLPR_PRM],
 		&jl_gr->gl.prm.attr.position, "position");
 	_jl_gl_geta(jl_gr, jl_gr->gl.prgs[JL_GL_SLPR_PRM],
 		&jl_gr->gl.prm.attr.texpos, "texpos");
-	jl_io_print(jl_gr->jlc, "setting up tex shader attrib's....");
+	JL_IO_DEBUG(jl_gr->jlc, "setting up tex shader attrib's....");
 	_jl_gl_geta(jl_gr, jl_gr->gl.prgs[JL_GL_SLPR_TEX],
 		&jl_gr->gl.tex.attr.position, "position");
 	_jl_gl_geta(jl_gr, jl_gr->gl.prgs[JL_GL_SLPR_TEX],
 		&jl_gr->gl.tex.attr.texpos, "texpos");
-	jl_io_print(jl_gr->jlc, "setting up chr shader attrib's....");
+	JL_IO_DEBUG(jl_gr->jlc, "setting up chr shader attrib's....");
 	_jl_gl_geta(jl_gr, jl_gr->gl.prgs[JL_GL_SLPR_CHR],
 		&jl_gr->gl.chr.attr.position, "position");
 	_jl_gl_geta(jl_gr, jl_gr->gl.prgs[JL_GL_SLPR_CHR],
 		&jl_gr->gl.chr.attr.texpos, "texpos");
-	jl_io_print(jl_gr->jlc, "setting up clr shader attrib's....");
+	JL_IO_DEBUG(jl_gr->jlc, "setting up clr shader attrib's....");
 	_jl_gl_geta(jl_gr, jl_gr->gl.prgs[JL_GL_SLPR_CLR],
 		&jl_gr->gl.clr.attr.position, "position");
 	_jl_gl_geta(jl_gr, jl_gr->gl.prgs[JL_GL_SLPR_CLR],
 		&jl_gr->gl.clr.attr.acolor, "acolor");
-	jl_io_print(jl_gr->jlc, "set up shaders.");
+	JL_IO_DEBUG(jl_gr->jlc, "set up shaders.");
 }
 
 #if JL_GLRTEX == JL_GLRTEX_EGL
@@ -1434,7 +1429,7 @@ static inline void jl_gl_init_egl(jl_gr_t* jl_gr) {
 	eglInitialize(eglDisp, &eglMajVers, &eglMinVers);
 	JL_EGL_ERROR(jl_gr, 0, "jl_gl_init_egl:eglInitialize");
 
-	printf("EGL init with version %d.%d", eglMajVers, eglMinVers);
+	JL_IO_DEBUG("EGL init with version %d.%d", eglMajVers, eglMinVers);
 
 	// choose the first config, i.e. best config
 	eglChooseConfig(eglDisp, confAttr, &eglConf, 1, &numConfigs);
@@ -1460,13 +1455,13 @@ static inline void _jl_gl_make_res(jl_gr_t* jl_gr) {
 	// Create shaders and set up attribute/uniform variable communication
 	_jl_gl_init_shaders(jl_gr);
 	//
-	jl_io_print(jl_gr->jlc, "making temporary vertex object....");
+	JL_IO_DEBUG(jl_gr->jlc, "making temporary vertex object....");
 	jl_gr->gl.temp_vo = jl_gl_vo_make(jl_gr, 1);
-	jl_io_print(jl_gr->jlc, "making default texc buff!");
+	JL_IO_DEBUG(jl_gr->jlc, "making default texc buff!");
 	// Default GL Texture Coordinate Buffer
 	jl_gl_buffer_new__(jl_gr, &(jl_gr->gl.default_tc));
 	jl_gl_buffer_set__(jl_gr, jl_gr->gl.default_tc, DEFAULT_TC, 8);
-	jl_io_print(jl_gr->jlc, "made temp vo & default tex. c. buff!");
+	JL_IO_DEBUG(jl_gr->jlc, "made temp vo & default tex. c. buff!");
 	jl_io_return(jl_gr->jlc, "GL_Init");
 }
 

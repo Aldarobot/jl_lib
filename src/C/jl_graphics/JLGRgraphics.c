@@ -329,7 +329,6 @@ static void _jl_gr_textbox_lt(jl_t* jl);
 			// Set the context to NULL.
 			((jl_sprite_t*)jl_gr->jlc->mouse)->data.ctx = NULL;
 		#endif
-		jl_io_print(jl_gr->jlc, "SADFASDF = %o", jl_gr->jlc->mouse);
 	}
 
 /**      @endcond      **/
@@ -1139,17 +1138,17 @@ static void _jl_gr_textbox_lt(jl_t* jl);
 		jl_gr->jlc->fontcolor[3] = 255;
 		jl_gr->jlc->font = (jl_font_t)
 			{ 0, JL_IMGI_FONT, 0, jl_gr->jlc->fontcolor, .04 };
-		jl_io_print(jl_gr->jlc, "Loading 1 image");
+		JL_IO_DEBUG(jl_gr->jlc, "Loading 1 image");
 		jl_sg_add_some_imgs_(jl_gr, 1);
 		//
 		jl_gr_draw_msge(jl_gr,0,0,0,"LOADING JL_LIB GRAPHICS...");
 		// Load the other images.
-		jl_io_print(jl_gr->jlc, "Loading 2 image");
+		JL_IO_DEBUG(jl_gr->jlc, "Loading 2 image");
 		jl_sg_add_some_imgs_(jl_gr, 2);
 		jl_gr_draw_msge(jl_gr, 0, 0, 0, "LOADED JL_LIB GRAPHICS!");
 		// Draw message on the screen
 		jl_gr_draw_msge(jl_gr, 0, 0, 0, "LOADING JLLIB....");
-		jl_io_print(jl_gr->jlc, "started up display %dx%d",
+		JL_IO_DEBUG(jl_gr->jlc, "started up display %dx%d",
 			jl_gr->dl.full_w, jl_gr->dl.full_h);
 		// Create the Taskbar.
 		jl_gr_menu_init__(jl_gr);

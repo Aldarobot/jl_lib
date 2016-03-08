@@ -14,21 +14,19 @@ static inline jvct_t* jl_init_essential__(void) {
 }
 
 static inline void jl_init_libs__(jvct_t *_jlc) {
-	jl_io_print(_jlc->jlc, "Initializing file system....");
+	JL_IO_DEBUG(_jlc->jlc, "Initializing file system....");
 	jl_fl_init__(_jlc);
-	jl_io_print(_jlc->jlc, "Initialized file system!");
+	JL_IO_DEBUG(_jlc->jlc, "Initialized file system!");
 //	jl_gr_draw_msge(_jlc->jlc, 0, 0, 0, "INITIALIZATION COMPLETE!");
 }
 
 static inline void _jl_ini(jvct_t *_jlc, jl_fnct _fnc_init_) {
-	jl_io_print(_jlc->jlc, "STARTING JL_lib Version "JL_VERSION"....");
+	jl_io_print(_jlc->jlc, "Starting JL_Lib - Version "JL_VERSION"....");
 
 	jl_init_libs__(_jlc);
 	// Run the users loop & resize functions
 	_fnc_init_(_jlc->jlc);
 	_jlc->mode.mode.tclp[JL_SG_WM_RESZ](_jlc->jlc);
-	//
-	jl_io_print(_jlc->jlc, "Initialized!");
 }
 
 static void jl_main_resz_jl(jvct_t* _jlc, u16_t x, u16_t y) {
@@ -84,7 +82,6 @@ static inline int jl_kill__(jl_t* jlc, int rc) {
 	jvct_t* _jlc = jlc->_jlc;
 
 	jl_io_print(jlc, "Quitting...."); //Exited properly
-	jl_io_function(jlc, "SG_Kill");
 //	jl_gr_draw_msge(jlc, 0, 0, 0, "Quiting JL-Lib....");
 	if(_jlc->me.status == JL_STATUS_EXIT) {
 		rc = JL_RTN_FAIL_IN_FAIL_EXIT;
@@ -94,9 +91,7 @@ static inline int jl_kill__(jl_t* jlc, int rc) {
 	}
 	// Set status to Exiting
 	_jlc->me.status = JL_STATUS_EXIT;
-	jl_io_print(jlc, "Quitting...."); //Exited properly
 	_jl_fl_kill(_jlc);
-	jl_io_print(jlc, ":Quit successfully!"); //Exited properly
 	_jl_io_kill(jlc);
 	_jl_me_kill(_jlc);
 	printf("[\\JL_Lib] ");
@@ -115,7 +110,7 @@ int jl_init(jl_fnct _fnc_init_, jl_fnct _fnc_kill_) {
 	// Initialize JL_lib!
 	_jl_ini(_jlc, _fnc_init_);
 	// Run the Loop
-	jl_io_print(_jlc->jlc, "going into loop....");
+	jl_io_print(_jlc->jlc, "Started JL_Lib!");
 	while(_jlc->jlc->mdec) main_loop__(_jlc);
 	// Run Users Kill Routine
 	_fnc_kill_(_jlc->jlc);
