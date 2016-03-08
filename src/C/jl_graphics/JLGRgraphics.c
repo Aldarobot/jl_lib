@@ -29,9 +29,10 @@ typedef enum{
 	being displayed on bottom screen then this will be displayed on top )*/
 float timeTilMessageVanish = 0.f;
 
-char *GMessage[2] = {
-	"SWITCH SCREEN: UPPER",
-	"SWITCH SCREEN: LOWER"
+char *GMessage[3] = {
+	"SWITCHED SCREEN: UPPER",
+	"SWITCHED SCREEN: LOWER",
+	"SINGLE SCREEN MODE"
 };
 
 //Upper OpenGL prototypes
@@ -42,8 +43,8 @@ uint8_t jl_gl_pr_isi(jl_gr_t* jl_gr, jl_vo_t* pv);
 void jl_gl_pr_old_(jl_gr_t* jl_gr, jl_pr_t** pr);
 
 //Graphics Prototypes
-static void _jl_gr_textbox_rt(jl_gr_t* jl_gr);
-static void _jl_gr_textbox_lt(jl_gr_t* jl_gr);
+static void _jl_gr_textbox_rt(jl_t* jl);
+static void _jl_gr_textbox_lt(jl_t* jl);
 
 /***      @cond       ***/
 /************************/
@@ -55,34 +56,39 @@ static void _jl_gr_textbox_lt(jl_gr_t* jl_gr);
 	}
 	
 	static inline void _jl_gr_flip_scrn(jl_gr_t* jl_gr) {
-// TODO: Re-Implement
-//		if(jl_gr->loop == JL_SG_WM_UP) {
-//			jl_gr->loop = JL_SG_WM_DN;
+		if(jl_gr->sg.cscreen == JL_SCR_UP) {
+			jl_gr->sg.cscreen = JL_SCR_DN;
 			timeTilMessageVanish = 8.5f;
-//		}else{
-//			jl_gr->loop = JL_SG_WM_UP;
-//			timeTilMessageVanish = 8.5f;
-//		}
+		}else if(jl_gr->sg.cscreen == JL_SCR_DN) {
+			jl_gr->sg.cscreen = JL_SCR_UP;
+			timeTilMessageVanish = 8.5f;
+		}else{
+			timeTilMessageVanish = 8.5f;
+		}
 	}
 	
 	static void jl_gr_sprite_draw_to_pr__(jl_t *jlc) {
 		jl_sprite_t *spr = jl_me_tmp_ptr(jlc, 0, NULL);
 
-		spr->draw(jlc->jl_gr, &(spr->data));
+		spr->draw(jlc, &(spr->data));
 	}
 
-	static void _jl_gr_popup_loop(jl_t *jlc) {
+	static void _jl_gr_popup_loop(jl_t *jl) {
 //		jl_gr_draw_rect(jlc, .1, .1, .8, .2, 127, 127, 255, 255);
 //		jl_gr_draw_rect(jlc, .1, .3, .8, .8, 64, 127, 127, 255);
 	}
 
-	static void _jl_gr_textbox_lt(jl_gr_t* jl_gr) {
+	static void _jl_gr_textbox_lt(jl_t* jl) {
+		jl_gr_t* jl_gr = jl->jl_gr;
+
 		jl_ct_typing_disable();
 		if(jl_gr->gr.textbox_string->curs)
 			jl_gr->gr.textbox_string->curs--;
 	}
 
-	static void _jl_gr_textbox_rt(jl_gr_t* jl_gr) {
+	static void _jl_gr_textbox_rt(jl_t* jl) {
+		jl_gr_t* jl_gr = jl->jl_gr;
+
 		jl_ct_typing_disable();
 		if(jl_gr->gr.textbox_string->curs < jl_gr->gr.textbox_string->size)
 			jl_gr->gr.textbox_string->curs++;
@@ -169,7 +175,8 @@ static void _jl_gr_textbox_lt(jl_gr_t* jl_gr);
 	}
 
 	// Run when the taskbar is left alone.
-	static void _jl_gr_taskbar_loop_pass(jl_gr_t* jl_gr) {
+	static void _jl_gr_taskbar_loop_pass(jl_t* jlc) {
+		jl_gr_t* jl_gr = jlc->jl_gr;
 		jl_taskbar_t *ctx = jl_gr->gr.taskbar->data.ctx;
 
 		if(ctx->redraw) {
@@ -202,12 +209,13 @@ static void _jl_gr_textbox_lt(jl_gr_t* jl_gr);
 	}
 
 	// Run when the taskbar is clicked/pressed
-	static void _jl_gr_taskbar_loop_run(jl_gr_t* jl_gr) {
+	static void _jl_gr_taskbar_loop_run(jl_t* jlc) {
+		jl_gr_t* jl_gr = jlc->jl_gr;
 		jl_taskbar_t *ctx;
 
 		//If mouse isn't over the taskbar - dont run pressed.
 		if(jl_gr->ct.msy >= .1) {
-			_jl_gr_taskbar_loop_pass(jl_gr);
+			_jl_gr_taskbar_loop_pass(jlc);
 			return;
 		}
 		// Set context
@@ -227,8 +235,8 @@ static void _jl_gr_textbox_lt(jl_gr_t* jl_gr);
 	}
 
 	// Run whenever a redraw is needed for an icon.
-	static void _jl_gr_taskbar_draw(void* jl_gr2, jl_sprd_t* sprd) {
-		jl_gr_t* jl_gr = jl_gr2;
+	static void _jl_gr_taskbar_draw(jl_t* jlc, jl_sprd_t* sprd) {
+		jl_gr_t* jl_gr = jlc->jl_gr;
 		jl_taskbar_t* ctx = jl_gr->gr.taskbar->data.ctx;
 
 		if(ctx->redraw == 2) {
@@ -242,8 +250,8 @@ static void _jl_gr_textbox_lt(jl_gr_t* jl_gr);
 	}
 
 	// Runs every frame.
-	static void _jl_gr_taskbar_loop(void* jl_gr2, jl_sprd_t* sprd) {
-		jl_gr_t* jl_gr = jl_gr2;
+	static void _jl_gr_taskbar_loop(jl_t* jlc, jl_sprd_t* sprd) {
+		jl_gr_t* jl_gr = jlc->jl_gr;
 
 		// Draw the pre-rendered taskbar.
 		jl_gr_sp_drw(jl_gr, jl_gr->gr.taskbar);
@@ -251,8 +259,6 @@ static void _jl_gr_textbox_lt(jl_gr_t* jl_gr);
 		jl_ct_run_event(jl_gr, JL_CT_PRESS, _jl_gr_taskbar_loop_run,
 			_jl_gr_taskbar_loop_pass);
 	}
-
-	static void _jl_gr_taskbar_dont(void* jl_gr, jl_sprd_t* sprd) { }
 
 	static void jl_gr_menu_init__(jl_gr_t* jl_gr) {
 		jl_rect_t rc = { 0.f, 0.f, 1.f, .11f };
@@ -287,8 +293,8 @@ static void _jl_gr_textbox_lt(jl_gr_t* jl_gr);
 		ctx->cursor = -1;
 	}
 
-	static void _jl_gr_mouse_loop(void* jl_gr2, jl_sprd_t* sprd) {
-		jl_gr_t* jl_gr = jl_gr2;
+	static void _jl_gr_mouse_loop(jl_t* jlc, jl_sprd_t* sprd) {
+		jl_gr_t* jl_gr = jlc->jl_gr;
 		jl_sprite_t* mouse = jl_gr->jlc->mouse;
 		jl_vo_t* mouse_vo = mouse->data.ctx;
 
@@ -323,6 +329,7 @@ static void _jl_gr_textbox_lt(jl_gr_t* jl_gr);
 			// Set the context to NULL.
 			((jl_sprite_t*)jl_gr->jlc->mouse)->data.ctx = NULL;
 		#endif
+		jl_io_print(jl_gr->jlc, "SADFASDF = %o", jl_gr->jlc->mouse);
 	}
 
 /**      @endcond      **/
@@ -330,7 +337,7 @@ static void _jl_gr_textbox_lt(jl_gr_t* jl_gr);
 /*** Global Functions ***/
 /************************/
 
-	void jl_gr_sp_dont(void* jl_gr, jl_sprd_t* spr) { }
+	void jl_gr_sp_dont(jl_t* jlc, jl_sprd_t* spr) { }
 	void jl_gr_dont(jl_gr_t* jl_gr) { }
 
 	/**
@@ -627,7 +634,9 @@ static void _jl_gr_textbox_lt(jl_gr_t* jl_gr);
 	 * @param spr: Which sprite to loop.
 	**/
 	void jl_gr_sp_rnl(jl_gr_t* jl_gr, jl_sprite_t *spr) {
+		jl_io_function(jl_gr->jlc, "Sprite/Loop");
 		spr->loop(jl_gr->jlc, &(spr->data));
+		jl_io_return(jl_gr->jlc, "Sprite/Loop");
 	}
 
 	/**
@@ -929,12 +938,12 @@ static void _jl_gr_textbox_lt(jl_gr_t* jl_gr);
  	 * @param 'slidex': how much the x should change when hovered above.
  	 * @param 'prun': the function to run when pressed.
 	**/
-	void jl_gr_slidebtn_rnl(jl_gr_t* jl_gr, jl_sprite_t * spr,  float defaultx,
-		float slidex, jl_gr_fnct prun)
+	void jl_gr_slidebtn_rnl(jl_gr_t* jl_gr, jl_sprite_t * spr,
+		float defaultx, float slidex, jl_fnct prun)
 	{
 		spr->data.tr.x = defaultx;
 		if(jl_gr_sprite_collide(jl_gr, jl_gr->jlc->mouse, spr)) {
-			jl_ct_run_event(jl_gr, JL_CT_PRESS, prun, jl_gr_dont);
+			jl_ct_run_event(jl_gr, JL_CT_PRESS, prun, jl_dont);
 			spr->data.tr.x = defaultx + slidex;
 		}
 		jl_gr_sp_drw(jl_gr, spr);
@@ -948,7 +957,7 @@ static void _jl_gr_textbox_lt(jl_gr_t* jl_gr);
  	 * @param 'prun': the function to run when pressed.
 	**/
 	void jl_gr_draw_glow_button(jl_gr_t* jl_gr, jl_sprite_t * spr,
-		char *txt, jl_gr_fnct prun)
+		char *txt, jl_fnct prun)
 	{
 		jl_gr_sp_rdr(jl_gr, spr);
 		jl_gr_sp_drw(jl_gr, spr);
@@ -968,7 +977,7 @@ static void _jl_gr_textbox_lt(jl_gr_t* jl_gr);
 				(jl_font_t) { 0, JL_IMGI_ICON, 0,
 					jl_gr->jlc->fontcolor, .05 });
 			// Run if press
-			jl_ct_run_event(jl_gr,JL_CT_PRESS,prun,jl_gr_dont);
+			jl_ct_run_event(jl_gr,JL_CT_PRESS,prun,jl_dont);
 		}
 	}
 
@@ -1000,9 +1009,9 @@ static void _jl_gr_textbox_lt(jl_gr_t* jl_gr);
 //			printf("inserting %1s\n", &bytetoinsert);
 		}
 		jl_ct_run_event(jl_gr,JL_CT_MAINLT,_jl_gr_textbox_lt,
-			jl_gr_dont);
+			jl_dont);
 		jl_ct_run_event(jl_gr,JL_CT_MAINRT,_jl_gr_textbox_rt,
-			jl_gr_dont);
+			jl_dont);
 //		jl_gr_draw_image(jlc, 0, 0, x, y, w, h, ' ', 255);
 		jl_gr_draw_text(jl_gr, (char*)((*string)->data),
 			(jl_vec3_t) {x, y, 0.},
@@ -1021,7 +1030,7 @@ static void _jl_gr_textbox_lt(jl_gr_t* jl_gr);
 		if(jl_gr->gr.menuoverlay == jl_gr_sp_dont)
 			jl_gr->gr.menuoverlay = _jl_gr_taskbar_loop;
 		else
-			jl_gr->gr.menuoverlay = _jl_gr_taskbar_dont;
+			jl_gr->gr.menuoverlay = jl_gr_sp_dont;
 	}
 
 	/**
@@ -1089,15 +1098,13 @@ static void _jl_gr_textbox_lt(jl_gr_t* jl_gr);
 			if(timeTilMessageVanish > 4.25) {
 				uint8_t color[] = { 255, 255, 255, 255 };
 				jl_gr_draw_ctxt(jl_gr,
-					// TODO: Depend on which screen: up/down
-					GMessage[0],
+					GMessage[jl_gr->sg.cscreen],
 					0, color);
 			}else{
 				uint8_t color[] = { 255, 255, 255, (uint8_t)
 					(timeTilMessageVanish * 255.f / 4.25)};
 				jl_gr_draw_ctxt(jl_gr,
-					// TODO: Depend on which screen: up/down
-					GMessage[0],
+					GMessage[jl_gr->sg.cscreen],
 					0, color);
 			}
 			timeTilMessageVanish-=jl_gr->jlc->time.psec;
@@ -1106,22 +1113,21 @@ static void _jl_gr_textbox_lt(jl_gr_t* jl_gr);
 
 	void _jl_gr_loopa(jl_gr_t* jl_gr) {
 		jvct_t* _jlc = jl_gr->jlc->_jlc;
-		
+
+		jl_io_function(jl_gr->jlc, "graphic loop");
 		// Menu Bar
-		if(!_jlc->fl.inloop) jl_gr->gr.menuoverlay(jl_gr, NULL);
+		if(!_jlc->fl.inloop) jl_gr->gr.menuoverlay(jl_gr->jlc, NULL);
 		// Update mouse
-		jl_gr_sp_rnl(jl_gr, jl_gr->jlc->mouse);
+		if(jl_gr->jlc->mouse) jl_gr_sp_rnl(jl_gr, jl_gr->jlc->mouse);
 		// Update messages.
 		_jl_gr_loopb(jl_gr);
+		jl_io_return(jl_gr->jlc, "graphic loop");
 	}
 	
 	void jl_gr_init__(jl_gr_t* jl_gr) {
 		jl_sprite_t* mouse = NULL;
 
 		_jl_gr_init_vos(jl_gr);
-		// Set the menu loop.
-		jl_gr_menu_init__(jl_gr);
-		jl_gr->gr.menuoverlay = _jl_gr_taskbar_loop;
 		// Resize screen
 		main_resz(jl_gr->jlc->_jlc, jl_gr->dl.full_w, jl_gr->dl.full_h);
 		// Draw Loading Screen
@@ -1133,12 +1139,21 @@ static void _jl_gr_textbox_lt(jl_gr_t* jl_gr);
 		jl_gr->jlc->fontcolor[3] = 255;
 		jl_gr->jlc->font = (jl_font_t)
 			{ 0, JL_IMGI_FONT, 0, jl_gr->jlc->fontcolor, .04 };
+		jl_io_print(jl_gr->jlc, "Loading 1 image");
 		jl_sg_add_some_imgs_(jl_gr, 1);
 		//
 		jl_gr_draw_msge(jl_gr,0,0,0,"LOADING JL_LIB GRAPHICS...");
 		// Load the other images.
+		jl_io_print(jl_gr->jlc, "Loading 2 image");
 		jl_sg_add_some_imgs_(jl_gr, 2);
 		jl_gr_draw_msge(jl_gr, 0, 0, 0, "LOADED JL_LIB GRAPHICS!");
+		// Draw message on the screen
+		jl_gr_draw_msge(jl_gr, 0, 0, 0, "LOADING JLLIB....");
+		jl_io_print(jl_gr->jlc, "started up display %dx%d",
+			jl_gr->dl.full_w, jl_gr->dl.full_h);
+		// Create the Taskbar.
+		jl_gr_menu_init__(jl_gr);
+		jl_gr->gr.menuoverlay = _jl_gr_taskbar_loop;
 		// Create the Mouse
 		_jl_gr_mouse_init(jl_gr);
 		mouse = jl_gr->jlc->mouse;
@@ -1146,10 +1161,6 @@ static void _jl_gr_textbox_lt(jl_gr_t* jl_gr);
 		// Set the mouse's collision width and height to 0
 		mouse->data.cb.w = 0.f;
 		mouse->data.cb.h = 0.f;
-		// Draw message on the screen
-		jl_gr_draw_msge(jl_gr, 0, 0, 0, "LOADING JLLIB....");
-		jl_io_print(jl_gr->jlc, "started up display %dx%d",
-			jl_gr->dl.full_w, jl_gr->dl.full_h);
 	}
 
 /**      @endcond      **/

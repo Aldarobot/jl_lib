@@ -387,10 +387,12 @@ static void jl_ct_testquit__(jl_gr_t* jl_gr) {
 
 /**
  * Run prun if event pevent is active.
+ * @param jl_gr: The library context.
+ * @param pevent: The event id
+ * @param prun: The function to run when event is active.
+ * @param pno: The function to run when event is inactive.
 */
-void jl_ct_run_event(jl_gr_t *jl_gr, uint8_t pevent, jl_gr_fnct prun,
-	jl_gr_fnct pno)
-{
+void jl_ct_run_event(jl_gr_t *jl_gr, uint8_t pevent, jl_fnct prun, jl_fnct pno){
 	jl_ct_event_fnct FunctionToRun_ = jl_gr->ct.getEvents[pevent];
 
 	if(jl_gr->ct.getEvents[pevent] == NULL) {
@@ -398,7 +400,7 @@ void jl_ct_run_event(jl_gr_t *jl_gr, uint8_t pevent, jl_gr_fnct prun,
 		jl_io_print(jl_gr->jlc,"pevent=%d", pevent);
 		jl_sg_kill(jl_gr->jlc);
 	}
-	FunctionToRun_(jl_gr->jlc, prun, pno);
+	FunctionToRun_(jl_gr, prun, pno);
 }
 
 void jl_ct_getevents_(jl_gr_t* jl_gr) {

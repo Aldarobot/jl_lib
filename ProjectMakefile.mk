@@ -12,9 +12,13 @@ BUILD_DEPS = build/deps
 
 # Dependencies
 #	$(shell find $(SRC_DEPS)/ -type f -name '*.cpp')
-MODULES_DEPS = $(subst .c,, $(shell basename -a $(subst .cpp,, \
-	$(shell find $(SRC_DEPS)/ -type f -name '*.c') \
-)))
+MODULES_DEPS_CFILES = $(subst .cpp,, \
+	$(shell find $(SRC_DEPS)/ -type f -name '*.c'))
+ifeq ("$(MODULES_DEPS_CFILES)", " ")
+	MODULES_DEPS = 
+else
+	MODULES_DEPS = $(subst .c,, $(shell basename -a  $(MODULES_DEPS_CFILES)))
+endif
 OBJS_DEPS = \
 	$(addprefix $(BUILD_DEPS)/, $(addsuffix .o,$(MODULES_DEPS)))
 HEADERS_DEPS = \
@@ -96,7 +100,6 @@ $(BUILD_DEPS)/%.o: %.c $(HEADERS_DEPS)
 -init-vars:
 	# Build Project
 	$(eval INCLUDES_DEPS=\
-#		$(addprefix -I, $(shell find deps/ -type d -name "include")) \
 		$(addprefix -I, $(shell find $(SRC_DEPS)/ -type d)))
 	$(eval CFLAGS_INCLUDES=\
 		-I$(shell echo $(JLL_HOME))/src/C/include/\

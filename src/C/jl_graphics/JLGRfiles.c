@@ -102,14 +102,18 @@ uint8_t jl_fl_user_select_init(jl_gr_t* jl_gr, const char *program_name,
 	}
 }
 
-static void _jl_fl_user_select_up(jl_gr_t* jl_gr) {
+static void _jl_fl_user_select_up(jl_t* jl) {
+	jl_gr_t* jl_gr = jl->jl_gr;
+
 	if(jl_gr->jlc->ctrl.h == 1) {
 		jvct_t * _jlc = jl_gr->jlc->_jlc;
 		if((_jlc->fl.cursor > 0) || _jlc->fl.cpage) _jlc->fl.cursor--;
 	}
 }
 
-static void _jl_fl_user_select_dn(jl_gr_t* jl_gr) {
+static void _jl_fl_user_select_dn(jl_t* jl) {
+	jl_gr_t* jl_gr = jl->jl_gr;
+
 	if(jl_gr->jlc->ctrl.h == 1) {
 		jvct_t * _jlc = jl_gr->jlc->_jlc;
 		if(_jlc->fl.cursor + (_jlc->fl.cpage * (_jlc->fl.drawupto+1)) <
@@ -120,17 +124,17 @@ static void _jl_fl_user_select_dn(jl_gr_t* jl_gr) {
 	}
 }
 
-static void _jl_fl_user_select_rt(jl_gr_t* jl_gr) {
+static void _jl_fl_user_select_rt(jl_t* jl) {
 	int i;
 	for(i = 0; i < 5; i++) {
-		_jl_fl_user_select_dn(jl_gr);
+		_jl_fl_user_select_dn(jl);
 	}
 }
 
-static void _jl_fl_user_select_lt(jl_gr_t* jl_gr) {
+static void _jl_fl_user_select_lt(jl_t* jl) {
 	int i;
 	for(i = 0; i < 5; i++) {
-		_jl_fl_user_select_up(jl_gr);
+		_jl_fl_user_select_up(jl);
 	}
 }
 
@@ -144,7 +148,9 @@ static void _jl_fl_open_file(jl_t*jlc, char *selecteditem) {
 	_jl_fl_user_select_open_dir(jlc->jl_gr,newdir);
 }
 
-static void _jl_fl_user_select_do(jl_gr_t* jl_gr) {
+static void _jl_fl_user_select_do(jl_t* jl) {
+	jl_gr_t* jl_gr = jl->jl_gr;
+
 	if(jl_gr->jlc->ctrl.h == 1) {
 		jvct_t * _jlc = jl_gr->jlc->_jlc;
 		struct cl_list_iterator *iterator;
@@ -197,10 +203,10 @@ void jl_fl_user_select_loop(jl_gr_t* jl_gr) {
 	jl_gr_draw_text(jl_gr, "Select File", (jl_vec3_t) { .02, .02, 0. },
 		jl_gr->jlc->font);
 
-	jl_ct_run_event(jl_gr,JL_CT_MAINUP, _jl_fl_user_select_up, jl_gr_dont);
-	jl_ct_run_event(jl_gr,JL_CT_MAINDN, _jl_fl_user_select_dn, jl_gr_dont);
-	jl_ct_run_event(jl_gr,JL_CT_MAINRT, _jl_fl_user_select_rt, jl_gr_dont);
-	jl_ct_run_event(jl_gr,JL_CT_MAINLT, _jl_fl_user_select_lt, jl_gr_dont);
+	jl_ct_run_event(jl_gr,JL_CT_MAINUP, _jl_fl_user_select_up, jl_dont);
+	jl_ct_run_event(jl_gr,JL_CT_MAINDN, _jl_fl_user_select_dn, jl_dont);
+	jl_ct_run_event(jl_gr,JL_CT_MAINRT, _jl_fl_user_select_rt, jl_dont);
+	jl_ct_run_event(jl_gr,JL_CT_MAINLT, _jl_fl_user_select_lt, jl_dont);
 	//Draw files
 	for(i = 0; i < cl_list_count(_jlc->fl.filelist); i++) {
 		stringtoprint = cl_list_iterator_next(iterator);
@@ -253,7 +259,7 @@ void jl_fl_user_select_loop(jl_gr_t* jl_gr) {
 			(jl_font_t) { 0, JL_IMGI_ICON, 0,
 				jl_gr->jlc->fontcolor, .02});
 		jl_ct_run_event(jl_gr, JL_CT_SELECT, _jl_fl_user_select_do,
-			jl_gr_dont);
+			jl_dont);
 	}
 	jl_gr_sp_rnl(jl_gr, _jlc->fl.btns[0]);
 	jl_gr_sp_rnl(jl_gr, _jlc->fl.btns[1]);
@@ -273,13 +279,13 @@ char *jl_fl_user_select_get(jl_gr_t* jl_gr) {
 		return NULL;
 }
 
-static void _jl_fl_btn_makefile_press(jl_gr_t* jl_gr) {
-	jvct_t *_jlc = jl_gr->jlc->_jlc;
+static void _jl_fl_btn_makefile_press(jl_t* jl) {
+	jvct_t *_jlc = jl->_jlc;
 	_jlc->fl.prompt = 1;
 }
 
-static void _jl_fl_btn_makefile_loop(void* jl_gr2, jl_sprd_t* sprd) {
-	jl_gr_t* jl_gr = jl_gr2;
+static void _jl_fl_btn_makefile_loop(jl_t* jlc, jl_sprd_t* sprd) {
+	jl_gr_t* jl_gr = jlc->jl_gr;
 	jvct_t *_jlc = jl_gr->jlc->_jlc;
 
 	//TODO: make graphic: 0, 1, 1, 255
@@ -288,8 +294,8 @@ static void _jl_fl_btn_makefile_loop(void* jl_gr2, jl_sprd_t* sprd) {
 		_jl_fl_btn_makefile_press);
 }
 
-static void _jl_fl_btn_makefile_draw(void* jl_gr2, jl_sprd_t* sprd) {
-	jl_gr_t* jl_gr = jl_gr2;
+static void _jl_fl_btn_makefile_draw(jl_t* jlc, jl_sprd_t* sprd) {
+	jl_gr_t* jl_gr = jlc->jl_gr;
 	jl_rect_t rc = { 0., 0., jl_gl_ar(jl_gr), jl_gl_ar(jl_gr) };
 	jl_vec3_t tr = { 0., 0., 0. };
 
@@ -297,8 +303,8 @@ static void _jl_fl_btn_makefile_draw(void* jl_gr2, jl_sprd_t* sprd) {
 	jl_gr_draw_vo(jl_gr, jl_gr->gl.temp_vo, &tr);
 }
 
-static void _jl_fl_btn_makefolder_loop(void* jl_gr2, jl_sprd_t* sprd) {
-	jl_gr_t* jl_gr = jl_gr2;
+static void _jl_fl_btn_makefolder_loop(jl_t* jlc, jl_sprd_t* sprd) {
+	jl_gr_t* jl_gr = jlc->jl_gr;
 	jvct_t *_jlc = jl_gr->jlc->_jlc;
 	
 	//TODO: make graphic: 0, 1, 2, 255,
@@ -306,8 +312,8 @@ static void _jl_fl_btn_makefolder_loop(void* jl_gr2, jl_sprd_t* sprd) {
 		_jl_fl_btn_makefile_press);
 }
 
-static void _jl_fl_btn_makefolder_draw(void* jl_gr2, jl_sprd_t* sprd) {
-	jl_gr_t* jl_gr = jl_gr2;
+static void _jl_fl_btn_makefolder_draw(jl_t* jlc, jl_sprd_t* sprd) {
+	jl_gr_t* jl_gr = jlc->jl_gr;
 	jl_rect_t rc = { 0., 0., jl_gl_ar(jl_gr), jl_gl_ar(jl_gr) };
 	jl_vec3_t tr = { 0., 0., 0. };
 

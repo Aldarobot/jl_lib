@@ -81,16 +81,15 @@ void jl_gr_loop(jl_gr_t* jl_gr, void* data, u32_t dataSize) {
  * @param jl_gr: The library context.
 **/
 void jl_gr_resz(jl_gr_t* jl_gr, u16_t x, u16_t y) {
-	jvct_t* _jlc = jl_gr->jlc->_jlc;
-	if(_jlc->has.graphics) {
+	if(jl_gr->gr.taskbar) {
 		jl_taskbar_t *ctx = jl_gr->gr.taskbar->data.ctx;
 
 		//Menu Bar
 		ctx->redraw = 2;
 		jl_gr_sp_rsz(jl_gr, jl_gr->gr.taskbar);
-		//Mouse
-		jl_gr_sp_rsz(jl_gr, jl_gr->jlc->mouse);
 	}
+	//Mouse
+	if(jl_gr->jlc->mouse) jl_gr_sp_rsz(jl_gr, jl_gr->jlc->mouse);
 	// Reset aspect ratio stuff.
 	jl_dl_resz__(jl_gr, x, y);
 	// Update the actual window.

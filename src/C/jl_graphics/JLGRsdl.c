@@ -68,6 +68,9 @@ static void _jl_dl_fscreen(jl_gr_t* jl_gr, uint8_t a) {
 	if(SDL_SetWindowFullscreen(jl_gr->dl.displayWindow->w,
 	 JL_DL_FULLSCREEN * jl_gr->dl.fullscreen))
 		jl_dl_killedit(jl_gr->jlc, "SDL_SetWindowFullscreen");
+	// Resize window
+	_jlvm_curd_mode(jl_gr);
+	main_resz(jl_gr->jlc->_jlc, jl_gr->dl.current.w, jl_gr->dl.current.h);
 }
 
 static inline void jlvmpi_ini_sdl(jl_gr_t* jl_gr) {

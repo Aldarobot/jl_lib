@@ -355,6 +355,7 @@ static void jl_gl_texture_off__(jl_gr_t* jl_gr) {
 static void jl_gl_texture_new__(jl_gr_t* jl_gr, m_u32_t *tex, u8_t* px,
 	u16_t w, u16_t h, u8_t bytepp)
 {
+	jl_io_function(jl_gr->jlc, "jl_gl_texture_new__");
 	jl_io_print(jl_gr->jlc, "make tx");
 	// Make the texture
 	jl_gl_texture_make__(jl_gr, tex);
@@ -367,6 +368,7 @@ static void jl_gl_texture_new__(jl_gr_t* jl_gr, m_u32_t *tex, u8_t* px,
 	// Set the texture parametrs.
 	jl_gl_texpar_set__(jl_gr);
 	jl_io_print(jl_gr->jlc, "setd tx");
+	jl_io_return(jl_gr->jlc, "jl_gl_texture_new__");
 }
 
 /*
@@ -602,6 +604,7 @@ static void jl_gl_framebuffer_make__(jl_gr_t* jl_gr, m_u32_t *fb) {
 static void jl_gl_framebuffer_use__(jl_gr_t* jl_gr, u32_t fb, u32_t db, u32_t tx,
 	u16_t w, u16_t h)
 {
+	jl_io_function(jl_gr->jlc, "jl_gl_framebuffer_use__");
 	if(fb == 0) {
 		jl_io_print(jl_gr->jlc, "jl_gl_framebuffer_use__: GL FB = 0");
 		jl_sg_kill(jl_gr->jlc);
@@ -627,6 +630,7 @@ static void jl_gl_framebuffer_use__(jl_gr_t* jl_gr, u32_t fb, u32_t db, u32_t tx
 	JL_GL_ERROR(jl_gr, fb,"glBindFramebuffer");
 	// Render on the whole framebuffer [ lower left -> upper right ]
 	_jl_gl_viewport(jl_gr, w, h);
+	jl_io_return(jl_gr->jlc, "jl_gl_framebuffer_use__");
 }
 
 static void jl_gl_framebuffer_off__(jl_gr_t* jl_gr) {
@@ -921,12 +925,14 @@ static inline void _jl_gl_draw_colr(jl_gr_t* jl_gr, jl_vo_t* pv) {
 
 // Prepare to draw a texture with texture coordinates "tc". 
 static void _jl_gl_draw_txtr(jl_gr_t* jl_gr, f32_t a, u32_t tx, u32_t tc) {
+	jl_io_function(jl_gr->jlc, "OPENGL/Draw Texture");
 	// Bind Texture Coordinates to shader
 	_jl_gl_setv(jl_gr, tc, jl_gr->gl.tex.attr.texpos, 2);
 	// Set Alpha Value In Shader
 	_jl_gl_setalpha(jl_gr, a);
 	// Bind the texture
 	jl_gl_texture_bind__(jl_gr, tx);
+	jl_io_return(jl_gr->jlc, "OPENGL/Draw Texture");
 }
 
 static void jl_gl_draw_vertices(jl_gr_t* jl_gr, u32_t gl, i32_t attr) {
@@ -1136,6 +1142,10 @@ void jl_gl_clrs(jl_gr_t* jl_gr, jl_vo_t* pv, u8_t *rgba) {
 void jl_gl_txtr(jl_gr_t* jl_gr,jl_vo_t* pv,u8_t map,u8_t a,u16_t pgid,u16_t pi){
 	_jl_gl_txtr(jl_gr, &pv, a, 0);
 	pv->tx = jl_gr->gl.textures[pgid][pi];
+	if(!pv->tx) {
+		jl_io_print(jl_gr->jlc, "Error: No Texture @%d/%d", pgid, pi);
+		exit(-1);
+	}
 	jl_gl_vo_txmap(jl_gr, pv, map);
 }
 
@@ -1223,6 +1233,7 @@ void jl_gl_transform_chr_(jl_gr_t* jl_gr, jl_vo_t* vo, float x, float y, float z
  * Else render vertex object "pv" on the screen.
 */
 void jl_gl_draw(jl_gr_t* jl_gr, jl_vo_t* pv) {
+	jl_io_function(jl_gr->jlc, "OPENGL/Draw");
 	// Use Temporary Vertex Object If no vertex object.
 	if(pv == NULL) pv = jl_gr->gl.temp_vo;
 	// Determine which shader to use: texturing or coloring?
@@ -1232,6 +1243,7 @@ void jl_gl_draw(jl_gr_t* jl_gr, jl_vo_t* pv) {
 	else _jl_gl_draw_txtr(jl_gr, pv->a, pv->tx, pv->bt);
 	// Draw onto the screen.
 	_jl_gl_draw_onts(jl_gr, pv->gl, pv->rs, pv->vc);
+	jl_io_return(jl_gr->jlc, "OPENGL/Draw");
 }
 
 /**

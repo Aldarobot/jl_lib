@@ -5,14 +5,14 @@
 
 // Enum:
 typedef enum {
-	JL_SCR_DN,
 	JL_SCR_UP,
+	JL_SCR_DN,
 	JL_SCR_SS,
 }jl_gr_which_screen_t;
 
 // Types:
 
-typedef void(*jl_gr_sp_fnt)(void* ctx, jl_sprd_t* spr);
+typedef void(*jl_gr_sp_fnt)(jl_t* ctx, jl_sprd_t* spr);
 
 typedef struct{
 	jl_sprd_t data;		// Sprite Data
@@ -61,7 +61,7 @@ typedef struct{
 		float screen_height;
 
 		void* loop; // ( jl_gr_fnct ) For upper or lower screen.
-		u8_t cscreen; // The current screen "jl_gr_which_screen_t"
+		m_u8_t cscreen; // The current screen "jl_gr_which_screen_t"
 	}sg;
 
 	//Input Information
@@ -218,7 +218,7 @@ typedef struct{
 }jl_gr_t;
 
 typedef void(*jl_gr_fnct)(jl_gr_t* jl_gr);
-typedef void(*jl_ct_event_fnct)(jl_t* jlc, jl_gr_fnct prun, jl_gr_fnct pno);
+typedef void(*jl_ct_event_fnct)(jl_gr_t* jl_gr, jl_fnct prun, jl_fnct pno);
 
 // Prototypes:
 jl_gr_t* jl_gr_init(jl_t* jlc, str_t window_name, u8_t fullscreen);
@@ -229,7 +229,7 @@ void jl_gr_kill(jl_gr_t* jl_gr);
 
 // JLGRgraphics:
 void jl_gr_dont(jl_gr_t* jl_gr);
-void jl_gr_sp_dont(void* jl_gr, jl_sprd_t* spr);
+void jl_gr_sp_dont(jl_t* jlc, jl_sprd_t* spr);
 void jl_gr_fill_image_set(jl_gr_t* jl_gr, u16_t g, u16_t i, u8_t c, u8_t a);
 void jl_gr_fill_image_draw(jl_gr_t* jl_gr);
 void jl_gr_pr_old(jl_gr_t* jl_gr, jl_vo_t* pv);
@@ -269,10 +269,10 @@ void jl_gr_draw_msge_(jl_gr_t* jl_gr,u16_t g,u16_t i,u8_t c, m_str_t message);
 	jl_gr_draw_msge_(jl_gr,g,i,c,jl_me_format(jl_gr->jlc, __VA_ARGS__));
 void jl_gr_term_msge(jl_gr_t* jl_gr, char* message);
 void jl_gr_slidebtn_rsz(jl_gr_t* jl_gr, jl_sprite_t * spr, str_t txt);
-void jl_gr_slidebtn_rnl(jl_gr_t* jl_gr, jl_sprite_t * spr,  float defaultx,
-	float slidex, jl_gr_fnct prun);
+void jl_gr_slidebtn_rnl(jl_gr_t* jl_gr, jl_sprite_t * spr,
+	float defaultx, float slidex, jl_fnct prun);
 void jl_gr_draw_glow_button(jl_gr_t* jl_gr, jl_sprite_t * spr,
-	char *txt, jl_gr_fnct prun);
+	char *txt, jl_fnct prun);
 uint8_t jl_gr_draw_textbox(jl_gr_t* jl_gr, float x, float y, float w,
 	float h, strt *string);
 void jl_gr_togglemenubar(jl_gr_t* jl_gr);
@@ -304,8 +304,7 @@ void jl_sg_kill(jl_t* jlc);
 void jl_sg_exit(jl_t* jlc);
 void jl_sg_add_image(jl_t* jlc, str_t pzipfile, u16_t pigid);
 // Controls
-void jl_ct_run_event(jl_gr_t *jl_gr, uint8_t pevent, jl_gr_fnct prun,
-	jl_gr_fnct pno);
+void jl_ct_run_event(jl_gr_t *jl_gr, uint8_t pevent, jl_fnct prun, jl_fnct pno);
 void jl_ct_quickloop_(jl_gr_t* jl_gr);
 float jl_ct_gmousex(jl_gr_t* jl_gr);
 float jl_ct_gmousey(jl_gr_t* jl_gr);

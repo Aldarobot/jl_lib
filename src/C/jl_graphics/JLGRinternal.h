@@ -60,5 +60,6 @@ void jl_gr_fl_init(jl_gr_t* jl_gr);
 // loop
 void jl_ct_loop__(jl_gr_t* jl_gr);
 void jl_dl_loop__(jl_gr_t* jl_gr);
+void _jl_gr_loopa(jl_gr_t* jl_gr);
 // kill
 void jl_dl_kill__(jl_gr_t* jl_gr);

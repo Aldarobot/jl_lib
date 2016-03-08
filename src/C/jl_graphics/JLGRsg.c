@@ -16,7 +16,6 @@
 // SG Prototypes
 void jl_gl_draw_prendered(jl_gr_t* jl_gr, jl_vo_t* pv);
 void jl_gl_pr_scr_set(jl_gr_t* jl_gr, jl_vo_t* vo);
-void _jl_gr_loopa(jl_t* jlc);
 
 // Constants
 	//ALL IMAGES: 1024x1024
@@ -353,8 +352,9 @@ void jl_sg_kill(jl_t* jlc) {
 	//	Also, don't automatically quit, like it does now!  ERQT can be
 	//	inline at that point.
 	jl_io_print(jlc, "Quitting On Error....");
-//	jl_io_stacktrace(jlc);
+	jl_io_stacktrace(jlc);
 	jlc->mdec = 0;
+	exit(-1);
 	// Program is stopped at this point.
 }
 
@@ -396,24 +396,21 @@ void jl_sg_add_image(jl_t* jlc, str_t pzipfile, u16_t pigid) {
 
 static void _jl_sg_screen_draw(jl_t* jlc, f32_t ytrans, jl_vo_t* bg, jl_fnct f){
 	jl_gr_t* jl_gr = jlc->jl_gr;
-	jvct_t* _jlc = jlc->_jlc;
 	jl_vec3_t translate = { jl_gr->sg.offsx, jl_gr->sg.offsy + ytrans, 0. };
 	jl_vec3_t transform = { 1., -1., 1. };
 
 	// Turn off all pre-renderers.
 	jl_gl_pr_off(jl_gr);
-	// Draw the vertex object.
-	jl_gr_draw_vo(jl_gr, bg, &translate);
 	// Use the pr for this screen.
 	jl_gl_pr_scr_set(jl_gr, bg);
 	jl_gl_pr_scr(jl_gr);
 	// Clear the screen.
 	jl_gl_clear(jl_gr, (ytrans > 0.1 ) * 255, (ytrans > 0.1 ) * 255,
 		(ytrans > 0.1 ) * 255, 255);
-	// TODO: Run the screen's redraw function
+	// Run the screen's redraw function
 	f(jlc);
 	// If BG is lower screen: Draw Menu Bar & Mouse - on lower screen
-	if(bg == jl_gr->sg.bg.dn && _jlc->has.graphics) _jl_gr_loopa(jlc);
+	if(bg == jl_gr->sg.bg.dn) _jl_gr_loopa(jl_gr);
 	// Turn off the pre-renderer.
 	jl_gl_pr_off(jl_gr);
 	// Draw the prendered texture.
@@ -422,11 +419,11 @@ static void _jl_sg_screen_draw(jl_t* jlc, f32_t ytrans, jl_vo_t* bg, jl_fnct f){
 
 // Double screen loop
 static void _jl_sg_loop_ds(jl_gr_t* jl_gr) {
-	// Draw lower screen - default screen
+	// Draw upper screen - alternate screen
 	_jl_sg_screen_draw(jl_gr->jlc, 0.f, jl_gr->sg.bg.up,
 		(jl_gr->sg.cscreen == JL_SCR_UP) ? jl_gr->sg.redraw.lower :
 			 jl_gr->sg.redraw.upper);
-	// Draw upper screen - alternate screen
+	// Draw lower screen - default screen
 	_jl_sg_screen_draw(jl_gr->jlc, jl_gr->sg.screen_height, jl_gr->sg.bg.dn,
 		(jl_gr->sg.cscreen == JL_SCR_UP) ? jl_gr->sg.redraw.upper :
 			 jl_gr->sg.redraw.lower);
@@ -465,6 +462,7 @@ static void jl_sg_init_ds_(jl_t* jlc) {
 	jl_gr_pr_new(jl_gr, jl_gr->sg.bg.dn, jl_gr->dl.current.w);
 	// Set double screen loop.
 	jl_gr->sg.loop = _jl_sg_loop_ds;
+	if(jl_gr->sg.cscreen == JL_SCR_SS) jl_gr->sg.cscreen = JL_SCR_DN;
 	//
 	jl_gr->sg.bg.up->pr->ar = jl_gr->dl.aspect / 2.;
 	jl_gr->sg.bg.dn->pr->ar = jl_gr->dl.aspect / 2.;
@@ -490,6 +488,7 @@ static void jl_sg_init_ss_(jl_t* jlc) {
 	jl_gr_pr_new(jl_gr, jl_gr->sg.bg.dn, jl_gr->dl.current.w);
 	// Set single screen loop.
 	jl_gr->sg.loop = _jl_sg_loop_ss;
+	jl_gr->sg.cscreen = JL_SCR_SS;
 	//
 	jl_gr->sg.bg.dn->pr->ar = jl_gr->dl.aspect;
 	
