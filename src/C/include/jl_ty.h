@@ -131,14 +131,21 @@ typedef struct {
 }jl_sprd_t;
 
 typedef struct{
+	SDL_mutex *lock;	/** The mutex lock on the "data" */
+	m_u8_t pnum;		/** Number of packets in structure (upto 16 ) */
+	m_u32_t size;		/** Size of "data" */
+	void* data[16];		/** The data attached to the mutex */
+}jl_comm_t;
+
+typedef struct{
 	uint8_t smde; //Whether 2 or 1 Screens are showing.
 	uint32_t info; //@startup:# images loaded from media.zip.Set by others.
 	jl_err_t errf; //Set if error
 	struct{
-		float psec; // Seconds since last frame.
+		float psec; // Secomms since last frame.
 		uint32_t prev_tick; // Time 1 frame ago started
 		uint32_t this_tick; // Time this frame started
-		uint16_t fps; // Frames per second.
+		uint16_t fps; // Frames per secomm.
 	}time;
 	uint8_t mdec; //Number of Modes
 	uint8_t mode; //Current Mode
@@ -162,6 +169,7 @@ typedef struct{
 	void* jl_au;
 }jl_t;
 
-typedef void(*jl_fnct)(jl_t* jlc);
-typedef void(*jl_io_print_fnt)(jl_t* jlc, const char * print);
+typedef void(*jl_fnct)(jl_t* jl);
+typedef void(*jl_data_fnct)(jl_t* jl, void* data);
+typedef void(*jl_io_print_fnt)(jl_t* jl, const char * print);
 //

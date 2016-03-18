@@ -49,21 +49,20 @@
 char *jl_gem(void);
 uint32_t jl_gem_size(void);
 
-//OTHER LIB STUFF
-void main_resz(jvct_t* _jlc, u16_t x, u16_t y);
-
 // Main - Prototypes
 	float jl_sdl_seconds_past__(jl_t* jlc);
-	// RESIZES
-	void jl_gr_resz(jl_gr_t* jl_gr, u16_t x, u16_t y);
 
 	// LIB INITIALIZATION fn(Context)
 	void _jl_cm_init(jvct_t* _jlc);
 	void jl_fl_init__(jvct_t * _jlc);
 	jvct_t* _jl_me_init(void);
 	void _jl_io_init(jl_t* jlc);
+	void jl_thread_init__(jvct_t* jl_);
 
 	// LIB KILLS
 	void _jl_me_kill(jvct_t* jprg);
 	void _jl_fl_kill(jvct_t* _jlc);
 	void _jl_io_kill(jl_t* jlc);
+
+	// LIB THREAD INITS
+	void jl_io_init_thread__(jl_t* jlc, u8_t thread_id);

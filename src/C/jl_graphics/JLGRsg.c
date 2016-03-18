@@ -3,8 +3,8 @@
  * Copyright (c) 2015 Jeron A. Lau 
 */
 /** \file
- * sg.c
- *	sg AKA. Simple JL_lib Graphics Library is a window handling library.
+ * JLGRsg.c
+ *	sg AKA. Simple Graphics does the window handling.
  *	It is needed for handling the 2 screens that JL_lib provides.  It also
  *	has support for things called modes.  An example is: your title screen
  *	of a game and the actual game would be on different modes.
@@ -71,7 +71,6 @@ static void _jl_sg_mode_add(jl_t* jlc) {
 	_jlc->mode.mdes[jlc->mdec].tclp[JL_SG_WM_INIT] = jl_dont;
 	_jlc->mode.mdes[jlc->mdec].tclp[JL_SG_WM_LOOP] = jl_dont;
 	_jlc->mode.mdes[jlc->mdec].tclp[JL_SG_WM_EXIT] = jl_sg_exit;
-	_jlc->mode.mdes[jlc->mdec].tclp[JL_SG_WM_RESZ] = jl_dont;
 	// Add to mode count.
 	jlc->mdec++;
 }
@@ -91,7 +90,6 @@ static void _jl_sg_mode_add(jl_t* jlc) {
  *		then the function will loop forever unless interupted by a
  *		second press of the "Back Button" or unless the mode is changed.
  *	JL_SG_WM_LOOP: Called repeatedly.
- *	JL_SG_WM_RESZ: This loop is called when the window is resized.
  * @param loop: What to change the loop to.
 */
 void jl_sg_mode_set(jl_t* jlc, u8_t mode, u8_t wm, jl_fnct loop) {
@@ -102,7 +100,7 @@ void jl_sg_mode_set(jl_t* jlc, u8_t mode, u8_t wm, jl_fnct loop) {
 	while(mode >= jlc->mdec) _jl_sg_mode_add(jlc);
 	_jlc->mode.mdes[mode].tclp[wm] = loop;
 	// Reset things
-	if(jl_gr) jl_gr->ct.heldDown = 0;
+	if(jl_gr) jl_gr->main.ct.heldDown = 0;
 }
 
 /**
@@ -371,8 +369,8 @@ void jl_sg_exit(jl_t* jlc) {
 static void jl_sg_add_image__(jl_t* jlc, str_t pzipfile, u16_t pigid, u8_t x) {
 	jl_io_function(jlc, "SG_LImg");
 	//Load Graphics
-	strt img = jl_fl_media(jlc, "jlex/2/_img", pzipfile,
-		jl_gem(), jl_gem_size());
+	strt img = jl_fl_media(jlc, "jlex/2/_img", pzipfile, jl_gem(),
+		jl_gem_size());
 
 	JL_IO_DEBUG(jlc, "Loading Images....");
 	if(img != NULL)
@@ -421,19 +419,19 @@ static void _jl_sg_screen_draw(jl_t* jlc, f32_t ytrans, jl_vo_t* bg, jl_fnct f){
 static void _jl_sg_loop_ds(jl_gr_t* jl_gr) {
 	// Draw upper screen - alternate screen
 	_jl_sg_screen_draw(jl_gr->jlc, 0.f, jl_gr->sg.bg.up,
-		(jl_gr->sg.cscreen == JL_SCR_UP) ? jl_gr->sg.redraw.lower :
-			 jl_gr->sg.redraw.upper);
+		(jl_gr->sg.cscreen == JL_SCR_UP) ? jl_gr->draw.redraw.lower :
+			 jl_gr->draw.redraw.upper);
 	// Draw lower screen - default screen
 	_jl_sg_screen_draw(jl_gr->jlc, jl_gr->sg.screen_height, jl_gr->sg.bg.dn,
-		(jl_gr->sg.cscreen == JL_SCR_UP) ? jl_gr->sg.redraw.upper :
-			 jl_gr->sg.redraw.lower);
+		(jl_gr->sg.cscreen == JL_SCR_UP) ? jl_gr->draw.redraw.upper :
+			 jl_gr->draw.redraw.lower);
 }
 
 // Single screen loop
 static void _jl_sg_loop_ss(jl_gr_t* jl_gr) {
 	// Draw lower screen - default screen
 	_jl_sg_screen_draw(jl_gr->jlc, 0.f, jl_gr->sg.bg.dn,
-		jl_gr->sg.redraw.single);
+		jl_gr->draw.redraw.single);
 }
 
 void _jl_sg_loop(jl_gr_t* jl_gr) {
@@ -527,15 +525,15 @@ void jl_sg_initb__(jl_gr_t* jl_gr) {
 void jl_sg_inita__(jl_gr_t* jl_gr) {
 	m_u16_t i;
 	jvct_t* _jlc = jl_gr->jlc->_jlc;
+	jlgr_redraw_t redraw = { jl_dont, jl_dont, jl_dont, jl_dont };
 
 	//Set Up Variables
 	jl_gr->gl.textures = NULL;
 	jl_gr->gl.tex.uniforms.textures = NULL;
 	jl_gr->sg.image_id = 0; //Reset Image Id
 	jl_gr->sg.igid = 0; //Reset Image Group Id
-	jl_gr->sg.redraw.upper = jl_dont;
-	jl_gr->sg.redraw.lower = jl_dont;
-	jl_gr->sg.redraw.single = jl_dont;
+	// Initialize redraw routines to do nothing.
+	jl_me_copyto(&redraw, &(jl_gr->draw.redraw), sizeof(jlgr_redraw_t));
 	// Load Graphics
 	jl_gr->gl.allocatedg = 0;
 	jl_gr->gl.allocatedi = 0;

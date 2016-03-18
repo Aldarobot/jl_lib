@@ -44,12 +44,14 @@ static void jl_dl_killedit(jl_t* jlc, char *str) {
 }
 
 static SDL_Window* jl_dl_mkwindow(jl_gr_t* jl_gr) {
+	int flags = SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE;
+	if(jl_gr->dl.fullscreen) flags |= SDL_WINDOW_FULLSCREEN;
 	SDL_Window* rtn = SDL_CreateWindow(
 		"SDL2 Window",				// window title
 		SDL_WINDOWPOS_UNDEFINED,		// initial x position
 		SDL_WINDOWPOS_UNDEFINED,		// initial y position
-		jl_gr->dl.current.w, jl_gr->dl.current.h,	// width and height
-		SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE//| SDL_WINDOW_FULLSCREEN
+		// width, height, flags
+		jl_gr->dl.current.w, jl_gr->dl.current.h, flags
     	);
 	if(rtn == NULL) jl_dl_killedit(jl_gr->jlc, "SDL_CreateWindow");
 	return rtn;
@@ -71,7 +73,7 @@ static void _jl_dl_fscreen(jl_gr_t* jl_gr, uint8_t a) {
 		jl_dl_killedit(jl_gr->jlc, "SDL_SetWindowFullscreen");
 	// Resize window
 	_jlvm_curd_mode(jl_gr);
-	main_resz(jl_gr->jlc->_jlc, jl_gr->dl.current.w, jl_gr->dl.current.h);
+	jl_gr_resz(jl_gr, jl_gr->dl.current.w, jl_gr->dl.current.h);
 }
 
 static inline void jlvmpi_ini_sdl(jl_gr_t* jl_gr) {
@@ -81,8 +83,6 @@ static inline void jlvmpi_ini_sdl(jl_gr_t* jl_gr) {
 	JL_IO_DEBUG(jl_gr->jlc, "input....");
 	#if JL_PLAT == JL_PLAT_COMPUTER
 	SDL_ShowCursor(SDL_DISABLE);
-	SDL_EventState(SDL_KEYDOWN, SDL_IGNORE);
-	SDL_EventState(SDL_KEYUP, SDL_IGNORE);
 	#endif
 	jl_io_return(jl_gr->jlc, "InitSDL"); // }
 }
@@ -134,7 +134,6 @@ static inline void _jlvm_crea_wind(jl_gr_t* jl_gr) {
 #if JL_GLRTEX == JL_GLRTEX_SDL
 	jl_gr->dl.whichwindow = 0;
 #endif
-	jl_gr->dl.fullscreen = 0;
 }
 
 //NON-STATIC FUNCTIONS

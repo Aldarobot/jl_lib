@@ -3,27 +3,27 @@
 #include "clump/clump.h"
 #include "JLgr.h"
 
-//IO:
-
-	typedef struct {
-		m_u32_t var_set_count;
-		void **vars;
-	}_sg_sprt_t;
-
-	//Standard Mode Class
-	typedef struct {
-		//Standard Functions
-		jl_fnct tclp[JL_SG_WM_MAX];
-	}__sg_mode_t;
-
-//OTHER:
+//Standard Mode Class
 typedef struct {
-	void (*duu)(void *param);
-}jlvm_t;
+	//Standard Functions
+	jl_fnct tclp[JL_SG_WM_MAX];
+}__sg_mode_t;
+
+typedef struct {
+	SDL_Thread* thread;
+	SDL_threadID thread_id;
+
+	struct {
+		int8_t ofs2;
+		char stack[50][30];
+		uint8_t level;
+	}print;
+}jlctx_thread_t__;
 
 //JLVM Context Structure
 typedef struct {
 	jl_t * jlc; // JL_Lib context
+	jlctx_thread_t__ thread[16];
 
 	struct {
 		__sg_mode_t *mdes; // Array Sizof Number Of Modes
@@ -40,13 +40,7 @@ typedef struct {
 
 	// Terminal Data
 	struct {
-		int8_t ofs2;
-		char head[16][5];
 		jl_io_print_fnt printfn;
-		int16_t tag[16];
-		char stack[50][30];
-		uint8_t level;
-		char buffer[256];
 	}io;
 	
 	struct {
@@ -82,5 +76,4 @@ typedef struct {
 	}has;
 
 	uint64_t cprg; //current program ID
-	_sg_sprt_t fncs; //Functions that change
 }jvct_t;

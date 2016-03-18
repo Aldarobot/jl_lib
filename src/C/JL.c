@@ -16,33 +16,19 @@ static inline jvct_t* jl_init_essential__(void) {
 static inline void jl_init_libs__(jvct_t *_jlc) {
 	JL_IO_DEBUG(_jlc->jlc, "Initializing file system....");
 	jl_fl_init__(_jlc);
-	JL_IO_DEBUG(_jlc->jlc, "Initialized file system!");
+	JL_IO_DEBUG(_jlc->jlc, "Initializing threads....");
+	jl_thread_init__(_jlc);
+	JL_IO_DEBUG(_jlc->jlc, "Initialized!");
 //	jl_gr_draw_msge(_jlc->jlc, 0, 0, 0, "INITIALIZATION COMPLETE!");
 }
 
 static inline void _jl_ini(jvct_t *_jlc, jl_fnct _fnc_init_) {
 	jl_io_print(_jlc->jlc, "Starting JL_Lib - Version "JL_VERSION"....");
-
+	// Run the library's init function.
 	jl_init_libs__(_jlc);
-	// Run the users loop & resize functions
+	// Run the program's init function.
 	_fnc_init_(_jlc->jlc);
-	_jlc->mode.mode.tclp[JL_SG_WM_RESZ](_jlc->jlc);
 	jl_io_print(_jlc->jlc, "Started JL_Lib!");
-}
-
-static void jl_main_resz_jl(jvct_t* _jlc, u16_t x, u16_t y) {
-	if(_jlc->jlc->jl_gr) {
-		jl_gr_t* jl_gr = _jlc->jlc->jl_gr;
-
-		jl_gr_resz(jl_gr, x, y);
-	}
-}
-
-void main_resz(jvct_t* _jlc, u16_t x, u16_t y) {
-	// Allow subsystems to adjust to the new window.
-	jl_main_resz_jl(_jlc, x, y);
-	// Allow the user to update their graphics.
-	_jlc->mode.mode.tclp[JL_SG_WM_RESZ](_jlc->jlc);
 }
 
 static void jl_time_reset__(jl_t* jlc, u8_t on_time) {

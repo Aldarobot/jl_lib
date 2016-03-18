@@ -10,21 +10,6 @@
 #include "jl_pr.h"
 #include "JLGRinternal.h"
 
-typedef enum{
-	JLGR_ID_NULL,
-	JLGR_ID_UNKNOWN,
-	JLGR_ID_FLIP_IMAGE,
-	JLGR_ID_SLOW_IMAGE,
-	JLGR_ID_GOOD_IMAGE,
-	JLGR_ID_TASK_MAX //how many taskbuttons
-}jlgr_id_t;
-
-typedef enum{
-	JL_GRTP_NOT,
-	JL_GRTP_YES,
-	JL_GRTP_RDR,
-}jl_gr_task_press_t;
-
 /*screen being displayed ( on two screens which one on bottom, if keyboard is
 	being displayed on bottom screen then this will be displayed on top )*/
 float timeTilMessageVanish = 0.f;
@@ -165,178 +150,11 @@ static void _jl_gr_textbox_lt(jl_t* jl);
 		if(jl_gr->sg.changed || !jl_gr->sg.on_time) ctx->redraw = 1;
 	}
 
-	//TODO: Move
-	static inline u8_t jl_gr_taskbar_idle__(jl_gr_t* jl_gr, jl_taskbar_t *ctx) {
-		// If A NULL function then, stop looping taskbar.
-		if( !(ctx->func[0][ctx->cursor]) ) return 1;
-		// Run the not loop.
-		ctx->func[JL_GRTP_NOT][ctx->cursor](jl_gr);
-		return 0;
-	}
-
-	// Run when the taskbar is left alone.
-	static void _jl_gr_taskbar_loop_pass(jl_t* jlc) {
-		jl_gr_t* jl_gr = jlc->jl_gr;
-		jl_taskbar_t *ctx = jl_gr->gr.taskbar->data.ctx;
-
-		if(ctx->redraw) {
-			for( ctx->cursor = 0; ctx->cursor < 10; ctx->cursor++) {
-				if(jl_gr_taskbar_idle__(jl_gr, ctx)) break;
-				jl_gr_sp_rdr(jl_gr, jl_gr->gr.taskbar);
-			}
-			ctx->redraw = 0;
-		}else{
-			for( ctx->cursor = 0; ctx->cursor < 10; ctx->cursor++)
-				if(jl_gr_taskbar_idle__(jl_gr, ctx)) break;
-		}
-	}
-
-	// TODO: MOVE
-	static inline void jl_gr_taskbar_shadow__(jl_gr_t* jl_gr, jl_taskbar_t* ctx) {
-		m_u8_t i;
-
-		// Clear Texture.
-		jl_gl_clear(jl_gr, 0, 0, 0, 0);
-		// Draw Shadows.
-		for(i = 0; i < 10; i++) {
-			jl_vec3_t tr = { .9 - (.1 * i), 0., 0. };
-
-			if(!ctx->func[0][i]) break;
-			jl_gr_draw_vo(jl_gr, &(ctx->icon[0]), &tr);
-		}
-		// Set redraw = true.
-		ctx->redraw = 1;
-	}
-
-	// Run when the taskbar is clicked/pressed
-	static void _jl_gr_taskbar_loop_run(jl_t* jlc) {
-		jl_gr_t* jl_gr = jlc->jl_gr;
-		jl_taskbar_t *ctx;
-
-		//If mouse isn't over the taskbar - dont run pressed.
-		if(jl_gr->ct.msy >= .1) {
-			_jl_gr_taskbar_loop_pass(jlc);
-			return;
-		}
-		// Set context
-		ctx = jl_gr->gr.taskbar->data.ctx;
-		// Figure out what's selected.
-		u8_t selected = (m_u8_t)((1. - jl_gr->ct.msx) / .1);
-		
-		for( ctx->cursor = 0; ctx->cursor < 10; ctx->cursor++) {
-			// If A NULL function then, stop looping taskbar.
-			if( !(ctx->func[0][ctx->cursor]) ) break;
-			// Run the "not" or "yes" loop.
-			ctx->func[(ctx->cursor == selected) ?
-				JL_GRTP_YES: JL_GRTP_NOT][ctx->cursor](jl_gr);
-			// If need to redraw run "rdr"
-			if(ctx->redraw) jl_gr_sp_rdr(jl_gr, jl_gr->gr.taskbar);
-		}
-	}
-
-	// Run whenever a redraw is needed for an icon.
-	static void _jl_gr_taskbar_draw(jl_t* jlc, jl_sprd_t* sprd) {
-		jl_gr_t* jl_gr = jlc->jl_gr;
-		jl_taskbar_t* ctx = jl_gr->gr.taskbar->data.ctx;
-
-		if(ctx->redraw == 2) {
-			jl_gr_taskbar_shadow__(jl_gr, ctx);
-			
-		}
-		// Run the selected icon's redraw function
-		if(ctx->func[JL_GRTP_RDR][ctx->cursor]) {
-			ctx->func[JL_GRTP_RDR][ctx->cursor](jl_gr);
-		}
-	}
-
-	// Runs every frame.
-	static void _jl_gr_taskbar_loop(jl_t* jlc, jl_sprd_t* sprd) {
-		jl_gr_t* jl_gr = jlc->jl_gr;
-
-		// Draw the pre-rendered taskbar.
-		jl_gr_sp_drw(jl_gr, jl_gr->gr.taskbar);
-		// Run the proper loops.
-		jl_ct_run_event(jl_gr, JL_CT_PRESS, _jl_gr_taskbar_loop_run,
-			_jl_gr_taskbar_loop_pass);
-	}
-
-	static void jl_gr_menu_init__(jl_gr_t* jl_gr) {
-		jl_rect_t rc = { 0.f, 0.f, 1.f, .11f };
-		jl_rect_t rc_icon = { 0., 0., .1, .1};
-		jl_rect_t rc_shadow = {-.01, .01, .1, .1 };
-		uint8_t shadow_color[] = { 0, 0, 0, 64 };
-		jl_taskbar_t *ctx;
-		jl_vo_t *icon = jl_gl_vo_make(jl_gr, 2);
-
-		// Make the taskbar.
-		jl_gr->gr.taskbar = jl_gr_sp_new(
-			jl_gr, rc, _jl_gr_taskbar_draw,
-			_jl_gr_taskbar_loop, sizeof(jl_taskbar_t));
-		// Get the context.
-		ctx = jl_gr->gr.taskbar->data.ctx;
-		// Initialize the context.
-		ctx->redraw = 2;
-		// Set the icon & Shadow vertex objects
-		ctx->icon = icon;
-		// Make the shadow vertex object.
-		jl_gr_vos_rec(jl_gr, &icon[0], rc_shadow, shadow_color, 0);
-		// Make the icon vertex object.
-		jl_gr_vos_image(jl_gr, &icon[1], rc_icon, 0, 1,
-			JLGR_ID_UNKNOWN, 255);
-		// Clear the taskbar & make pre-renderer.
-		for( ctx->cursor = 0; ctx->cursor < 10; ctx->cursor++) {
-			m_u8_t i;
-
-			for(i = 0; i < 3; i++) ctx->func[i][ctx->cursor] = NULL;
-			jl_gr_sp_rdr(jl_gr, jl_gr->gr.taskbar);
-		}
-		ctx->cursor = -1;
-	}
-
-	static void _jl_gr_mouse_loop(jl_t* jlc, jl_sprd_t* sprd) {
-		jl_gr_t* jl_gr = jlc->jl_gr;
-		jl_sprite_t* mouse = jl_gr->jlc->mouse;
-		jl_vo_t* mouse_vo = mouse->data.ctx;
-
-	//Update Mouse
-		mouse->data.tr.x = jl_ct_gmousex(jl_gr);
-		mouse->data.tr.y = jl_ct_gmousey(jl_gr);
-		mouse->data.cb.x = mouse->data.tr.x;
-		mouse->data.cb.y = mouse->data.tr.y;
-	// Draw mouse
-		#if JL_PLAT == JL_PLAT_COMPUTER //if computer
-			jl_gr_draw_vo(jl_gr, mouse_vo, &(mouse->data.tr));
-		#endif
-	}
-
-	static inline void _jl_gr_mouse_init(jl_gr_t* jl_gr) {
-		jl_rect_t rc = { 0.f, 0.f, .075f, .075f };
-		jl_vo_t *mouse = jl_gl_vo_make(jl_gr, 1);
-
-		#if JL_PLAT == JL_PLAT_COMPUTER //if computer
-			jl_gr_vos_image(jl_gr, &(mouse[0]), rc, 0,
-				JL_IMGI_FONT, 255, 255);
-		#endif
-		jl_gr->jlc->mouse = jl_gr_sp_new(
-			jl_gr, rc, jl_gr_sp_dont,
-			_jl_gr_mouse_loop,
-		#if JL_PLAT == JL_PLAT_COMPUTER //if computer
-				sizeof(jl_vo_t*));
-			// Set the context to the vertex object.
-			((jl_sprite_t*)jl_gr->jlc->mouse)->data.ctx = mouse;
-		#elif JL_PLAT == JL_PLAT_PHONE // if phone
-				0);
-			// Set the context to NULL.
-			((jl_sprite_t*)jl_gr->jlc->mouse)->data.ctx = NULL;
-		#endif
-	}
-
 /**      @endcond      **/
 /************************/
 /*** Global Functions ***/
 /************************/
 
-	void jl_gr_sp_dont(jl_t* jlc, jl_sprd_t* spr) { }
 	void jl_gr_dont(jl_gr_t* jl_gr) { }
 
 	/**
@@ -620,14 +438,6 @@ static void _jl_gr_textbox_lt(jl_t* jl);
 	}
 
 	/**
-	 * Resize and redraw a sprite.
-	**/
-	void jl_gr_sp_rds(jl_gr_t* jl_gr, jl_sprite_t *spr) {
-		// Redraw
-		jl_gr_sp_rdr(jl_gr, spr);
-	}
-
-	/**
 	 * Run a sprite's loop.
 	 * @param jlc: The library context.
 	 * @param spr: Which sprite to loop.
@@ -861,7 +671,7 @@ static void _jl_gr_textbox_lt(jl_t* jl);
 	void jl_gr_draw_msge_(jl_gr_t* jl_gr,u16_t g,u16_t i,u8_t c,
 		m_str_t message)
 	{
-		jl_io_function(jl_gr->jlc, "JLGR_MSGE");
+/*		jl_io_function(jl_gr->jlc, "JLGR_MSGE");
 		JL_IO_DEBUG(jl_gr->jlc, "Printing %p", message);
 
 		jvct_t* _jlc = jl_gr->jlc->_jlc;
@@ -903,7 +713,7 @@ static void _jl_gr_textbox_lt(jl_t* jl);
 		JL_IO_DEBUG(jl_gr->jlc, "Set old values");
 		jl_gr_loop_set(jl_gr, onescreen, upscreen, downscreen);
 		_jlc->fl.inloop = inloop;
-		jl_io_return(jl_gr->jlc, "JLGR_MSGE");
+		jl_io_return(jl_gr->jlc, "JLGR_MSGE");*/
 	}
 
 	/**
@@ -928,7 +738,7 @@ static void _jl_gr_textbox_lt(jl_t* jl);
 		jl_gr->gr.popup.btns = btns;
 		jl_sg_mode_override(jl_gr->jlc, JL_SG_WM_EXIT, jl_sg_exit);
 		jl_sg_mode_override(jl_gr->jlc, JL_SG_WM_LOOP, _jl_gr_popup_loop);
-		jl_sg_mode_override(jl_gr->jlc, JL_SG_WM_RESZ, jl_dont);
+		jl_sg_mode_override(jl_gr->jlc, JL_SG_WM_INIT, jl_dont);
 	}
 
 	/**
@@ -1032,18 +842,6 @@ static void _jl_gr_textbox_lt(jl_t* jl);
 	}
 
 	/**
-	 * Toggle whether or not to show the menu bar.
-	 *
-	 * @param jlc: the libary context
-	**/
-	void jl_gr_togglemenubar(jl_gr_t* jl_gr) {
-		if(jl_gr->gr.menuoverlay == jl_gr_sp_dont)
-			jl_gr->gr.menuoverlay = _jl_gr_taskbar_loop;
-		else
-			jl_gr->gr.menuoverlay = jl_gr_sp_dont;
-	}
-
-	/**
 	 * Add an icon to the menubar
 	 *
 	 * @param jlc: the libary context
@@ -1132,16 +930,14 @@ static void _jl_gr_textbox_lt(jl_t* jl);
 		// Update messages.
 		_jl_gr_loopb(jl_gr);
 		jl_io_return(jl_gr->jlc, "GR_LP");
+		// Draw mouse and taskbar.
+		jlgr_gui_draw_(jl_gr->jlc);
 	}
 	
 	void jl_gr_init__(jl_gr_t* jl_gr) {
-		jl_sprite_t* mouse = NULL;
-
 		_jl_gr_init_vos(jl_gr);
 		JL_IO_DEBUG(jl_gr->jlc, "Draw Loading Screen");
 		jl_gr_draw_msge(jl_gr, 0, 0, 0, 0);
-		// Resize screen
-		//main_resz(jl_gr->jlc->_jlc,jl_gr->dl.full_w,jl_gr->dl.full_h);
 		// Create Font
 		jl_gr->jlc->fontcolor[0] = 0;
 		jl_gr->jlc->fontcolor[1] = 0;
@@ -1163,16 +959,7 @@ static void _jl_gr_textbox_lt(jl_t* jl);
 		jl_gr_draw_msge(jl_gr, 0, 0, 0, "LOADING JLLIB....");
 		JL_IO_DEBUG(jl_gr->jlc, "started up display %dx%d",
 			jl_gr->dl.full_w, jl_gr->dl.full_h);
-		// Create the Taskbar.
-		jl_gr_menu_init__(jl_gr);
-		jl_gr->gr.menuoverlay = _jl_gr_taskbar_loop;
-		// Create the Mouse
-		_jl_gr_mouse_init(jl_gr);
-		mouse = jl_gr->jlc->mouse;
-		jl_gr_sp_rsz(jl_gr, mouse);
-		// Set the mouse's collision width and height to 0
-		mouse->data.cb.w = 0.f;
-		mouse->data.cb.h = 0.f;
+
 	}
 
 /**      @endcond      **/

@@ -186,7 +186,8 @@ static void jl_gl_buffer_new__(jl_gr_t* jl_gr, GLuint *buffer) {
 	glGenBuffers(1, buffer);
 	JL_GL_ERROR(jl_gr, 0,"buffer gen");
 	if(*buffer == 0) {
-		jl_io_print(jl_gr->jlc, "buffer is made wrongly!");
+		jl_io_print(jl_gr->jlc, "buffer is made wrongly on thread #%d!",
+			jl_thread_current(jl_gr->jlc));
 		jl_sg_kill(jl_gr->jlc);
 	}
 }
@@ -545,6 +546,7 @@ static void _jl_gl_col_begin(jl_gr_t* jl_gr, jl_vo_t* pv) {
 void jl_gl_pbo_new(jl_gr_t* jl_gr, jl_tex_t* texture, u8_t* pixels,
 	u16_t w, u16_t h, u8_t bpp)
 {
+	jl_io_function(jl_gr->jlc, "GL_PBO_NEW");
 	jl_gl_buffer_new__(jl_gr, &(texture->gl_buffer));
 	jl_gl_texture_make__(jl_gr, &(texture->gl_texture));
 	jl_gl_texture__bind__(jl_gr, texture->gl_texture);
@@ -553,6 +555,7 @@ void jl_gl_pbo_new(jl_gr_t* jl_gr, jl_tex_t* texture, u8_t* pixels,
 	jl_gl_buffer_use__(jl_gr, texture->gl_buffer);
 	glBufferData(GL_ARRAY_BUFFER, w * h * 4, pixels, GL_DYNAMIC_DRAW);
 	JL_GL_ERROR(jl_gr, 0, "jl_gl_pbo_set__: glBufferData");
+	jl_io_return(jl_gr->jlc, "GL_PBO_NEW");
 }
 // TODO: MOVE
 void jl_gl_pbo_set(jl_gr_t* jl_gr, jl_tex_t* texture, u8_t* pixels,
@@ -1464,6 +1467,7 @@ static inline void _jl_gl_make_res(jl_gr_t* jl_gr) {
 }
 
 static inline void _jl_gl_vo_make(jl_gr_t* jl_gr, jl_vo_t* vo, u32_t nc) {
+	jl_io_function(jl_gr->jlc, "GL_VO_MAKE");
 	// How many more vo's will be made.
 	vo->nc = nc;
 	// GL VBO
@@ -1485,6 +1489,7 @@ static inline void _jl_gl_vo_make(jl_gr_t* jl_gr, jl_vo_t* vo, u32_t nc) {
 	// Set the container pre-renderer.
 	vo->cb.x = 0.f, vo->cb.y = 0.f, vo->cb.z = 0.f;
 	vo->cb.w = 1., vo->cb.h = 1., vo->cb.d = 1.;
+	jl_io_return(jl_gr->jlc, "GL_VO_MAKE");
 }
 
 static void jl_gl_pr_set__(jl_pr_t *pr,f32_t w,f32_t h,u16_t w_px) {
@@ -1609,6 +1614,7 @@ void jl_gl_pr_rsz(jl_gr_t* jl_gr, jl_pr_t *pr, f32_t w, f32_t h, u16_t w_px) {
 jl_pr_t * jl_gl_pr_new(jl_gr_t* jl_gr, f32_t w, f32_t h, u16_t w_px) {
 	jl_pr_t *pr = NULL;
 
+	jl_io_function(jl_gr->jlc, "GL_PR_NEW");
 	// Make the pr structure.
 	jl_me_alloc(jl_gr->jlc, (void**)(&pr), sizeof(jl_pr_t), 0);
 	// Set the initial pr structure values - Nothings made yet.
@@ -1633,6 +1639,8 @@ jl_pr_t * jl_gl_pr_new(jl_gr_t* jl_gr, f32_t w, f32_t h, u16_t w_px) {
 	_jl_gl_pr_obj_make(jl_gr, pr);
 	// Resize the new pre-renderer.
 	jl_gl_pr_rsz(jl_gr, pr, w, h, w_px);
+	//
+	jl_io_return(jl_gr->jlc, "GL_PR_NEW");
 	// Return the new pre-renderer.
 	return pr;
 }

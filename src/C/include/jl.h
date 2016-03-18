@@ -102,6 +102,19 @@
 		void *pdata, uint64_t psize);
 	u8_t jl_fl_mkdir(jl_t* jlc, str_t path);
 	str_t jl_fl_get_resloc(jl_t* jlc, str_t prg_folder, str_t fname);
+// "thread.c"
+	uint8_t jl_thread_new(jl_t *jl, str_t name, SDL_ThreadFunction fn);
+	uint8_t jl_thread_current(jl_t *jl);
+	int32_t jl_thread_old(jl_t *jl, u8_t threadnum);
+	SDL_mutex* jl_thread_mutex_new(jl_t *jl);
+	void jl_thread_mutex_use(jl_t *jl, SDL_mutex* mutex, jl_fnct fn_);
+	void jl_thread_mutex_cpy(jl_t *jl, SDL_mutex* mutex, void* src,
+		void* dst, u32_t size);
+	void jl_thread_mutex_old(jl_t *jl, SDL_mutex* mutex);
+	jl_comm_t* jl_thread_comm_make(jl_t* jl, u32_t size);
+	void jl_thread_comm_send(jl_t* jl, jl_comm_t* comm, const void* src);
+	void jl_thread_comm_recv(jl_t* jl, jl_comm_t* comm, jl_data_fnct fn);
+	void jl_thread_comm_kill(jl_t* jl, jl_comm_t* comm);
 #endif
 /*
  *	This a Jeron Lau project. JL_lib (c) 2014 

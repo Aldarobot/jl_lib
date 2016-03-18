@@ -11,8 +11,8 @@ else
 endif
 #TODO: Darwin is mac OS for uname
 
-HEADER = -Isrc/lib/ -Isrc/lib/include/ -I/opt/vc/include/ -Isrc/C/header/\
-	-Isrc/C/include
+HEADER = -Isrc/lib/ -Isrc/lib/include/ -I/opt/vc/include/ \
+	$(addprefix -I, $(shell find src/C/ -type d ))
 CFLAGS_MEDIA = $(HEADER) -O3
 CFLAGS_DEBUG = $(HEADER) -Wall -g
 CFLAGS_RELEASE = $(HEADER) -O3

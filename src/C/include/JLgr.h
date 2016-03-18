@@ -27,7 +27,84 @@ typedef struct{
 }jl_popup_button_t;
 
 typedef struct{
+	void* single;
+	void* upper;
+	void* lower;
+	void* resize;
+}jlgr_redraw_t;
+
+typedef struct{
+	uint8_t id;		// Packet ID
+	uint16_t x, y;		// X(w), Y(h)
+	jl_fnct fn;		// Function
+}jlgr_thread_packet_t;
+
+typedef struct{
 	jl_t* jlc;
+	uint8_t running; // Whether program running or not.
+	uint8_t thread; // Graphical Thread ID.
+	SDL_mutex* mutex; // Mutex to lock wshare structure.
+	jl_comm_t* comm2draw; // commition variable for thread communication.
+	jl_comm_t* comm2main; // commition variable for thread communication.
+	struct {
+		SDL_mutex *usr_ctx;
+	}mutexs;
+
+	// Non-duplicate share data.
+	struct {
+		void* usr_ctx;		// User's redraw data.
+	}share;
+
+	struct {
+		//Input Information
+		struct {
+			void* getEvents[JL_CT_MAXX];
+
+			float msx, msy;
+			int msxi, msyi;
+
+			SDL_Event event;
+		
+			#if JL_PLAT == JL_PLAT_PHONE
+				uint8_t menu;
+			#elif JL_PLAT == JL_PLAT_COMPUTER
+				const Uint8 *keys;
+			#endif
+		
+			struct {
+				#if JL_PLAT == JL_PLAT_PHONE
+					uint8_t finger;
+					uint8_t menu;
+					uint8_t back;
+				#elif JL_PLAT == JL_PLAT_COMPUTER
+					uint8_t click_left; // Or Click
+					uint8_t click_right; // Or Ctrl-Click
+					uint8_t click_middle; // Or Shift-Click
+				#endif
+				//Multi-Platform
+				uint8_t scroll_right;
+				uint8_t scroll_left;
+				uint8_t scroll_up;
+				uint8_t scroll_down;
+			}input;
+
+			uint8_t back; //Back Key, Escape Key, Start Button
+			uint8_t heldDown;
+			uint8_t keyDown[255];
+			uint32_t sd; //NYI: stylus delete
+		
+			uint8_t sc;
+			uint8_t text_input[32];
+			uint8_t read_cursor;
+		}ct;
+
+		m_u8_t rtn;
+	} main;
+
+	struct {
+		m_u8_t rtn;
+		jlgr_redraw_t redraw;
+	} draw;
 
 	// Window Info
 	struct {
@@ -52,60 +129,11 @@ typedef struct{
 			jl_vo_t* dn;
 		}bg;
 
-		struct {
-			void* single;
-			void* lower;
-			void* upper;
-		}redraw;
-
 		float screen_height;
 
 		void* loop; // ( jl_gr_fnct ) For upper or lower screen.
 		m_u8_t cscreen; // The current screen "jl_gr_which_screen_t"
 	}sg;
-
-	//Input Information
-	struct {
-		void* getEvents[JL_CT_MAXX];
-
-		float msx, msy;
-		int msxi, msyi;
-
-		SDL_Event event;
-		
-		#if JL_PLAT == JL_PLAT_PHONE
-		uint8_t menu;
-
-		#elif JL_PLAT == JL_PLAT_COMPUTER
-		const Uint8 *keys;
-		#endif
-		
-		struct {
-			#if JL_PLAT == JL_PLAT_PHONE
-			uint8_t finger;
-			uint8_t menu;
-			uint8_t back;
-			#elif JL_PLAT == JL_PLAT_COMPUTER
-			uint8_t click_left; // Or Click
-			uint8_t click_right; // Or Ctrl-Click
-			uint8_t click_middle; // Or Shift-Click
-			#endif
-			//Multi-Platform
-			uint8_t scroll_right;
-			uint8_t scroll_left;
-			uint8_t scroll_up;
-			uint8_t scroll_down;
-		}input;
-
-		uint8_t back; //Back Key, Escape Key, Start Button
-		uint8_t heldDown;
-		uint8_t keyDown[255];
-		uint32_t sd; //NYI: stylus delete
-		
-		uint8_t sc;
-		uint8_t text_input[32];
-		uint8_t read_cursor;
-	}ct;
 	
 	//Opengl Data
 	struct {
@@ -221,9 +249,9 @@ typedef void(*jl_gr_fnct)(jl_gr_t* jl_gr);
 typedef void(*jl_ct_event_fnct)(jl_gr_t* jl_gr, jl_fnct prun, jl_fnct pno);
 
 // Prototypes:
-jl_gr_t* jl_gr_init(jl_t* jlc, str_t window_name, u8_t fullscreen);
+jl_gr_t* jl_gr_init(jl_t* jlc, str_t window_name, u8_t fullscreen, jl_fnct fn_);
 void jl_gr_loop_set(jl_gr_t* jl_gr, jl_fnct onescreen, jl_fnct upscreen,
-	jl_fnct downscreen);
+	jl_fnct downscreen, jl_fnct resize);
 void jl_gr_loop(jl_gr_t* jl_gr, void* data, u32_t dataSize);
 void jl_gr_kill(jl_gr_t* jl_gr);
 

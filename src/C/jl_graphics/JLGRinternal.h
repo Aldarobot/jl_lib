@@ -11,6 +11,30 @@ typedef struct{
 	m_i8_t cursor;
 }jl_taskbar_t;
 
+typedef enum{
+	JL_GRTP_NOT,
+	JL_GRTP_YES,
+	JL_GRTP_RDR,
+}jl_gr_task_press_t;
+
+typedef enum{
+	JLGR_ID_NULL,
+	JLGR_ID_UNKNOWN,
+	JLGR_ID_FLIP_IMAGE,
+	JLGR_ID_SLOW_IMAGE,
+	JLGR_ID_GOOD_IMAGE,
+	JLGR_ID_TASK_MAX //how many taskbuttons
+}jlgr_id_t;
+
+typedef enum{
+	JLGR_COMM_NONE,		/** Does nothing */
+	JLGR_COMM_RESIZE,	/** main --> draw: Resize the drawing screen */
+	JLGR_COMM_KILL,		/** main --> draw: Close the window*/
+	JLGR_COMM_DRAWFIN,	/** main <-- draw: Stop waiting, fool! */
+	JLGR_COMM_INIT,		/** main --> draw: Send program's init func. */
+	JLGR_COMM_SEND,		/** main --> draw: Send redraw func.'s */
+}jlgr_thread_asdf_t;
+
 void jl_sg_add_some_imgs_(jl_gr_t* jl_gr, u16_t x);
 uint32_t _jl_sg_gpix(/*in */ SDL_Surface* surface, int32_t x, int32_t y);
 void jl_gl_viewport_screen(jl_gr_t* jl_gr);
@@ -49,6 +73,7 @@ m_u8_t* jl_vi_load_(jl_t* jlc, strt data, m_u16_t* w, m_u16_t* h);
 void jl_dl_resz__(jl_gr_t* jl_gr, uint16_t x, uint16_t y);
 void jl_gl_resz__(jl_gr_t* jl_gr);
 void jl_sg_resz__(jl_t* jlc);
+void jl_gr_resz(jl_gr_t* jl_gr, u16_t x, u16_t y);
 // init functions.
 void jl_dl_init__(jl_gr_t* jl_gr);
 void jl_sg_inita__(jl_gr_t* jl_gr);
@@ -57,9 +82,22 @@ void jl_gl_init__(jl_gr_t* jl_gr);
 void jl_gr_init__(jl_gr_t* jl_gr);
 void jl_ct_init__(jl_gr_t* jl_gr);
 void jl_gr_fl_init(jl_gr_t* jl_gr);
+void jlgr_gui_init_(jl_gr_t* jl_gr);
+void jlgr_thread_init(jl_gr_t* jl_gr);
 // loop
 void jl_ct_loop__(jl_gr_t* jl_gr);
 void jl_dl_loop__(jl_gr_t* jl_gr);
 void _jl_gr_loopa(jl_gr_t* jl_gr);
 // kill
 void jl_dl_kill__(jl_gr_t* jl_gr);
+void jlgr_thread_kill(jl_gr_t* jl_gr);
+//
+void jlgr_gui_draw_(jl_t* jl);
+void jlgr_thread_send(jl_gr_t* jl_gr, u8_t id, u16_t x, u16_t y, jl_fnct fn);
+
+// Sprites' Functions
+void jl_gr_mouse_loop_(jl_t* jlc, jl_sprd_t* sprd);
+void jl_gr_taskbar_loop_(jl_t* jlc, jl_sprd_t* sprd);
+
+void jl_gr_mouse_draw_(jl_t* jlc, jl_sprd_t* sprd);
+void jl_gr_taskbar_draw_(jl_t* jlc, jl_sprd_t* sprd);
