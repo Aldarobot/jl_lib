@@ -20,13 +20,12 @@ typedef enum{
 	JL_STATUS_EVIL,
 }jl_status_t;
 
-// [WINDOW MODE]
 typedef enum{
-	JL_SG_WM_INIT, // Run When the mode is switched in.
-	JL_SG_WM_LOOP, // Run When The mode is selected.
-	JL_SG_WM_EXIT, // Run When User requests to go back / quit.
-	JL_SG_WM_MAX,
-}jl_sg_wm_t;
+	JL_MODE_INIT, // Run When the mode is switched in.
+	JL_MODE_LOOP, // Run When The mode is selected.
+	JL_MODE_EXIT, // Run When User requests to go back / quit.
+	JL_MODE_LMAX,
+}jl_modeloops_t;
 
 //ERROR MESSAGES
 typedef enum{

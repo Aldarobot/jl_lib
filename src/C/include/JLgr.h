@@ -40,7 +40,7 @@ typedef struct{
 }jlgr_thread_packet_t;
 
 typedef struct{
-	jl_t* jlc;
+	jl_t* jl;
 	uint8_t running; // Whether program running or not.
 	uint8_t thread; // Graphical Thread ID.
 	SDL_mutex* mutex; // Mutex to lock wshare structure.
@@ -248,16 +248,20 @@ typedef struct{
 typedef void(*jl_gr_fnct)(jl_gr_t* jl_gr);
 typedef void(*jl_ct_event_fnct)(jl_gr_t* jl_gr, jl_fnct prun, jl_fnct pno);
 
-// Prototypes:
-jl_gr_t* jl_gr_init(jl_t* jlc, str_t window_name, u8_t fullscreen, jl_fnct fn_);
-void jl_gr_loop_set(jl_gr_t* jl_gr, jl_fnct onescreen, jl_fnct upscreen,
+// Main Thread:
+jl_gr_t* jlgr_init(jl_t* jl, str_t window_name, u8_t fullscreen, jl_fnct fn_);
+void jlgr_loop_set(jl_gr_t* jl_gr, jl_fnct onescreen, jl_fnct upscreen,
 	jl_fnct downscreen, jl_fnct resize);
-void jl_gr_loop(jl_gr_t* jl_gr, void* data, u32_t dataSize);
-void jl_gr_kill(jl_gr_t* jl_gr);
+void jlgr_loop(jl_gr_t* jl_gr, void* data, u32_t dataSize);
+void jlgr_kill(jl_gr_t* jl_gr);
+
+// Draw Thread:
+
+// Either Thread:
 
 // JLGRgraphics:
 void jl_gr_dont(jl_gr_t* jl_gr);
-void jl_gr_sp_dont(jl_t* jlc, jl_sprd_t* spr);
+void jl_gr_sp_dont(jl_t* jl, jl_sprd_t* spr);
 void jl_gr_fill_image_set(jl_gr_t* jl_gr, u16_t g, u16_t i, u8_t c, u8_t a);
 void jl_gr_fill_image_draw(jl_gr_t* jl_gr);
 void jl_gr_pr_old(jl_gr_t* jl_gr, jl_vo_t* pv);
@@ -294,7 +298,7 @@ void jl_gr_draw_text_sprite(jl_gr_t* jl_gr,jl_sprite_t * spr, str_t txt);
 void jl_gr_draw_ctxt(jl_gr_t* jl_gr, char *str, float yy, uint8_t* color);
 void jl_gr_draw_msge_(jl_gr_t* jl_gr,u16_t g,u16_t i,u8_t c, m_str_t message);
 #define jl_gr_draw_msge(jl_gr,g,i,c,...);\
-	jl_gr_draw_msge_(jl_gr,g,i,c,jl_me_format(jl_gr->jlc, __VA_ARGS__));
+	jl_gr_draw_msge_(jl_gr,g,i,c,jl_me_format(jl_gr->jl, __VA_ARGS__));
 void jl_gr_term_msge(jl_gr_t* jl_gr, char* message);
 void jl_gr_slidebtn_rsz(jl_gr_t* jl_gr, jl_sprite_t * spr, str_t txt);
 void jl_gr_slidebtn_rnl(jl_gr_t* jl_gr, jl_sprite_t * spr,
@@ -325,12 +329,12 @@ jl_pr_t * jl_gl_pr_new(jl_gr_t* jl_gr, f32_t w, f32_t h, u16_t w_px);
 void jl_gl_pr_draw(jl_gr_t* jl_gr, jl_pr_t* pr, jl_vec3_t* vec, jl_vec3_t* scl);
 void jl_gl_pr(jl_gr_t* jl_gr, jl_pr_t * pr, jl_fnct par__redraw);
 // video
-strt jl_vi_make_jpeg(jl_t* jlc,i32_t quality,m_u8_t* pxdata,u16_t w,u16_t h);
-m_u8_t* jl_gr_load_image(jl_t* jlc, strt data, m_u16_t* w, m_u16_t* h);
+strt jl_vi_make_jpeg(jl_t* jl,i32_t quality,m_u8_t* pxdata,u16_t w,u16_t h);
+m_u8_t* jl_gr_load_image(jl_t* jl, strt data, m_u16_t* w, m_u16_t* h);
 // SG
-void jl_sg_kill(jl_t* jlc);
-void jl_sg_exit(jl_t* jlc);
-void jl_sg_add_image(jl_t* jlc, str_t pzipfile, u16_t pigid);
+void jl_sg_kill(jl_t* jl);
+void jl_sg_exit(jl_t* jl);
+void jl_sg_add_image(jl_t* jl, str_t pzipfile, u16_t pigid);
 // Controls
 void jl_ct_run_event(jl_gr_t *jl_gr, uint8_t pevent, jl_fnct prun, jl_fnct pno);
 void jl_ct_quickloop_(jl_gr_t* jl_gr);
@@ -338,11 +342,16 @@ float jl_ct_gmousex(jl_gr_t* jl_gr);
 float jl_ct_gmousey(jl_gr_t* jl_gr);
 uint8_t jl_ct_typing_get(jl_gr_t* pusr);
 void jl_ct_typing_disable(void);
-
 // JLGRfiles.c
-uint8_t jl_fl_user_select_init(jl_gr_t* jlc, const char *program_name,
+uint8_t jl_fl_user_select_init(jl_gr_t* jl, const char *program_name,
 	void *newfiledata, uint64_t newfilesize);
-void jl_fl_user_select_loop(jl_gr_t* jlc);
-char *jl_fl_user_select_get(jl_gr_t* jlc);
+void jl_fl_user_select_loop(jl_gr_t* jl);
+char *jl_fl_user_select_get(jl_gr_t* jl);
+// Window Management
+void jlgr_wm_setfullscreen(jl_gr_t* jl_gr, uint8_t is);
+void jlgr_wm_togglefullscreen(jl_gr_t* jl_gr);
+uint16_t jlgr_wm_getw(jl_gr_t* jl_gr);
+uint16_t jlgr_wm_geth(jl_gr_t* jl_gr);
+void jlgr_wm_setwindowname(jl_gr_t* jl_gr, str_t window_name);
 
 #endif

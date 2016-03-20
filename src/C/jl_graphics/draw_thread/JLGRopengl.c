@@ -154,16 +154,16 @@ void jl_gl_pr_scr(jl_gr_t* jl_gr);
 		}else{
 			fstrerr = "opengl: unknown error!\n";
 		}
-		jl_io_print(jl_gr->jlc, "error: %s:%s (%d)",fname,fstrerr,width);
-		jl_sg_kill(jl_gr->jlc);
+		jl_print(jl_gr->jl, "error: %s:%s (%d)",fname,fstrerr,width);
+		jl_sg_kill(jl_gr->jl);
 	}
 #endif
 
 static void jl_gl_buffer_use__(jl_gr_t* jl_gr, uint32_t buffer) {
 	// Check For Deleted Buffer
 	if(buffer == 0) {
-		jl_io_print(jl_gr->jlc, "buffer got deleted!");
-		jl_sg_kill(jl_gr->jlc);
+		jl_print(jl_gr->jl, "buffer got deleted!");
+		jl_sg_kill(jl_gr->jl);
 	}
 	// bind the buffer
 	glBindBuffer(GL_ARRAY_BUFFER, buffer);
@@ -186,9 +186,9 @@ static void jl_gl_buffer_new__(jl_gr_t* jl_gr, GLuint *buffer) {
 	glGenBuffers(1, buffer);
 	JL_GL_ERROR(jl_gr, 0,"buffer gen");
 	if(*buffer == 0) {
-		jl_io_print(jl_gr->jlc, "buffer is made wrongly on thread #%d!",
-			jl_thread_current(jl_gr->jlc));
-		jl_sg_kill(jl_gr->jlc);
+		jl_print(jl_gr->jl, "buffer is made wrongly on thread #%d!",
+			jl_thread_current(jl_gr->jl));
+		jl_sg_kill(jl_gr->jl);
 	}
 }
 
@@ -220,10 +220,10 @@ GLuint jl_gl_load_shader(jl_gr_t* jl_gr, GLenum shaderType, const char* pSource)
 				buf = (char*) malloc(infoLen);
 				if (buf) {
 					glGetShaderInfoLog(shader, infoLen, NULL, buf);
-					jl_io_print(jl_gr->jlc,
+					jl_print(jl_gr->jl,
 						"Could not compile shader:%s",buf);
 					free(buf);
-					jl_sg_kill(jl_gr->jlc);
+					jl_sg_kill(jl_gr->jl);
 				}
 				glDeleteShader(shader);
 				shader = 0;
@@ -238,14 +238,14 @@ GLuint jl_gl_glsl_prg_create(jl_gr_t* jl_gr, const char* pVertexSource,
 {
 	GLuint vertexShader = jl_gl_load_shader(jl_gr, GL_VERTEX_SHADER, pVertexSource);
 	if (!vertexShader) {
-		jl_io_print(jl_gr->jlc, "couldn't load vertex shader");
-		jl_sg_kill(jl_gr->jlc);
+		jl_print(jl_gr->jl, "couldn't load vertex shader");
+		jl_sg_kill(jl_gr->jl);
 	}
 
 	GLuint pixelShader = jl_gl_load_shader(jl_gr, GL_FRAGMENT_SHADER, pFragmentSource);
 	if (!pixelShader) {
-		jl_io_print(jl_gr->jlc, "couldn't load fragment shader");
-		jl_sg_kill(jl_gr->jlc);
+		jl_print(jl_gr->jl, "couldn't load fragment shader");
+		jl_sg_kill(jl_gr->jl);
 	}
 
 	GLuint program = glCreateProgram();
@@ -273,24 +273,24 @@ GLuint jl_gl_glsl_prg_create(jl_gr_t* jl_gr, const char* pVertexSource,
 				buf = (char*) malloc(bufLength);
 				if (buf) {
 					glGetProgramInfoLog(program, bufLength, NULL, buf);
-					jl_io_print(jl_gr->jlc,
+					jl_print(jl_gr->jl,
 						"Could not link program:%s",buf);
 					free(buf);
-					jl_sg_kill(jl_gr->jlc);
+					jl_sg_kill(jl_gr->jl);
 				}else{
-					jl_io_print(jl_gr->jlc, "failed malloc");
-					jl_sg_kill(jl_gr->jlc);
+					jl_print(jl_gr->jl, "failed malloc");
+					jl_sg_kill(jl_gr->jl);
 				}
 			}else{
 				glDeleteProgram(program);
-				jl_io_print(jl_gr->jlc, "no info log");
-				jl_sg_kill(jl_gr->jlc);
+				jl_print(jl_gr->jl, "no info log");
+				jl_sg_kill(jl_gr->jl);
 			}
 		}
 	}
 	if (program == 0) {
-		jl_io_print(jl_gr->jlc, "Failed to load program");
-		jl_sg_kill(jl_gr->jlc);
+		jl_print(jl_gr->jl, "Failed to load program");
+		jl_sg_kill(jl_gr->jl);
 	}
 	return program;
 }
@@ -299,8 +299,8 @@ static void jl_gl_texture_make__(jl_gr_t* jl_gr, uint32_t *tex) {
 	glGenTextures(1, tex);
 	if(!(*tex)) {
 		JL_GL_ERROR(jl_gr, 0, "jl_gl_texture_make__: glGenTextures");
-		jl_io_print(jl_gr->jlc, "jl_gl_texture_make__: GL tex = 0");
-		jl_sg_kill(jl_gr->jlc);
+		jl_print(jl_gr->jl, "jl_gl_texture_make__: GL tex = 0");
+		jl_sg_kill(jl_gr->jl);
 	}
 	JL_GL_ERROR(jl_gr, 0, "jl_gl_texture_make__: glGenTextures");
 }
@@ -341,8 +341,8 @@ static void jl_gl_texture__bind__(jl_gr_t* jl_gr, uint32_t tex) {
 // Bind a texture.
 static void jl_gl_texture_bind__(jl_gr_t* jl_gr, uint32_t tex) {
 	if(tex == 0) {
-		jl_io_print(jl_gr->jlc, "jl_gl_texture_bind__: GL tex = 0");
-		jl_sg_kill(jl_gr->jlc);
+		jl_print(jl_gr->jl, "jl_gl_texture_bind__: GL tex = 0");
+		jl_sg_kill(jl_gr->jl);
 	}
 	jl_gl_texture__bind__(jl_gr, tex);
 }
@@ -356,7 +356,7 @@ static void jl_gl_texture_off__(jl_gr_t* jl_gr) {
 static void jl_gl_texture_new__(jl_gr_t* jl_gr, m_u32_t *tex, u8_t* px,
 	u16_t w, u16_t h, u8_t bytepp)
 {
-	jl_io_function(jl_gr->jlc, "jl_gl_texture_new__");
+	jl_print_function(jl_gr->jl, "jl_gl_texture_new__");
 	// Make the texture
 	jl_gl_texture_make__(jl_gr, tex);
 	// Bind the texture
@@ -365,7 +365,7 @@ static void jl_gl_texture_new__(jl_gr_t* jl_gr, m_u32_t *tex, u8_t* px,
 	jl_gl_texture_set__(jl_gr, px, w, h, bytepp);
 	// Set the texture parametrs.
 	jl_gl_texpar_set__(jl_gr);
-	jl_io_return(jl_gr->jlc, "jl_gl_texture_new__");
+	jl_print_return(jl_gr->jl, "jl_gl_texture_new__");
 }
 
 /*
@@ -387,10 +387,10 @@ static void jl_gl_depthbuffer_new__(jl_gr_t* jl_gr,m_u32_t*db ,u16_t w,u16_t h) 
 void jl_gl_maketexture(jl_gr_t* jl_gr, uint16_t gid, uint16_t id,
 	void* pixels, int width, int height, u8_t bytepp)
 {
-	jl_io_function(jl_gr->jlc, "GL_MkTex");
+	jl_print_function(jl_gr->jl, "GL_MkTex");
 	if (!pixels) {
-		jl_io_print(jl_gr->jlc, "null pixels");
-		jl_sg_kill(jl_gr->jlc);
+		jl_print(jl_gr->jl, "null pixels");
+		jl_sg_kill(jl_gr->jl);
 	}
 	if (jl_gr->gl.allocatedg < gid + 1) {
 		jl_gr->gl.textures =
@@ -413,18 +413,18 @@ void jl_gl_maketexture(jl_gr_t* jl_gr, uint16_t gid, uint16_t id,
 				sizeof(GLint) * (id+1));
 		jl_gr->gl.allocatedi = id + 1;
 	}
-	JL_IO_DEBUG(jl_gr->jlc, "generating texture (%d,%d)",width,height);
+	JL_PRINT_DEBUG(jl_gr->jl, "generating texture (%d,%d)",width,height);
 	// Make the texture.
 	jl_gl_texture_new__(jl_gr, &jl_gr->gl.textures[gid][id], pixels, width,
 		height, bytepp);
-	jl_io_return(jl_gr->jlc, "GL_MkTex");
+	jl_print_return(jl_gr->jl, "GL_MkTex");
 }
 
 //Lower Level Stuff
 static void _jl_gl_usep(jl_gr_t* jl_gr, GLuint prg) {
 	if(!prg) {
-		jl_io_print(jl_gr->jlc, ":program ain't a prg!");
-		jl_sg_kill(jl_gr->jlc);
+		jl_print(jl_gr->jl, ":program ain't a prg!");
+		jl_sg_kill(jl_gr->jl);
 	}
 	glUseProgram(prg);
 	JL_GL_ERROR(jl_gr, prg, "glUseProgram");
@@ -498,7 +498,7 @@ static void jl_gl_vertices__(jl_gr_t* jl_gr, const float *xyzw, uint8_t vertices
 	u16_t items = (vertices*3);
 
 	// Copy Vertices
-	jl_me_copyto(xyzw, cv, items * sizeof(float));
+	jl_mem_copyto(xyzw, cv, items * sizeof(float));
 	// Copy Buffer Data "cv" to Buffer "gl"
 	jl_gl_buffer_set__(jl_gr, gl, cv, items);
 }
@@ -509,10 +509,9 @@ void jl_gl_vo_vertices(jl_gr_t* jl_gr, jl_vo_t* pv, const float *xyzw,
 	pv->vc = vertices;
 	if(vertices) {
 		// Free pv->cv if non-null
-		if(pv->cv) jl_me_alloc(jl_gr->jlc, (void**)&pv->cv, 0, 0);
+		if(pv->cv) pv->cv = jl_mem(jl_gr->jl, pv->cv, 0);
 		// Allocate pv->cv
-		jl_me_alloc(jl_gr->jlc,
-			(void**)&pv->cv, vertices * sizeof(float) * 3, 0);
+		pv->cv = jl_memi(jl_gr->jl, vertices * sizeof(float) * 3);
 		// Set pv->cv & pv->gl
 		jl_gl_vertices__(jl_gr, xyzw, vertices, pv->cv, pv->gl);
 	}
@@ -524,10 +523,10 @@ void jl_gl_vo_free(jl_gr_t* jl_gr, jl_vo_t *pv) {
 	// Free GL Texture Buffer
 	jl_gl_buffer_old__(jl_gr, &pv->bt);
 	// Free Converted Vertices & Colors
-	if(pv->cv) jl_me_alloc(jl_gr->jlc, (void**)&pv->cv, 0,0);
-	if(pv->cc) jl_me_alloc(jl_gr->jlc, (void**)&pv->cc, 0,0);
+	if(pv->cv) pv->cv = jl_mem(jl_gr->jl, pv->cv, 0);
+	if(pv->cc) pv->cc = jl_mem(jl_gr->jl, pv->cc, 0);
 	// Free main structure
-	jl_me_alloc(jl_gr->jlc, (void**)&pv, 0,0);
+	pv = jl_mem(jl_gr->jl, (void**)&pv, 0);
 }
 
 static void _jl_gl_setp(jl_gr_t* jl_gr, jl_gl_slpr id) {
@@ -539,14 +538,14 @@ static void _jl_gl_setp(jl_gr_t* jl_gr, jl_gl_slpr id) {
 
 static void _jl_gl_col_begin(jl_gr_t* jl_gr, jl_vo_t* pv) {
 	//Free anything old
-	if(pv->cc != NULL) jl_me_alloc(jl_gr->jlc, (void**)&pv->cc, 0, 0);
+	if(pv->cc != NULL) pv->cc = jl_mem(jl_gr->jl, pv->cc, 0);
 }
 
 // TODO: MOVE
 void jl_gl_pbo_new(jl_gr_t* jl_gr, jl_tex_t* texture, u8_t* pixels,
 	u16_t w, u16_t h, u8_t bpp)
 {
-	jl_io_function(jl_gr->jlc, "GL_PBO_NEW");
+	jl_print_function(jl_gr->jl, "GL_PBO_NEW");
 	jl_gl_buffer_new__(jl_gr, &(texture->gl_buffer));
 	jl_gl_texture_make__(jl_gr, &(texture->gl_texture));
 	jl_gl_texture__bind__(jl_gr, texture->gl_texture);
@@ -555,7 +554,7 @@ void jl_gl_pbo_new(jl_gr_t* jl_gr, jl_tex_t* texture, u8_t* pixels,
 	jl_gl_buffer_use__(jl_gr, texture->gl_buffer);
 	glBufferData(GL_ARRAY_BUFFER, w * h * 4, pixels, GL_DYNAMIC_DRAW);
 	JL_GL_ERROR(jl_gr, 0, "jl_gl_pbo_set__: glBufferData");
-	jl_io_return(jl_gr->jlc, "GL_PBO_NEW");
+	jl_print_return(jl_gr->jl, "GL_PBO_NEW");
 }
 // TODO: MOVE
 void jl_gl_pbo_set(jl_gr_t* jl_gr, jl_tex_t* texture, u8_t* pixels,
@@ -593,8 +592,8 @@ static void jl_gl_framebuffer_free__(jl_gr_t* jl_gr, m_u32_t *fb) {
 static void jl_gl_framebuffer_make__(jl_gr_t* jl_gr, m_u32_t *fb) {
 	glGenFramebuffers(1, fb);
 	if(!(*fb)) {
-		jl_io_print(jl_gr->jlc, "jl_gl_framebuffer_make__: GL FB = 0");
-		jl_sg_kill(jl_gr->jlc);
+		jl_print(jl_gr->jl, "jl_gl_framebuffer_make__: GL FB = 0");
+		jl_sg_kill(jl_gr->jl);
 	}
 	JL_GL_ERROR(jl_gr, *fb,"glGenFramebuffers");
 }
@@ -602,22 +601,22 @@ static void jl_gl_framebuffer_make__(jl_gr_t* jl_gr, m_u32_t *fb) {
 static void jl_gl_framebuffer_use__(jl_gr_t* jl_gr, u32_t fb, u32_t db, u32_t tx,
 	u16_t w, u16_t h)
 {
-	jl_io_function(jl_gr->jlc, "jl_gl_framebuffer_use__");
+	jl_print_function(jl_gr->jl, "jl_gl_framebuffer_use__");
 	if(fb == 0) {
-		jl_io_print(jl_gr->jlc, "jl_gl_framebuffer_use__: GL FB = 0");
-		jl_sg_kill(jl_gr->jlc);
+		jl_print(jl_gr->jl, "jl_gl_framebuffer_use__: GL FB = 0");
+		jl_sg_kill(jl_gr->jl);
 //	}else if(db == 0) {
-//		jl_io_print(jl_gr->jlc, "jl_gl_framebuffer_use__: GL DB = 0");
-//		jl_sg_kill(jl_gr->jlc);
+//		jl_print(jl_gr->jl, "jl_gl_framebuffer_use__: GL DB = 0");
+//		jl_sg_kill(jl_gr->jl);
 	}else if(tx == 0) {
-		jl_io_print(jl_gr->jlc, "jl_gl_framebuffer_use__: GL TX = 0");
-		jl_sg_kill(jl_gr->jlc);
+		jl_print(jl_gr->jl, "jl_gl_framebuffer_use__: GL TX = 0");
+		jl_sg_kill(jl_gr->jl);
 	}else if(w == 0) {
-		jl_io_print(jl_gr->jlc, "jl_gl_framebuffer_use__: GL W = 0");
-		jl_sg_kill(jl_gr->jlc);
+		jl_print(jl_gr->jl, "jl_gl_framebuffer_use__: GL W = 0");
+		jl_sg_kill(jl_gr->jl);
 	}else if(h == 0) {
-		jl_io_print(jl_gr->jlc, "jl_gl_framebuffer_use__: GL H = 0");
-		jl_sg_kill(jl_gr->jlc);
+		jl_print(jl_gr->jl, "jl_gl_framebuffer_use__: GL H = 0");
+		jl_sg_kill(jl_gr->jl);
 	}
 	// Bind the texture.
 	jl_gl_texture_bind__(jl_gr, tx);
@@ -628,7 +627,7 @@ static void jl_gl_framebuffer_use__(jl_gr_t* jl_gr, u32_t fb, u32_t db, u32_t tx
 	JL_GL_ERROR(jl_gr, fb,"glBindFramebuffer");
 	// Render on the whole framebuffer [ lower left -> upper right ]
 	_jl_gl_viewport(jl_gr, w, h);
-	jl_io_return(jl_gr->jlc, "jl_gl_framebuffer_use__");
+	jl_print_return(jl_gr->jl, "jl_gl_framebuffer_use__");
 }
 
 static void jl_gl_framebuffer_off__(jl_gr_t* jl_gr) {
@@ -661,8 +660,8 @@ static void jl_gl_framebuffer_adddb__(jl_gr_t* jl_gr, u32_t db) {
 static void jl_gl_framebuffer_status__(jl_gr_t* jl_gr) {
 	// Check to see if framebuffer was made properly.
 	if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE){
-		jl_io_print(jl_gr->jlc, "Frame buffer not complete!");
-		jl_sg_kill(jl_gr->jlc);
+		jl_print(jl_gr->jl, "Frame buffer not complete!");
+		jl_sg_kill(jl_gr->jl);
 	}
 }
 
@@ -691,42 +690,42 @@ static void jl_gl_egl_geterror__(jl_gr_t* jl_gr, i32_t x, str_t fname) {
 	
 	if(err == EGL_SUCCESS) return;
 	
-	jl_io_print(jl_gr->jlc, ":source: paraphrased from www.khronos.org:");
-	jl_io_print(jl_gr->jlc, "\"%s\"", fname);
+	jl_print(jl_gr->jl, ":source: paraphrased from www.khronos.org:");
+	jl_print(jl_gr->jl, "\"%s\"", fname);
 
 	if(err == EGL_NOT_INITIALIZED)
-		jl_io_print(jl_gr->jlc,"EGL couldn't initialize or isn't init'd");
+		jl_print(jl_gr->jl,"EGL couldn't initialize or isn't init'd");
 	else if(err == EGL_BAD_ACCESS)
-		jl_io_print(jl_gr->jlc,"EGL can't access a resource. (Threads?)");
+		jl_print(jl_gr->jl,"EGL can't access a resource. (Threads?)");
 	else if(err == EGL_BAD_ALLOC)
-		jl_io_print(jl_gr->jlc,"EGL failed to allocate resources.");
+		jl_print(jl_gr->jl,"EGL failed to allocate resources.");
 	else if(err == EGL_BAD_ATTRIBUTE)
-		jl_io_print(jl_gr->jlc,
+		jl_print(jl_gr->jl,
 			"Attribute not recognized (value or/ list).");
 	else if(err == EGL_BAD_CONFIG)
-		jl_io_print(jl_gr->jlc, "EGLConfig argument is invalid.");
+		jl_print(jl_gr->jl, "EGLConfig argument is invalid.");
 	else if(err == EGL_BAD_CONTEXT)
-		jl_io_print(jl_gr->jlc, "EGLContext argument is invalid.");
+		jl_print(jl_gr->jl, "EGLContext argument is invalid.");
 	else if(err == EGL_BAD_CURRENT_SURFACE)
-		jl_io_print(jl_gr->jlc, "Surface passed is invalid.");
+		jl_print(jl_gr->jl, "Surface passed is invalid.");
 	else if(err == EGL_BAD_DISPLAY)
-		jl_io_print(jl_gr->jlc, "EGLDisplay argument is invalid.");
+		jl_print(jl_gr->jl, "EGLDisplay argument is invalid.");
 	else if(err == EGL_BAD_MATCH)
-		jl_io_print(jl_gr->jlc, "EGLContext requires buffers not alloc'd.");
+		jl_print(jl_gr->jl, "EGLContext requires buffers not alloc'd.");
 	else if(err == EGL_BAD_NATIVE_PIXMAP)
-		jl_io_print(jl_gr->jlc, "EGLNativePixmapType argument is invalid.");
+		jl_print(jl_gr->jl, "EGLNativePixmapType argument is invalid.");
 	else if(err == EGL_BAD_NATIVE_WINDOW)
-		jl_io_print(jl_gr->jlc, "EGLNativeWindowType argument is invalid.");
+		jl_print(jl_gr->jl, "EGLNativeWindowType argument is invalid.");
 	else if(err == EGL_BAD_PARAMETER)
-		jl_io_print(jl_gr->jlc, "1 or more argument values are invalid.");
+		jl_print(jl_gr->jl, "1 or more argument values are invalid.");
 	else if(err == EGL_BAD_SURFACE)
-		jl_io_print(jl_gr->jlc, "EGLSurface argument is an invalid surface.");
+		jl_print(jl_gr->jl, "EGLSurface argument is an invalid surface.");
 	else if(err == EGL_CONTEXT_LOST)
-		jl_io_print(jl_gr->jlc, "A power management event has occurred.");
+		jl_print(jl_gr->jl, "A power management event has occurred.");
 	else
-		jl_io_print(jl_gr->jlc, "Unknown error.");
-	jl_io_print(jl_gr->jlc, ":%d", (void*)jl_me_strt_fnum(x)->data);
-	jl_sg_kill(jl_gr->jlc);
+		jl_print(jl_gr->jl, "Unknown error.");
+	jl_print(jl_gr->jl, ":%d", (void*)jl_me_strt_fnum(x)->data);
+	jl_sg_kill(jl_gr->jl);
 }
 
 #endif // JL_DEBUG_LIB
@@ -771,20 +770,20 @@ static void _jl_gl_depthbuffer_free(jl_gr_t* jl_gr, uint32_t *db) {
 static void _jl_gl_depthbuffer_make(jl_gr_t* jl_gr, uint32_t *db) {
 	glGenRenderbuffers(1, db);
 	if(!(*db)) {
-		jl_io_print(jl_gr->jlc, "_jl_gl_depthbuffer_make: GL buff=0");
-		jl_sg_kill(jl_gr->jlc);
+		jl_print(jl_gr->jl, "_jl_gl_depthbuffer_make: GL buff=0");
+		jl_sg_kill(jl_gr->jl);
 	}
 	JL_GL_ERROR(jl_gr,*db,"make pr: glGenRenderbuffers");
 }
 
 static void jl_gl_depthbuffer_set__(jl_gr_t* jl_gr, u16_t w, u16_t h) {
 	if(!w) {
-		jl_io_print(jl_gr->jlc, "jl_gl_depthbuffer_set: w = 0");
-		jl_sg_kill(jl_gr->jlc);
+		jl_print(jl_gr->jl, "jl_gl_depthbuffer_set: w = 0");
+		jl_sg_kill(jl_gr->jl);
 	}
 	if(!h) {
-		jl_io_print(jl_gr->jlc, "jl_gl_depthbuffer_set: h = 0");
-		jl_sg_kill(jl_gr->jlc);
+		jl_print(jl_gr->jl, "jl_gl_depthbuffer_set: h = 0");
+		jl_sg_kill(jl_gr->jl);
 	}
 	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT16, w, h);
 	JL_GL_ERROR(jl_gr, w, "make pr: glRenderbufferStorage");
@@ -792,8 +791,8 @@ static void jl_gl_depthbuffer_set__(jl_gr_t* jl_gr, u16_t w, u16_t h) {
 
 static void _jl_gl_depthbuffer_bind(jl_gr_t* jl_gr, uint32_t db) {
 	if(db == 0) {
-		jl_io_print(jl_gr->jlc, "_jl_gl_depthbuffer_bind: GL db = 0");
-		jl_sg_kill(jl_gr->jlc);
+		jl_print(jl_gr->jl, "_jl_gl_depthbuffer_bind: GL db = 0");
+		jl_sg_kill(jl_gr->jl);
 	}
 	glBindRenderbuffer(GL_RENDERBUFFER, db);
 	JL_GL_ERROR(jl_gr, db,"_jl_gl_depthbuffer_bind: glBindRenderbuffer");
@@ -829,7 +828,7 @@ static void _jl_gl_pr_obj_free(jl_gr_t* jl_gr, jl_pr_t *pr) {
 #if JL_GLRTEX == JL_GLRTEX_EGL
 	jl_gl_pixelbuffer_old__(jl_gr, pr->pb);
 #elif JL_GLRTEX == JL_GLRTEX_SDL
-	jl_me_alloc(jl_gr->jlc, (void**)&pr->px, 0, 4 * pr->w * pr->h);
+	pr->px = jl_mem(jl_gr->jl, pr->px, 0);
 #else
 	jl_gl_framebuffer_free__(jl_gr, &(pr->fb));
 //	_jl_gl_depthbuffer_free(jl_gr, &(pr->db));
@@ -847,20 +846,20 @@ static void jl_gl_pr_obj_make_tx__(jl_gr_t* jl_gr, jl_pr_t *pr) {
 static void _jl_gl_pr_obj_make(jl_gr_t* jl_gr, jl_pr_t *pr) {
 	jl_gr->gl.cp = NULL;
 	if(pr->w < 1) {
-		jl_io_print(jl_gr->jlc,
+		jl_print(jl_gr->jl,
 			"_jl_gl_pr_obj_make() failed: 'w' must be more than 1");
-		jl_sg_kill(jl_gr->jlc);
+		jl_sg_kill(jl_gr->jl);
 	}
 	if(pr->h < 1) {
-		jl_io_print(jl_gr->jlc,
+		jl_print(jl_gr->jl,
 			"_jl_gl_pr_obj_make() failed: 'h' must be more than 1");
-		jl_sg_kill(jl_gr->jlc);
+		jl_sg_kill(jl_gr->jl);
 	}
 	if((pr->w > GL_MAX_TEXTURE_SIZE) || (pr->h > GL_MAX_TEXTURE_SIZE)) {
-		jl_io_print(jl_gr->jlc, "_jl_gl_pr_obj_make() failed:");
-		jl_io_print(jl_gr->jlc, "w = %d,h = %d", pr->w, pr->h);
-		jl_io_print(jl_gr->jlc, "texture is too big for graphics card.");
-		jl_sg_kill(jl_gr->jlc);
+		jl_print(jl_gr->jl, "_jl_gl_pr_obj_make() failed:");
+		jl_print(jl_gr->jl, "w = %d,h = %d", pr->w, pr->h);
+		jl_print(jl_gr->jl, "texture is too big for graphics card.");
+		jl_sg_kill(jl_gr->jl);
 	}
 #if JL_GLRTEX == JL_GLRTEX_EGL
 	// Make the texture.
@@ -873,7 +872,7 @@ static void _jl_gl_pr_obj_make(jl_gr_t* jl_gr, jl_pr_t *pr) {
 	// Make a new Hidden Window.
 	pr->sw = jl_dl_screen_new_(jl_gr, pr->w, pr->h);
 	// Allocate pixel space
-	jl_me_alloc(jl_gr->jlc, (void**)&pr->px, 4 * pr->w * pr->h, 0);
+	pr->px = jl_memi(jl_gr->jl, 4 * pr->w * pr->h);
 	// Use the Pre-renderer.
 	printf("jl_gl_pbo_use__: %dx%d\n", pr->w, pr->h);
 	jl_gl_pbo_use__(jl_gr, pr);
@@ -908,7 +907,7 @@ static void _jl_gl_txtr(jl_gr_t* jl_gr, jl_vo_t** pv, uint8_t a, uint8_t is_rt) 
 	(*pv)->a = ((float)a) / 255.f;
 	// Make sure non-textured colors aren't attempted
 	if((!is_rt) && ((*pv)->cc != NULL))
-		jl_me_alloc(jl_gr->jlc, (void**)&((*pv)->cc), 0,0);
+		(*pv)->cc = jl_mem(jl_gr->jl, (*pv)->cc, 0);
 }
 
 static inline void _jl_gl_set_shader(jl_gr_t* jl_gr, jl_vo_t* pv) {
@@ -923,14 +922,14 @@ static inline void _jl_gl_draw_colr(jl_gr_t* jl_gr, jl_vo_t* pv) {
 
 // Prepare to draw a texture with texture coordinates "tc". 
 static void _jl_gl_draw_txtr(jl_gr_t* jl_gr, f32_t a, u32_t tx, u32_t tc) {
-	jl_io_function(jl_gr->jlc, "OPENGL/Draw Texture");
+	jl_print_function(jl_gr->jl, "OPENGL/Draw Texture");
 	// Bind Texture Coordinates to shader
 	_jl_gl_setv(jl_gr, tc, jl_gr->gl.tex.attr.texpos, 2);
 	// Set Alpha Value In Shader
 	_jl_gl_setalpha(jl_gr, a);
 	// Bind the texture
 	jl_gl_texture_bind__(jl_gr, tx);
-	jl_io_return(jl_gr->jlc, "OPENGL/Draw Texture");
+	jl_print_return(jl_gr->jl, "OPENGL/Draw Texture");
 }
 
 static void jl_gl_draw_vertices(jl_gr_t* jl_gr, u32_t gl, i32_t attr) {
@@ -958,20 +957,20 @@ void jl_gl_viewport_screen(jl_gr_t* jl_gr) {
 	_jl_gl_viewport(jl_gr, jl_gr->dl.full_w, jl_gr->dl.full_h);
 }
 
-void jl_gl_pr_old_(jl_gr_t* jl_gr, jl_pr_t** pr) {
+void jl_gl_pr_old_(jl_gr_t* jl_gr, jl_pr_t* pr) {
 	// 
-	_jl_gl_pr_obj_free(jl_gr, *pr);
+	_jl_gl_pr_obj_free(jl_gr, pr);
 	// Free old pr object.
-	jl_me_alloc(jl_gr->jlc, (void**)pr, 0, 0);
+	pr = jl_mem(jl_gr->jl, pr, 0);
 }
 
 // Free a pr for a vertex object
 void jl_gl_pr_old(jl_gr_t* jl_gr, jl_vo_t* pv) {
 	if(pv->pr == NULL) {
-		jl_io_print(jl_gr->jlc, "pr(): double free!");
-		jl_sg_kill(jl_gr->jlc);
+		jl_print(jl_gr->jl, "pr(): double free!");
+		jl_sg_kill(jl_gr->jl);
 	}
-	jl_gl_pr_old_(jl_gr, &(pv->pr));
+	jl_gl_pr_old_(jl_gr, pv->pr);
 }
 
 uint8_t jl_gl_pr_isi_(jl_gr_t* jl_gr, jl_pr_t* pr) {
@@ -987,15 +986,15 @@ uint8_t jl_gl_pr_isi_(jl_gr_t* jl_gr, jl_pr_t* pr) {
 			return 0;
 		}else{
 			if(pr->tx)
-				jl_io_printc(jl_gr->jlc, "[OK] pr->tx\n");
-			else jl_io_printc(jl_gr->jlc, "[FAIL] pr->tx\n");
+				jl_printc(jl_gr->jl, "[OK] pr->tx\n");
+			else jl_printc(jl_gr->jl, "[FAIL] pr->tx\n");
 //			if(pr->db)
-//				jl_io_printc(jl_gr->jlc, "[OK] pr->db\n");
-//			else jl_io_printc(jl_gr->jlc, "[FAIL] pr->db\n");
+//				jl_printc(jl_gr->jl, "[OK] pr->db\n");
+//			else jl_printc(jl_gr->jl, "[FAIL] pr->db\n");
 			if(pr->fb)
-				jl_io_print(jl_gr->jlc, "[OK] pr->fb");
-			else jl_io_print(jl_gr->jlc, "[FAIL] pr->fb");
-			jl_sg_kill(jl_gr->jlc);
+				jl_print(jl_gr->jl, "[OK] pr->fb");
+			else jl_print(jl_gr->jl, "[FAIL] pr->fb");
+			jl_sg_kill(jl_gr->jl);
 		}
 #endif
 	}else{
@@ -1030,8 +1029,8 @@ void jl_gl_pr_use_(jl_gr_t* jl_gr, jl_pr_t* pr) {
 void jl_gl_pr_use(jl_gr_t* jl_gr, jl_vo_t* pv) {
 	pv->a = 1.f;
 	if(!pv->pr) {
-		jl_io_print(jl_gr->jlc,"jl_gl_pr_use: pre-renderer not created");
-		jl_sg_kill(jl_gr->jlc);
+		jl_print(jl_gr->jl,"jl_gl_pr_use: pre-renderer not created");
+		jl_sg_kill(jl_gr->jl);
 	}
 	jl_gl_pr_use_(jl_gr, pv->pr);
 }
@@ -1090,11 +1089,9 @@ void jl_gl_clrc(jl_gr_t* jl_gr, jl_vo_t* pv, jl_ccolor_t* cc) {
 //Convert color to solid
 jl_ccolor_t* jl_gl_clrcs(jl_gr_t* jl_gr, u8_t *rgba, uint32_t vc) {
 	int i;
-	jl_ccolor_t* cc = NULL;
-
 	//Allocate memory
-	jl_me_alloc(jl_gr->jlc,
-		(void**)&cc, vc * sizeof(float) * 4, 0);
+	jl_ccolor_t* cc = jl_memi(jl_gr->jl, vc * sizeof(float) * 4);
+
 	//Set RGBA for each vertex
 	for(i = 0; i < vc; i++) { 
 		cc[(i * 4) + 0] = ((double) rgba[0]) / 255.;
@@ -1108,10 +1105,9 @@ jl_ccolor_t* jl_gl_clrcs(jl_gr_t* jl_gr, u8_t *rgba, uint32_t vc) {
 //Convert Color To Gradient
 jl_ccolor_t* jl_gl_clrcg(jl_gr_t* jl_gr, u8_t *rgba, uint32_t vc) {
 	int i;
-	jl_ccolor_t* cc = NULL;
-
 	//Allocate memory
-	jl_me_alloc(jl_gr->jlc, (void**)&cc, vc * sizeof(float) * 4, 0);
+	jl_ccolor_t* cc = jl_memi(jl_gr->jl, vc * sizeof(float) * 4);
+
 	//Set RGBA for each vertex
 	for(i = 0; i < vc; i++) { 
 		cc[(i * 4) + 0] = ((double) rgba[(i * 4) + 0]) / 255.;
@@ -1141,8 +1137,8 @@ void jl_gl_txtr(jl_gr_t* jl_gr,jl_vo_t* pv,u8_t map,u8_t a,u16_t pgid,u16_t pi){
 	_jl_gl_txtr(jl_gr, &pv, a, 0);
 	pv->tx = jl_gr->gl.textures[pgid][pi];
 	if(!pv->tx) {
-		jl_io_print(jl_gr->jlc, "Error: No Texture @%d/%d", pgid, pi);
-		jl_io_stacktrace(jl_gr->jlc);
+		jl_print(jl_gr->jl, "Error: No Texture @%d/%d", pgid, pi);
+		jl_print_stacktrace(jl_gr->jl);
 		exit(-1);
 	}
 	jl_gl_vo_txmap(jl_gr, pv, map);
@@ -1184,9 +1180,9 @@ void jl_gl_transform_pr_(jl_gr_t* jl_gr, jl_pr_t* pr, float x, float y, float z,
 	f64_t ar = jl_gl_ar(jl_gr);
 
 	if(!jl_gl_pr_isi_(jl_gr, pr)) {
-		jl_io_print(jl_gr->jlc, "jl_gl_translate_pr: "
+		jl_print(jl_gr->jl, "jl_gl_translate_pr: "
 			"Pre-renderer Not Initialized!");
-		jl_sg_kill(jl_gr->jlc);
+		jl_sg_kill(jl_gr->jl);
 	}
 	jl_gl_translate__(jl_gr, jl_gr->gl.prm.uniforms.translate, JL_GL_SLPR_PRM,
 		x, y, z, ar);
@@ -1232,7 +1228,7 @@ void jl_gl_transform_chr_(jl_gr_t* jl_gr, jl_vo_t* vo, float x, float y, float z
  * Else render vertex object "pv" on the screen.
 */
 void jl_gl_draw(jl_gr_t* jl_gr, jl_vo_t* pv) {
-	jl_io_function(jl_gr->jlc, "OPENGL/Draw");
+	jl_print_function(jl_gr->jl, "OPENGL/Draw");
 	// Use Temporary Vertex Object If no vertex object.
 	if(pv == NULL) pv = jl_gr->gl.temp_vo;
 	// Determine which shader to use: texturing or coloring?
@@ -1242,7 +1238,7 @@ void jl_gl_draw(jl_gr_t* jl_gr, jl_vo_t* pv) {
 	else _jl_gl_draw_txtr(jl_gr, pv->a, pv->tx, pv->bt);
 	// Draw onto the screen.
 	_jl_gl_draw_onts(jl_gr, pv->gl, pv->rs, pv->vc);
-	jl_io_return(jl_gr->jlc, "OPENGL/Draw");
+	jl_print_return(jl_gr->jl, "OPENGL/Draw");
 }
 
 /**
@@ -1273,13 +1269,13 @@ void jl_gl_draw_chr(jl_gr_t* jl_gr, jl_vo_t* pv,
 }
 
 // Draw the pre-rendered texture.
-void jl_gl_draw_pr_(jl_t* jlc, jl_pr_t* pr) {
-	jl_gr_t* jl_gr = jlc->jl_gr;
+void jl_gl_draw_pr_(jl_t* jl, jl_pr_t* pr) {
+	jl_gr_t* jl_gr = jl->jl_gr;
 
 	// Fail if no pre-rendered texture.
 	if(!jl_gl_pr_isi_(jl_gr, pr)) {
-		jl_io_print(jl_gr->jlc, "Pre-renderer Not Initialized!");
-		jl_sg_kill(jlc);
+		jl_print(jl_gr->jl, "Pre-renderer Not Initialized!");
+		jl_sg_kill(jl);
 	}
 	// Use pre-mixed texturing shader.
 	_jl_gl_setp(jl_gr, JL_GL_SLPR_PRM);
@@ -1296,8 +1292,8 @@ void jl_gl_draw_pr_(jl_t* jlc, jl_pr_t* pr) {
 int32_t _jl_gl_getu(jl_gr_t* jl_gr, GLuint prg, char *var) {
 	int32_t a = 0;
 	if((a = glGetUniformLocation(prg, var)) == -1) {
-		jl_io_print(jl_gr->jlc, ":opengl: bad name; is: %s", var);
-		jl_sg_kill(jl_gr->jlc);
+		jl_print(jl_gr->jl, ":opengl: bad name; is: %s", var);
+		jl_sg_kill(jl_gr->jl);
 	}
 	JL_GL_ERROR(jl_gr, a,"glGetUniformLocation");
 	return a;
@@ -1305,9 +1301,9 @@ int32_t _jl_gl_getu(jl_gr_t* jl_gr, GLuint prg, char *var) {
 
 void _jl_gl_geta(jl_gr_t* jl_gr, GLuint prg, m_i32_t *attrib, const char *title) {
 	if((*attrib = glGetAttribLocation(prg, title)) == -1) {
-		jl_io_print(jl_gr->jlc, 
+		jl_print(jl_gr->jl, 
 			"attribute name is either reserved or non-existant");
-		jl_sg_kill(jl_gr->jlc);
+		jl_sg_kill(jl_gr->jl);
 	}
 }
 
@@ -1317,18 +1313,18 @@ void _jl_gl_geta(jl_gr_t* jl_gr, GLuint prg, m_i32_t *attrib, const char *title)
 /************************/
 
 static inline void _jl_gl_init_setup_gl(jl_gr_t* jl_gr) {
-	JL_IO_DEBUG(jl_gr->jlc, "setting properties....");
+	JL_PRINT_DEBUG(jl_gr->jl, "setting properties....");
 	//Disallow Dither & Depth Test
 	_jl_gl_init_disable_extras(jl_gr);
 	//Set alpha=0 to transparent
 	_jl_gl_init_enable_alpha(jl_gr);
 	glPixelStorei(GL_PACK_ALIGNMENT, 1);
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-	JL_IO_DEBUG(jl_gr->jlc, "set glproperties.");
+	JL_PRINT_DEBUG(jl_gr->jl, "set glproperties.");
 }
 
 static inline void _jl_gl_init_shaders(jl_gr_t* jl_gr) {
-	JL_IO_DEBUG(jl_gr->jlc, "making GLSL programs....");
+	JL_PRINT_DEBUG(jl_gr->jl, "making GLSL programs....");
 	jl_gr->gl.prgs[JL_GL_SLPR_PRM] = jl_gl_glsl_prg_create(jl_gr,
 		source_vert_tex, source_frag_tex);
 	jl_gr->gl.prgs[JL_GL_SLPR_TEX] = jl_gl_glsl_prg_create(jl_gr,
@@ -1337,12 +1333,12 @@ static inline void _jl_gl_init_shaders(jl_gr_t* jl_gr) {
 		source_vert_tex, source_frag_tex_charmap);
 	jl_gr->gl.prgs[JL_GL_SLPR_CLR] = jl_gl_glsl_prg_create(jl_gr,
 		source_vert_clr, source_frag_clr);
-	JL_IO_DEBUG(jl_gr->jlc, "made programs.");
+	JL_PRINT_DEBUG(jl_gr->jl, "made programs.");
 
-	JL_IO_DEBUG(jl_gr->jlc, "setting up shaders....");
+	JL_PRINT_DEBUG(jl_gr->jl, "setting up shaders....");
 	if(jl_gr->gl.tex.uniforms.textures == NULL) {
-		jl_io_print(jl_gr->jlc, "Couldn't create uniforms");
-		jl_sg_kill(jl_gr->jlc);
+		jl_print(jl_gr->jl, "Couldn't create uniforms");
+		jl_sg_kill(jl_gr->jl);
 	}
 	// Texture
 	jl_gr->gl.prm.uniforms.textures =
@@ -1380,27 +1376,27 @@ static inline void _jl_gl_init_shaders(jl_gr_t* jl_gr) {
 	jl_gr->gl.chr.uniforms.new_color =
 		_jl_gl_getu(jl_gr, jl_gr->gl.prgs[JL_GL_SLPR_CHR], "new_color");
 	//
-	JL_IO_DEBUG(jl_gr->jlc, "setting up prm shader attrib's....");
+	JL_PRINT_DEBUG(jl_gr->jl, "setting up prm shader attrib's....");
 	_jl_gl_geta(jl_gr, jl_gr->gl.prgs[JL_GL_SLPR_PRM],
 		&jl_gr->gl.prm.attr.position, "position");
 	_jl_gl_geta(jl_gr, jl_gr->gl.prgs[JL_GL_SLPR_PRM],
 		&jl_gr->gl.prm.attr.texpos, "texpos");
-	JL_IO_DEBUG(jl_gr->jlc, "setting up tex shader attrib's....");
+	JL_PRINT_DEBUG(jl_gr->jl, "setting up tex shader attrib's....");
 	_jl_gl_geta(jl_gr, jl_gr->gl.prgs[JL_GL_SLPR_TEX],
 		&jl_gr->gl.tex.attr.position, "position");
 	_jl_gl_geta(jl_gr, jl_gr->gl.prgs[JL_GL_SLPR_TEX],
 		&jl_gr->gl.tex.attr.texpos, "texpos");
-	JL_IO_DEBUG(jl_gr->jlc, "setting up chr shader attrib's....");
+	JL_PRINT_DEBUG(jl_gr->jl, "setting up chr shader attrib's....");
 	_jl_gl_geta(jl_gr, jl_gr->gl.prgs[JL_GL_SLPR_CHR],
 		&jl_gr->gl.chr.attr.position, "position");
 	_jl_gl_geta(jl_gr, jl_gr->gl.prgs[JL_GL_SLPR_CHR],
 		&jl_gr->gl.chr.attr.texpos, "texpos");
-	JL_IO_DEBUG(jl_gr->jlc, "setting up clr shader attrib's....");
+	JL_PRINT_DEBUG(jl_gr->jl, "setting up clr shader attrib's....");
 	_jl_gl_geta(jl_gr, jl_gr->gl.prgs[JL_GL_SLPR_CLR],
 		&jl_gr->gl.clr.attr.position, "position");
 	_jl_gl_geta(jl_gr, jl_gr->gl.prgs[JL_GL_SLPR_CLR],
 		&jl_gr->gl.clr.attr.acolor, "acolor");
-	JL_IO_DEBUG(jl_gr->jlc, "set up shaders.");
+	JL_PRINT_DEBUG(jl_gr->jl, "set up shaders.");
 }
 
 #if JL_GLRTEX == JL_GLRTEX_EGL
@@ -1433,7 +1429,7 @@ static inline void jl_gl_init_egl(jl_gr_t* jl_gr) {
 	eglInitialize(eglDisp, &eglMajVers, &eglMinVers);
 	JL_EGL_ERROR(jl_gr, 0, "jl_gl_init_egl:eglInitialize");
 
-	JL_IO_DEBUG("EGL init with version %d.%d", eglMajVers, eglMinVers);
+	JL_PRINT_DEBUG("EGL init with version %d.%d", eglMajVers, eglMinVers);
 
 	// choose the first config, i.e. best config
 	eglChooseConfig(eglDisp, confAttr, &eglConf, 1, &numConfigs);
@@ -1446,7 +1442,7 @@ static inline void jl_gl_init_egl(jl_gr_t* jl_gr) {
 
 //Load and create all resources
 static inline void _jl_gl_make_res(jl_gr_t* jl_gr) {
-	jl_io_function(jl_gr->jlc, "GL_Init");
+	jl_print_function(jl_gr->jl, "GL_Init");
 #if JL_GLRTEX == JL_GLRTEX_EGL
 	// Initialize EGL.
 	jl_gl_init_egl(jl_gr);
@@ -1456,18 +1452,18 @@ static inline void _jl_gl_make_res(jl_gr_t* jl_gr) {
 	// Create shaders and set up attribute/uniform variable communication
 	_jl_gl_init_shaders(jl_gr);
 	//
-	JL_IO_DEBUG(jl_gr->jlc, "making temporary vertex object....");
+	JL_PRINT_DEBUG(jl_gr->jl, "making temporary vertex object....");
 	jl_gr->gl.temp_vo = jl_gl_vo_make(jl_gr, 1);
-	JL_IO_DEBUG(jl_gr->jlc, "making default texc buff!");
+	JL_PRINT_DEBUG(jl_gr->jl, "making default texc buff!");
 	// Default GL Texture Coordinate Buffer
 	jl_gl_buffer_new__(jl_gr, &(jl_gr->gl.default_tc));
 	jl_gl_buffer_set__(jl_gr, jl_gr->gl.default_tc, DEFAULT_TC, 8);
-	JL_IO_DEBUG(jl_gr->jlc, "made temp vo & default tex. c. buff!");
-	jl_io_return(jl_gr->jlc, "GL_Init");
+	JL_PRINT_DEBUG(jl_gr->jl, "made temp vo & default tex. c. buff!");
+	jl_print_return(jl_gr->jl, "GL_Init");
 }
 
 static inline void _jl_gl_vo_make(jl_gr_t* jl_gr, jl_vo_t* vo, u32_t nc) {
-	jl_io_function(jl_gr->jlc, "GL_VO_MAKE");
+	jl_print_function(jl_gr->jl, "GL_VO_MAKE");
 	// How many more vo's will be made.
 	vo->nc = nc;
 	// GL VBO
@@ -1489,7 +1485,7 @@ static inline void _jl_gl_vo_make(jl_gr_t* jl_gr, jl_vo_t* vo, u32_t nc) {
 	// Set the container pre-renderer.
 	vo->cb.x = 0.f, vo->cb.y = 0.f, vo->cb.z = 0.f;
 	vo->cb.w = 1., vo->cb.h = 1., vo->cb.d = 1.;
-	jl_io_return(jl_gr->jlc, "GL_VO_MAKE");
+	jl_print_return(jl_gr->jl, "GL_VO_MAKE");
 }
 
 static void jl_gl_pr_set__(jl_pr_t *pr,f32_t w,f32_t h,u16_t w_px) {
@@ -1512,16 +1508,15 @@ static void jl_gl_pr_set__(jl_pr_t *pr,f32_t w,f32_t h,u16_t w_px) {
 
 /**
  * Create 1 or more empty vertex object/s & return it/them.
- * @param jlc: The library context.
+ * @param jl: The library context.
  * @param count: How many vertex objects to create - default = 1.
  * @returns: A new vertex object with 0 vertices.
 **/
 jl_vo_t *jl_gl_vo_make(jl_gr_t* jl_gr, u32_t count) {
-	jl_vo_t *rtn = NULL;
+	// Allocate space for "rtn"
+	jl_vo_t *rtn = jl_memi(jl_gr->jl, sizeof(jl_vo_t) * count);
 	m_u32_t i;
 
-	// Allocate space in "rtn"
-	jl_me_alloc(jl_gr->jlc, (void**)&rtn, sizeof(jl_vo_t) * count,0);
 	// Make each vertex object.
 	for(i = 0; i < count; i++) _jl_gl_vo_make(jl_gr, &rtn[i], (count-1) - i);
 	// Return the vertex object[s].
@@ -1530,7 +1525,7 @@ jl_vo_t *jl_gl_vo_make(jl_gr_t* jl_gr, u32_t count) {
 
 /**
  * Change the character map for a texture.
- * @param jlc: The library context.
+ * @param jl: The library context.
  * @param pv: The vertext object to change.
  * @param map: The character value to map.
 **/
@@ -1554,7 +1549,7 @@ void jl_gl_vo_txmap(jl_gr_t* jl_gr, jl_vo_t* pv, u8_t map) {
 
 /**
  * Get the Aspect Ratio for the pre-renderer in use.
- * @param jlc: The library context.
+ * @param jl: The library context.
 **/
 double jl_gl_ar(jl_gr_t* jl_gr) {
 	return jl_gr->gl.cp ? jl_gr->gl.cp->ar : jl_gr->dl.aspect;
@@ -1562,7 +1557,7 @@ double jl_gl_ar(jl_gr_t* jl_gr) {
 
 /**
  * Clear the screen with a color
- * @param jlc: The library context.
+ * @param jl: The library context.
  * @param r: The amount of red [ 0 - 255 ]
  * @param g: The amount of green [ 0 - 255 ]
  * @param b: The amount of blue [ 0 - 255 ]
@@ -1578,7 +1573,7 @@ void jl_gl_clear(jl_gr_t* jl_gr, uint8_t r, uint8_t g, uint8_t b, uint8_t a) {
 
 /**
  * Resize a prerenderer.
- * @param jlc: The library context.
+ * @param jl: The library context.
  * @param pr: The pre-renderer to resize.
  * @param w: The display width. [ 0. - 1. ]
  * @param h: The display height. [ 0. - 1. ]
@@ -1606,17 +1601,16 @@ void jl_gl_pr_rsz(jl_gr_t* jl_gr, jl_pr_t *pr, f32_t w, f32_t h, u16_t w_px) {
 
 /**
  * Make a new pre-renderer.
- * @param jlc: The library context.
+ * @param jl: The library context.
  * @param w: The display width. [ 0. - 1. ]
  * @param h: The display height. [ 0. - 1. ]
  * @param w_px: The resolution in pixels along the x axis [ 1- ]
 **/
 jl_pr_t * jl_gl_pr_new(jl_gr_t* jl_gr, f32_t w, f32_t h, u16_t w_px) {
-	jl_pr_t *pr = NULL;
-
-	jl_io_function(jl_gr->jlc, "GL_PR_NEW");
 	// Make the pr structure.
-	jl_me_alloc(jl_gr->jlc, (void**)(&pr), sizeof(jl_pr_t), 0);
+	jl_pr_t *pr = jl_memi(jl_gr->jl, sizeof(jl_pr_t));
+
+	jl_print_function(jl_gr->jl, "GL_PR_NEW");
 	// Set the initial pr structure values - Nothings made yet.
 	pr->tx = 0;
 	#if JL_GLRTEX == JL_GLRTEX_EGL
@@ -1629,25 +1623,24 @@ jl_pr_t * jl_gl_pr_new(jl_gr_t* jl_gr, f32_t w, f32_t h, u16_t w_px) {
 	pr->fb = 0;
 	#endif
 	pr->gl = 0;
-	pr->cv = NULL;
+	// Allocate pr->cv 
+	pr->cv = jl_memi(jl_gr->jl, 4*sizeof(float)*3);
 	// Set width, height and aspect ratio.
 	jl_gl_pr_set__(pr, w, h, w_px);
-	// Allocate pr->cv 
-	jl_me_alloc(jl_gr->jlc, (void**)&pr->cv, 4*sizeof(float)*3, 0);
 	// Make OpenGL Objects
 	jl_gl_buffer_new__(jl_gr, &(pr->gl));
 	_jl_gl_pr_obj_make(jl_gr, pr);
 	// Resize the new pre-renderer.
 	jl_gl_pr_rsz(jl_gr, pr, w, h, w_px);
 	//
-	jl_io_return(jl_gr->jlc, "GL_PR_NEW");
+	jl_print_return(jl_gr->jl, "GL_PR_NEW");
 	// Return the new pre-renderer.
 	return pr;
 }
 
 /**
  * Draw a pre-rendered texture.
- * @param jlc: The library context.
+ * @param jl: The library context.
  * @param pr: The pre-rendered texture.
  * @param vec: The vector of offset/translation.
  * @param scl: The scale factor.
@@ -1664,18 +1657,18 @@ void jl_gl_pr_draw(jl_gr_t* jl_gr, jl_pr_t* pr, jl_vec3_t* vec, jl_vec3_t* scl) 
 		jl_gl_transform_pr_(jl_gr, pr,
 			vec->x, vec->y, vec->z, scl->x, scl->y, scl->z);	
 	}
-	jl_gl_draw_pr_(jl_gr->jlc, pr);
+	jl_gl_draw_pr_(jl_gr->jl, pr);
 }
 
 void jl_gl_pr(jl_gr_t* jl_gr, jl_pr_t * pr, jl_fnct par__redraw) {
 	if(!pr) {
-		jl_io_print(jl_gr->jlc, "Drawing on lost pre-renderer.");
-		jl_sg_kill(jl_gr->jlc);
+		jl_print(jl_gr->jl, "Drawing on lost pre-renderer.");
+		jl_sg_kill(jl_gr->jl);
 	}
 	// Use the vo's pr
 	jl_gl_pr_use_(jl_gr, pr);
 	// Render to the pr.
-	par__redraw(jl_gr->jlc);
+	par__redraw(jl_gr->jl);
 	// Go back to the screen without clearing it.
 	jl_gl_pr_scr(jl_gr);
 }
@@ -1696,8 +1689,8 @@ void jl_gl_init__(jl_gr_t* jl_gr) {
 #ifdef JL_GLTYPE_HAS_GLEW
 	printf(" [JLVM/GLEW] init\n");
 	if(glewInit()!=GLEW_OK) {
-		jl_io_print(jl_gr->jlc, "glew fail!(no sticky)");
-		jl_sg_kill(jl_gr->jlc);
+		jl_print(jl_gr->jl, "glew fail!(no sticky)");
+		jl_sg_kill(jl_gr->jl);
 	}
 #endif
 	jl_gr->gl.cp = NULL;

@@ -16,7 +16,7 @@
  * @returns: The thread ID number.
 **/
 uint8_t jl_thread_new(jl_t *jl, str_t name, SDL_ThreadFunction fn) {
-	jvct_t* jl_ = jl->_jlc;
+	jvct_t* jl_ = jl->_jl;
 	uint8_t i, rtn;
 
 	// Skip main thread ( i = 1 )
@@ -24,14 +24,14 @@ uint8_t jl_thread_new(jl_t *jl, str_t name, SDL_ThreadFunction fn) {
 		// Look for not init'd thread.
 		if(jl_->thread[i].thread == NULL) {
 			// Run thread-specific initalizations
-			jl_io_init_thread__(jl, i);
+			jl_print_init_thread__(jl, i);
 			// Create a thread
 			jl_->thread[i].thread =	SDL_CreateThread(fn, name, jl);
 			jl_->thread[i].thread_id =
 				SDL_GetThreadID(jl_->thread[i].thread);
 			// Check if success
 			if(jl_->thread[i].thread == NULL) {
-				jl_io_print(jl, "SDL_CreateThread failed: %s",
+				jl_print(jl, "SDL_CreateThread failed: %s",
 					SDL_GetError());
 				exit(-1);
 			}else{
@@ -40,7 +40,7 @@ uint8_t jl_thread_new(jl_t *jl, str_t name, SDL_ThreadFunction fn) {
 			}
 		}
 	}
-	JL_IO_DEBUG(jl, "Made thread #%d", rtn);
+	JL_PRINT_DEBUG(jl, "Made thread #%d", rtn);
 	return rtn;
 }
 
@@ -50,7 +50,7 @@ uint8_t jl_thread_new(jl_t *jl, str_t name, SDL_ThreadFunction fn) {
  * @returns: The thread ID number, 0 if main thread.
 **/
 uint8_t jl_thread_current(jl_t *jl) {
-	jvct_t* jl_ = jl->_jlc;
+	jvct_t* jl_ = jl->_jl;
 	SDL_threadID current_thread = SDL_ThreadID();
 	uint8_t i, rtn = 0;
 
@@ -72,7 +72,7 @@ uint8_t jl_thread_current(jl_t *jl) {
  * @returns: Value returned from the thread.
 **/
 int32_t jl_thread_old(jl_t *jl, u8_t threadnum) {
-	jvct_t* jl_ = jl->_jlc;
+	jvct_t* jl_ = jl->_jl;
 	int32_t threadReturnValue = 0;
 
 	SDL_WaitThread(jl_->thread[threadnum].thread, &threadReturnValue);
@@ -87,7 +87,7 @@ int32_t jl_thread_old(jl_t *jl, u8_t threadnum) {
 SDL_mutex* jl_thread_mutex_new(jl_t *jl) {
 	SDL_mutex* mutex = SDL_CreateMutex();
 	if (!mutex) {
-		jl_io_print(jl, "jl_thread_mutex_new: Couldn't create mutex");
+		jl_print(jl, "jl_thread_mutex_new: Couldn't create mutex");
 		exit(-1);
 	}
 	return mutex;
@@ -106,7 +106,7 @@ void jl_thread_mutex_use(jl_t *jl, SDL_mutex* mutex, jl_fnct fn_) {
 		// Give up for other threads
 		SDL_UnlockMutex(mutex);
 	} else {
-		jl_io_print(jl, "jl_thread_mutex_use: Couldn't lock mutex");
+		jl_print(jl, "jl_thread_mutex_use: Couldn't lock mutex");
 		exit(-1);
 	}
 }
@@ -127,11 +127,11 @@ void jl_thread_mutex_cpy(jl_t *jl, SDL_mutex* mutex, void* src, void* dst,
 {
 	if (SDL_LockMutex(mutex) == 0) {
 		// Copy data.
-		jl_me_copyto(src, dst, size);
+		jl_mem_copyto(src, dst, size);
 		// Give up for other threads
 		SDL_UnlockMutex(mutex);
 	} else {
-		jl_io_print(jl, "jl_thread_mutex_use: Couldn't lock mutex");
+		jl_print(jl, "jl_thread_mutex_use: Couldn't lock mutex");
 		exit(-1);
 	}
 }
@@ -152,16 +152,14 @@ void jl_thread_mutex_old(jl_t* jl, SDL_mutex* mutex) {
  * @returns: The thread communicator.
 **/
 jl_comm_t* jl_thread_comm_make(jl_t* jl, u32_t size) {
-	jl_comm_t* rtn = NULL;
+	jl_comm_t* rtn = jl_memi(jl, sizeof(jl_comm_t));
 	m_u8_t i;
 
-	jl_me_alloc(jl, (void**)&rtn, sizeof(jl_comm_t), 0);
 	rtn->lock = SDL_CreateMutex();
 	rtn->size = size;
 	rtn->pnum = 0;
 	for(i = 0; i < 16; i++) {
-		rtn->data[i] = NULL;
-		jl_me_alloc(jl, (void**)(&rtn->data[i]), size, 0);
+		rtn->data[i] = jl_memi(jl, size);
 	}
 	return rtn;
 }
@@ -181,19 +179,19 @@ void jl_thread_comm_send(jl_t* jl, jl_comm_t* comm, const void* src) {
 	uint8_t stall = 0;
 	SDL_LockMutex(comm->lock);
 	// Copy to next packet location
-	jl_me_copyto(src, comm->data[comm->pnum], comm->size);
+	jl_mem_copyto(src, comm->data[comm->pnum], comm->size);
 	// Advance number of packets.
 	comm->pnum++;
 	// If maxed out on packets, then stall.
 	if(comm->pnum == 16) {
-		JL_IO_DEBUG(jl,"WARNING: \"jl_thread_comm_send\" Stalling....");
+		JL_PRINT_DEBUG(jl,"WARNING: \"jl_thread_comm_send\" Stalling....");
 		stall = 1;
 	}
 	SDL_UnlockMutex(comm->lock);
 	// If 1 second passed, and still stalling, then quit.
 	while(stall) {
 		if(stall > 10) {
-			jl_io_print(jl, "Other thread wouldn't respond!");
+			jl_print(jl, "Other thread wouldn't respond!");
 			exit(-1);
 		}
 		SDL_LockMutex(comm->lock);
@@ -232,9 +230,9 @@ void jl_thread_comm_kill(jl_t* jl, jl_comm_t* comm) {
 	// Free the lock.
 	SDL_DestroyMutex(comm->lock);
 	// Free 16 packets.
-	for(i = 0; i < 16; i++) jl_me_alloc(jl, (void**)(&comm->data[i]), 0, 0);
+	for(i = 0; i < 16; i++) jl_mem(jl, comm->data[i], 0);
 	// Free main data structure.
-	jl_me_alloc(jl, (void**)(&comm), 0, 0);
+	jl_mem(jl, comm, 0);
 }
 
 //

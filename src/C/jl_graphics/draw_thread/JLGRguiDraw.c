@@ -34,8 +34,8 @@ static inline void jl_gr_taskbar_shadow__(jl_gr_t* jl_gr, jl_taskbar_t* ctx) {
 //
 
 // Run whenever a redraw is needed for an icon.
-void jl_gr_taskbar_draw_(jl_t* jlc, jl_sprd_t* sprd) {
-	jl_gr_t* jl_gr = jlc->jl_gr;
+void jl_gr_taskbar_draw_(jl_t* jl, jl_sprd_t* sprd) {
+	jl_gr_t* jl_gr = jl->jl_gr;
 	jl_taskbar_t* ctx = jl_gr->gr.taskbar->data.ctx;
 
 	// If needed, draw shadow.
@@ -49,11 +49,11 @@ void jl_gr_taskbar_draw_(jl_t* jlc, jl_sprd_t* sprd) {
 }
 
 // Run when mouse needs to be redrawn.
-void jl_gr_mouse_draw_(jl_t* jlc, jl_sprd_t* sprd) {
+void jl_gr_mouse_draw_(jl_t* jl, jl_sprd_t* sprd) {
 	// Draw mouse, if using a computer.
 #if JL_PLAT == JL_PLAT_COMPUTER //if computer
-	jl_gr_t* jl_gr = jlc->jl_gr;
-	jl_sprite_t* mouse = jl_gr->jlc->mouse;
+	jl_gr_t* jl_gr = jl->jl_gr;
+	jl_sprite_t* mouse = jl_gr->jl->mouse;
 	jl_vo_t* mouse_vo = mouse->data.ctx;
 	jl_rect_t rc = { 0.f, 0.f, 1.f, 1.f };
 
@@ -65,10 +65,10 @@ void jl_gr_mouse_draw_(jl_t* jlc, jl_sprd_t* sprd) {
 
 void jlgr_gui_draw_(jl_t* jl) {
 	jl_gr_t* jl_gr = jl->jl_gr;
-	jvct_t* _jlc = jl->_jlc;
+	jvct_t* _jl = jl->_jl;
 
 	// Draw taskbar, if needed
-	if(!_jlc->fl.inloop) {
+	if(!_jl->fl.inloop) {
 		jl_taskbar_t *ctx = jl_gr->gr.taskbar->data.ctx;
 
 		if(ctx->redraw) {

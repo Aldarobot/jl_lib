@@ -52,15 +52,15 @@ static void _jl_gr_textbox_lt(jl_t* jl);
 		}
 	}
 	
-	static void jl_gr_sprite_draw_to_pr__(jl_t *jlc) {
-		jl_sprite_t *spr = jl_me_tmp_ptr(jlc, 0, NULL);
+	static void jl_gr_sprite_draw_to_pr__(jl_t *jl) {
+		jl_sprite_t *spr = jl_me_tmp_ptr(jl, 0, NULL);
 
-		spr->draw(jlc, &(spr->data));
+		spr->draw(jl, &(spr->data));
 	}
 
 	static void _jl_gr_popup_loop(jl_t *jl) {
-//		jl_gr_draw_rect(jlc, .1, .1, .8, .2, 127, 127, 255, 255);
-//		jl_gr_draw_rect(jlc, .1, .3, .8, .8, 64, 127, 127, 255);
+//		jl_gr_draw_rect(jl, .1, .1, .8, .2, 127, 127, 255, 255);
+//		jl_gr_draw_rect(jl, .1, .3, .8, .8, 64, 127, 127, 255);
 	}
 
 	static void _jl_gr_textbox_lt(jl_t* jl) {
@@ -106,7 +106,7 @@ static void _jl_gr_textbox_lt(jl_t* jl);
 	}
 
 	static void jl_gr_menu_flip_press__(jl_gr_t* jl_gr) {
-		if(jl_gr->jlc->ctrl.h != 1) return;
+		if(jl_gr->jl->ctrl.h != 1) return;
 		_jl_gr_flip_scrn(jl_gr);
 	}
 	
@@ -122,17 +122,17 @@ static void _jl_gr_textbox_lt(jl_t* jl);
 		jl_gr_draw_text(jl_gr, jl_gr->dl.windowTitle[0],
 			(jl_vec3_t) { 1. - (jl_gl_ar(jl_gr) * (ctx->cursor+1.)),
 				0., 0. },
-			(jl_font_t) { 0, JL_IMGI_ICON, 0, jl_gr->jlc->fontcolor, 
+			(jl_font_t) { 0, JL_IMGI_ICON, 0, jl_gr->jl->fontcolor, 
 				text_size});
 		jl_gr_draw_text(jl_gr, jl_gr->dl.windowTitle[1],
 			(jl_vec3_t) { 1. - (jl_gl_ar(jl_gr) * (ctx->cursor+1.)),
 				text_size, 0. },
-			(jl_font_t) { 0, JL_IMGI_ICON, 0, jl_gr->jlc->fontcolor, 
+			(jl_font_t) { 0, JL_IMGI_ICON, 0, jl_gr->jl->fontcolor, 
 				text_size});
 	}
 
 	static void _jl_gr_menu_slow_draw(jl_gr_t* jl_gr) {
-		jl_t* jlc = jl_gr->jlc;
+		jl_t* jl = jl_gr->jl;
 		m_u8_t color[] = { 255, 255, 255, 255 };
 
 		// Draw the icon based on whether on time or not.
@@ -141,7 +141,7 @@ static void _jl_gr_textbox_lt(jl_t* jl);
 		// If not on time report the seconds that passed.
 		if(!jl_gr->sg.on_time)
 			jl_gr_taskbar_text__(jl_gr, color,
-				jl_me_format(jlc, "%d fps", jlc->time.fps));
+				jl_me_format(jl, "%d fps", jl->time.fps));
 	}
 
 	static void _jl_gr_menu_slow_loop(jl_gr_t* jl_gr) {
@@ -160,7 +160,7 @@ static void _jl_gr_textbox_lt(jl_t* jl);
 	/**
 	 * Prepare to draw an image that takes up the entire pre-renderer or
 	 * screen.
-	 * @param jlc: The library context.
+	 * @param jl: The library context.
   	 * @param g: the image group that the image pointed to by 'i' is in.
 	 * @param i:  the ID of the image.
 	 * @param c: is 0 unless you want to use the image as
@@ -177,7 +177,7 @@ static void _jl_gr_textbox_lt(jl_t* jl);
 
 	/**
 	 * Draw the image prepared with jl_gr_fill_image_set().
-	 * @param jlc: The library context.
+	 * @param jl: The library context.
 	**/
 	void jl_gr_fill_image_draw(jl_gr_t* jl_gr) {
 		jl_gr_draw_vo(jl_gr, jl_gr->gr.vos.whole_screen, NULL);
@@ -185,7 +185,7 @@ static void _jl_gr_textbox_lt(jl_t* jl);
 
 	/**
 	 * Delete a pr image for a vertex object.
-	 * @param jlc: The library context.
+	 * @param jl: The library context.
 	 * @param pv: The pr's vertex object.
 	**/
 	void jl_gr_pr_old(jl_gr_t* jl_gr, jl_vo_t* pv) {
@@ -195,33 +195,33 @@ static void _jl_gr_textbox_lt(jl_t* jl);
 	/**
 	 * Create or replace a pr image for a vertex object based on
 	 * the bounding box.
-	 * @param jlc: The library context.
+	 * @param jl: The library context.
 	 * @param pv: The vertex object to create/replace a pr for.
 	 * @param xres: The resolution across the x axis for the pre-renderer.
 	**/
 	void jl_gr_pr_new(jl_gr_t* jl_gr, jl_vo_t* pv, u16_t xres) {
 		uint8_t isi = jl_gl_pr_isi(jl_gr, pv);
 		if(isi == 2) {
-			jl_io_print(jl_gr->jlc, "jl_gr_pr_new: VO is NULL");
-			jl_sg_kill(jl_gr->jlc);
+			jl_print(jl_gr->jl, "jl_gr_pr_new: VO is NULL");
+			jl_sg_kill(jl_gr->jl);
 		}
 		// If prender is already initialized, resize, otherwise init.
 		if(isi) jl_gl_pr_rsz(jl_gr, pv->pr, pv->cb.w, pv->cb.h, xres);
 		else pv->pr = jl_gl_pr_new(jl_gr, pv->cb.w, pv->cb.h, xres);
 		// Check if pre-renderer is initialized.
 		if(!pv->pr) {
-			jl_io_print(jl_gr->jlc, "Prerender Failed Allocation.");
-			jl_sg_kill(jl_gr->jlc);
+			jl_print(jl_gr->jl, "Prerender Failed Allocation.");
+			jl_sg_kill(jl_gr->jl);
 		}
 		if(!jl_gl_pr_isi(jl_gr, pv)) {
-			jl_io_print(jl_gr->jlc, "jl_gr_pr_new: didn't make!");
-			jl_sg_kill(jl_gr->jlc);
+			jl_print(jl_gr->jl, "jl_gr_pr_new: didn't make!");
+			jl_sg_kill(jl_gr->jl);
 		}
 	}
 
 	/**
 	 * Render an image onto a vertex object's pr.
-	 * @param jlc: The library context.
+	 * @param jl: The library context.
 	 * @param vo: The vertex object that contains the pre-renderer.
 	 * @param par__redraw: The redraw functions for the pre-renderer.
 	**/
@@ -231,7 +231,7 @@ static void _jl_gr_textbox_lt(jl_t* jl);
 
 	/**
 	 * Draw a vertex object's pre-rendered texture.
-  	 * @param jlc: The library context.
+  	 * @param jl: The library context.
   	 * @param pv: The vertex object to get the pre-rendered texture from.
   	 * @param vec: The vector of offset/translation.
 	**/
@@ -242,7 +242,7 @@ static void _jl_gr_textbox_lt(jl_t* jl);
 
 	/**
 	 * Convert a color.
-	 * @param jlc: The library context.
+	 * @param jl: The library context.
 	 * @param rgba: The color to convert ( Not freed - Reusable ).
 	 * @param vc: How many vertices to acount for.
 	 * @param gradient: 1 if "rgba" is a gradient array, 0 if solid color.
@@ -257,7 +257,7 @@ static void _jl_gr_textbox_lt(jl_t* jl);
 
 	/**
 	 * Change the coloring scheme for a vertex object.
- 	 * @param jlc: The library context.
+ 	 * @param jl: The library context.
  	 * @param pv: The Vertex Object
  	 * @param cc: The Converted Color Object to use on the Vertex Object.
  	 *	The library takes care of freeing this variable.
@@ -268,7 +268,7 @@ static void _jl_gr_textbox_lt(jl_t* jl);
 
 	/**
 	 * Draw a vertex object with offset by translation.
-  	 * @param jlc: The library context.
+  	 * @param jl: The library context.
   	 * @param pv: The vertex object to draw.
   	 * @param vec: The vector of offset/translation.
 	**/
@@ -314,7 +314,7 @@ static void _jl_gr_textbox_lt(jl_t* jl);
 
 	/**
 	 * Set a vertex object to a rectangle.
- 	 * @param jlc: The library context.
+ 	 * @param jl: The library context.
  	 * @param pv: The vertex object
 	 * @param rc: The rectangle coordinates.
 	 * @param colors: The color(s) to use - [ R, G, B, A ]
@@ -343,7 +343,7 @@ static void _jl_gr_textbox_lt(jl_t* jl);
 	/**
 	 * Set a vertex object to an Image.
 	 *
-	 * @param jlc: The library context
+	 * @param jl: The library context
   	 * @param pv: The vertex object
  	 * @param rc: the rectangle to draw the image in.
    	 * @param g: the image group that the image pointed to by 'i' is in.
@@ -391,7 +391,7 @@ static void _jl_gr_textbox_lt(jl_t* jl);
 
 	/**
 	 * Free a vertex object.
-	 * @param jlc: The library context
+	 * @param jl: The library context
 	 * @param pv: The vertex object to free
 	**/
 	void jl_gr_vo_old(jl_gr_t* jl_gr, jl_vo_t* pv) {
@@ -402,14 +402,14 @@ static void _jl_gr_textbox_lt(jl_t* jl);
 	static inline void jl_gr_sp_redraw_tex__(jl_gr_t* jl_gr,
 		jl_sprite_t *spr)
 	{
-		jl_me_tmp_ptr(jl_gr->jlc, 0, spr);
+		jl_me_tmp_ptr(jl_gr->jl, 0, spr);
 		jl_gl_pr(jl_gr, spr->pr, jl_gr_sprite_draw_to_pr__);
 	}
 
 	/**
 	 * Run a sprite's draw routine to draw on it's pre-rendered texture.
 	 *
-	 * @param jlc: The library context
+	 * @param jl: The library context
 	 * @param spr: Which sprite to draw.
 	**/
 	void jl_gr_sp_rdr(jl_gr_t* jl_gr, jl_sprite_t *spr) {
@@ -439,38 +439,38 @@ static void _jl_gr_textbox_lt(jl_t* jl);
 
 	/**
 	 * Run a sprite's loop.
-	 * @param jlc: The library context.
+	 * @param jl: The library context.
 	 * @param spr: Which sprite to loop.
 	**/
 	void jl_gr_sp_rnl(jl_gr_t* jl_gr, jl_sprite_t *spr) {
-		jl_io_function(jl_gr->jlc, "Sprite/Loop");
-		spr->loop(jl_gr->jlc, &(spr->data));
-		jl_io_return(jl_gr->jlc, "Sprite/Loop");
+		jl_print_function(jl_gr->jl, "Sprite/Loop");
+		spr->loop(jl_gr->jl, &(spr->data));
+		jl_print_return(jl_gr->jl, "Sprite/Loop");
 	}
 
 	/**
 	 * Render a sprite's pre-rendered texture onto the screen.
 	 *
-	 * @param jlc: The library context.
+	 * @param jl: The library context.
 	 * @param spr: The sprite.
 	**/
 	void jl_gr_sp_drw(jl_gr_t* jl_gr, jl_sprite_t *spr) {
 		jl_pr_t *pr = spr->pr;
 
 		if(!pr) {
-			jl_io_print(jl_gr->jlc, "jl_gr_sp_drw: not init'd!");
-			jl_sg_kill(jl_gr->jlc);
+			jl_print(jl_gr->jl, "jl_gr_sp_drw: not init'd!");
+			jl_sg_kill(jl_gr->jl);
 		}
 		jl_gl_transform_pr_(jl_gr, pr, spr->data.tr.x,
 			spr->data.tr.y, spr->data.tr.z, 1., 1., 1.);
 
-		jl_gl_draw_pr_(jl_gr->jlc, pr);
+		jl_gl_draw_pr_(jl_gr->jl, pr);
 	}
 
 	/**
 	 * Create a new sprite.
 	 *
-	 * @param jlc: The library context.
+	 * @param jl: The library context.
 	 * @param rc: The rectangle bounding box & pr size.
  	 * @param a: the transparency each pixel is multiplied by; 255 is
 	 *	solid and 0 is totally invisble.
@@ -509,7 +509,7 @@ static void _jl_gr_textbox_lt(jl_t* jl);
 	/**
 	 * test if 2 sprites collide.
 	 *
-	 * @param 'jlc': library context
+	 * @param 'jl': library context
 	 * @param 'sprite1': sprite 1
 	 * @param 'sprite2': sprite 2
 	 * @return 0: if the sprites don't collide in their bounding boxes.
@@ -532,7 +532,7 @@ static void _jl_gr_textbox_lt(jl_t* jl);
 
 	/**
 	 * Draw text on the current pre-renderer.
-	 * @param 'jlc': library context
+	 * @param 'jl': library context
 	 * @param 'str': the text to draw
 	 * @param 'loc': the position to draw it at
 	 * @param 'f': the font to use.
@@ -563,7 +563,7 @@ static void _jl_gr_textbox_lt(jl_t* jl);
 
 	/**
 	 * draw an integer on the screen
- 	 * @param 'jlc': library context
+ 	 * @param 'jl': library context
 	 * @param 'num': the number to draw
 	 * @param 'loc': the position to draw it at
 	 * @param 'f': the font to use.
@@ -576,7 +576,7 @@ static void _jl_gr_textbox_lt(jl_t* jl);
 
 	/**
 	 * draw a floating point on the screen
- 	 * @param 'jlc': library context
+ 	 * @param 'jl': library context
 	 * @param 'num': the number to draw
 	 * @param 'dec': the number of places after the decimal to include.
 	 * @param 'loc': the position to draw it at
@@ -595,7 +595,7 @@ static void _jl_gr_textbox_lt(jl_t* jl);
 
 	/**
 	 * Draw text within the boundary of a sprite
-	 * @param 'jlc': library context
+	 * @param 'jl': library context
 	 * @param 'spr': the boundary sprite
 	 * @param 'txt': the text to draw
 	**/
@@ -603,13 +603,13 @@ static void _jl_gr_textbox_lt(jl_t* jl);
 		float fontsize = .9 / strlen(txt);
 		jl_gr_draw_text(jl_gr, txt,
 			(jl_vec3_t) { .05,.5 * (jl_gl_ar(jl_gr) - fontsize),0. },
-			(jl_font_t) { 0, JL_IMGI_ICON, 0, jl_gr->jlc->fontcolor, 
+			(jl_font_t) { 0, JL_IMGI_ICON, 0, jl_gr->jl->fontcolor, 
 				fontsize});
 	}
 
 	/**
 	 * Draw a sprite, then draw text within the boundary of a sprite
- 	 * @param 'jlc': library context
+ 	 * @param 'jl': library context
 	 * @param 'spr': the boundary sprite
 	 * @param 'txt': the text to draw
 	**/
@@ -621,7 +621,7 @@ static void _jl_gr_textbox_lt(jl_t* jl);
 
 	/**
 	 * Draw centered text across screen
-  	 * @param 'jlc': library context.
+  	 * @param 'jl': library context.
 	 * @param 'str': the text to draw
 	 * @param 'yy': y coordinate to draw it at
 	 * @param 'color': 255 = opaque, 0 = invisible
@@ -650,40 +650,40 @@ static void _jl_gr_textbox_lt(jl_t* jl);
 	}
 
 	//TODO: MOVE
-	void jl_gr_draw_msge__(jl_t* jlc) {
-		jl_gr_t* jl_gr = jlc->jl_gr;
+	void jl_gr_draw_msge__(jl_t* jl) {
+		jl_gr_t* jl_gr = jl->jl_gr;
 
-		jl_io_function(jl_gr->jlc, "JLGR_MSGE2");
+		jl_print_function(jl_gr->jl, "JLGR_MSGE2");
 		jl_gl_pr_scr(jl_gr);
 		jl_gr_draw_bg(jl_gr, jl_gr->gr.msge.g, jl_gr->gr.msge.i,
 			jl_gr->gr.msge.c);
 		if(jl_gr->gr.msge.message)
 			jl_gr_draw_ctxt(jl_gr, jl_gr->gr.msge.message, 9./32.,
-				jlc->fontcolor);
-		jl_io_return(jl_gr->jlc, "JLGR_MSGE2");
+				jl->fontcolor);
+		jl_print_return(jl_gr->jl, "JLGR_MSGE2");
 	}
 
 	/**
 	 * Print message on the screen.
-   	 * @param 'jlc': library context.
+   	 * @param 'jl': library context.
 	 * @param 'message': the message 
 	 */
 	void jl_gr_draw_msge_(jl_gr_t* jl_gr,u16_t g,u16_t i,u8_t c,
 		m_str_t message)
 	{
-/*		jl_io_function(jl_gr->jlc, "JLGR_MSGE");
-		JL_IO_DEBUG(jl_gr->jlc, "Printing %p", message);
+/*		jl_print_function(jl_gr->jl, "JLGR_MSGE");
+		JL_PRINT_DEBUG(jl_gr->jl, "Printing %p", message);
 
-		jvct_t* _jlc = jl_gr->jlc->_jlc;
-		if(_jlc->has.quickloop) {
-			if(jl_sdl_seconds_past__(jl_gr->jlc) <
+		jvct_t* _jl = jl_gr->jl->_jl;
+		if(_jl->has.quickloop) {
+			if(jl_sdl_seconds_past__(jl_gr->jl) <
 				(1.f/(float)JL_FPS))
 			{
-				jl_io_return(jl_gr->jlc, "JLGR_MSGE");
+				jl_print_return(jl_gr->jl, "JLGR_MSGE");
 				return;
 			}else{
-				jl_gr->jlc->time.prev_tick =
-					jl_gr->jlc->time.this_tick;
+				jl_gr->jl->time.prev_tick =
+					jl_gr->jl->time.this_tick;
 			}
 		}
 		jl_gr->gr.msge.message = message;
@@ -694,13 +694,13 @@ static void _jl_gr_textbox_lt(jl_t* jl);
 		jl_fnct upscreen = jl_gr->sg.redraw.upper;
 		jl_fnct downscreen  = jl_gr->sg.redraw.lower;
 		jl_fnct onescreen = jl_gr->sg.redraw.single;
-		u8_t inloop = _jlc->fl.inloop;
+		u8_t inloop = _jl->fl.inloop;
 		// Set Graphical loops.
 		jl_gr_loop_set(jl_gr, jl_gr_draw_msge__, jl_dont,
 			jl_gr_draw_msge__);
-		_jlc->fl.inloop = 1;
+		_jl->fl.inloop = 1;
 		// Set mode to EXIT.
-		JL_IO_DEBUG(jl_gr->jlc, "Run Minimal Graphical Loop.");
+		JL_PRINT_DEBUG(jl_gr->jl, "Run Minimal Graphical Loop.");
 		// Update events ( minimal )
 		jl_ct_quickloop_(jl_gr);
 		// Deselect any pre-renderer.
@@ -710,21 +710,21 @@ static void _jl_gr_textbox_lt(jl_t* jl);
 		// Update Screen.
 		jl_dl_loop__(jl_gr);
 		//
-		JL_IO_DEBUG(jl_gr->jlc, "Set old values");
+		JL_PRINT_DEBUG(jl_gr->jl, "Set old values");
 		jl_gr_loop_set(jl_gr, onescreen, upscreen, downscreen);
-		_jlc->fl.inloop = inloop;
-		jl_io_return(jl_gr->jlc, "JLGR_MSGE");*/
+		_jl->fl.inloop = inloop;
+		jl_print_return(jl_gr->jl, "JLGR_MSGE");*/
 	}
 
 	/**
 	 * Print a message on the screen and then terminate the program
- 	 * @param 'jlc': library context
+ 	 * @param 'jl': library context
  	 * @param 'message': the message 
 	 */
 	void jl_gr_term_msge(jl_gr_t* jl_gr, char *message) {
 		jl_gr_draw_msge(jl_gr, 0, JL_IMGI_ICON, 1, message);
-		jl_io_print(jl_gr->jlc, message);
-		jl_sg_kill(jl_gr->jlc);
+		jl_print(jl_gr->jl, message);
+		jl_sg_kill(jl_gr->jl);
 	}
 
 	/**
@@ -736,9 +736,9 @@ static void _jl_gr_textbox_lt(jl_t* jl);
 		jl_gr->gr.popup.window_name = name;
 		jl_gr->gr.popup.message = message;
 		jl_gr->gr.popup.btns = btns;
-		jl_sg_mode_override(jl_gr->jlc, JL_SG_WM_EXIT, jl_sg_exit);
-		jl_sg_mode_override(jl_gr->jlc, JL_SG_WM_LOOP, _jl_gr_popup_loop);
-		jl_sg_mode_override(jl_gr->jlc, JL_SG_WM_INIT, jl_dont);
+		jl_sg_mode_override(jl_gr->jl, JL_MODE_EXIT, jl_sg_exit);
+		jl_sg_mode_override(jl_gr->jl, JL_MODE_LOOP, _jl_gr_popup_loop);
+		jl_sg_mode_override(jl_gr->jl, JL_MODE_INIT, jl_dont);
 	}
 
 	/**
@@ -752,7 +752,7 @@ static void _jl_gr_textbox_lt(jl_t* jl);
 	/**
 	 * Run the Slide Button loop. ( activated when pressed, moved when
 	 *  hovered over. ) - And Draw Slide Button.
-	 * @param 'jlc': the libary context
+	 * @param 'jl': the libary context
  	 * @param 'spr': the Slide Button Sprite.
  	 * @param 'defaultx': the default x position of the button.
  	 * @param 'slidex': how much the x should change when hovered above.
@@ -762,7 +762,7 @@ static void _jl_gr_textbox_lt(jl_t* jl);
 		float defaultx, float slidex, jl_fnct prun)
 	{
 		spr->data.tr.x = defaultx;
-		if(jl_gr_sprite_collide(jl_gr, jl_gr->jlc->mouse, spr)) {
+		if(jl_gr_sprite_collide(jl_gr, jl_gr->jl->mouse, spr)) {
 			jl_ct_run_event(jl_gr, JL_CT_PRESS, prun, jl_dont);
 			spr->data.tr.x = defaultx + slidex;
 		}
@@ -771,7 +771,7 @@ static void _jl_gr_textbox_lt(jl_t* jl);
 
 	/**
 	 * Draw a glow button, and activate if it is pressed.
-	 * @param 'jlc': the libary context
+	 * @param 'jl': the libary context
  	 * @param 'spr': the sprite to draw
  	 * @param 'txt': the text to draw on the button.
  	 * @param 'prun': the function to run when pressed.
@@ -781,7 +781,7 @@ static void _jl_gr_textbox_lt(jl_t* jl);
 	{
 		jl_gr_sp_rdr(jl_gr, spr);
 		jl_gr_sp_drw(jl_gr, spr);
-		if(jl_gr_sprite_collide(jl_gr, jl_gr->jlc->mouse, spr)) {
+		if(jl_gr_sprite_collide(jl_gr, jl_gr->jl->mouse, spr)) {
 			jl_rect_t rc = { spr->data.cb.x, spr->data.cb.y,
 				spr->data.cb.w, spr->data.cb.h };
 			uint8_t glow_color[] = { 255, 255, 255, 64 };
@@ -795,7 +795,7 @@ static void _jl_gr_textbox_lt(jl_t* jl);
 				(jl_vec3_t)
 					{0., jl_gl_ar(jl_gr) - .0625, 0.},
 				(jl_font_t) { 0, JL_IMGI_ICON, 0,
-					jl_gr->jlc->fontcolor, .05 });
+					jl_gr->jl->fontcolor, .05 });
 			// Run if press
 			jl_ct_run_event(jl_gr,JL_CT_PRESS,prun,jl_dont);
 		}
@@ -817,13 +817,13 @@ static void _jl_gr_textbox_lt(jl_t* jl);
 			if(bytetoinsert == '\b') {
 				if((*string)->curs == 0) return 0;
 				(*string)->curs--;
-				jl_me_strt_delete_byte(jl_gr->jlc, *string);
+				jl_me_strt_delete_byte(jl_gr->jl, *string);
 			}else if(bytetoinsert == '\02') {
-				jl_me_strt_delete_byte(jl_gr->jlc, *string);
+				jl_me_strt_delete_byte(jl_gr->jl, *string);
 			}else if(bytetoinsert == '\n') {
 				return 1;
 			}else{
-				jl_me_strt_insert_byte(jl_gr->jlc, *string,
+				jl_me_strt_insert_byte(jl_gr->jl, *string,
 					 bytetoinsert);
 			}
 //			printf("inserting %1s\n", &bytetoinsert);
@@ -832,11 +832,11 @@ static void _jl_gr_textbox_lt(jl_t* jl);
 			jl_dont);
 		jl_ct_run_event(jl_gr,JL_CT_MAINRT,_jl_gr_textbox_rt,
 			jl_dont);
-//		jl_gr_draw_image(jlc, 0, 0, x, y, w, h, ' ', 255);
+//		jl_gr_draw_image(jl, 0, 0, x, y, w, h, ' ', 255);
 		jl_gr_draw_text(jl_gr, (char*)((*string)->data),
 			(jl_vec3_t) {x, y, 0.},
-			(jl_font_t) {0,JL_IMGI_ICON,0,jl_gr->jlc->fontcolor,h});
-//		jl_gr_draw_image(jlc, 0, 0,
+			(jl_font_t) {0,JL_IMGI_ICON,0,jl_gr->jl->fontcolor,h});
+//		jl_gr_draw_image(jl, 0, 0,
 //			x + (h*((float)(*string)->curs-.5)), y, h, h, 252, 255);
 		return 0;
 	}
@@ -844,7 +844,7 @@ static void _jl_gr_textbox_lt(jl_t* jl);
 	/**
 	 * Add an icon to the menubar
 	 *
-	 * @param jlc: the libary context
+	 * @param jl: the libary context
 	 * @param fno: the function to run when the icon isn't pressed.
 	 * @param fnc: the function to run when the icon is pressed.
 	 * @param rdr: the function to run when redraw is called.
@@ -865,7 +865,7 @@ static void _jl_gr_textbox_lt(jl_t* jl);
 
 	/**
 	 * Add the flip screen icon to the menubar.
-	 * @param jlc: the libary context
+	 * @param jl: the libary context
 	**/
 	void jl_gr_addicon_flip(jl_gr_t* jl_gr) {
 		jl_gr_addicon(jl_gr, jl_gr_dont, jl_gr_menu_flip_press__,
@@ -874,7 +874,7 @@ static void _jl_gr_textbox_lt(jl_t* jl);
 
 	/**
 	 * Add slowness detector to the menubar.
-	 * @param jlc: the libary context
+	 * @param jl: the libary context
 	**/
 	void jl_gr_addicon_slow(jl_gr_t* jl_gr) {
 		jl_gr_addicon(jl_gr, _jl_gr_menu_slow_loop, jl_gr_dont,
@@ -883,7 +883,7 @@ static void _jl_gr_textbox_lt(jl_t* jl);
 
 	/**
 	 * Add program title to the menubar.
-	 * @param jlc: the libary context
+	 * @param jl: the libary context
 	**/
 	void jl_gr_addicon_name(jl_gr_t* jl_gr) {
 		int i;
@@ -915,49 +915,49 @@ static void _jl_gr_textbox_lt(jl_t* jl);
 					GMessage[jl_gr->sg.cscreen],
 					0, color);
 			}
-			timeTilMessageVanish-=jl_gr->jlc->time.psec;
+			timeTilMessageVanish-=jl_gr->jl->time.psec;
 		}
 	}
 
 	void _jl_gr_loopa(jl_gr_t* jl_gr) {
-		jvct_t* _jlc = jl_gr->jlc->_jlc;
+		jvct_t* _jl = jl_gr->jl->_jl;
 
-		jl_io_function(jl_gr->jlc, "GR_LP");
+		jl_print_function(jl_gr->jl, "GR_LP");
 		// Menu Bar
-		if(!_jlc->fl.inloop) jl_gr->gr.menuoverlay(jl_gr->jlc, NULL);
+		if(!_jl->fl.inloop) jl_gr->gr.menuoverlay(jl_gr->jl, NULL);
 		// Update mouse
-		if(jl_gr->jlc->mouse) jl_gr_sp_rnl(jl_gr, jl_gr->jlc->mouse);
+		if(jl_gr->jl->mouse) jl_gr_sp_rnl(jl_gr, jl_gr->jl->mouse);
 		// Update messages.
 		_jl_gr_loopb(jl_gr);
-		jl_io_return(jl_gr->jlc, "GR_LP");
+		jl_print_return(jl_gr->jl, "GR_LP");
 		// Draw mouse and taskbar.
-		jlgr_gui_draw_(jl_gr->jlc);
+		jlgr_gui_draw_(jl_gr->jl);
 	}
 	
 	void jl_gr_init__(jl_gr_t* jl_gr) {
 		_jl_gr_init_vos(jl_gr);
-		JL_IO_DEBUG(jl_gr->jlc, "Draw Loading Screen");
+		JL_PRINT_DEBUG(jl_gr->jl, "Draw Loading Screen");
 		jl_gr_draw_msge(jl_gr, 0, 0, 0, 0);
 		// Create Font
-		jl_gr->jlc->fontcolor[0] = 0;
-		jl_gr->jlc->fontcolor[1] = 0;
-		jl_gr->jlc->fontcolor[2] = 0;
-		jl_gr->jlc->fontcolor[3] = 255;
-		jl_gr->jlc->font = (jl_font_t)
-			{ 0, JL_IMGI_FONT, 0, jl_gr->jlc->fontcolor, .04 };
-		JL_IO_DEBUG(jl_gr->jlc, "Loading 1 image");
+		jl_gr->jl->fontcolor[0] = 0;
+		jl_gr->jl->fontcolor[1] = 0;
+		jl_gr->jl->fontcolor[2] = 0;
+		jl_gr->jl->fontcolor[3] = 255;
+		jl_gr->jl->font = (jl_font_t)
+			{ 0, JL_IMGI_FONT, 0, jl_gr->jl->fontcolor, .04 };
+		JL_PRINT_DEBUG(jl_gr->jl, "Loading 1 image");
 		jl_sg_add_some_imgs_(jl_gr, 1);
 		//
-		JL_IO_DEBUG(jl_gr->jlc, "First font use try");
+		JL_PRINT_DEBUG(jl_gr->jl, "First font use try");
 		jl_gr_draw_msge(jl_gr,0,0,0,"LOADING JL_LIB GRAPHICS...");
-		JL_IO_DEBUG(jl_gr->jlc, "First font use succeed");
+		JL_PRINT_DEBUG(jl_gr->jl, "First font use succeed");
 		// Load the other images.
-		JL_IO_DEBUG(jl_gr->jlc, "Loading 2 image");
+		JL_PRINT_DEBUG(jl_gr->jl, "Loading 2 image");
 		jl_sg_add_some_imgs_(jl_gr, 2);
 		jl_gr_draw_msge(jl_gr, 0, 0, 0, "LOADED JL_LIB GRAPHICS!");
 		// Draw message on the screen
 		jl_gr_draw_msge(jl_gr, 0, 0, 0, "LOADING JLLIB....");
-		JL_IO_DEBUG(jl_gr->jlc, "started up display %dx%d",
+		JL_PRINT_DEBUG(jl_gr->jl, "started up display %dx%d",
 			jl_gr->dl.full_w, jl_gr->dl.full_h);
 
 	}
@@ -965,10 +965,10 @@ static void _jl_gr_textbox_lt(jl_t* jl);
 /**      @endcond      **/
 /***   #End of File   ***/
 
-strt jl_vi_make_jpeg(jl_t* jlc,i32_t quality,m_u8_t* pxdata,u16_t w,u16_t h) {
-	return jl_vi_make_jpeg_(jlc, quality, pxdata, w, h);
+strt jl_vi_make_jpeg(jl_t* jl,i32_t quality,m_u8_t* pxdata,u16_t w,u16_t h) {
+	return jl_vi_make_jpeg_(jl, quality, pxdata, w, h);
 }
 
-m_u8_t* jl_gr_load_image(jl_t* jlc, strt data, m_u16_t* w, m_u16_t* h) {
-	return jl_vi_load_(jlc, data, w, h);
+m_u8_t* jl_gr_load_image(jl_t* jl, strt data, m_u16_t* w, m_u16_t* h) {
+	return jl_vi_load_(jl, data, w, h);
 }

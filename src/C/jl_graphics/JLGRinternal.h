@@ -77,7 +77,6 @@ void jl_gr_resz(jl_gr_t* jl_gr, u16_t x, u16_t y);
 // init functions.
 void jl_dl_init__(jl_gr_t* jl_gr);
 void jl_sg_inita__(jl_gr_t* jl_gr);
-void jl_sg_initb__(jl_gr_t* jl_gr);
 void jl_gl_init__(jl_gr_t* jl_gr);
 void jl_gr_init__(jl_gr_t* jl_gr);
 void jl_ct_init__(jl_gr_t* jl_gr);

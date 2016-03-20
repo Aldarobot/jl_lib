@@ -149,9 +149,9 @@ typedef struct{
 	}time;
 	uint8_t mdec; //Number of Modes
 	uint8_t mode; //Current Mode
-	jl_sg_wm_t loop; //[WINDOW MODE] ( terminal,up,down,exit screen)
+	uint8_t loop; //[WINDOW MODE] ( terminal,up,down,exit screen)
 	void* mouse; //jl_sprite_t: Sprite to represent mouse pointer
-	void* _jlc; //The library's context
+	void* _jl; //The library's context
 	void* uctx; //The program's context
 	struct{
 		float x; //X position 0-1
@@ -171,5 +171,5 @@ typedef struct{
 
 typedef void(*jl_fnct)(jl_t* jl);
 typedef void(*jl_data_fnct)(jl_t* jl, void* data);
-typedef void(*jl_io_print_fnt)(jl_t* jl, const char * print);
+typedef void(*jl_print_fnt)(jl_t* jl, const char * print);
 //

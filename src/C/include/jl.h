@@ -23,86 +23,84 @@
 #define JL_IMG_SIZE_FLS 5 // How many bytes start for images.
 
 	int jl_init(jl_fnct _fnc_init_, jl_fnct _fnc_kill_);
-	void jl_dont(jl_t* jlc);
-// "me.c"
+	void jl_dont(jl_t* jl);
+// "JLmem.c"
+	void *jl_mem(jl_t* jl, void *a, uint32_t size);
+	void *jl_memi(jl_t* jl, uint32_t size);
+	void * jl_mem_copy(jl_t* jl, const void *src, size_t size);
+
+
+
 	u64_t jl_me_tbiu(void);
-	void jl_me_leak_init(jl_t* jlc);
-	void jl_me_leak_fail(jl_t* jlc, str_t fn_name);
-	void jl_me_clr(void *pmem, uint64_t size);
-	#define jl_me_copyto(src, dest, size) memcpy(dest, src, size)
-	void * jl_me_copy(jl_t* jlc, const void *src, size_t size);
-	void jl_me_alloc(jl_t* jlc, void **a, uint32_t size, uint32_t oldsize);
-	#define List(x) jl_me_list_allc(sizeof(void*)*x)
-	void jl_me_strt_clear(jl_t* jlc, strt pa);
+	void jl_me_leak_init(jl_t* jl);
+	void jl_me_leak_fail(jl_t* jl, str_t fn_name);
+	/**
+	 * Clear memory pointed to by "mem" of size "size"
+	 * @param pmem: memory to clear
+	 * @param size: size of "mem"
+	**/
+	#define jl_mem_clr(pmem, size) memset(pmem, 0, size);
+	#define jl_mem_copyto(src, dest, size) memcpy(dest, src, size)
+	void jl_me_strt_clear(jl_t* jl, strt pa);
 	strt jl_me_strt_make(u32_t size);
 	void jl_me_strt_free(strt pstr);
 	strt jl_me_strt_mkfrom_str(str_t string);
-	#define Strt(x) jl_me_strt_mkfrom_str((const void*)x)
-	strt jl_me_strt_mkfrom_data(jl_t* jlc, u32_t size, const void *data);
-	void jl_me_strt_strt(jl_t*jlc, strt a, strt b, uint64_t p);
-	void jl_me_strt_merg(jl_t *jlc, strt a, strt b);
-	void jl_me_strt_trunc(jl_t *jlc, strt a, uint32_t size);
-	char* jl_me_string_fstrt(jl_t* jlc, strt a);
-	m_str_t jl_me_format(jl_t* jlc, str_t format, ... );
-	uint8_t jl_me_string_print(jl_t* jlc, char *string, const char* format,
-		const char *var, u64_t n);
+	strt jl_me_strt_mkfrom_data(jl_t* jl, u32_t size, const void *data);
+	void jl_me_strt_strt(jl_t *jl, strt a, const strt b, uint64_t bytes);
+	void jl_me_strt_merg(jl_t *jl, strt a, const strt b);
+	void jl_me_strt_trunc(jl_t *jl, strt a, uint32_t size);
+	char* jl_me_string_fstrt(jl_t* jl, strt a);
+	m_str_t jl_me_format(jl_t* jl, str_t format, ... );
 	u8_t jl_me_strt_byte(strt pstr);
 	void jl_me_strt_loadto(strt pstr, u32_t varsize, void* var);
 	void jl_me_strt_saveto(strt pstr, u32_t varsize, const void* var);
 	void jl_me_strt_add_byte(strt pstr, u8_t pvalue);
-	void jl_me_strt_delete_byte(jl_t *jlc, strt pstr);
-	void jl_me_strt_resize(jl_t *jlc, strt pstr, u32_t newsize);
-	void jl_me_strt_insert_byte(jl_t *jlc, strt pstr, uint8_t pvalue);
-	void jl_me_strt_insert_data(jl_t *jlc, strt pstr, void* data, u32_t size);
+	void jl_me_strt_delete_byte(jl_t *jl, strt pstr);
+	void jl_me_strt_resize(jl_t *jl, strt pstr, u32_t newsize);
+	void jl_me_strt_insert_byte(jl_t *jl, strt pstr, uint8_t pvalue);
+	void jl_me_strt_insert_data(jl_t *jl, strt pstr, void* data, u32_t size);
 	u32_t jl_me_random_int(u32_t a);
 	u8_t jl_me_test_next(strt script, str_t particle);
-	strt jl_me_read_upto(jl_t* jlc, strt script, u8_t end, u32_t psize);
-	void *jl_me_tmp_ptr(jl_t* jlc, uint8_t which, void *tmp_ptr);
+	strt jl_me_read_upto(jl_t* jl, strt script, u8_t end, u32_t psize);
+	void *jl_me_tmp_ptr(jl_t* jl, uint8_t which, void *tmp_ptr);
+// "JLdata_t.c"
+	
 // "cl.c"
 	void jl_cl_list_alphabetize(struct cl_list *list);
-// "gl.c"
-
 // "sg.c"
-	void jl_sg_mode_init(jl_t* jlc, u8_t mdec);
-	void jl_sg_mode_set(jl_t* jlc, u8_t mode, u8_t wm, jl_fnct loop);
-	void jl_sg_mode_override(jl_t* jlc, uint8_t wm, jl_fnct loop);
-	void jl_sg_mode_reset(jl_t* jlc);
-	void jl_sg_mode_switch(jl_t* jlc, uint8_t mode);
-// "dl.c"
-	void jl_dl_setfullscreen(jl_t *jlc, uint8_t is);
-	void jl_dl_togglefullscreen(jl_t *jlc);
-	uint16_t jl_dl_getw(jl_t *jlc);
-	uint16_t jl_dl_geth(jl_t *jlc);
-	void jl_dl_progname(jl_t* jlc, strt name);
-// "io.c"
-	void jl_io_tag_set(jl_t* jlc, jl_io_print_fnt tagfn);
-	void jl_io_printc(jl_t* jlc, const char * print);
-	#define jl_io_print(jlc, ...)\
-		jl_io_printc(jlc, jl_me_format(jlc, __VA_ARGS__))
+	void jl_sg_mode_set(jl_t* jl, u8_t mode, u8_t wm, jl_fnct loop);
+	void jl_sg_mode_override(jl_t* jl, uint8_t wm, jl_fnct loop);
+	void jl_sg_mode_reset(jl_t* jl);
+	void jl_sg_mode_switch(jl_t* jl, uint8_t mode);
+// "JLprint.c"
+	void jl_print_tag_set(jl_t* jl, jl_print_fnt tagfn);
+	void jl_printc(jl_t* jl, const char * print);
+	#define jl_print(jl, ...)\
+		jl_printc(jl, jl_me_format(jl, __VA_ARGS__))
 	#ifdef DEBUG
-		#define JL_IO_DEBUG(jlc, ...)\
-			jl_io_printc(jlc, jl_me_format(jlc, __VA_ARGS__))
+		#define JL_PRINT_DEBUG(jl, ...)\
+			jl_printc(jl, jl_me_format(jl, __VA_ARGS__))
 	#else
-		#define JL_IO_DEBUG(jlc, ...)
+		#define JL_PRINT_DEBUG(jl, ...)
 	#endif
-	void jl_io_function(jl_t* jlc, str_t fn_name);
-	void jl_io_return(jl_t* jlc, str_t fn_name);
-	void jl_io_stacktrace(jl_t* jlc);
-// "fl.c"
-	void jl_fl_print(jl_t* jlc, str_t fname, str_t msg);
-	u8_t jl_fl_exist(jl_t* jlc, str_t path);
-	void jl_fl_save(jl_t* jlc, const void *file, const char *name,
+	void jl_print_function(jl_t* jl, str_t fn_name);
+	void jl_print_return(jl_t* jl, str_t fn_name);
+	void jl_print_stacktrace(jl_t* jl);
+// "JLfile.c"
+	void jl_file_print(jl_t* jl, str_t fname, str_t msg);
+	u8_t jl_file_exist(jl_t* jl, str_t path);
+	void jl_file_save(jl_t* jl, const void *file, const char *name,
 		uint32_t bytes);
-	strt jl_fl_load(jl_t* jlc, str_t file_name);
-	char jl_fl_pk_save(jl_t* jlc, str_t packageFileName, str_t fileName,
+	strt jl_file_load(jl_t* jl, str_t file_name);
+	char jl_file_pk_save(jl_t* jl, str_t packageFileName, str_t fileName,
 		void *data, uint64_t dataSize);
-	strt jl_fl_pk_load(jl_t* jlc, const char *packageFileName,
+	strt jl_file_pk_load(jl_t* jl, const char *packageFileName,
 		const char *filename);
-	strt jl_fl_media(jl_t* jlc, str_t Fname, str_t pzipfile,
+	strt jl_file_media(jl_t* jl, str_t Fname, str_t pzipfile,
 		void *pdata, uint64_t psize);
-	u8_t jl_fl_mkdir(jl_t* jlc, str_t path);
-	str_t jl_fl_get_resloc(jl_t* jlc, str_t prg_folder, str_t fname);
-// "thread.c"
+	u8_t jl_file_mkdir(jl_t* jl, str_t path);
+	str_t jl_file_get_resloc(jl_t* jl, str_t prg_folder, str_t fname);
+// "JLthread.c"
 	uint8_t jl_thread_new(jl_t *jl, str_t name, SDL_ThreadFunction fn);
 	uint8_t jl_thread_current(jl_t *jl);
 	int32_t jl_thread_old(jl_t *jl, u8_t threadnum);

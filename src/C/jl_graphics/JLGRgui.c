@@ -51,19 +51,19 @@ static inline void jlgr_mouse_init__(jl_gr_t* jl_gr) {
 		jl_vo_t *mouse_vo = jl_gl_vo_make(jl_gr, 1);
 	#endif
 
-	jl_gr->jlc->mouse = jl_gr_sp_new(
+	jl_gr->jl->mouse = jl_gr_sp_new(
 		jl_gr, rc, jl_gr_mouse_draw_,
 		jl_gr_mouse_loop_,
 	#if JL_PLAT == JL_PLAT_COMPUTER //if computer
 			sizeof(jl_vo_t*));
 		// Set the context to the vertex object.
-		((jl_sprite_t*)jl_gr->jlc->mouse)->data.ctx = mouse_vo;
+		((jl_sprite_t*)jl_gr->jl->mouse)->data.ctx = mouse_vo;
 	#elif JL_PLAT == JL_PLAT_PHONE // if phone
 			0);
 		// Set the context to NULL.
-		((jl_sprite_t*)jl_gr->jlc->mouse)->data.ctx = NULL;
+		((jl_sprite_t*)jl_gr->jl->mouse)->data.ctx = NULL;
 	#endif
-	mouse = jl_gr->jlc->mouse;
+	mouse = jl_gr->jl->mouse;
 	jl_gr_sp_rsz(jl_gr, mouse);
 	// Set the mouse's collision width and height to 0
 	mouse->data.cb.w = 0.f;

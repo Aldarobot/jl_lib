@@ -7,34 +7,38 @@
 //Initialize The Libraries Needed At Very Beginning: The Base Of It All
 static inline jvct_t* jl_init_essential__(void) {
 	// Memory
-	jvct_t* _jlc = _jl_me_init(); // Create The Library Context
+	jvct_t* _jl = _jl_me_init(); // Create The Library Context
 	// Printing to terminal
-	_jl_io_init(_jlc->jlc);
-	return _jlc;
+	jl_print_init__(_jl->jl);
+	return _jl;
 }
 
-static inline void jl_init_libs__(jvct_t *_jlc) {
-	JL_IO_DEBUG(_jlc->jlc, "Initializing file system....");
-	jl_fl_init__(_jlc);
-	JL_IO_DEBUG(_jlc->jlc, "Initializing threads....");
-	jl_thread_init__(_jlc);
-	JL_IO_DEBUG(_jlc->jlc, "Initialized!");
-//	jl_gr_draw_msge(_jlc->jlc, 0, 0, 0, "INITIALIZATION COMPLETE!");
+static inline void jl_init_libs__(jvct_t *_jl) {
+	JL_PRINT_DEBUG(_jl->jl, "Initializing file system....");
+	jl_file_init__(_jl);
+	JL_PRINT_DEBUG(_jl->jl, "Initializing threads....");
+	jl_thread_init__(_jl);
+	JL_PRINT_DEBUG(_jl->jl, "Initializing modes....");
+	jl_mode_init__(_jl->jl);
+	JL_PRINT_DEBUG(_jl->jl, "Initializing time....");
+	jl_sdl_init__(_jl->jl);
+	JL_PRINT_DEBUG(_jl->jl, "Initialized!");
+//	jl_gr_draw_msge(_jl->jl, 0, 0, 0, "INITIALIZATION COMPLETE!");
 }
 
-static inline void _jl_ini(jvct_t *_jlc, jl_fnct _fnc_init_) {
-	jl_io_print(_jlc->jlc, "Starting JL_Lib - Version "JL_VERSION"....");
+static inline void _jl_ini(jvct_t *_jl, jl_fnct _fnc_init_) {
+	jl_print(_jl->jl, "Starting JL_Lib - Version "JL_VERSION"....");
 	// Run the library's init function.
-	jl_init_libs__(_jlc);
+	jl_init_libs__(_jl);
 	// Run the program's init function.
-	_fnc_init_(_jlc->jlc);
-	jl_io_print(_jlc->jlc, "Started JL_Lib!");
+	_fnc_init_(_jl->jl);
+	jl_print(_jl->jl, "Started JL_Lib!");
 }
 
-static void jl_time_reset__(jl_t* jlc, u8_t on_time) {
-	jlc->time.prev_tick = jlc->time.this_tick;
-	if(jlc->jl_gr) {
-		jl_gr_t* jl_gr = jlc->jl_gr;
+static void jl_time_reset__(jl_t* jl, u8_t on_time) {
+	jl->time.prev_tick = jl->time.this_tick;
+	if(jl->jl_gr) {
+		jl_gr_t* jl_gr = jl->jl_gr;
 
 		if((jl_gr->sg.changed = ( jl_gr->sg.on_time != on_time)))
 			jl_gr->sg.on_time = on_time;
@@ -42,22 +46,22 @@ static void jl_time_reset__(jl_t* jlc, u8_t on_time) {
 }
 
 //return how many seconds passed since last call
-static inline void jl_seconds_passed__(jvct_t* _jlc) {
+static inline void jl_seconds_passed__(jvct_t* _jl) {
 	int diff;
 
-	_jlc->jlc->time.psec = jl_sdl_seconds_past__(_jlc->jlc);
-	diff = _jlc->jlc->time.this_tick - _jlc->jlc->time.prev_tick;
-	if(diff) _jlc->jlc->time.fps = round(1000./((double)diff));
-	else _jlc->jlc->time.fps = 25000;
+	_jl->jl->time.psec = jl_sdl_seconds_past__(_jl->jl);
+	diff = _jl->jl->time.this_tick - _jl->jl->time.prev_tick;
+	if(diff) _jl->jl->time.fps = round(1000./((double)diff));
+	else _jl->jl->time.fps = 25000;
 	// Tell if fps is 60 fps or better
-	jl_time_reset__(_jlc->jlc, _jlc->jlc->time.fps >= JL_FPS);
+	jl_time_reset__(_jl->jl, _jl->jl->time.fps >= JL_FPS);
 }
 
-static inline void main_loop__(jvct_t* _jlc) {
+static inline void main_loop__(jvct_t* _jl) {
 	// Check the amount of time passed since last frame.
-	jl_seconds_passed__(_jlc);
+	jl_seconds_passed__(_jl);
 	// Run the user's mode loop.
-	_jlc->mode.mode.tclp[_jlc->jlc->loop](_jlc->jlc);
+	_jl->mode.mode.tclp[_jl->jl->loop](_jl->jl);
 }
 
 // EXPORT FUNCTIONS
@@ -65,24 +69,24 @@ static inline void main_loop__(jvct_t* _jlc) {
 /**
  * Do Nothing
 **/
-void jl_dont(jl_t* jlc) { }
+void jl_dont(jl_t* jl) { }
 
-static inline int jl_kill__(jl_t* jlc, int rc) {
-	jvct_t* _jlc = jlc->_jlc;
+static inline int jl_kill__(jl_t* jl, int rc) {
+	jvct_t* _jl = jl->_jl;
 
-	jl_io_print(jlc, "Quitting...."); //Exited properly
-//	jl_gr_draw_msge(jlc, 0, 0, 0, "Quiting JL-Lib....");
-	if(_jlc->me.status == JL_STATUS_EXIT) {
+	jl_print(jl, "Quitting...."); //Exited properly
+//	jl_gr_draw_msge(jl, 0, 0, 0, "Quiting JL-Lib....");
+	if(_jl->me.status == JL_STATUS_EXIT) {
 		rc = JL_RTN_FAIL_IN_FAIL_EXIT;
 		printf("\n!! double error!\n");
 		printf("!! exiting with return value %d\n", rc);
 		exit(rc);
 	}
 	// Set status to Exiting
-	_jlc->me.status = JL_STATUS_EXIT;
-	_jl_fl_kill(_jlc);
-	_jl_io_kill(jlc);
-	_jl_me_kill(_jlc);
+	_jl->me.status = JL_STATUS_EXIT;
+	jl_file_kill__(_jl);
+	jl_print_kill__(jl);
+	_jl_me_kill(_jl);
 	printf("[\\JL_Lib] ");
 	if(!rc) printf("| No errors ");
 	printf("| Exiting with return value %d |\n", rc);
@@ -94,16 +98,16 @@ static inline int jl_kill__(jl_t* jlc, int rc) {
 **/
 int jl_init(jl_fnct _fnc_init_, jl_fnct _fnc_kill_) {
 	//Set Up Memory And Logging
-	jvct_t* _jlc = jl_init_essential__();
+	jvct_t* _jl = jl_init_essential__();
 
 	// Initialize JL_lib!
-	_jl_ini(_jlc, _fnc_init_);
+	_jl_ini(_jl, _fnc_init_);
 	// Run the Loop
-	while(_jlc->jlc->mdec) main_loop__(_jlc);
+	while(_jl->jl->mdec) main_loop__(_jl);
 	// Run Users Kill Routine
-	_fnc_kill_(_jlc->jlc);
+	_fnc_kill_(_jl->jl);
 	// Kill the program
-	return jl_kill__(_jlc->jlc, JL_RTN_SUCCESS);
+	return jl_kill__(_jl->jl, JL_RTN_SUCCESS);
 }
 
 #if JL_PLAT == JL_PLAT_PHONE
@@ -117,3 +121,9 @@ Java_org_libsdl_app_SDLActivity_nativeJlSendData( JNIEnv *env, jobject obj,
 }
 
 #endif
+
+/**
+ * @mainpage
+ * @section Library Description
+ * 
+*/

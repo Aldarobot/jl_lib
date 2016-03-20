@@ -6,7 +6,7 @@
 //Standard Mode Class
 typedef struct {
 	//Standard Functions
-	jl_fnct tclp[JL_SG_WM_MAX];
+	jl_fnct tclp[JL_MODE_LMAX];
 }__sg_mode_t;
 
 typedef struct {
@@ -18,12 +18,12 @@ typedef struct {
 		char stack[50][30];
 		uint8_t level;
 	}print;
-}jlctx_thread_t__;
+}jl_thread_t__;
 
 //JLVM Context Structure
 typedef struct {
-	jl_t * jlc; // JL_Lib context
-	jlctx_thread_t__ thread[16];
+	jl_t * jl; // JL_Lib context
+	jl_thread_t__ thread[16]; // Thread-Specific Context
 
 	struct {
 		__sg_mode_t *mdes; // Array Sizof Number Of Modes
@@ -40,7 +40,7 @@ typedef struct {
 
 	// Terminal Data
 	struct {
-		jl_io_print_fnt printfn;
+		jl_print_fnt printfn;
 	}io;
 	
 	struct {

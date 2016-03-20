@@ -18,8 +18,8 @@ static u8_t jl_gr_taskbar_idle__(jl_gr_t* jl_gr, jl_taskbar_t *ctx) {
 }
 
 // Run when the taskbar is left alone.
-static void _jl_gr_taskbar_loop_pass(jl_t* jlc) {
-	jl_gr_t* jl_gr = jlc->jl_gr;
+static void _jl_gr_taskbar_loop_pass(jl_t* jl) {
+	jl_gr_t* jl_gr = jl->jl_gr;
 	jl_taskbar_t *ctx = jl_gr->gr.taskbar->data.ctx;
 
 	for( ctx->cursor = 0; ctx->cursor < 10; ctx->cursor++) {
@@ -29,13 +29,13 @@ static void _jl_gr_taskbar_loop_pass(jl_t* jlc) {
 }
 
 // Run when the taskbar is clicked/pressed
-static void _jl_gr_taskbar_loop_run(jl_t* jlc) {
-	jl_gr_t* jl_gr = jlc->jl_gr;
+static void _jl_gr_taskbar_loop_run(jl_t* jl) {
+	jl_gr_t* jl_gr = jl->jl_gr;
 	jl_taskbar_t *ctx;
 
 	//If mouse isn't over the taskbar - dont run pressed.
 	if(jl_gr->main.ct.msy >= .1) {
-		_jl_gr_taskbar_loop_pass(jlc);
+		_jl_gr_taskbar_loop_pass(jl);
 		return;
 	}
 	// Set context
@@ -59,8 +59,8 @@ static void _jl_gr_taskbar_loop_run(jl_t* jlc) {
 //
 
 // Runs every frame when taskbar is visible.
-void jl_gr_taskbar_loop_(jl_t* jlc, jl_sprd_t* sprd) {
-	jl_gr_t* jl_gr = jlc->jl_gr;
+void jl_gr_taskbar_loop_(jl_t* jl, jl_sprd_t* sprd) {
+	jl_gr_t* jl_gr = jl->jl_gr;
 
 	// Draw the pre-rendered taskbar.
 	jl_gr_sp_drw(jl_gr, jl_gr->gr.taskbar);
@@ -70,9 +70,9 @@ void jl_gr_taskbar_loop_(jl_t* jlc, jl_sprd_t* sprd) {
 }
 
 // Run every frame for mouse
-void jl_gr_mouse_loop_(jl_t* jlc, jl_sprd_t* sprd) {
-	jl_gr_t* jl_gr = jlc->jl_gr;
-	jl_sprite_t* mouse = jl_gr->jlc->mouse;
+void jl_gr_mouse_loop_(jl_t* jl, jl_sprd_t* sprd) {
+	jl_gr_t* jl_gr = jl->jl_gr;
+	jl_sprite_t* mouse = jl_gr->jl->mouse;
 
 //Update Mouse
 	mouse->data.tr.x = jl_ct_gmousex(jl_gr);
@@ -90,15 +90,15 @@ void jl_gr_mouse_loop_(jl_t* jlc, jl_sprd_t* sprd) {
 
 /**
  * Empty sprite loop. ( Don't do anything )
- * @param jlc: The library context
+ * @param jl: The library context
  * @param spr: The sprite
 **/
-void jl_gr_sp_dont(jl_t* jlc, jl_sprd_t* spr) { }
+void jl_gr_sp_dont(jl_t* jl, jl_sprd_t* spr) { }
 
 /**
  * Toggle whether or not to show the menu bar.
  *
- * @param jlc: the libary context
+ * @param jl: the libary context
 **/
 void jl_gr_togglemenubar(jl_gr_t* jl_gr) {
 	if(jl_gr->gr.menuoverlay == jl_gr_sp_dont)

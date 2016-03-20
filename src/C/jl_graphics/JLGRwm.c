@@ -1,7 +1,6 @@
 /*
- * JLGRsdl.c: upper level SDL2
- *	LSDL AKA. SDL or Simple Direct Media Layer:  SDL is a popular library
- *	for making games.
+ * JLGRwm.c: upper level SDL2
+ *	Window Manager - Manages creating / destroying / redrawing windows.
 */
 
 #include "jl_pr.h"
@@ -16,31 +15,31 @@ static void _jl_dl_fscreen(jl_gr_t* jl_gr, uint8_t a);
 static void _jlvm_curd_mode(jl_gr_t* jl_gr);
 
 //EXPORT FUNCTIONS
-void jl_dl_setfullscreen(jl_t *jlc, uint8_t is) {
-	jl_gr_t* jl_gr = jlc->jl_gr;
+void jlgr_wm_setfullscreen(jl_gr_t* jl_gr, uint8_t is) {
 	_jl_dl_fscreen(jl_gr, is);
 }
 
-void jl_dl_togglefullscreen(jl_t *jlc) {
-	jl_gr_t* jl_gr = jlc->jl_gr;
+void jlgr_wm_togglefullscreen(jl_gr_t* jl_gr) {
 	_jl_dl_fscreen(jl_gr, !jl_gr->dl.fullscreen);
 }
 
-uint16_t jl_dl_getw(jl_t *jlc) {
-	jl_gr_t* jl_gr = jlc->jl_gr;
+uint16_t jlgr_wm_getw(jl_gr_t* jl_gr) {
 	return jl_gr->dl.current.w;
 }
 
-uint16_t jl_dl_geth(jl_t *jlc) {
-	jl_gr_t* jl_gr = jlc->jl_gr;
+uint16_t jlgr_wm_geth(jl_gr_t* jl_gr) {
 	return jl_gr->dl.current.h;
 }
 
+void jlgr_wm_setwindowname(jl_gr_t* jl_gr, str_t window_name) {
+	
+}
+
 //STATIC FUNCTIONS
-static void jl_dl_killedit(jl_t* jlc, char *str) {
-	jl_io_print(jlc, str);
-	jl_io_print(jlc, SDL_GetError());
-	jl_sg_kill(jlc);
+static void jl_dl_killedit(jl_t* jl, char *str) {
+	jl_print(jl, str);
+	jl_print(jl, SDL_GetError());
+	jl_sg_kill(jl);
 }
 
 static SDL_Window* jl_dl_mkwindow(jl_gr_t* jl_gr) {
@@ -53,13 +52,13 @@ static SDL_Window* jl_dl_mkwindow(jl_gr_t* jl_gr) {
 		// width, height, flags
 		jl_gr->dl.current.w, jl_gr->dl.current.h, flags
     	);
-	if(rtn == NULL) jl_dl_killedit(jl_gr->jlc, "SDL_CreateWindow");
+	if(rtn == NULL) jl_dl_killedit(jl_gr->jl, "SDL_CreateWindow");
 	return rtn;
 }
 
 static SDL_GLContext* jl_dl_gl_context(jl_gr_t* jl_gr) {
 	SDL_GLContext* rtn = SDL_GL_CreateContext(jl_gr->dl.displayWindow->w);
-	if(rtn == NULL) jl_dl_killedit(jl_gr->jlc, "SDL_GL_CreateContext");
+	if(rtn == NULL) jl_dl_killedit(jl_gr->jl, "SDL_GL_CreateContext");
 	return rtn;
 }
 
@@ -70,34 +69,34 @@ static void _jl_dl_fscreen(jl_gr_t* jl_gr, uint8_t a) {
 	// Actually set whether fullscreen or not.
 	if(SDL_SetWindowFullscreen(jl_gr->dl.displayWindow->w,
 	 JL_DL_FULLSCREEN * jl_gr->dl.fullscreen))
-		jl_dl_killedit(jl_gr->jlc, "SDL_SetWindowFullscreen");
+		jl_dl_killedit(jl_gr->jl, "SDL_SetWindowFullscreen");
 	// Resize window
 	_jlvm_curd_mode(jl_gr);
 	jl_gr_resz(jl_gr, jl_gr->dl.current.w, jl_gr->dl.current.h);
 }
 
 static inline void jlvmpi_ini_sdl(jl_gr_t* jl_gr) {
-	jl_io_function(jl_gr->jlc, "InitSDL"); // {
-	JL_IO_DEBUG(jl_gr->jlc, "Starting up....");
+	jl_print_function(jl_gr->jl, "InitSDL"); // {
+	JL_PRINT_DEBUG(jl_gr->jl, "Starting up....");
 	SDL_Init(JL_DL_INIT);
-	JL_IO_DEBUG(jl_gr->jlc, "input....");
+	JL_PRINT_DEBUG(jl_gr->jl, "input....");
 	#if JL_PLAT == JL_PLAT_COMPUTER
 	SDL_ShowCursor(SDL_DISABLE);
 	#endif
-	jl_io_return(jl_gr->jlc, "InitSDL"); // }
+	jl_print_return(jl_gr->jl, "InitSDL"); // }
 }
 
 //Update the SDL_displayMode structure
 static void _jlvm_curd_mode(jl_gr_t* jl_gr) {
 	if(SDL_GetCurrentDisplayMode(0, &jl_gr->dl.current)) {
-		jl_io_print(jl_gr->jlc, "failed to get current display mode:%s",
+		jl_print(jl_gr->jl, "failed to get current display mode:%s",
 			(char *)SDL_GetError());
-		jl_sg_kill(jl_gr->jlc);
+		jl_sg_kill(jl_gr->jl);
 	}
-	jl_io_function(jl_gr->jlc, "SDL_cdm");
-	JL_IO_DEBUG(jl_gr->jlc, "%d,%d", jl_gr->dl.current.w,
+	jl_print_function(jl_gr->jl, "SDL_cdm");
+	JL_PRINT_DEBUG(jl_gr->jl, "%d,%d", jl_gr->dl.current.w,
 		jl_gr->dl.current.h);
-	jl_io_return(jl_gr->jlc, "SDL_cdm");
+	jl_print_return(jl_gr->jl, "SDL_cdm");
 }
 
 //This is the code that actually creates the window by accessing SDL
@@ -111,8 +110,7 @@ static inline void _jlvm_crea_wind(jl_gr_t* jl_gr) {
 	#endif
 	
 	// Allocate space for "displayWindow"
-	jl_me_alloc(jl_gr->jlc, (void**)&jl_gr->dl.displayWindow,
-		sizeof(jl_window_t), 0);
+	jl_gr->dl.displayWindow = jl_memi(jl_gr->jl, sizeof(jl_window_t));
 	//
 	SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
 	SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
@@ -149,10 +147,9 @@ void jl_dl_screen_(jl_gr_t* jl_gr, jl_window_t* which) {
 }
 
 jl_window_t* jl_dl_screen_new_(jl_gr_t* jl_gr, u16_t w, u16_t h) {
-	jl_window_t* window = NULL;
-
 	// Allocate space for "window"
-	jl_me_alloc(jl_gr->jlc, (void**)&window, sizeof(jl_window_t), 0);
+	jl_window_t* window = jl_memi(jl_gr->jl, sizeof(jl_window_t));
+
 	// Create the window.
 	window->w = SDL_CreateWindow(
 		"¡Hidden!",				// window title
@@ -188,7 +185,7 @@ void jl_dl_resz__(jl_gr_t* jl_gr, uint16_t x, uint16_t y) {
 	jl_gr->dl.shiftx = 0.;
 	jl_gr->dl.shifty = 0.;
 	if(y < x * .5625) {
-		jl_gr->jlc->smde = 0;
+		jl_gr->jl->smde = 0;
 		offx = x;
 		x = y * 16./9.; //Widesceen
 		jl_gr->dl.shiftx += ((float)offx - (float)x)/((float)offx);
@@ -198,7 +195,7 @@ void jl_dl_resz__(jl_gr_t* jl_gr, uint16_t x, uint16_t y) {
 		jl_gr->dl.window.w = x;
 		jl_gr->dl.window.h = y;
 	}else if(y > x * 1.125) {//DOUBLE SCREEN
-		jl_gr->jlc->smde = 1;
+		jl_gr->jl->smde = 1;
 		if(y > x * 1.5) {
 			offy = y;
 			y = x * 1.5; //Standard
@@ -216,7 +213,7 @@ void jl_dl_resz__(jl_gr_t* jl_gr, uint16_t x, uint16_t y) {
 			jl_gr->dl.window.h = y / 2.;
 		}
 	}else if(y > x * .75) {
-		jl_gr->jlc->smde = 0;
+		jl_gr->jl->smde = 0;
 		offy = y;
 		y = x * .75; //Standard
 		jl_gr->dl.shifty += ((float)offy-(float)y)/((float)offy);
@@ -226,7 +223,7 @@ void jl_dl_resz__(jl_gr_t* jl_gr, uint16_t x, uint16_t y) {
 		jl_gr->dl.window.w = x;
 		jl_gr->dl.window.h = y;
 	}else{
-		jl_gr->jlc->smde = 0;
+		jl_gr->jl->smde = 0;
 		jl_gr->dl.window.x = 0.;
 		jl_gr->dl.window.y = 0.;
 		jl_gr->dl.window.w = x;
@@ -240,14 +237,15 @@ void jl_dl_resz__(jl_gr_t* jl_gr, uint16_t x, uint16_t y) {
 	jl_gl_clear(jl_gr, 122, 255, 125, 255);
 }
 
+// TODO: Make not exported, but called in jlgr_init()
 /**
  * Set the program title.  Used as window name, and as resource
  * directory.
- * @param jlc: The library context.
+ * @param jl: The library context.
  * @param name: The name of the program.
 */
-void jl_dl_progname(jl_t* jlc, strt name) {
-	jl_gr_t* jl_gr = jlc->jl_gr;
+void jl_dl_progname(jl_t* jl, strt name) {
+	jl_gr_t* jl_gr = jl->jl_gr;
 	int ii;
 	for(ii = 0; ii < 16; ii++) {
 		jl_gr->dl.windowTitle[0][ii] = name->data[ii];
@@ -275,10 +273,10 @@ void jl_dl_init__(jl_gr_t* jl_gr) {
 }
 
 void jl_dl_kill__(jl_gr_t* jl_gr) {
-	JL_IO_DEBUG(jl_gr->jlc, "killing SDL....");
+	JL_PRINT_DEBUG(jl_gr->jl, "killing SDL....");
 	if (jl_gr->dl.displayWindow->c != NULL) {
 		SDL_free(jl_gr->dl.displayWindow->c);
 		SDL_free(jl_gr->dl.displayWindow->w);
 	}
-	JL_IO_DEBUG(jl_gr->jlc, "killed SDL!");
+	JL_PRINT_DEBUG(jl_gr->jl, "killed SDL!");
 }

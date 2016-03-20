@@ -50,19 +50,22 @@ char *jl_gem(void);
 uint32_t jl_gem_size(void);
 
 // Main - Prototypes
-	float jl_sdl_seconds_past__(jl_t* jlc);
+	float jl_sdl_seconds_past__(jl_t* jl);
+	str_t jl_file_convert__(jl_t* jl, str_t filename);
 
 	// LIB INITIALIZATION fn(Context)
-	void _jl_cm_init(jvct_t* _jlc);
-	void jl_fl_init__(jvct_t * _jlc);
+	void _jl_cm_init(jvct_t* _jl);
+	void jl_file_init__(jvct_t * _jl);
 	jvct_t* _jl_me_init(void);
-	void _jl_io_init(jl_t* jlc);
+	void jl_print_init__(jl_t* jl);
 	void jl_thread_init__(jvct_t* jl_);
+	void jl_mode_init__(jl_t* jl);
+	void jl_sdl_init__(jl_t* jl);
 
 	// LIB KILLS
 	void _jl_me_kill(jvct_t* jprg);
-	void _jl_fl_kill(jvct_t* _jlc);
-	void _jl_io_kill(jl_t* jlc);
+	void jl_file_kill__(jvct_t * _jl);
+	void jl_print_kill__(jl_t* jl);
 
 	// LIB THREAD INITS
-	void jl_io_init_thread__(jl_t* jlc, u8_t thread_id);
+	void jl_print_init_thread__(jl_t* jl, u8_t thread_id);

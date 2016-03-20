@@ -35,22 +35,22 @@ static uint8_t _jl_ct_state(uint8_t *preval, const uint8_t read) {
 	}
 }
 
-static void _jl_ct_press(jl_t *jlc) {
-	jl_gr_t* jl_gr = jlc->jl_gr;
-	jlc->ctrl.h = jl_gr->main.ct.heldDown;
-	jlc->ctrl.r = 0.;
-	jlc->ctrl.x = jl_ct_gmousex(jl_gr);
-	jlc->ctrl.y = jl_ct_gmousey(jl_gr);
+static void _jl_ct_press(jl_t *jl) {
+	jl_gr_t* jl_gr = jl->jl_gr;
+	jl->ctrl.h = jl_gr->main.ct.heldDown;
+	jl->ctrl.r = 0.;
+	jl->ctrl.x = jl_ct_gmousex(jl_gr);
+	jl->ctrl.y = jl_ct_gmousey(jl_gr);
 }
 
 static void _jl_ct_not_down(jl_gr_t *jl_gr) {
-	jl_gr->jlc->ctrl.p = 0.;
-	jl_gr->jlc->ctrl.k = 0;
+	jl_gr->jl->ctrl.p = 0.;
+	jl_gr->jl->ctrl.k = 0;
 }
 
 static void _jl_ct_is_down(jl_gr_t *jl_gr) {
-	jl_gr->jlc->ctrl.k = 1;
-	jl_gr->jlc->ctrl.p = 1.;
+	jl_gr->jl->ctrl.k = 1;
+	jl_gr->jl->ctrl.p = 1.;
 }
 
 #if JL_PLAT == JL_PLAT_COMPUTER
@@ -58,18 +58,18 @@ static void _jl_ct_is_down(jl_gr_t *jl_gr) {
 	void jl_ct_key(jl_gr_t *jl_gr, jl_fnct prun, jl_fnct pno, uint8_t key)
 	{
 		uint8_t a = jl_ct_key_pressed(jl_gr, key);
-		jl_t* jlc = jl_gr->jlc;
-		jlc->ctrl.h = a;
-		jlc->ctrl.r = 0.;
-		jlc->ctrl.x = 0.;
-		jlc->ctrl.y = 0.;
+		jl_t* jl = jl_gr->jl;
+		jl->ctrl.h = a;
+		jl->ctrl.r = 0.;
+		jl->ctrl.x = 0.;
+		jl->ctrl.y = 0.;
 		if(a && (a!=3)) {
-			jlc->ctrl.p = 1.;
-			jlc->ctrl.k = key;
-			prun(jlc);
+			jl->ctrl.p = 1.;
+			jl->ctrl.k = key;
+			prun(jl);
 		}else{
 			_jl_ct_not_down(jl_gr);
-			pno(jlc);
+			pno(jl);
 		}
 	}
 
@@ -110,13 +110,13 @@ static void _jl_ct_is_down(jl_gr_t *jl_gr) {
 	}
 	
 	void jl_ct_left_click(jl_gr_t *jl_gr, jl_fnct prun, jl_fnct pno) {
-		_jl_ct_press(jl_gr->jlc); //hrxy
+		_jl_ct_press(jl_gr->jl); //hrxy
 		if(jl_gr->main.ct.heldDown) {
 			_jl_ct_is_down(jl_gr); //pk
-			prun(jl_gr->jlc);
+			prun(jl_gr->jl);
 		}else{
 			_jl_ct_not_down(jl_gr); //pk
-			pno(jl_gr->jlc);
+			pno(jl_gr->jl);
 		}
 	}
 	
@@ -125,148 +125,148 @@ static void _jl_ct_is_down(jl_gr_t *jl_gr) {
 //	}
 #elif JL_PLAT == JL_PLAT_PHONE //if Android
 	void tuch_cntr(jl_gr_t *jl_gr, jl_fnct prun, jl_fnct pno) { //touch center
-		jl_gr_t* jl_gr = jlc->jl_gr;
-		_jl_ct_press(jlc); //hrxy
-		if(jl_gr->main.ct.heldDown && (((jl_gr->main.ct.msy>.4f * jl_gl_ar(jlc)) &&
-			(jl_gr->main.ct.msy<.6f * jl_gl_ar(jlc))) &&
+		jl_gr_t* jl_gr = jl->jl_gr;
+		_jl_ct_press(jl); //hrxy
+		if(jl_gr->main.ct.heldDown && (((jl_gr->main.ct.msy>.4f * jl_gl_ar(jl)) &&
+			(jl_gr->main.ct.msy<.6f * jl_gl_ar(jl))) &&
 			((jl_gr->main.ct.msx>.4f) && (jl_gr->main.ct.msx<.6f))))
 		{
-			_jl_ct_is_down(jlc); //pk
-			prun(jlc);
+			_jl_ct_is_down(jl); //pk
+			prun(jl);
 		}else{
-			_jl_ct_not_down(jlc); //pk
-			pno(jlc);
+			_jl_ct_not_down(jl); //pk
+			pno(jl);
 		}
 	}
 	//
 	void tuch_nrrt(jl_gr_t *jl_gr, jl_fnct prun, jl_fnct pno) { //near right
-		jl_gr_t* jl_gr = jlc->jl_gr;
-		_jl_ct_press(jlc); //hrxy
+		jl_gr_t* jl_gr = jl->jl_gr;
+		_jl_ct_press(jl); //hrxy
 		if(jl_gr->main.ct.heldDown && (((jl_gr->main.ct.msx>.6f) && (jl_gr->main.ct.msx<.8f)) &&
-			((jl_gr->main.ct.msy * jl_gl_ar(jlc)>.2f) &&
-			(jl_gr->main.ct.msy * jl_gl_ar(jlc)<.8f))))
+			((jl_gr->main.ct.msy * jl_gl_ar(jl)>.2f) &&
+			(jl_gr->main.ct.msy * jl_gl_ar(jl)<.8f))))
 		{
-			_jl_ct_is_down(jlc); //pk
-			prun(jlc);
+			_jl_ct_is_down(jl); //pk
+			prun(jl);
 		}else{
-			_jl_ct_not_down(jlc); //pk
-			pno(jlc);
+			_jl_ct_not_down(jl); //pk
+			pno(jl);
 		}
 	}
 
 	void tuch_nrlt(jl_gr_t *jl_gr, jl_fnct prun, jl_fnct pno) { //near left
-		jl_gr_t* jl_gr = jlc->jl_gr;
-		_jl_ct_press(jlc); //hrxy
+		jl_gr_t* jl_gr = jl->jl_gr;
+		_jl_ct_press(jl); //hrxy
 		if(jl_gr->main.ct.heldDown && (((jl_gr->main.ct.msx<.4f) && (jl_gr->main.ct.msx>.2f)) &&
-			((jl_gr->main.ct.msy>.2f * jl_gl_ar(jlc)) &&
-			(jl_gr->main.ct.msy<.8f * jl_gl_ar(jlc)))))
+			((jl_gr->main.ct.msy>.2f * jl_gl_ar(jl)) &&
+			(jl_gr->main.ct.msy<.8f * jl_gl_ar(jl)))))
 		{
-			_jl_ct_is_down(jlc); //pk
-			prun(jlc);
+			_jl_ct_is_down(jl); //pk
+			prun(jl);
 		}else{
-			_jl_ct_not_down(jlc); //pk
-			pno(jlc);
+			_jl_ct_not_down(jl); //pk
+			pno(jl);
 		}
 	}
 
 	void tuch_nrup(jl_gr_t *jl_gr, jl_fnct prun, jl_fnct pno) { //near up
-		jl_gr_t* jl_gr = jlc->jl_gr;
-		_jl_ct_press(jlc); //hrxy
-		if(jl_gr->main.ct.heldDown && (((jl_gr->main.ct.msy<.4f * jl_gl_ar(jlc)) &&
-			(jl_gr->main.ct.msy>.2f * jl_gl_ar(jlc))) &&
+		jl_gr_t* jl_gr = jl->jl_gr;
+		_jl_ct_press(jl); //hrxy
+		if(jl_gr->main.ct.heldDown && (((jl_gr->main.ct.msy<.4f * jl_gl_ar(jl)) &&
+			(jl_gr->main.ct.msy>.2f * jl_gl_ar(jl))) &&
 			((jl_gr->main.ct.msx>.2f) && (jl_gr->main.ct.msx<.8f))))
 		{
-			_jl_ct_is_down(jlc); //pk
-			prun(jlc);
+			_jl_ct_is_down(jl); //pk
+			prun(jl);
 		}else{
-			_jl_ct_not_down(jlc); //pk
-			pno(jlc);
+			_jl_ct_not_down(jl); //pk
+			pno(jl);
 		}
 	}
 
 	void tuch_nrdn(jl_gr_t *jl_gr, jl_fnct prun, jl_fnct pno) { //near down
-		jl_gr_t* jl_gr = jlc->jl_gr;
-		_jl_ct_press(jlc); //hrxy
+		jl_gr_t* jl_gr = jl->jl_gr;
+		_jl_ct_press(jl); //hrxy
 		if(jl_gr->main.ct.heldDown &&
-			(((jl_gr->main.ct.msy>.6f * jl_gl_ar(jlc)) &&
-			(jl_gr->main.ct.msy<.8f * jl_gl_ar(jlc))) &&
+			(((jl_gr->main.ct.msy>.6f * jl_gl_ar(jl)) &&
+			(jl_gr->main.ct.msy<.8f * jl_gl_ar(jl))) &&
 			((jl_gr->main.ct.msx>.2f) &&
 			(jl_gr->main.ct.msx<.8f))))
 		{
-			_jl_ct_is_down(jlc); //pk
-			prun(jlc);
+			_jl_ct_is_down(jl); //pk
+			prun(jl);
 		}else{
-			_jl_ct_not_down(jlc); //pk
-			pno(jlc);
+			_jl_ct_not_down(jl); //pk
+			pno(jl);
 		}
 	}
 	//
 
 	void tuch_frrt(jl_gr_t *jl_gr, jl_fnct prun, jl_fnct pno) {//far right
-		jl_gr_t* jl_gr = jlc->jl_gr;
-		_jl_ct_press(jlc); //hrxy
+		jl_gr_t* jl_gr = jl->jl_gr;
+		_jl_ct_press(jl); //hrxy
 		if(jl_gr->main.ct.heldDown &&
 			(jl_gr->main.ct.msx>.8f))
 		{
-			_jl_ct_is_down(jlc); //pk
-			prun(jlc);
+			_jl_ct_is_down(jl); //pk
+			prun(jl);
 		}else{
-			_jl_ct_not_down(jlc); //pk
-			pno(jlc);
+			_jl_ct_not_down(jl); //pk
+			pno(jl);
 		}
 	}
 
 	void tuch_frlt(jl_gr_t *jl_gr, jl_fnct prun, jl_fnct pno) {//far left
-		jl_gr_t* jl_gr = jlc->jl_gr;
-		_jl_ct_press(jlc); //hrxy
+		jl_gr_t* jl_gr = jl->jl_gr;
+		_jl_ct_press(jl); //hrxy
 		if(jl_gr->main.ct.heldDown &&
 			(jl_gr->main.ct.msx<.2f))
 		{
-			_jl_ct_is_down(jlc); //pk
-			prun(jlc);
+			_jl_ct_is_down(jl); //pk
+			prun(jl);
 		}else{
-			_jl_ct_not_down(jlc); //pk
-			pno(jlc);
+			_jl_ct_not_down(jl); //pk
+			pno(jl);
 		}
 	}
 
 	void tuch_frup(jl_gr_t *jl_gr, jl_fnct prun, jl_fnct pno) {//far up
-		jl_gr_t* jl_gr = jlc->jl_gr;
-		_jl_ct_press(jlc); //hrxy
+		jl_gr_t* jl_gr = jl->jl_gr;
+		_jl_ct_press(jl); //hrxy
 		if(jl_gr->main.ct.heldDown &&
-			(jl_gr->main.ct.msy<.2f * jl_gl_ar(jlc)))
+			(jl_gr->main.ct.msy<.2f * jl_gl_ar(jl)))
 		{
-			_jl_ct_is_down(jlc); //pk
-			prun(jlc);
+			_jl_ct_is_down(jl); //pk
+			prun(jl);
 		}else{
-			_jl_ct_not_down(jlc); //pk
-			pno(jlc);
+			_jl_ct_not_down(jl); //pk
+			pno(jl);
 		}
 	}
 
 	void tuch_frdn(jl_gr_t *jl_gr, jl_fnct prun, jl_fnct pno) {//far down
-		jl_gr_t* jl_gr = jlc->jl_gr;
-		_jl_ct_press(jlc); //hrxy
+		jl_gr_t* jl_gr = jl->jl_gr;
+		_jl_ct_press(jl); //hrxy
 		if(jl_gr->main.ct.heldDown &&
-			(jl_gr->main.ct.msy>.8f * jl_gl_ar(jlc)))
+			(jl_gr->main.ct.msy>.8f * jl_gl_ar(jl)))
 		{
-			_jl_ct_is_down(jlc); //pk
-			prun(jlc);
+			_jl_ct_is_down(jl); //pk
+			prun(jl);
 		}else{
-			_jl_ct_not_down(jlc); //pk
-			pno(jlc);
+			_jl_ct_not_down(jl); //pk
+			pno(jl);
 		}
 	}
 
 	void tuch(jl_gr_t *jl_gr, jl_fnct prun, jl_fnct pno) {//Any touch
-		jl_gr_t* jl_gr = jlc->jl_gr;
-		_jl_ct_press(jlc); //hrxy
+		jl_gr_t* jl_gr = jl->jl_gr;
+		_jl_ct_press(jl); //hrxy
 		if(jl_gr->main.ct.heldDown) {
-			_jl_ct_is_down(jlc); //pk
-			prun(jlc);
+			_jl_ct_is_down(jl); //pk
+			prun(jl);
 		}else{
-			_jl_ct_not_down(jlc); //pk
-			pno(jlc);
+			_jl_ct_not_down(jl); //pk
+			pno(jl);
 		}
 	}
 #endif
@@ -277,19 +277,19 @@ void jl_ct_key_menu(jl_gr_t *jl_gr, jl_fnct prun,
 	#if JL_PLAT == JL_PLAT_COMPUTER
 	jl_ct_key(jl_gr, prun, pno, SDL_SCANCODE_APPLICATION); //xyrhpk
 	#elif JL_PLAT == JL_PLAT_PHONE
-	jl_gr_t* jl_gr = jlc->jl_gr;
-	jlc->ctrl.x = 0.;
-	jlc->ctrl.y = 0.;
-	jlc->ctrl.r = 0.;
-	jlc->ctrl.h = jl_gr->main.ct.menu;
+	jl_gr_t* jl_gr = jl->jl_gr;
+	jl->ctrl.x = 0.;
+	jl->ctrl.y = 0.;
+	jl->ctrl.r = 0.;
+	jl->ctrl.h = jl_gr->main.ct.menu;
 	if(jl_gr->main.ct.menu) {
-		jlc->ctrl.p = 1. * (jl_gr->main.ct.menu != 3);
-		jlc->ctrl.k = SDL_SCANCODE_APPLICATION;
-		prun(jlc);
+		jl->ctrl.p = 1. * (jl_gr->main.ct.menu != 3);
+		jl->ctrl.k = SDL_SCANCODE_APPLICATION;
+		prun(jl);
 	}else{
-		jlc->ctrl.p = 0.;
-		jlc->ctrl.k = 0;
-		pno(jlc);
+		jl->ctrl.p = 0.;
+		jl->ctrl.k = 0;
+		pno(jl);
 	}
 	#endif
 }
@@ -315,10 +315,10 @@ static inline void _jl_ct_handle_events_platform_dependant(jl_gr_t* jl_gr) {
 	if( jl_gr->main.ct.event.type==SDL_FINGERDOWN ) {
 		jl_gr->main.ct.msx = jl_gr->main.ct.event.tfinger.x;
 		jl_gr->main.ct.input.finger = 1;
-		jl_gr->main.ct.msy = jl_gr->main.ct.event.tfinger.y * jl_gl_ar(jl_gr->jlc);
-		if(jl_gr->jlc->smde) {
+		jl_gr->main.ct.msy = jl_gr->main.ct.event.tfinger.y * jl_gl_ar(jl_gr->jl);
+		if(jl_gr->jl->smde) {
 			jl_gr->main.ct.msy = jl_gr->main.ct.msy * 2.;
-			jl_gr->main.ct.msy -= jl_gl_ar(jl_gr->jlc);
+			jl_gr->main.ct.msy -= jl_gl_ar(jl_gr->jl);
 			if(jl_gr->main.ct.msy < 0.) jl_gr->main.ct.input.finger = 0;
 		}
 
@@ -379,7 +379,8 @@ static inline void _jl_ct_handle_events(jl_gr_t* jl_gr) {
 //		printf("%1s\n", &(jl_gr->main.ct.event.text.text[0]));
 		int i;
 		for(i = 0; i < 32; i++)
-			jl_gr->main.ct.text_input[i] = jl_gr->main.ct.event.text.text[i];
+			jl_gr->main.ct.text_input[i] =
+				jl_gr->main.ct.event.text.text[i];
 		jl_gr->main.ct.read_cursor = 0;
 	}else{
 		jl_ct_handle_resize__(jl_gr);
@@ -397,7 +398,7 @@ static inline void _jl_ct_process_events(jl_gr_t* jl_gr) {
 }
 
 static void jl_ct_testquit__(jl_gr_t* jl_gr) {
-	if(jl_gr->main.ct.back == 1) jl_sg_exit(jl_gr->jlc); // Back Button/Key
+	if(jl_gr->main.ct.back == 1) jl_sg_exit(jl_gr->jl); // Back Button/Key
 }
 
 /**
@@ -411,9 +412,9 @@ void jl_ct_run_event(jl_gr_t *jl_gr, uint8_t pevent, jl_fnct prun, jl_fnct pno){
 	jl_ct_event_fnct FunctionToRun_ = jl_gr->main.ct.getEvents[pevent];
 
 	if(jl_gr->main.ct.getEvents[pevent] == NULL) {
-		jl_io_print(jl_gr->jlc,"Null Pointer: jl_gr->main.ct.getEvents.Event");
-		jl_io_print(jl_gr->jlc,"pevent=%d", pevent);
-		jl_sg_kill(jl_gr->jlc);
+		jl_print(jl_gr->jl,"Null Pointer: jl_gr->main.ct.getEvents.Event");
+		jl_print(jl_gr->jl,"pevent=%d", pevent);
+		jl_sg_kill(jl_gr->jl);
 	}
 	FunctionToRun_(jl_gr, prun, pno);
 }
@@ -430,25 +431,25 @@ void jl_ct_getevents_(jl_gr_t* jl_gr) {
 }
 
 void jl_ct_quickloop_(jl_gr_t* jl_gr) {
-	jvct_t* _jlc = jl_gr->jlc->_jlc;
+	jvct_t* _jl = jl_gr->jl->_jl;
 
-	jl_io_function(jl_gr->jlc, "INPUT_QUICKLOOP");
-	_jlc->has.quickloop = 1;
-	if(_jlc->has.input) {
+	jl_print_function(jl_gr->jl, "INPUT_QUICKLOOP");
+	_jl->has.quickloop = 1;
+	if(_jl->has.input) {
 		jl_ct_getevents_(jl_gr);
-		if(jl_gr->main.ct.back == 1) jl_sg_exit(jl_gr->jlc);
+		if(jl_gr->main.ct.back == 1) jl_sg_exit(jl_gr->jl);
 	}else{
 		while(SDL_PollEvent(&jl_gr->main.ct.event))
 			jl_ct_handle_resize__(jl_gr);
 	}
-	jl_io_return(jl_gr->jlc, "INPUT_QUICKLOOP");
+	jl_print_return(jl_gr->jl, "INPUT_QUICKLOOP");
 }
 
 //Main Input Loop
 void jl_ct_loop__(jl_gr_t* jl_gr) {
-	jvct_t* _jlc = jl_gr->jlc->_jlc;
+	jvct_t* _jl = jl_gr->jl->_jl;
 
-	_jlc->has.quickloop = 0;
+	_jl->has.quickloop = 0;
 	//Get the information on current events
 	jl_ct_getevents_(jl_gr);
 	_jl_ct_process_events(jl_gr);
@@ -472,19 +473,19 @@ void jl_ct_loop__(jl_gr_t* jl_gr) {
 		}
 		int32_t mousex = jl_gr->main.ct.msxi - jl_gr->dl.window.x;
 		int32_t mousey = (jl_gr->main.ct.msyi - jl_gr->dl.window.y) *
-			(1 + jl_gr->jlc->smde);
+			(1 + jl_gr->jl->smde);
 		//translate integer into float by clipping [0-1]
 		jl_gr->main.ct.msx =
-			((float)(mousex-2)) / jl_dl_getw(jl_gr->jlc);
+			((float)(mousex-2)) / jlgr_wm_getw(jl_gr);
 		jl_gr->main.ct.msy =
 			((float)mousey) /
-			(jl_dl_geth(jl_gr->jlc) * (1 + jl_gr->jlc->smde));
-		if(jl_gr->jlc->smde && jl_gr->main.ct.msy < 0.) {
+			(jlgr_wm_geth(jl_gr) * (1 + jl_gr->jl->smde));
+		if(jl_gr->jl->smde && jl_gr->main.ct.msy < 0.) {
 			jl_gr->main.ct.msy = 0.;
 			jl_gr->main.ct.heldDown = 0;
 		}
 		if(jl_ct_key_pressed(jl_gr, SDL_SCANCODE_F11) == 1)
-			jl_dl_togglefullscreen(jl_gr->jlc);
+			jlgr_wm_togglefullscreen(jl_gr);
 	#endif
 	jl_ct_testquit__(jl_gr);
 }
@@ -529,10 +530,10 @@ static inline void _jl_ct_var_init(jl_gr_t* jl_gr) {
 }
 
 void jl_ct_init__(jl_gr_t* jl_gr) {
-	jvct_t* _jlc = jl_gr->jlc->_jlc;
+	jvct_t* _jl = jl_gr->jl->_jl;
 	_jl_ct_fn_init(jl_gr);
 	_jl_ct_var_init(jl_gr);
-	_jlc->has.input = 1;
+	_jl->has.input = 1;
 }
 
 /**
