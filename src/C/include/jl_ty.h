@@ -46,10 +46,7 @@ typedef struct{
 	uint8_t* data; //Actual String
 	uint32_t size; //Allocated Space In String
 	uint32_t curs; //Cursor In String
-}strt_t;
-
-typedef strt_t* strt;
-typedef strt* strl;
+}data_t;
 
 typedef struct {
 	SDL_Window* w;		// Window

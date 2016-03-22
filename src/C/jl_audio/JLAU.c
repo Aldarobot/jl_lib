@@ -166,7 +166,7 @@ static inline void _jl_au_init_sounds(jl_au_t* jl_au, uint8_t *data) {
  * @param pigid: which audio group to load the soundtracks into.
 */
 void jl_au_add_audio(jl_t* jl, str_t pzipfile, uint16_t pigid) {
-	strt aud = jl_file_media(jl, "jlex/2/_aud", pzipfile,
+	data_t* aud = jl_file_media(jl, "jlex/2/_aud", pzipfile,
 		jl_gem(), jl_gem_size());
 	jl_print_function(jl, "AU_Load");
 	jl_print(jl, "Audio Size: %d", jl->info);

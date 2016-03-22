@@ -9,7 +9,7 @@
 **/
 #include "jl_pr.h"
 
-static void _jl_sg_mode_add(jl_t* jl) {
+static void _jl_mode_add(jl_t* jl) {
 	jvct_t* _jl = jl->_jl;
 
 	// Allocate a new mode.
@@ -40,11 +40,11 @@ static void _jl_sg_mode_add(jl_t* jl) {
  *	JL_MODE_LOOP: Called repeatedly.
  * @param loop: What to change the loop to.
 */
-void jl_sg_mode_set(jl_t* jl, u8_t mode, u8_t wm, jl_fnct loop) {
+void jl_mode_set(jl_t* jl, u8_t mode, u8_t wm, jl_fnct loop) {
 	jvct_t* _jl = jl->_jl;
 	jl_gr_t* jl_gr = jl->jl_gr;
 
-	while(mode >= jl->mdec) _jl_sg_mode_add(jl);
+	while(mode >= jl->mdec) _jl_mode_add(jl);
 	_jl->mode.mdes[mode].tclp[wm] = loop;
 	// Reset things
 	if(jl_gr) jl_gr->main.ct.heldDown = 0;
@@ -56,7 +56,7 @@ void jl_sg_mode_set(jl_t* jl, u8_t mode, u8_t wm, jl_fnct loop) {
  * @param wm: the loop to override
  * @param loop: the overriding function 
  */
-void jl_sg_mode_override(jl_t* jl, uint8_t wm, jl_fnct loop) {
+void jl_mode_override(jl_t* jl, uint8_t wm, jl_fnct loop) {
 	jvct_t* _jl = jl->_jl;
 
 	_jl->mode.mode.tclp[wm] = loop;
@@ -66,7 +66,7 @@ void jl_sg_mode_override(jl_t* jl, uint8_t wm, jl_fnct loop) {
  * Reset any functions overwritten with jl_sg_mode_override().
  * @param jl: The library context.
  */
-void jl_sg_mode_reset(jl_t* jl) {
+void jl_mode_reset(jl_t* jl) {
 	jvct_t* _jl = jl->_jl;
 	int i;
 
@@ -79,14 +79,14 @@ void jl_sg_mode_reset(jl_t* jl) {
  * @param jl: The library context.
  * @param mode: The mode to switch to.
  */
-void jl_sg_mode_switch(jl_t* jl, uint8_t mode) {
+void jl_mode_switch(jl_t* jl, u8_t mode) {
 	jvct_t* _jl = jl->_jl;
 
 	// Switch mode
 	jl->mode = mode;
 	jl->loop = JL_MODE_LOOP;
 	// Set the basic functions
-	jl_sg_mode_reset(jl);
+	jl_mode_reset(jl);
 	// Run user's intialization
 	_jl->mode.mode.tclp[JL_MODE_INIT](_jl->jl);
 }
@@ -102,7 +102,7 @@ void jl_mode_init__(jl_t* jl) {
 	jl->mode = 0;
 	jl->mdec = 0;
 	_jl->mode.mdes = NULL;
-	_jl_sg_mode_add(jl);
+	_jl_mode_add(jl);
 	// Clear User Loops
 	for(i = 0; i < JL_MODE_LMAX; i++) _jl->mode.mode.tclp[i] = jl_dont;
 }

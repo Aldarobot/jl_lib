@@ -4,15 +4,15 @@
 // Internal Functions
 //
 
-static void _jl_me_truncate_curs(strt pstr) {
+static void jl_data_truncate_curs__(data_t* pstr) {
 	if(pstr->curs > pstr->size) {
 		pstr->curs = pstr->size;
 	}
 }
 
-static void jl_me_strt_increment(strt pstr, u8_t incrementation) {
+static void jl_data_increment(data_t* pstr, u8_t incrementation) {
 	pstr->curs += incrementation;
-	_jl_me_truncate_curs(pstr);
+	jl_data_truncate_curs__(pstr);
 }
 
 //
@@ -23,9 +23,9 @@ static void jl_me_strt_increment(strt pstr, u8_t incrementation) {
  * Clears an already existing string and resets it's cursor value.
  * @param pa: string to clear.
 */
-void jl_me_strt_clear(jl_t* jl, strt pa) {
+void jl_data_clear(jl_t* jl, data_t* pa) {
 	pa->curs = 0;
-	jl_me_strt_resize(jl, pa, 0);
+//	jl_data_resize(jl, pa, 0);
 	jl_mem_clr(pa->data, pa->size + 1);
 }
 
@@ -35,8 +35,8 @@ void jl_me_strt_clear(jl_t* jl, strt pa) {
  * @param type: whether automatic freeing should be allowed or not.
  * @returns: A new initialized "strt".
 */
-strt jl_me_strt_make(u32_t size) {
-	strt a = malloc(sizeof(strt_t));
+data_t* jl_data_make(u32_t size) {
+	data_t* a = malloc(sizeof(data_t));
 	a->data = malloc(size+1);
 	a->size = size;
 	a->curs = 0;
@@ -48,7 +48,7 @@ strt jl_me_strt_make(u32_t size) {
  * frees a "strt".
  * @param pstr: the "strt" to free
 */
-void jl_me_strt_free(strt pstr) {
+void jl_data_free(data_t* pstr) {
 	free(pstr->data);
 	free(pstr);
 }
@@ -56,20 +56,20 @@ void jl_me_strt_free(strt pstr) {
 /**
  *
 */
-strt jl_me_strt_mkfrom_data(jl_t* jl, u32_t size, const void *data) {
-	strt a = jl_me_strt_make(size);
+data_t* jl_data_mkfrom_data(jl_t* jl, u32_t size, const void *data) {
+	data_t* a = jl_data_make(size);
 	jl_mem_copyto(data, a->data, size);
 	a->data[size] = '\0'; // Null terminalte
 	return a;
 }
 
 /**
- * Converts "string" into a strt and returns it.
+ * Converts "string" into a data_t* and returns it.
  * @param string: String to convert
  * @returns: new "strt" with same contents as "string".
 */
-strt jl_me_strt_mkfrom_str(str_t string) {
-	return jl_me_strt_mkfrom_data(NULL, strlen(string), string);
+data_t* jl_data_mkfrom_str(str_t string) {
+	return jl_data_mkfrom_data(NULL, strlen(string), string);
 }
 
 /**
@@ -77,17 +77,17 @@ strt jl_me_strt_mkfrom_str(str_t string) {
  * @param pstr: the string to read.
  * @returns: byte at the cursor of "pstr"
 */
-u8_t jl_me_strt_byte(strt pstr) {
-	_jl_me_truncate_curs(pstr);
+u8_t jl_data_byte(data_t* pstr) {
+	jl_data_truncate_curs__(pstr);
 	return pstr->data[pstr->curs];
 }
 
 /**
  * Get the byte at the cursor of "strt", and increment the cursor value
 **/
-u8_t jl_me_strt_get_byte(strt pstr) {
+u8_t jl_data_get_byte(data_t* pstr) {
 	uint8_t* area = ((void*)pstr->data) + pstr->curs;
-	jl_me_strt_increment(pstr, 1);
+	jl_data_increment(pstr, 1);
 	return *area;
 }
 
@@ -97,11 +97,11 @@ u8_t jl_me_strt_get_byte(strt pstr) {
  * @param varsize: the size of variable pointed to by "var" in bytes (1,2,4,8).
  * @param var: the variable to save the data to.
 **/
-void jl_me_strt_loadto(strt pstr, u32_t varsize, void* var) {
+void jl_data_loadto(data_t* pstr, u32_t varsize, void* var) {
 	void* area = ((void*)pstr->data) + pstr->curs;
 
 	jl_mem_copyto(area, var, varsize);
-	jl_me_strt_increment(pstr, varsize);
+	jl_data_increment(pstr, varsize);
 }
 
 /**
@@ -109,11 +109,11 @@ void jl_me_strt_loadto(strt pstr, u32_t varsize, void* var) {
  * @param pstr: the string to read.
  * @param: pval: the integer to add to "pstr"
 */
-void jl_me_strt_saveto(strt pstr, u32_t varsize, const void* var) {
+void jl_data_saveto(data_t* pstr, u32_t varsize, const void* var) {
 	void* area = ((void*)pstr->data) + pstr->curs;
 
 	jl_mem_copyto(var, area, varsize);
-	jl_me_strt_increment(pstr, varsize);
+	jl_data_increment(pstr, varsize);
 }
 
 /**
@@ -122,16 +122,16 @@ void jl_me_strt_saveto(strt pstr, u32_t varsize, const void* var) {
  * @param pstr: The string to add a byte to.
  * @param pvalue: the byte to add to "pstr".
 */
-void jl_me_strt_add_byte(strt pstr, u8_t pvalue) {
-	_jl_me_truncate_curs(pstr);
+void jl_data_add_byte(data_t* pstr, u8_t pvalue) {
+	jl_data_truncate_curs__(pstr);
 	pstr->data[pstr->curs] = pvalue;
-	jl_me_strt_increment(pstr, 1);
+	jl_data_increment(pstr, 1);
 }
 
 /**
  * Delete byte at cursor in string.
 */
-void jl_me_strt_delete_byte(jl_t *jl, strt pstr) {
+void jl_data_delete_byte(jl_t *jl, data_t* pstr) {
 	int i;
 	
 	if(pstr->size == 0) return;
@@ -140,10 +140,10 @@ void jl_me_strt_delete_byte(jl_t *jl, strt pstr) {
 	pstr->size--;
 	pstr->data[pstr->size] = '\0';
 	pstr->data = jl_mem(jl, pstr->data, pstr->size);
-	_jl_me_truncate_curs(pstr);
+	jl_data_truncate_curs__(pstr);
 }
 
-void jl_me_strt_resize(jl_t *jl, strt pstr, u32_t newsize) {
+void jl_data_resize(jl_t *jl, data_t* pstr, u32_t newsize) {
 	pstr->size = newsize;
 	pstr->data = jl_mem(jl, pstr->data, pstr->size);
 }
@@ -152,41 +152,41 @@ void jl_me_strt_resize(jl_t *jl, strt pstr, u32_t newsize) {
  * Inserts a byte at cursor in string pstr.  If not enough size is available,
  * the new memory will be allocated. Value 0 is treated as null byte - dont use.
 */
-void jl_me_strt_insert_byte(jl_t *jl, strt pstr, uint8_t pvalue) {
+void jl_data_insert_byte(jl_t *jl, data_t* pstr, uint8_t pvalue) {
 	if(strlen((char*)pstr->data) == pstr->size) {
-		jl_me_strt_resize(jl, pstr, pstr->size + 1);
+		jl_data_resize(jl, pstr, pstr->size + 1);
 	}
-	if(jl_me_strt_byte(pstr) == '\0') {
-		jl_me_strt_add_byte(pstr, pvalue);
-		jl_me_strt_add_byte(pstr, '\0');
+	if(jl_data_byte(pstr) == '\0') {
+		jl_data_add_byte(pstr, pvalue);
+		jl_data_add_byte(pstr, '\0');
 	}else{
 		int i;
 		uint32_t pstr_len = pstr->size;
 		pstr->data[pstr_len] = '\0';
 		for(i = pstr_len - 1; i > pstr->curs; i--)
 			pstr->data[i] = pstr->data[i-1];
-		jl_me_strt_add_byte(pstr, pvalue);
+		jl_data_add_byte(pstr, pvalue);
 	}
 }
 
-void jl_me_strt_insert_data(jl_t *jl, strt pstr, void* data, u32_t size) {
+void jl_data_insert_data(jl_t *jl, data_t* pstr, void* data, u32_t size) {
 //	int i;
 //	uint8_t* data2 = data;
 
 	// Add size
-	jl_me_strt_resize(jl, pstr, pstr->size + size);
+	jl_data_resize(jl, pstr, pstr->size + size);
 	// Copy data.
 	jl_mem_copyto(data, pstr->data + pstr->curs, size);
 	// Increase cursor
 	pstr->curs+=size;
 //	for(i = 0; i < size; i++) {
-//		jl_me_strt_insert_byte(jl, pstr, data2[i]);
+//		jl_data_insert_byte(jl, pstr, data2[i]);
 //	}
 }
 
 /**
  * At the cursor in string 'a' replace 'bytes' bytes of 'b' at it's cursor.
- * jl_me_strt_strt(jl, { data="HELLO", curs=2 }, { "WORLD", curs=2 }, 2);
+ * jl_data_strt(jl, { data="HELLO", curs=2 }, { "WORLD", curs=2 }, 2);
  *  would make 'a'
  *	"HELLO"-"LL" = "HE\0\0O"
  *	"WORLD"[2] and [3] = "RL"
@@ -196,16 +196,16 @@ void jl_me_strt_insert_data(jl_t *jl, strt pstr, void* data, u32_t size) {
  * @param b: string being copied into 'a'
  * @param bytes: the number of bytes to copy over
  */
-void jl_me_strt_strt(jl_t *jl, strt a, const strt b, uint64_t bytes) {
+void jl_data_strt(jl_t *jl, data_t* a, const data_t* b, uint64_t bytes) {
 	int32_t i;
 	uint32_t size = a->size;
 	uint32_t sizeb = a->curs + bytes;
 
 	if(a == NULL) {
-		jl_print(jl, "jl_me_strt_strt: NULL A STRING");
+		jl_print(jl, "jl_data_strt: NULL A STRING");
 		exit(-1);
 	}else if(b == NULL) {
-		jl_print(jl, "jl_me_strt_strt: NULL B STRING");
+		jl_print(jl, "jl_data_strt: NULL B STRING");
 		exit(-1);
 	}
 	if(sizeb > size) size = sizeb;
@@ -223,9 +223,9 @@ void jl_me_strt_strt(jl_t *jl, strt a, const strt b, uint64_t bytes) {
  * @param 'a': string being modified
  * @param 'b': string being appended onto "a"
  */
-void jl_me_strt_merg(jl_t *jl, strt a, const strt b) {
+void jl_data_merg(jl_t *jl, data_t* a, const data_t* b) {
 	a->curs = a->size;
-	jl_me_strt_strt(jl, a, b, b->size);
+	jl_data_strt(jl, a, b, b->size);
 }
 
 /**
@@ -234,7 +234,7 @@ void jl_me_strt_merg(jl_t *jl, strt a, const strt b) {
  * @param 'a': string being modified
  * @param 'size': size to truncate to.
  */
-void jl_me_strt_trunc(jl_t *jl, strt a, uint32_t size) {
+void jl_data_trunc(jl_t *jl, data_t* a, uint32_t size) {
 	a->curs = 0;
 	a->size = size;
 	a->data = jl_mem(jl, a->data, a->size + 1);
@@ -246,7 +246,7 @@ void jl_me_strt_trunc(jl_t *jl, strt a, uint32_t size) {
  * @param a: the 'strt' to convert to a string ( char * )
  * @returns: a new string (char *) with the same contents as "a"
 */
-char* jl_me_string_fstrt(jl_t* jl, strt a) {
+char* jl_data_tostring(jl_t* jl, data_t* a) {
 	char *rtn = (void*)a->data;
 	free(a);
 	return rtn;
@@ -259,7 +259,7 @@ char* jl_me_string_fstrt(jl_t* jl, strt a) {
  * @return 1: If particle is at the cursor.
  * @return 0: If particle is not at the cursor.
 */
-u8_t jl_me_test_next(strt script, str_t particle) {
+u8_t jl_data_test_next(data_t* script, str_t particle) {
 	char * point = (void*)script->data + script->curs; //the cursor
 	char * place = strstr(point, particle); //search for partical
 	if(place == point) {//if partical at begining return true otherwise false
@@ -278,15 +278,15 @@ u8_t jl_me_test_next(strt script, str_t particle) {
  * @param psize: maximum size of truncated "script" to return.
  * @returns: a "strt" that is a truncated array script.
 */
-strt jl_me_read_upto(jl_t* jl, strt script, u8_t end, u32_t psize) {
-	strt compiled = jl_me_strt_make(psize);
+data_t* jl_data_read_upto(jl_t* jl, data_t* script, u8_t end, u32_t psize) {
+	data_t* compiled = jl_data_make(psize);
 	compiled->curs = 0;
-	while((jl_me_strt_byte(script) != end) && (jl_me_strt_byte(script) != 0)) {
+	while((jl_data_byte(script) != end) && (jl_data_byte(script) != 0)) {
 		strncat((void*)compiled->data,
 			(void*)script->data + script->curs, 1);
 		script->curs++;
 		compiled->curs++;
 	}
-	jl_me_strt_trunc(jl, compiled, compiled->curs);
+	jl_data_trunc(jl, compiled, compiled->curs);
 	return compiled;
 }

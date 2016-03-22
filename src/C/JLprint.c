@@ -22,7 +22,7 @@ static void _jl_print_current(jl_t *jl, u8_t thread_id) {
 
 	JL_PRINT(" <");
 	for(i = 0; i < _jl->thread[thread_id].print.level; i++) {
-		JL_PRINT(jl_me_format(jl, "%s",
+		JL_PRINT(jl_mem_format(jl, "%s",
 			_jl->thread[thread_id].print.stack[i+1]));
 		JL_PRINT("/");
 	}
@@ -125,7 +125,7 @@ void _jl_printc(jl_t* jl, str_t input) {
 
 		JL_PRINT(convert, text);
 		jl_file_print(jl, _jl->fl.paths.errf,
-			jl_me_format(jl, convert, text));
+			jl_mem_format(jl, convert, text));
 	}
 }
 

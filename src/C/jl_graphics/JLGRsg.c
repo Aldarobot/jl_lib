@@ -57,7 +57,7 @@ uint32_t _jl_sg_gpix(/*in */ SDL_Surface* surface, int32_t x, int32_t y) {
 	return color;
 }
 
-void _jl_sg_load_jlpx(jl_gr_t* jl_gr,strt data,void **pixels,int *w,int *h) {
+void _jl_sg_load_jlpx(jl_gr_t* jl_gr,data_t* data,void **pixels,int *w,int *h) {
 	if(data == NULL) {
 		jl_print(jl_gr->jl, "NULL DATA!");
 		jl_sg_kill(jl_gr->jl);
@@ -93,14 +93,14 @@ void _jl_sg_load_jlpx(jl_gr_t* jl_gr,strt data,void **pixels,int *w,int *h) {
 		SDL_RWops *rw;
 		void* img_file = NULL;
 		uint32_t color = 0;
-		strt pixel_data;
+		data_t* pixel_data;
 
 		JL_PRINT_DEBUG(jl_gr->jl, "png/gif/jpeg etc.");
 		data->curs = jl_gr->sg.init_image_location+strlen(JL_IMG_HEADER)+1;
-		jl_me_strt_loadto(data, 4, &FSIZE);
+		jl_data_loadto(data, 4, &FSIZE);
 		JL_PRINT_DEBUG(jl_gr->jl, "File Size = %d", FSIZE);
 		img_file = jl_memi(jl_gr->jl, FSIZE);
-		jl_me_strt_loadto(data, FSIZE, img_file);
+		jl_data_loadto(data, FSIZE, img_file);
 		rw = SDL_RWFromMem(img_file, FSIZE);
 		if ((image = IMG_Load_RW(rw, 1)) == NULL) {
 			jl_print(jl_gr->jl, "Couldn't load image: %s",
@@ -108,16 +108,16 @@ void _jl_sg_load_jlpx(jl_gr_t* jl_gr,strt data,void **pixels,int *w,int *h) {
 			jl_sg_kill(jl_gr->jl);
 		}
 		// Covert SDL_Surface.
-		pixel_data = jl_me_strt_make(image->w * image->h * 4);
+		pixel_data = jl_data_make(image->w * image->h * 4);
 		for(i = 0; i < image->h; i++) {
 			for(j = 0; j < image->w; j++) {
 				color = _jl_sg_gpix(image, j, i);
-				jl_me_strt_saveto(pixel_data, 4, &color);
+				jl_data_saveto(pixel_data, 4, &color);
 			}
 		}
 		jl_gr->sg.init_image_location += FSIZE + 6;
 		//Set Return values
-		*pixels = jl_me_string_fstrt(jl_gr->jl, pixel_data);
+		*pixels = jl_data_tostring(jl_gr->jl, pixel_data);
 		*w = image->w;
 		*h = image->h;
 		// Clean-up
@@ -163,7 +163,7 @@ void jl_sg_add_some_imgs_(jl_gr_t* jl_gr, u16_t x) {
 }
 
 //Load the images in the image file
-static inline void _jl_sg_init_images(jl_gr_t* jl_gr,strt data,u16_t gi,u16_t x){
+static inline void _jl_sg_init_images(jl_gr_t* jl_gr,data_t* data,u16_t gi,u16_t x){
 	jl_gr->sg.init_image_location = 0;
 	jl_gr->sg.image_id= 0; //Reset Image Id
 	jl_gr->sg.igid = gi;
@@ -207,7 +207,7 @@ void jl_sg_exit(jl_t* jl) {
 static void jl_sg_add_image__(jl_t* jl, str_t pzipfile, u16_t pigid, u8_t x) {
 	jl_print_function(jl, "SG_LImg");
 	//Load Graphics
-	strt img = jl_file_media(jl, "jlex/2/_img", pzipfile, jl_gem(),
+	data_t* img = jl_file_media(jl, "jlex/2/_img", pzipfile, jl_gem(),
 		jl_gem_size());
 
 	JL_PRINT_DEBUG(jl, "Loading Images....");

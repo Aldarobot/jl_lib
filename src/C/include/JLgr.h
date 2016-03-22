@@ -118,7 +118,7 @@ typedef struct{
 		//For loading images
 		uint16_t image_id;
 		uint16_t igid;
-		strt image_data;
+		data_t* image_data;
 		
 		// Offset x and y
 		float offsx, offsy;
@@ -218,7 +218,7 @@ typedef struct{
 			m_u16_t i;
 			m_u8_t c;
 		}msge;
-		strt textbox_string;
+		data_t* textbox_string;
 	}gr;
 
 	// SDL
@@ -298,7 +298,7 @@ void jl_gr_draw_text_sprite(jl_gr_t* jl_gr,jl_sprite_t * spr, str_t txt);
 void jl_gr_draw_ctxt(jl_gr_t* jl_gr, char *str, float yy, uint8_t* color);
 void jl_gr_draw_msge_(jl_gr_t* jl_gr,u16_t g,u16_t i,u8_t c, m_str_t message);
 #define jl_gr_draw_msge(jl_gr,g,i,c,...);\
-	jl_gr_draw_msge_(jl_gr,g,i,c,jl_me_format(jl_gr->jl, __VA_ARGS__));
+	jl_gr_draw_msge_(jl_gr,g,i,c,jl_mem_format(jl_gr->jl, __VA_ARGS__));
 void jl_gr_term_msge(jl_gr_t* jl_gr, char* message);
 void jl_gr_slidebtn_rsz(jl_gr_t* jl_gr, jl_sprite_t * spr, str_t txt);
 void jl_gr_slidebtn_rnl(jl_gr_t* jl_gr, jl_sprite_t * spr,
@@ -306,7 +306,7 @@ void jl_gr_slidebtn_rnl(jl_gr_t* jl_gr, jl_sprite_t * spr,
 void jl_gr_draw_glow_button(jl_gr_t* jl_gr, jl_sprite_t * spr,
 	char *txt, jl_fnct prun);
 uint8_t jl_gr_draw_textbox(jl_gr_t* jl_gr, float x, float y, float w,
-	float h, strt *string);
+	float h, data_t* *string);
 void jl_gr_togglemenubar(jl_gr_t* jl_gr);
 void jl_gr_addicon(jl_gr_t* jl_gr, jl_gr_fnct fno, jl_gr_fnct fnc,
 	jl_gr_fnct rdr);
@@ -329,8 +329,8 @@ jl_pr_t * jl_gl_pr_new(jl_gr_t* jl_gr, f32_t w, f32_t h, u16_t w_px);
 void jl_gl_pr_draw(jl_gr_t* jl_gr, jl_pr_t* pr, jl_vec3_t* vec, jl_vec3_t* scl);
 void jl_gl_pr(jl_gr_t* jl_gr, jl_pr_t * pr, jl_fnct par__redraw);
 // video
-strt jl_vi_make_jpeg(jl_t* jl,i32_t quality,m_u8_t* pxdata,u16_t w,u16_t h);
-m_u8_t* jl_gr_load_image(jl_t* jl, strt data, m_u16_t* w, m_u16_t* h);
+data_t* jl_vi_make_jpeg(jl_t* jl,i32_t quality,m_u8_t* pxdata,u16_t w,u16_t h);
+m_u8_t* jl_gr_load_image(jl_t* jl, data_t* data, m_u16_t* w, m_u16_t* h);
 // SG
 void jl_sg_kill(jl_t* jl);
 void jl_sg_exit(jl_t* jl);

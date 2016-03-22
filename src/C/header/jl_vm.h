@@ -56,8 +56,8 @@ typedef struct {
 		void *newfiledata;
 		uint64_t newfilesize;
 		uint8_t prompt;
-		strt promptstring;
-		strt separator;
+		data_t* promptstring;
+		data_t* separator;
 
 		struct{
 			char* root; // The root directory "-- JL_Lib/"

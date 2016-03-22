@@ -53,7 +53,7 @@ static void _jl_gr_textbox_lt(jl_t* jl);
 	}
 	
 	static void jl_gr_sprite_draw_to_pr__(jl_t *jl) {
-		jl_sprite_t *spr = jl_me_tmp_ptr(jl, 0, NULL);
+		jl_sprite_t *spr = jl_mem_tmp_ptr(jl, 0, NULL);
 
 		spr->draw(jl, &(spr->data));
 	}
@@ -141,7 +141,7 @@ static void _jl_gr_textbox_lt(jl_t* jl);
 		// If not on time report the seconds that passed.
 		if(!jl_gr->sg.on_time)
 			jl_gr_taskbar_text__(jl_gr, color,
-				jl_me_format(jl, "%d fps", jl->time.fps));
+				jl_mem_format(jl, "%d fps", jl->time.fps));
 	}
 
 	static void _jl_gr_menu_slow_loop(jl_gr_t* jl_gr) {
@@ -402,7 +402,7 @@ static void _jl_gr_textbox_lt(jl_t* jl);
 	static inline void jl_gr_sp_redraw_tex__(jl_gr_t* jl_gr,
 		jl_sprite_t *spr)
 	{
-		jl_me_tmp_ptr(jl_gr->jl, 0, spr);
+		jl_mem_tmp_ptr(jl_gr->jl, 0, spr);
 		jl_gl_pr(jl_gr, spr->pr, jl_gr_sprite_draw_to_pr__);
 	}
 
@@ -736,9 +736,9 @@ static void _jl_gr_textbox_lt(jl_t* jl);
 		jl_gr->gr.popup.window_name = name;
 		jl_gr->gr.popup.message = message;
 		jl_gr->gr.popup.btns = btns;
-		jl_sg_mode_override(jl_gr->jl, JL_MODE_EXIT, jl_sg_exit);
-		jl_sg_mode_override(jl_gr->jl, JL_MODE_LOOP, _jl_gr_popup_loop);
-		jl_sg_mode_override(jl_gr->jl, JL_MODE_INIT, jl_dont);
+		jl_mode_override(jl_gr->jl, JL_MODE_EXIT, jl_sg_exit);
+		jl_mode_override(jl_gr->jl, JL_MODE_LOOP, _jl_gr_popup_loop);
+		jl_mode_override(jl_gr->jl, JL_MODE_INIT, jl_dont);
 	}
 
 	/**
@@ -807,23 +807,23 @@ static void _jl_gr_textbox_lt(jl_t* jl);
 	 * @return 0 if not.
 	*/
 	uint8_t jl_gr_draw_textbox(jl_gr_t* jl_gr, float x, float y, float w,
-		float h, strt *string)
+		float h, data_t* *string)
 	{
 		uint8_t bytetoinsert = 0;
 
-		if(*string == NULL) *string = jl_me_strt_make(1);
+		if(*string == NULL) *string = jl_data_make(1);
 		jl_gr->gr.textbox_string = *string;
 		if((bytetoinsert = jl_ct_typing_get(jl_gr))) {
 			if(bytetoinsert == '\b') {
 				if((*string)->curs == 0) return 0;
 				(*string)->curs--;
-				jl_me_strt_delete_byte(jl_gr->jl, *string);
+				jl_data_delete_byte(jl_gr->jl, *string);
 			}else if(bytetoinsert == '\02') {
-				jl_me_strt_delete_byte(jl_gr->jl, *string);
+				jl_data_delete_byte(jl_gr->jl, *string);
 			}else if(bytetoinsert == '\n') {
 				return 1;
 			}else{
-				jl_me_strt_insert_byte(jl_gr->jl, *string,
+				jl_data_insert_byte(jl_gr->jl, *string,
 					 bytetoinsert);
 			}
 //			printf("inserting %1s\n", &bytetoinsert);
@@ -965,10 +965,10 @@ static void _jl_gr_textbox_lt(jl_t* jl);
 /**      @endcond      **/
 /***   #End of File   ***/
 
-strt jl_vi_make_jpeg(jl_t* jl,i32_t quality,m_u8_t* pxdata,u16_t w,u16_t h) {
+data_t* jl_vi_make_jpeg(jl_t* jl,i32_t quality,m_u8_t* pxdata,u16_t w,u16_t h) {
 	return jl_vi_make_jpeg_(jl, quality, pxdata, w, h);
 }
 
-m_u8_t* jl_gr_load_image(jl_t* jl, strt data, m_u16_t* w, m_u16_t* h) {
+m_u8_t* jl_gr_load_image(jl_t* jl, data_t* data, m_u16_t* w, m_u16_t* h) {
 	return jl_vi_load_(jl, data, w, h);
 }

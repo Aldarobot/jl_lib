@@ -17,7 +17,7 @@
  * @param h: THe height
  * @returns: The data.
 **/
-strt jl_vi_make_jpeg_(jl_t* jl,i32_t quality,m_u8_t* pxdata,u16_t w,u16_t h) {
+data_t* jl_vi_make_jpeg_(jl_t* jl,i32_t quality,m_u8_t* pxdata,u16_t w,u16_t h) {
 	uint8_t* data = NULL;
 	m_u64_t data_size = 0;
 
@@ -113,7 +113,7 @@ strt jl_vi_make_jpeg_(jl_t* jl,i32_t quality,m_u8_t* pxdata,u16_t w,u16_t h) {
 	jpeg_destroy_compress(&cinfo);
 
 	/* And we're done! */
-	return jl_me_strt_mkfrom_data(jl, data_size, data);
+	return jl_data_mkfrom_data(jl, data_size, data);
 }
 
 //void memtester(jl_t* jl, str_t name);
@@ -126,11 +126,11 @@ strt jl_vi_make_jpeg_(jl_t* jl,i32_t quality,m_u8_t* pxdata,u16_t w,u16_t h) {
  * @param h: Pointer to the height variable.
  * @returns: Raw pixel data.
 **/
-m_u8_t* jl_vi_load_(jl_t* jl, strt data, m_u16_t* w, m_u16_t* h) {
+m_u8_t* jl_vi_load_(jl_t* jl, data_t* data, m_u16_t* w, m_u16_t* h) {
 	SDL_Surface *image; //  Free'd by SDL_free(image);
 	SDL_RWops *rw; // Free'd by SDL_RWFromMem
 	void* img_file; // Free'd by jl_mem
-	strt pixel_data; // Free'd by jl_me_string_fstrt
+	data_t* pixel_data; // Free'd by jl_mem_string_fstrt
 	void* rtn_pixels; // Returned so not free'd.
 	uint32_t color = 0;
 	u32_t FSIZE = data->size;
@@ -140,7 +140,7 @@ m_u8_t* jl_vi_load_(jl_t* jl, strt data, m_u16_t* w, m_u16_t* h) {
 //	memtester(jl, "LoadImg/Start0");
 	img_file = jl_memi(jl, FSIZE);
 //	memtester(jl, "LoadImg/Start1");
-	jl_me_strt_loadto(data, FSIZE, img_file);
+	jl_data_loadto(data, FSIZE, img_file);
 //	memtester(jl, "LoadImg/Start2");
 	rw = SDL_RWFromMem(img_file, FSIZE);
 //	memtester(jl, "LoadImg/Start3");
@@ -150,16 +150,16 @@ m_u8_t* jl_vi_load_(jl_t* jl, strt data, m_u16_t* w, m_u16_t* h) {
 	}
 //	memtester(jl, "LoadImg/Start4");
 	// Covert SDL_Surface.
-	pixel_data = jl_me_strt_make(image->w * image->h * rgba);
+	pixel_data = jl_data_make(image->w * image->h * rgba);
 	for(i = 0; i < image->h; i++) {
 		for(j = 0; j < image->w; j++) {
 			color = _jl_sg_gpix(image, j, i);
-			jl_me_strt_saveto(pixel_data, rgba, &color);
+			jl_data_saveto(pixel_data, rgba, &color);
 		}
 	}
 //	memtester(jl, "LoadImg/Start5");
 	//Set Return values
-	rtn_pixels = jl_me_string_fstrt(jl, pixel_data);
+	rtn_pixels = jl_data_tostring(jl, pixel_data);
 //	memtester(jl, "LoadImg/End6");
 	*w = image->w;
 	*h = image->h;

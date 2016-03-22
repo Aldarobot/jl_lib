@@ -244,7 +244,7 @@ void jl_dl_resz__(jl_gr_t* jl_gr, uint16_t x, uint16_t y) {
  * @param jl: The library context.
  * @param name: The name of the program.
 */
-void jl_dl_progname(jl_t* jl, strt name) {
+void jl_dl_progname(jl_t* jl, data_t* name) {
 	jl_gr_t* jl_gr = jl->jl_gr;
 	int ii;
 	for(ii = 0; ii < 16; ii++) {

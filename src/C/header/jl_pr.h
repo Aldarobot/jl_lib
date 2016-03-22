@@ -56,14 +56,14 @@ uint32_t jl_gem_size(void);
 	// LIB INITIALIZATION fn(Context)
 	void _jl_cm_init(jvct_t* _jl);
 	void jl_file_init__(jvct_t * _jl);
-	jvct_t* _jl_me_init(void);
+	jvct_t* jl_mem_init__(void);
 	void jl_print_init__(jl_t* jl);
 	void jl_thread_init__(jvct_t* jl_);
 	void jl_mode_init__(jl_t* jl);
 	void jl_sdl_init__(jl_t* jl);
 
 	// LIB KILLS
-	void _jl_me_kill(jvct_t* jprg);
+	void jl_mem_kill__(jvct_t* jprg);
 	void jl_file_kill__(jvct_t * _jl);
 	void jl_print_kill__(jl_t* jl);
 

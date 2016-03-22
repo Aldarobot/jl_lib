@@ -7,7 +7,7 @@
 //Initialize The Libraries Needed At Very Beginning: The Base Of It All
 static inline jvct_t* jl_init_essential__(void) {
 	// Memory
-	jvct_t* _jl = _jl_me_init(); // Create The Library Context
+	jvct_t* _jl = jl_mem_init__(); // Create The Library Context
 	// Printing to terminal
 	jl_print_init__(_jl->jl);
 	return _jl;
@@ -86,7 +86,7 @@ static inline int jl_kill__(jl_t* jl, int rc) {
 	_jl->me.status = JL_STATUS_EXIT;
 	jl_file_kill__(_jl);
 	jl_print_kill__(jl);
-	_jl_me_kill(_jl);
+	jl_mem_kill__(_jl);
 	printf("[\\JL_Lib] ");
 	if(!rc) printf("| No errors ");
 	printf("| Exiting with return value %d |\n", rc);

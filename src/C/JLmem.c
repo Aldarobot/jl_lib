@@ -14,9 +14,9 @@
 /************************/
 
 //Update Memory To Size "kb" kilobytes
-static inline void _jlvm_jl_me_resz(jvct_t* _jl, uint32_t kb) {
+static inline void _jlvm_jl_mem_resz(jvct_t* _jl, uint32_t kb) {
 	printf("[jl_me] updating memory size....\n");
-	printf("[jl_me] total size = %ld\n", jl_me_tbiu());
+	printf("[jl_me] total size = %ld\n", jl_mem_tbiu());
 	printf("[jl_me] update to =  %d\n", kb);
 	printf("[jl_me] SDL Size =   %d\n", 0);
 	printf("[jl_me] JLVM Size =  %d\n", 0);
@@ -24,14 +24,14 @@ static inline void _jlvm_jl_me_resz(jvct_t* _jl, uint32_t kb) {
 	printf("[jl_me] Unknown =    %d\n", 0);
 }
 
-static void _jl_me_init_alloc(void **a, uint32_t size) {
+static void _jl_mem_init_alloc(void **a, uint32_t size) {
 	if(size == 0) {
 		printf("mina: Double Free or free on NULL pointer!\n");
 		exit(-1);
 	}
 	*a = malloc(size);
 	if(*a == NULL) {
-		printf("mina: jl_me_alloc: Out Of Memory!");
+		printf("mina: jl_mem_alloc: Out Of Memory!");
 		exit(-1);
 	}
 	jl_mem_clr(*a, size);
@@ -45,7 +45,7 @@ static void _jl_me_init_alloc(void **a, uint32_t size) {
  * Return Amount Of Total Memory Being Used
  * @returns The total amount of memory being used in bytes.
 **/
-u64_t jl_me_tbiu(void) {
+u64_t jl_mem_tbiu(void) {
 	struct mallinfo mi;
 
 	malloc_trim(0); //Remove Free Memory
@@ -53,19 +53,19 @@ u64_t jl_me_tbiu(void) {
 	return mi.uordblks;
 }
 
-void jl_me_leak_init(jl_t* jl) {
+void jl_mem_leak_init(jl_t* jl) {
 	jvct_t * jl_ = jl->_jl;
 
-	jl_->me.usedmem = jl_me_tbiu();
+	jl_->me.usedmem = jl_mem_tbiu();
 }
 
 /**
- * Exit if there's been a memory leak since the last call to jl_me_leak_init().
+ * Exit if there's been a memory leak since the last call to jl_mem_leak_init().
 **/
-void jl_me_leak_fail(jl_t* jl, str_t fn_name) {
+void jl_mem_leak_fail(jl_t* jl, str_t fn_name) {
 	jvct_t * jl_ = jl->_jl;
 
-	if(jl_me_tbiu() != jl_->me.usedmem) {
+	if(jl_mem_tbiu() != jl_->me.usedmem) {
 		jl_print(jl, "%s: Memory Leak Fail", fn_name);
 		jl_sg_kill(jl);
 	}
@@ -136,7 +136,7 @@ void * jl_mem_copy(jl_t* jl, const void *src, size_t size) {
 /**
  * Format a string.
 **/
-m_str_t jl_me_format(jl_t* jl, str_t format, ... ) {
+m_str_t jl_mem_format(jl_t* jl, str_t format, ... ) {
 	if(format) {
 		va_list arglist;
 
@@ -154,7 +154,7 @@ m_str_t jl_me_format(jl_t* jl, str_t format, ... ) {
  * @param a: 1 more than the maximum # to return
  * @returns: a random integer from 0 to "a"
 */
-u32_t jl_me_random_int(u32_t a) {
+u32_t jl_mem_random_int(u32_t a) {
 	return rand()%a;
 }
 
@@ -165,7 +165,7 @@ u32_t jl_me_random_int(u32_t a) {
  * @param tmp_ptr: The new pointer to save to the buffer.
  * @returns: The old/previous value of the pointer.
 **/
-void *jl_me_tmp_ptr(jl_t* jl, uint8_t which, void *tmp_ptr) {
+void *jl_mem_tmp_ptr(jl_t* jl, uint8_t which, void *tmp_ptr) {
 	jvct_t* _jl = jl->_jl;
 	void *rtn = _jl->me.tmp_ptr[which];
 
@@ -177,17 +177,17 @@ void *jl_me_tmp_ptr(jl_t* jl, uint8_t which, void *tmp_ptr) {
 /***  ETOM Functions  ***/
 /************************/
 
-jvct_t* _jl_me_init(void) {
+jvct_t* jl_mem_init__(void) {
 	//Create a context for the currently loaded program
 	jvct_t* _jl = NULL;
-	_jl_me_init_alloc((void**)&_jl, sizeof(jvct_t));
+	_jl_mem_init_alloc((void**)&_jl, sizeof(jvct_t));
 	m_u8_t i;
 
 	//Set the current program ID to 0[RESERVED DEFAULT]
 	_jl->cprg = 0;
 	//Prepare user data structure
 	_jl->jl = NULL;
-	_jl_me_init_alloc((void**)&(_jl->jl), sizeof(jl_t));
+	_jl_mem_init_alloc((void**)&(_jl->jl), sizeof(jl_t));
 	_jl->jl->_jl = _jl;
 	_jl->jl->errf = JL_ERR_NERR; // No error
 	//Make sure that non-initialized things aren't used
@@ -206,7 +206,7 @@ jvct_t* _jl_me_init(void) {
 	return _jl;
 }
 
-void _jl_me_kill(jvct_t* _jl) {
+void jl_mem_kill__(jvct_t* _jl) {
 	free(_jl);
 //	cl_list_destroy(g_vmap_list);
 }
