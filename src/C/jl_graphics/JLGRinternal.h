@@ -100,3 +100,6 @@ void jl_gr_taskbar_loop_(jl_t* jlc, jl_sprd_t* sprd);
 
 void jl_gr_mouse_draw_(jl_t* jlc, jl_sprd_t* sprd);
 void jl_gr_taskbar_draw_(jl_t* jlc, jl_sprd_t* sprd);
+
+//
+void jl_wm_updatewh_(jl_gr_t* jl_gr);

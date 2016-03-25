@@ -9,7 +9,8 @@
 #include "jl_pr.h"
 #include "JLGRinternal.h"
 
-static inline void jlgr_thread_resize(jl_gr_t* jl_gr, u16_t w, u16_t h) {
+static void jlgr_thread_resize(jl_gr_t* jl_gr, u16_t w, u16_t h) {
+	jl_print(jl_gr->jl, "Resizing to %dx%d....", w, h);
 	// Reset aspect ratio stuff.
 	jl_dl_resz__(jl_gr, w, h);
 	// Update the actual window.
@@ -70,6 +71,8 @@ static u8_t jlgr_thread_draw_event__(jl_t* jl) {
 	return jl_gr->draw.rtn;
 }
 
+void jl_wm_updatewh_(jl_gr_t* jl_gr); // TODO: Move
+
 static void jlgr_thread_draw_init__(jl_t* jl) {
 	jl_gr_t* jl_gr = jl->jl_gr;
 	jlgr_thread_packet_t packet = { JLGR_COMM_DRAWFIN, 0, 0 };
@@ -85,6 +88,9 @@ static void jlgr_thread_draw_init__(jl_t* jl) {
 	jl_gr_init__(jl_gr);
 	JL_PRINT_DEBUG(jl, "Creating Mouse / Taskbar sprites....");
 	jlgr_gui_init_(jl_gr);
+	JL_PRINT_DEBUG(jl, "Force Resize");
+	jl_wm_updatewh_(jl_gr);
+	jlgr_thread_resize(jl_gr, jl_gr->dl.current.w,jl_gr->dl.current.h);
 	JL_PRINT_DEBUG(jl, "Looking for init packet....");
 	// Wait until recieve init packet....
 	while(jlgr_thread_draw_event__(jl) != 2);

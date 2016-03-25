@@ -12,7 +12,6 @@
 
 //PROTOTYPES
 static void _jl_dl_fscreen(jl_gr_t* jl_gr, uint8_t a);
-static void _jlvm_curd_mode(jl_gr_t* jl_gr);
 
 //EXPORT FUNCTIONS
 void jlgr_wm_setfullscreen(jl_gr_t* jl_gr, uint8_t is) {
@@ -39,7 +38,7 @@ void jlgr_wm_setwindowname(jl_gr_t* jl_gr, str_t window_name) {
 static void jl_dl_killedit(jl_t* jl, char *str) {
 	jl_print(jl, str);
 	jl_print(jl, SDL_GetError());
-	jl_sg_kill(jl);
+	exit(-1);
 }
 
 static SDL_Window* jl_dl_mkwindow(jl_gr_t* jl_gr) {
@@ -71,7 +70,7 @@ static void _jl_dl_fscreen(jl_gr_t* jl_gr, uint8_t a) {
 	 JL_DL_FULLSCREEN * jl_gr->dl.fullscreen))
 		jl_dl_killedit(jl_gr->jl, "SDL_SetWindowFullscreen");
 	// Resize window
-	_jlvm_curd_mode(jl_gr);
+	jl_wm_updatewh_(jl_gr);
 	jl_gr_resz(jl_gr, jl_gr->dl.current.w, jl_gr->dl.current.h);
 }
 
@@ -87,16 +86,14 @@ static inline void jlvmpi_ini_sdl(jl_gr_t* jl_gr) {
 }
 
 //Update the SDL_displayMode structure
-static void _jlvm_curd_mode(jl_gr_t* jl_gr) {
+void jl_wm_updatewh_(jl_gr_t* jl_gr) {
 	if(SDL_GetCurrentDisplayMode(0, &jl_gr->dl.current)) {
 		jl_print(jl_gr->jl, "failed to get current display mode:%s",
 			(char *)SDL_GetError());
 		jl_sg_kill(jl_gr->jl);
 	}
-	jl_print_function(jl_gr->jl, "SDL_cdm");
 	JL_PRINT_DEBUG(jl_gr->jl, "%d,%d", jl_gr->dl.current.w,
 		jl_gr->dl.current.h);
-	jl_print_return(jl_gr->jl, "SDL_cdm");
 }
 
 //This is the code that actually creates the window by accessing SDL
@@ -129,44 +126,9 @@ static inline void _jlvm_crea_wind(jl_gr_t* jl_gr) {
 	// Clear and update
 	jl_gl_clear(jl_gr, 2, 255, 5, 255);
 	jl_dl_loop__(jl_gr);
-#if JL_GLRTEX == JL_GLRTEX_SDL
-	jl_gr->dl.whichwindow = 0;
-#endif
 }
 
-//NON-STATIC FUNCTIONS
 // ETOM FUNCTIONS
-
-#if JL_GLRTEX == JL_GLRTEX_SDL
-
-void jl_dl_screen_(jl_gr_t* jl_gr, jl_window_t* which) {
-	if(jl_gr->dl.whichwindow != which) {
-		SDL_GL_MakeCurrent(which->w, jl_gr->dl.displayWindow->c);
-		jl_gr->dl.whichwindow = which;
-	}
-}
-
-jl_window_t* jl_dl_screen_new_(jl_gr_t* jl_gr, u16_t w, u16_t h) {
-	// Allocate space for "window"
-	jl_window_t* window = jl_memi(jl_gr->jl, sizeof(jl_window_t));
-
-	// Create the window.
-	window->w = SDL_CreateWindow(
-		"¡Hidden!",				// window title
-		10, 10,					// initial (x,y)
-		w, h,					// width & height
-		SDL_WINDOW_OPENGL | SDL_WINDOW_HIDDEN
-	);
-	// Create Shared Context
-	SDL_GL_SetAttribute(SDL_GL_SHARE_WITH_CURRENT_CONTEXT, 1);
-	window->c = SDL_GL_CreateContext(window->w);
-	// Set display window as default.
-	SDL_RaiseWindow(jl_gr->dl.displayWindow->w);
-	// Return the new window.
-	return window;
-}
-
-#endif
 
 void jl_dl_loop__(jl_gr_t* jl_gr) {
 	//Update Screen
@@ -261,11 +223,11 @@ void jl_dl_progname(jl_t* jl, data_t* name) {
 void jl_dl_init__(jl_gr_t* jl_gr) {
 	jlvmpi_ini_sdl(jl_gr);
 	//Get Information On How Big To Make Window
-	_jlvm_curd_mode(jl_gr);
+	jl_wm_updatewh_(jl_gr);
 	//Create Window With SDL
 	_jlvm_crea_wind(jl_gr);
 	//Get Window Size
-	_jlvm_curd_mode(jl_gr);
+	jl_wm_updatewh_(jl_gr);
 	//Update screensize to fix any rendering glitches
 	jl_dl_resz__(jl_gr, jl_gr->dl.current.w, jl_gr->dl.current.h);
 	// Update The Screen
@@ -275,7 +237,7 @@ void jl_dl_init__(jl_gr_t* jl_gr) {
 void jl_dl_kill__(jl_gr_t* jl_gr) {
 	JL_PRINT_DEBUG(jl_gr->jl, "killing SDL....");
 	if (jl_gr->dl.displayWindow->c != NULL) {
-		SDL_free(jl_gr->dl.displayWindow->c);
+//		SDL_free(jl_gr->dl.displayWindow->c);
 		SDL_free(jl_gr->dl.displayWindow->w);
 	}
 	JL_PRINT_DEBUG(jl_gr->jl, "killed SDL!");
