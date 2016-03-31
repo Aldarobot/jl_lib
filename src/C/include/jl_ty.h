@@ -48,85 +48,6 @@ typedef struct{
 	uint32_t curs; //Cursor In String
 }data_t;
 
-typedef struct {
-	SDL_Window* w;		// Window
-	SDL_GLContext* c;	// GL Context
-}jl_window_t;
-
-typedef struct {
-	m_u32_t gl_texture;
-	m_u32_t gl_buffer;
-	m_u16_t w, h;
-	void* pixels;
-}jl_tex_t;
-
-typedef struct {
-	// What to render
-	uint32_t tx;	// ID to texture.
-	uint32_t db;	// ID to Depth Buffer
-	uint32_t fb;	// ID to Frame Buffer
-	uint16_t w, h;	// Width and hieght of texture
-	// Render Area
-	uint32_t gl;	// GL Vertex Buffer Object [ 0 = Not Enabled ]
-	float ar;	// Aspect Ratio: h:w
-	float* cv;	// Converted Vertices
-}jl_pr_t;
-
-// Collision Box.
-typedef struct{
-	m_f32_t x, y, z;
-	m_f32_t w, h, d; // Width, Height, Depth.
-}jl_cb_t;
-
-//Vertex Object
-typedef struct{
-	// Other vo's
-	m_u32_t nc;	// How many more vo's are following this vo in the array
-	// Basic:
-	uint8_t rs;	// Rendering Style 0=GL_TRIANGLE_FAN 1=GL_TRIANGLES
-	uint32_t gl;	// GL Vertex Buffer Object [ 0 = Not Enabled ]
-	uint32_t vc;	// # of Vertices
-	float* cv;	// Converted Vertices
-	uint32_t bt;	// Buffer for Texture coordinates or Color Vertices.
-	// Coloring:
-	jl_ccolor_t* cc;// Converted Colors [ NULL = Texturing Instead ]
-	// Texturing:
-	uint32_t tx;	// ID to texture.
-	float a;	// Converted Alpha.
-	jl_pr_t *pr;	// Pre-renderer.
-	// Collision Box
-	jl_cb_t cb;	// 2D/3D collision box.
-}jl_vo_t;
-
-// Coordinate Structures
-typedef struct{
-	float x, y, w, h;
-}jl_rect_t;
-
-typedef struct{
-	float x, y, z;
-}jl_vec3_t;
-
-typedef struct{
-	jl_vec3_t pt1;
-	jl_vec3_t pt2;
-}jl_line_t;
-
-typedef struct {
-	m_i32_t g, i; // Group ID, Image ID
-	m_u8_t multicolor; // Allow Multiple Colors
-	m_u8_t* colors; // The Colors
-	m_f32_t size; // The Size
-}jl_font_t;
-
-typedef struct {
-	jl_vec3_t tr;				// The translate vector.
-	jl_rect_t cb;				// Collision Box
-	float rh, rw;				// Real Height & Width
-	void* ctx;				// The sprite's context.
-	void* spr;				// Pointer back to sprite.
-}jl_sprd_t;
-
 typedef struct{
 	SDL_mutex *lock;	/** The mutex lock on the "data" */
 	m_u8_t pnum;		/** Number of packets in structure (upto 16 ) */
@@ -134,22 +55,40 @@ typedef struct{
 	void* data[16];		/** The data attached to the mutex */
 }jl_comm_t;
 
+//Standard Mode Class
+typedef struct {
+	void* init;
+	void* loop;
+	void* kill;
+}jl_mode_t;
+
+// Thread-Specific context.
 typedef struct{
-	uint8_t smde; //Whether 2 or 1 Screens are showing.
-	uint32_t info; //@startup:# images loaded from media.zip.Set by others.
-	jl_err_t errf; //Set if error
+	SDL_Thread* thread;
+	SDL_threadID thread_id;
+
+	struct {
+		int8_t ofs2;
+		char stack[50][30];
+		uint8_t level;
+	}print;
+
+	void* temp_ptr;
+	char temp[256];
+}jl_ctx_t;
+
+typedef struct{
+	// Thread Non-Safe Variables ( For 1 thread's use ).
+	struct{
+		void* printfn; // Function for printing
+		SDL_mutex* mutex; // Mutex for printing to terminal
+	}print;
 	struct{
 		float psec; // Secomms since last frame.
 		uint32_t prev_tick; // Time 1 frame ago started
 		uint32_t this_tick; // Time this frame started
 		uint16_t fps; // Frames per secomm.
 	}time;
-	uint8_t mdec; //Number of Modes
-	uint8_t mode; //Current Mode
-	uint8_t loop; //[WINDOW MODE] ( terminal,up,down,exit screen)
-	void* mouse; //jl_sprite_t: Sprite to represent mouse pointer
-	void* _jl; //The library's context
-	void* uctx; //The program's context
 	struct{
 		float x; //X position 0-1
 		float y; //Y position 0-1
@@ -158,15 +97,27 @@ typedef struct{
 		uint8_t h; //How long held down.
 		uint8_t k; //Which key [ a-z , left/right click ]
 	}ctrl;
-	uint8_t fontcolor[4];
-	jl_font_t font;
-	char temp[256];
+	struct {
+		jl_mode_t *mdes; // Array Sizof Number Of Modes
+		jl_mode_t mode; // Current Mode Data
+		uint16_t which;
+		uint16_t count;
+	}mode;
+	uint8_t smde; //Whether 2 or 1 Screens are showing.
+	uint32_t info; //@startup:# images loaded from media.zip.Set by others.
+	jl_err_t errf; //Set if error
+	void* _jl; //The library's context
+	//
+	jl_ctx_t jl_ctx[16];
+	// Program's context.
+	void* prg_context;
 	// Built-in library pointers.
-	void* jl_gr;
+	void* jlgr;
 	void* jl_au;
 }jl_t;
 
 typedef void(*jl_fnct)(jl_t* jl);
 typedef void(*jl_data_fnct)(jl_t* jl, void* data);
 typedef void(*jl_print_fnt)(jl_t* jl, const char * print);
+
 //

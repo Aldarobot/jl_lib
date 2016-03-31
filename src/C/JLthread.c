@@ -8,6 +8,19 @@
 **/
 #include "jl_pr.h"
 
+//
+// Static Functions
+//
+
+// Initialize a new thread.
+static void jl_thread_init_new(jl_t* jl, u8_t thread_id) {
+	jl_print_init_thread__(jl, thread_id);
+}
+
+//
+// Exported Functions
+//
+
 /**
  * Create a thread.  User can program up to 16 threads.
  * @param jl: The library context.
@@ -16,21 +29,20 @@
  * @returns: The thread ID number.
 **/
 uint8_t jl_thread_new(jl_t *jl, str_t name, SDL_ThreadFunction fn) {
-	jvct_t* jl_ = jl->_jl;
 	uint8_t i, rtn;
 
 	// Skip main thread ( i = 1 )
 	for(i = 1; i < 16; i++) {
 		// Look for not init'd thread.
-		if(jl_->thread[i].thread == NULL) {
+		if(jl->jl_ctx[i].thread == NULL) {
 			// Run thread-specific initalizations
-			jl_print_init_thread__(jl, i);
+			jl_thread_init_new(jl, i);
 			// Create a thread
-			jl_->thread[i].thread =	SDL_CreateThread(fn, name, jl);
-			jl_->thread[i].thread_id =
-				SDL_GetThreadID(jl_->thread[i].thread);
+			jl->jl_ctx[i].thread =	SDL_CreateThread(fn, name, jl);
+			jl->jl_ctx[i].thread_id =
+				SDL_GetThreadID(jl->jl_ctx[i].thread);
 			// Check if success
-			if(jl_->thread[i].thread == NULL) {
+			if(jl->jl_ctx[i].thread == NULL) {
 				jl_print(jl, "SDL_CreateThread failed: %s",
 					SDL_GetError());
 				exit(-1);
@@ -50,14 +62,13 @@ uint8_t jl_thread_new(jl_t *jl, str_t name, SDL_ThreadFunction fn) {
  * @returns: The thread ID number, 0 if main thread.
 **/
 uint8_t jl_thread_current(jl_t *jl) {
-	jvct_t* jl_ = jl->_jl;
 	SDL_threadID current_thread = SDL_ThreadID();
 	uint8_t i, rtn = 0;
 
 	// Skip main thread ( i = 1 )
 	for(i = 1; i < 16; i++) {
 		// Look for not init'd thread.
-		if(jl_->thread[i].thread_id == current_thread) {
+		if(jl->jl_ctx[i].thread_id == current_thread) {
 			rtn = i;
 			break;
 		}
@@ -72,10 +83,9 @@ uint8_t jl_thread_current(jl_t *jl) {
  * @returns: Value returned from the thread.
 **/
 int32_t jl_thread_old(jl_t *jl, u8_t threadnum) {
-	jvct_t* jl_ = jl->_jl;
 	int32_t threadReturnValue = 0;
 
-	SDL_WaitThread(jl_->thread[threadnum].thread, &threadReturnValue);
+	SDL_WaitThread(jl->jl_ctx[threadnum].thread, &threadReturnValue);
 	return threadReturnValue;
 }
 
@@ -239,9 +249,9 @@ void jl_thread_comm_kill(jl_t* jl, jl_comm_t* comm) {
 // Internal functions
 //
 
-void jl_thread_init__(jvct_t* jl_) {
+void jl_thread_init__(jl_t* jl) {
 	uint8_t i;
 
 	// Set all threads to null
-	for(i = 0; i < 16; i++) jl_->thread[i].thread = NULL;
+	for(i = 0; i < 16; i++) jl->jl_ctx[i].thread = NULL;
 }

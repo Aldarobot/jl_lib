@@ -24,19 +24,6 @@ static inline void _jlvm_jl_mem_resz(jvct_t* _jl, uint32_t kb) {
 	printf("[jl_me] Unknown =    %d\n", 0);
 }
 
-static void _jl_mem_init_alloc(void **a, uint32_t size) {
-	if(size == 0) {
-		printf("mina: Double Free or free on NULL pointer!\n");
-		exit(-1);
-	}
-	*a = malloc(size);
-	if(*a == NULL) {
-		printf("mina: jl_mem_alloc: Out Of Memory!");
-		exit(-1);
-	}
-	jl_mem_clr(*a, size);
-}
-
 /************************/
 /*** Global Functions ***/
 /************************/
@@ -81,7 +68,7 @@ void jl_mem_leak_fail(jl_t* jl, str_t fn_name) {
  * @param a: Pointer to the memory to resize/free, or NULL if allocating memory.
  * @param size: # of bytes to resize to/allocate, or 0 to free.
 **/
-void *jl_mem(jl_t* jl, void *a, uint32_t size) {
+void *jl_mem(jl_t* jl, void *a, u64_t size) {
 	if(size == 0) { // Free
 		if(a == NULL) {
 			jl_print(jl, "Double Free or free on NULL pointer");
@@ -105,10 +92,11 @@ void *jl_mem(jl_t* jl, void *a, uint32_t size) {
  * @param jl: The library context.
  * @param size: # of bytes to allocate.
 **/
-void *jl_memi(jl_t* jl, uint32_t size) {
+void *jl_memi(jl_t* jl, u64_t size) {
 	// Make sure size is non-zero.
 	if(!size) {
-		jl_print(jl, "jl_memi(): size must be more than 0");
+		if(jl) jl_print(jl, "jl_memi(): size must be more than 0");
+		else printf("jl_memi(): size must be more than 0");
 		exit(-1);
 	}
 	// Allocate Memory.
@@ -121,13 +109,32 @@ void *jl_memi(jl_t* jl, uint32_t size) {
 }
 
 /**
+ * Clear memory pointed to by "mem" of size "size"
+ * @param pmem: memory to clear
+ * @param size: size of "mem"
+**/
+void jl_mem_clr(void* mem, u64_t size) {
+	memset(mem, 0, size);
+}
+
+/**
+ * Copy memory from one place to another.
+ * @param src: The place to copy memory from
+ * @param dst: The place to copy memory to
+ * @param size: The size of src & dst in bytes.
+**/
+void jl_mem_copyto(const void* src, void* dst, u64_t size) {
+	memcpy(dst, src, size);
+}
+
+/**
  * Copy "size" bytes of "src" to a new pointer of "size" bytes and return it.
  * @param jl: The library context.
  * @param src: source buffer
  * @param size: # of bytes of "src" to copy to "dst"
  * @returns: a new pointer to 
 */
-void * jl_mem_copy(jl_t* jl, const void *src, size_t size) {
+void *jl_mem_copy(jl_t* jl, const void *src, u64_t size) {
 	void *dest = jl_memi(jl, size);
 	jl_mem_copyto(src, dest, size);
 	return dest;
@@ -139,11 +146,12 @@ void * jl_mem_copy(jl_t* jl, const void *src, size_t size) {
 m_str_t jl_mem_format(jl_t* jl, str_t format, ... ) {
 	if(format) {
 		va_list arglist;
+		void* temp = jl->jl_ctx[jl_thread_current(jl)].temp;
 
 		va_start( arglist, format );
-		vsprintf( jl->temp, format, arglist );
+		vsprintf( temp, format, arglist );
 		va_end( arglist );
-		return jl->temp;
+		return temp;
 	}else{
 		return NULL;
 	}
@@ -159,17 +167,16 @@ u32_t jl_mem_random_int(u32_t a) {
 }
 
 /**
- * Save a pointer to a buffer and get the previous value of it.
+ * Save up to 256 bytes to a buffer, return the previous value of the buffer.
  * @param jl: The library context.
- * @param which: A number from 1-15, specifies which temporary pointer to use.
- * @param tmp_ptr: The new pointer to save to the buffer.
+ * @param mem: The new memory to save to the buffer.
+ * @param size: Size of pointer.
  * @returns: The old/previous value of the pointer.
 **/
-void *jl_mem_tmp_ptr(jl_t* jl, uint8_t which, void *tmp_ptr) {
-	jvct_t* _jl = jl->_jl;
-	void *rtn = _jl->me.tmp_ptr[which];
+void *jl_mem_temp(jl_t* jl, void *mem) {
+	void* rtn = jl->jl_ctx[jl_thread_current(jl)].temp_ptr;
 
-	_jl->me.tmp_ptr[which] = tmp_ptr;
+	jl->jl_ctx[jl_thread_current(jl)].temp_ptr = mem;
 	return rtn;
 }
 
@@ -179,15 +186,12 @@ void *jl_mem_tmp_ptr(jl_t* jl, uint8_t which, void *tmp_ptr) {
 
 jvct_t* jl_mem_init__(void) {
 	//Create a context for the currently loaded program
-	jvct_t* _jl = NULL;
-	_jl_mem_init_alloc((void**)&_jl, sizeof(jvct_t));
-	m_u8_t i;
+	jvct_t* _jl = jl_memi(NULL, sizeof(jvct_t));
 
 	//Set the current program ID to 0[RESERVED DEFAULT]
 	_jl->cprg = 0;
 	//Prepare user data structure
-	_jl->jl = NULL;
-	_jl_mem_init_alloc((void**)&(_jl->jl), sizeof(jl_t));
+	_jl->jl = jl_memi(NULL, sizeof(jl_t));
 	_jl->jl->_jl = _jl;
 	_jl->jl->errf = JL_ERR_NERR; // No error
 	//Make sure that non-initialized things aren't used
@@ -196,13 +200,6 @@ jvct_t* jl_mem_init__(void) {
 	_jl->has.filesys = 0;
 	_jl->has.input = 0;
 	_jl->me.status = JL_STATUS_GOOD;
-	// Clear temporary pointer buffer.
-	for(i = 0; i < 16; i++) _jl->me.tmp_ptr[i] = NULL;
-
-/*	printf("u %p, %p, c %p,%p\n",
-		_jl->jl, ((jvct_t *)(_jl->jl->_jl))->sg.usrd,
-		_jl, _jl->jl->_jl);*/
-//	g_vmap_list = cl_list_create();
 	return _jl;
 }
 

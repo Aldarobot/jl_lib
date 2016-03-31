@@ -52,13 +52,14 @@ uint32_t jl_gem_size(void);
 // Main - Prototypes
 	float jl_sdl_seconds_past__(jl_t* jl);
 	str_t jl_file_convert__(jl_t* jl, str_t filename);
+	jl_ctx_t* jl_thread_get_safe__(jl_t* jl);
 
 	// LIB INITIALIZATION fn(Context)
 	void _jl_cm_init(jvct_t* _jl);
 	void jl_file_init__(jvct_t * _jl);
 	jvct_t* jl_mem_init__(void);
 	void jl_print_init__(jl_t* jl);
-	void jl_thread_init__(jvct_t* jl_);
+	void jl_thread_init__(jl_t* jl);
 	void jl_mode_init__(jl_t* jl);
 	void jl_sdl_init__(jl_t* jl);
 

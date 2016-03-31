@@ -9,26 +9,31 @@
 **/
 #include "jl_pr.h"
 
-static void _jl_mode_add(jl_t* jl) {
-	jvct_t* _jl = jl->_jl;
+//
+// Static functions.
+//
 
+static void _jl_mode_add(jl_t* jl) {
 	// Allocate a new mode.
-	_jl->mode.mdes = jl_mem(jl, _jl->mode.mdes,
-		(jl->mdec + 1) * sizeof(__sg_mode_t));
+	jl->mode.mdes = jl_mem(jl, jl->mode.mdes,
+		(jl->mode.count + 1) * sizeof(jl_mode_t));
 	// Set the mode.
-	_jl->mode.mdes[jl->mdec].tclp[JL_MODE_INIT] = jl_dont;
-	_jl->mode.mdes[jl->mdec].tclp[JL_MODE_LOOP] = jl_dont;
-	_jl->mode.mdes[jl->mdec].tclp[JL_MODE_EXIT] = jl_sg_exit;
+	jl->mode.mdes[jl->mode.count] =
+		(jl_mode_t) { jl_dont, jl_dont, jl_mode_exit };
 	// Add to mode count.
-	jl->mdec++;
+	jl->mode.count++;
 }
+
+//
+// Export Functions
+//
 
 /**
  * Set the loop functions for a mode.
  *
  * @param jl: The library context.
  * @param mode: The mode to change the loop functions of.
- * @param wm: Which loop to change.
+ * @param loops: Which loop to change.
  *	JL_MODE_INIT: Called when mode is switched in.
  *	JL_MODE_EXIT: Called when "Back Button" Is Pressed.  "Back Button" is:
  *		- 3DS/WiiU: Select
@@ -40,26 +45,22 @@ static void _jl_mode_add(jl_t* jl) {
  *	JL_MODE_LOOP: Called repeatedly.
  * @param loop: What to change the loop to.
 */
-void jl_mode_set(jl_t* jl, u8_t mode, u8_t wm, jl_fnct loop) {
-	jvct_t* _jl = jl->_jl;
-	jl_gr_t* jl_gr = jl->jl_gr;
+void jl_mode_set(jl_t* jl, u16_t mode, jl_mode_t loops) {
+	jlgr_t* jlgr = jl->jlgr;
 
-	while(mode >= jl->mdec) _jl_mode_add(jl);
-	_jl->mode.mdes[mode].tclp[wm] = loop;
-	// Reset things
-	if(jl_gr) jl_gr->main.ct.heldDown = 0;
+	while(mode >= jl->mode.count) _jl_mode_add(jl);
+	jl->mode.mdes[mode] = loops;
+	// Reset input.
+	if(jlgr) jlgr->main.ct.heldDown = 0;
 }
 
 /**
  * Temporarily change the mode functions without actually changing the mode.
  * @param jl: The library context.
- * @param wm: the loop to override
- * @param loop: the overriding function 
+ * @param loops: the overriding functions.
  */
-void jl_mode_override(jl_t* jl, uint8_t wm, jl_fnct loop) {
-	jvct_t* _jl = jl->_jl;
-
-	_jl->mode.mode.tclp[wm] = loop;
+void jl_mode_override(jl_t* jl, jl_mode_t loops) {
+	jl->mode.mode = loops;
 }
 
 /**
@@ -67,11 +68,7 @@ void jl_mode_override(jl_t* jl, uint8_t wm, jl_fnct loop) {
  * @param jl: The library context.
  */
 void jl_mode_reset(jl_t* jl) {
-	jvct_t* _jl = jl->_jl;
-	int i;
-
-	for(i = 0; i < JL_MODE_LMAX; i++)
-		_jl->mode.mode.tclp[i] = _jl->mode.mdes[jl->mode].tclp[i];
+	jl->mode.mode = jl->mode.mdes[jl->mode.which];
 }
 
 /**
@@ -79,30 +76,44 @@ void jl_mode_reset(jl_t* jl) {
  * @param jl: The library context.
  * @param mode: The mode to switch to.
  */
-void jl_mode_switch(jl_t* jl, u8_t mode) {
-	jvct_t* _jl = jl->_jl;
+void jl_mode_switch(jl_t* jl, u16_t mode) {
+	jl_fnct kill_ = jl->mode.mode.kill;
+	jl_fnct init_;
 
+	// Run the previous mode's kill function
+	kill_(jl);
 	// Switch mode
-	jl->mode = mode;
-	jl->loop = JL_MODE_LOOP;
-	// Set the basic functions
+	jl->mode.which = mode;
+	// Update mode functions
 	jl_mode_reset(jl);
-	// Run user's intialization
-	_jl->mode.mode.tclp[JL_MODE_INIT](_jl->jl);
+	// Run the new mode's init functions.
+	init_ = jl->mode.mode.init;
+	init_(jl);
+}
+
+/**
+ * Run the exit routine for the mode.  If the mode isn't switched in the exit
+ *	routine, then the program will halt.
+ * @param jl: The library context.
+ */
+void jl_mode_exit(jl_t* jl) {
+	u16_t which = jl->mode.which;
+	jl_fnct kill_ = jl->mode.mode.kill;
+
+	// Run exit routine.
+	kill_(jl);
+	// If mode is same as before, then quit.
+	if(which == jl->mode.which) jl->mode.count = 0;
 }
 
 // Internal functions
 
 void jl_mode_init__(jl_t* jl) {
-	m_u8_t i;
-	jvct_t* _jl = jl->_jl;
-
 	// Set up modes:
-	jl->loop = JL_MODE_INIT; // Set Default Loop To Initialize
-	jl->mode = 0;
-	jl->mdec = 0;
-	_jl->mode.mdes = NULL;
+	jl->mode.which = 0;
+	jl->mode.count = 0;
+	jl->mode.mdes = NULL;
 	_jl_mode_add(jl);
 	// Clear User Loops
-	for(i = 0; i < JL_MODE_LMAX; i++) _jl->mode.mode.tclp[i] = jl_dont;
+	jl_mode_override(jl, (jl_mode_t) { jl_dont, jl_dont, jl_dont });
 }

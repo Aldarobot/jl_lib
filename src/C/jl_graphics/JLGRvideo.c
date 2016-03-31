@@ -3,7 +3,6 @@
 
 		VIDE is for editing sounds and graphics.
 */
-#include "jl_pr.h"
 #include "JLGRinternal.h"
 
 #undef HAVE_STDLIB_H

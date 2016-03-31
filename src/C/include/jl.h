@@ -22,25 +22,21 @@
 //1=format,4=size,x=data
 #define JL_IMG_SIZE_FLS 5 // How many bytes start for images.
 
-	int jl_init(jl_fnct _fnc_init_, jl_fnct _fnc_kill_);
 	void jl_dont(jl_t* jl);
+	void* jl_get_context(jl_t* jl);
+	int jl_start(jl_fnct fnc_init_, jl_fnct fnc_kill_, u64_t ctx_size);
 // "JLmem.c"
-	void *jl_mem(jl_t* jl, void *a, uint32_t size);
-	void *jl_memi(jl_t* jl, uint32_t size);
-	void * jl_mem_copy(jl_t* jl, const void *src, size_t size);
+	void *jl_mem(jl_t* jl, void *a, u64_t size);
+	void *jl_memi(jl_t* jl, u64_t size);
+	void *jl_mem_copy(jl_t* jl, const void *src, u64_t size);
 	u64_t jl_mem_tbiu(void);
 	void jl_mem_leak_init(jl_t* jl);
 	void jl_mem_leak_fail(jl_t* jl, str_t fn_name);
-	/**
-	 * Clear memory pointed to by "mem" of size "size"
-	 * @param pmem: memory to clear
-	 * @param size: size of "mem"
-	**/
-	#define jl_mem_clr(pmem, size) memset(pmem, 0, size);
-	#define jl_mem_copyto(src, dest, size) memcpy(dest, src, size)
+	void jl_mem_clr(void* mem, u64_t size);
+	void jl_mem_copyto(const void* src, void* dst, u64_t size);
 	m_str_t jl_mem_format(jl_t* jl, str_t format, ... );
 	u32_t jl_mem_random_int(u32_t a);
-	void *jl_mem_tmp_ptr(jl_t* jl, uint8_t which, void *tmp_ptr);
+	void *jl_mem_temp(jl_t* jl, void *mem);
 // "JLdata_t.c"
 	void jl_data_clear(jl_t* jl, data_t* pa);
 	data_t* jl_data_make(u32_t size);
@@ -63,25 +59,23 @@
 	data_t* jl_data_read_upto(jl_t* jl, data_t* script, u8_t end, u32_t psize);
 // "cl.c"
 	void jl_cl_list_alphabetize(struct cl_list *list);
-// "sg.c"
-	void jl_mode_set(jl_t* jl, u8_t mode, u8_t wm, jl_fnct loop);
-	void jl_mode_override(jl_t* jl, uint8_t wm, jl_fnct loop);
+// "JLmode.c"
+	void jl_mode_set(jl_t* jl, u16_t mode, jl_mode_t loops);
+	void jl_mode_override(jl_t* jl, jl_mode_t loops);
 	void jl_mode_reset(jl_t* jl);
-	void jl_mode_switch(jl_t* jl, u8_t mode);
+	void jl_mode_switch(jl_t* jl, u16_t mode);
+	void jl_mode_exit(jl_t* jl);
 // "JLprint.c"
-	void jl_print_tag_set(jl_t* jl, jl_print_fnt tagfn);
-	void jl_printc(jl_t* jl, const char * print);
-	#define jl_print(jl, ...)\
-		jl_printc(jl, jl_mem_format(jl, __VA_ARGS__))
-	#ifdef DEBUG
-		#define JL_PRINT_DEBUG(jl, ...)\
-			jl_printc(jl, jl_mem_format(jl, __VA_ARGS__))
-	#else
-		#define JL_PRINT_DEBUG(jl, ...)
-	#endif
+	void jl_print_set(jl_t* jl, jl_print_fnt fn_);
+	void jl_print(jl_t* jl, str_t format, ... );
 	void jl_print_function(jl_t* jl, str_t fn_name);
 	void jl_print_return(jl_t* jl, str_t fn_name);
 	void jl_print_stacktrace(jl_t* jl);
+	#ifdef DEBUG
+		#define JL_PRINT_DEBUG(jl, ...) jl_print(jl, __VA_ARGS__)
+	#else
+		#define JL_PRINT_DEBUG(jl, ...)
+	#endif
 // "JLfile.c"
 	void jl_file_print(jl_t* jl, str_t fname, str_t msg);
 	u8_t jl_file_exist(jl_t* jl, str_t path);

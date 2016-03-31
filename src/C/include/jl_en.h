@@ -20,13 +20,6 @@ typedef enum{
 	JL_STATUS_EVIL,
 }jl_status_t;
 
-typedef enum{
-	JL_MODE_INIT, // Run When the mode is switched in.
-	JL_MODE_LOOP, // Run When The mode is selected.
-	JL_MODE_EXIT, // Run When User requests to go back / quit.
-	JL_MODE_LMAX,
-}jl_modeloops_t;
-
 //ERROR MESSAGES
 typedef enum{
 	JL_ERR_NERR, //NO ERROR

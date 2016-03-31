@@ -1,10 +1,9 @@
-#include "jl_pr.h"
 #include "JLGRinternal.h"
 
-static char* jlgr_file_fullname__(jl_gr_t* jl_gr, char* selecteddir,
+static char* jlgr_file_fullname__(jlgr_t* jlgr, char* selecteddir,
 	char* selecteditem)
 {
-	jl_t* jl = jl_gr->jl;
+	jl_t* jl = jlgr->jl;
 	jvct_t * _jl = jl->_jl;
 
 	char *newdir = malloc(
@@ -31,22 +30,22 @@ static void _jl_fl_user_select_check_extradir(char *dirname) {
 
 // Return 1 on success
 // Return 0 if directory not available
-static uint8_t _jl_fl_user_select_open_dir(jl_gr_t* jl_gr, char *dirname) {
+static uint8_t _jl_fl_user_select_open_dir(jlgr_t* jlgr, char *dirname) {
 	DIR *dir;
 	struct dirent *ent;
-	jvct_t * _jl = jl_gr->jl->_jl;
+	jvct_t * _jl = jlgr->jl->_jl;
 	str_t converted_filename;
 
 	_jl_fl_user_select_check_extradir(dirname);
 	if(dirname[1] == '\0') {
-		jl_mem(jl_gr->jl, dirname, 0);
+		jl_mem(jlgr->jl, dirname, 0);
 		dirname = SDL_GetPrefPath("JL_Lib", "\0");
 		_jl_fl_user_select_check_extradir(dirname);
 	}
 	_jl->fl.dirname = dirname;
 	_jl->fl.cursor = 0;
 	_jl->fl.cpage = 0;
-	converted_filename = jl_file_convert__(jl_gr->jl, _jl->fl.dirname);
+	converted_filename = jl_file_convert__(jlgr->jl, _jl->fl.dirname);
 	cl_list_clear(_jl->fl.filelist);
 //UnComment to test file system conversion code.
 	printf("dirname=%s:%s\n", _jl->fl.dirname, converted_filename);
@@ -67,7 +66,8 @@ static uint8_t _jl_fl_user_select_open_dir(jl_gr_t* jl_gr, char *dirname) {
 			_jl->fl.returnit = 1;
 			_jl->fl.dirname[strlen(dirname)-1] = '\0';
 			_jl->fl.inloop = 0;
-			jl_gr->jl->loop = JL_MODE_EXIT; //Go into exit loop
+			// Exit this mode.
+			jl_mode_switch(jlgr->jl, jlgr->jl->mode.which);
 		}else if(errsv == ENOENT) { // Directory Doesn't Exist
 			return 0;
 		}else if(errsv == EACCES) { // Doesn't have permission
@@ -75,13 +75,13 @@ static uint8_t _jl_fl_user_select_open_dir(jl_gr_t* jl_gr, char *dirname) {
 		}else if((errsv == EMFILE) || (errsv == ENFILE) ||
 			(errsv == ENOMEM)) //Not enough memory!
 		{
-			jl_print(jl_gr->jl, "FileViewer Can't Open Directory:"
+			jl_print(jlgr->jl, "FileViewer Can't Open Directory:"
 				"Not Enough Memory!");
-			jl_sg_kill(jl_gr->jl);
+			jl_sg_kill(jlgr->jl);
 		}else{ //Unknown error
-			jl_print(jl_gr->jl, "FileViewer Can't Open Directory:"
+			jl_print(jlgr->jl, "FileViewer Can't Open Directory:"
 				"Unknown Error!");
-			jl_sg_kill(jl_gr->jl);
+			jl_sg_kill(jlgr->jl);
 		}
 	}
 	return 1;
@@ -99,11 +99,10 @@ static uint8_t _jl_fl_user_select_open_dir(jl_gr_t* jl_gr, char *dirname) {
  * @returns 0: if can't open the directory. ( Doesn't exist, Bad permissions )
  * @returns 1: on success.
 **/
-uint8_t jl_fl_user_select_init(jl_gr_t* jl_gr, const char *program_name,
+uint8_t jl_fl_user_select_init(jlgr_t* jlgr, const char *program_name,
 	void *newfiledata, uint64_t newfilesize)
 {
-	jvct_t * _jl = jl_gr->jl->_jl;
-	jl_gr->jl->loop = JL_MODE_LOOP;
+	jvct_t * _jl = jlgr->jl->_jl;
 	_jl->fl.returnit = 0;
 	_jl->fl.inloop = 1;
 	_jl->fl.newfiledata = newfiledata;
@@ -111,29 +110,29 @@ uint8_t jl_fl_user_select_init(jl_gr_t* jl_gr, const char *program_name,
 	_jl->fl.prompt = 0;
 	_jl->fl.promptstring = NULL;
 	if(program_name[0] == '!') {
-		char *path = jl_mem_copy(jl_gr->jl,program_name,
+		char *path = jl_mem_copy(jlgr->jl,program_name,
 			strlen(program_name));
-		return _jl_fl_user_select_open_dir(jl_gr, path);
+		return _jl_fl_user_select_open_dir(jlgr, path);
 	}else{
-		return _jl_fl_user_select_open_dir(jl_gr,
+		return _jl_fl_user_select_open_dir(jlgr,
 			SDL_GetPrefPath("JL_Lib",program_name));
 	}
 }
 
 static void _jl_fl_user_select_up(jl_t* jl) {
-	jl_gr_t* jl_gr = jl->jl_gr;
+	jlgr_t* jlgr = jl->jlgr;
 
-	if(jl_gr->jl->ctrl.h == 1) {
-		jvct_t * _jl = jl_gr->jl->_jl;
+	if(jlgr->jl->ctrl.h == 1) {
+		jvct_t * _jl = jlgr->jl->_jl;
 		if((_jl->fl.cursor > 0) || _jl->fl.cpage) _jl->fl.cursor--;
 	}
 }
 
 static void _jl_fl_user_select_dn(jl_t* jl) {
-	jl_gr_t* jl_gr = jl->jl_gr;
+	jlgr_t* jlgr = jl->jlgr;
 
-	if(jl_gr->jl->ctrl.h == 1) {
-		jvct_t * _jl = jl_gr->jl->_jl;
+	if(jlgr->jl->ctrl.h == 1) {
+		jvct_t * _jl = jlgr->jl->_jl;
 		if(_jl->fl.cursor + (_jl->fl.cpage * (_jl->fl.drawupto+1)) <
 			cl_list_count(_jl->fl.filelist) - 1)
 		{
@@ -158,19 +157,19 @@ static void _jl_fl_user_select_lt(jl_t* jl) {
 
 static void _jl_fl_open_file(jl_t*jl, char *selecteditem) {
 	jvct_t * _jl = jl->_jl;
-	char *newdir = jlgr_file_fullname__(jl->jl_gr,
+	char *newdir = jlgr_file_fullname__(jl->jlgr,
 		_jl->fl.dirname, selecteditem);
 
 	free(_jl->fl.dirname);
 	_jl->fl.dirname = NULL;
-	_jl_fl_user_select_open_dir(jl->jl_gr,newdir);
+	_jl_fl_user_select_open_dir(jl->jlgr,newdir);
 }
 
 static void _jl_fl_user_select_do(jl_t* jl) {
-	jl_gr_t* jl_gr = jl->jl_gr;
+	jlgr_t* jlgr = jl->jlgr;
 
-	if(jl_gr->jl->ctrl.h == 1) {
-		jvct_t * _jl = jl_gr->jl->_jl;
+	if(jlgr->jl->ctrl.h == 1) {
+		jvct_t * _jl = jlgr->jl->_jl;
 		struct cl_list_iterator *iterator;
 		int i;
 		char *stringtoprint;
@@ -192,39 +191,39 @@ static void _jl_fl_user_select_do(jl_t* jl) {
 				if(_jl->fl.dirname[i] == '/') break;
 				else _jl->fl.dirname[i] = '\0';
 			}
-			_jl_fl_user_select_open_dir(jl_gr,_jl->fl.dirname);
+			_jl_fl_user_select_open_dir(jlgr,_jl->fl.dirname);
 		}else if(strcmp(_jl->fl.selecteditem, ".") == 0) {
 			_jl->fl.inloop = 0;
-			jl_gr->jl->loop = JL_MODE_EXIT; //Go into exit loop
+			jl_mode_switch(jlgr->jl, jlgr->jl->mode.which);
 		}else{
-			_jl_fl_open_file(jl_gr->jl, _jl->fl.selecteditem);
+			_jl_fl_open_file(jlgr->jl, _jl->fl.selecteditem);
 		}
 	}
 }
 
 /**
  * Run the file viewer.
- * @param jl_gr: The jl_gr library Context.
+ * @param jlgr: The jlgr library Context.
 **/
-void jl_fl_user_select_loop(jl_gr_t* jl_gr) {
-	jvct_t * _jl = jl_gr->jl->_jl;
+void jl_fl_user_select_loop(jlgr_t* jlgr) {
+	jvct_t * _jl = jlgr->jl->_jl;
 	struct cl_list_iterator *iterator;
 	int i;
 	char *stringtoprint;
 
-	_jl->fl.drawupto = ((int)(20.f * jl_gl_ar(jl_gr))) - 1;
+	_jl->fl.drawupto = ((int)(20.f * jl_gl_ar(jlgr))) - 1;
 
 	iterator = cl_list_iterator_create(_jl->fl.filelist);
 
-	jl_gr_fill_image_set(jl_gr, 0, JL_IMGI_ICON, 1, 255);
-	jl_gr_fill_image_draw(jl_gr);
-	jl_gr_draw_text(jl_gr, "Select File", (jl_vec3_t) { .02, .02, 0. },
-		jl_gr->jl->font);
+	jlgr_fill_image_set(jlgr, 0, JL_IMGI_ICON, 1, 255);
+	jlgr_fill_image_draw(jlgr);
+	jlgr_draw_text(jlgr, "Select File", (jl_vec3_t) { .02, .02, 0. },
+		jlgr->font);
 
-	jl_ct_run_event(jl_gr,JL_CT_MAINUP, _jl_fl_user_select_up, jl_dont);
-	jl_ct_run_event(jl_gr,JL_CT_MAINDN, _jl_fl_user_select_dn, jl_dont);
-	jl_ct_run_event(jl_gr,JL_CT_MAINRT, _jl_fl_user_select_rt, jl_dont);
-	jl_ct_run_event(jl_gr,JL_CT_MAINLT, _jl_fl_user_select_lt, jl_dont);
+	jl_ct_run_event(jlgr,JL_CT_MAINUP, _jl_fl_user_select_up, jl_dont);
+	jl_ct_run_event(jlgr,JL_CT_MAINDN, _jl_fl_user_select_dn, jl_dont);
+	jl_ct_run_event(jlgr,JL_CT_MAINRT, _jl_fl_user_select_rt, jl_dont);
+	jl_ct_run_event(jlgr,JL_CT_MAINLT, _jl_fl_user_select_lt, jl_dont);
 	//Draw files
 	for(i = 0; i < cl_list_count(_jl->fl.filelist); i++) {
 		stringtoprint = cl_list_iterator_next(iterator);
@@ -234,12 +233,12 @@ void jl_fl_user_select_loop(jl_gr_t* jl_gr) {
 			stringtoprint = "//this folder//";
 		}
 		if(i - (_jl->fl.cpage * (_jl->fl.drawupto+1)) >= 0)
-			jl_gr_draw_text(jl_gr, stringtoprint, (jl_vec3_t) {
+			jlgr_draw_text(jlgr, stringtoprint, (jl_vec3_t) {
 				.06,
-				.08 + (jl_gr->jl->font.size *
+				.08 + (jlgr->font.size *
 					(i - (_jl->fl.cpage * (
 					_jl->fl.drawupto+1)))), 0. },
-				jl_gr->jl->font);
+				jlgr->font);
 		if(i - (_jl->fl.cpage * (_jl->fl.drawupto+1)) >
 			_jl->fl.drawupto - 1)
 		{
@@ -256,31 +255,31 @@ void jl_fl_user_select_loop(jl_gr_t* jl_gr) {
 		_jl->fl.cpage--;
 	}
 	if(_jl->fl.prompt) {
-		if(jl_gr_draw_textbox(jl_gr, .02, jl_gl_ar(jl_gr) - .06, .94, .02,
+		if(jlgr_draw_textbox(jlgr, .02, jl_gl_ar(jlgr) - .06, .94, .02,
 			&_jl->fl.promptstring))
 		{
-			char *name = jlgr_file_fullname__(jl_gr,
+			char *name = jlgr_file_fullname__(jlgr,
 				_jl->fl.dirname,
 				(char*)_jl->fl.promptstring->data);
 			name[strlen(name) - 1] = '\0';
-			jl_file_save(jl_gr->jl, _jl->fl.newfiledata,
+			jl_file_save(jlgr->jl, _jl->fl.newfiledata,
 				name, _jl->fl.newfilesize);
-			_jl_fl_user_select_open_dir(jl_gr, _jl->fl.dirname);
+			_jl_fl_user_select_open_dir(jlgr, _jl->fl.dirname);
 			_jl->fl.prompt = 0;
 		}
 	}else{
-		jl_gr_draw_text(jl_gr, ">", (jl_vec3_t) {
+		jlgr_draw_text(jlgr, ">", (jl_vec3_t) {
 			.02, .08 + (.04 * _jl->fl.cursor), 0. },
-			jl_gr->jl->font);
-		jl_gr_draw_text(jl_gr, _jl->fl.dirname,
-			(jl_vec3_t) { .02, jl_gl_ar(jl_gr) - .02, 0. },
+			jlgr->font);
+		jlgr_draw_text(jlgr, _jl->fl.dirname,
+			(jl_vec3_t) { .02, jl_gl_ar(jlgr) - .02, 0. },
 			(jl_font_t) { 0, JL_IMGI_ICON, 0,
-				jl_gr->jl->fontcolor, .02});
-		jl_ct_run_event(jl_gr, JL_CT_SELECT, _jl_fl_user_select_do,
+				jlgr->fontcolor, .02});
+		jl_ct_run_event(jlgr, JL_CT_SELECT, _jl_fl_user_select_do,
 			jl_dont);
 	}
-	jl_gr_sp_rnl(jl_gr, _jl->fl.btns[0]);
-	jl_gr_sp_rnl(jl_gr, _jl->fl.btns[1]);
+	jlgr_sprite_loop(jlgr, _jl->fl.btns[0]);
+	jlgr_sprite_loop(jlgr, _jl->fl.btns[1]);
 }
 
 /**
@@ -288,8 +287,8 @@ void jl_fl_user_select_loop(jl_gr_t* jl_gr) {
  * @param jl: Library Context.
  * @returns: If done, name of selected file.  If not done, NULL is returned.
 **/
-char *jl_fl_user_select_get(jl_gr_t* jl_gr) {
-	jvct_t * _jl = jl_gr->jl->_jl;
+char *jl_fl_user_select_get(jlgr_t* jlgr) {
+	jvct_t * _jl = jlgr->jl->_jl;
 	
 	if(_jl->fl.returnit)
 		return _jl->fl.dirname;
@@ -302,54 +301,54 @@ static void _jl_fl_btn_makefile_press(jl_t* jl) {
 	_jl->fl.prompt = 1;
 }
 
-static void _jl_fl_btn_makefile_loop(jl_t* jl, jl_sprd_t* sprd) {
-	jl_gr_t* jl_gr = jl->jl_gr;
-	jvct_t *_jl = jl_gr->jl->_jl;
+static void _jl_fl_btn_makefile_loop(jl_t* jl, jl_sprite_t* sprite) {
+	jlgr_t* jlgr = jl->jlgr;
+	jvct_t *_jl = jlgr->jl->_jl;
 
 	//TODO: make graphic: 0, 1, 1, 255
 	if(!_jl->fl.newfiledata) return;
-	jl_gr_draw_glow_button(jl_gr, _jl->fl.btns[0], "+ New File",
+	jlgr_draw_glow_button(jlgr, _jl->fl.btns[0], "+ New File",
 		_jl_fl_btn_makefile_press);
 }
 
-static void _jl_fl_btn_makefile_draw(jl_t* jl, jl_sprd_t* sprd) {
-	jl_gr_t* jl_gr = jl->jl_gr;
-	jl_rect_t rc = { 0., 0., jl_gl_ar(jl_gr), jl_gl_ar(jl_gr) };
+static void _jl_fl_btn_makefile_draw(jl_t* jl, jl_sprite_t* sprite) {
+	jlgr_t* jlgr = jl->jlgr;
+	jl_rect_t rc = { 0., 0., jl_gl_ar(jlgr), jl_gl_ar(jlgr) };
 	jl_vec3_t tr = { 0., 0., 0. };
 
-	jl_gr_vos_image(jl_gr, jl_gr->gl.temp_vo, rc, 0, JL_IMGI_ICON, 9, 255);
-	jl_gr_draw_vo(jl_gr, jl_gr->gl.temp_vo, &tr);
+	jlgr_vos_image(jlgr, jlgr->gl.temp_vo, rc, 0, JL_IMGI_ICON, 9, 255);
+	jlgr_draw_vo(jlgr, jlgr->gl.temp_vo, &tr);
 }
 
-static void _jl_fl_btn_makefolder_loop(jl_t* jl, jl_sprd_t* sprd) {
-	jl_gr_t* jl_gr = jl->jl_gr;
-	jvct_t *_jl = jl_gr->jl->_jl;
+static void _jl_fl_btn_makefolder_loop(jl_t* jl, jl_sprite_t* sprite) {
+	jlgr_t* jlgr = jl->jlgr;
+	jvct_t *_jl = jlgr->jl->_jl;
 	
 	//TODO: make graphic: 0, 1, 2, 255,
-	jl_gr_draw_glow_button(jl_gr, _jl->fl.btns[1], "+ New Folder",
+	jlgr_draw_glow_button(jlgr, _jl->fl.btns[1], "+ New Folder",
 		_jl_fl_btn_makefile_press);
 }
 
-static void _jl_fl_btn_makefolder_draw(jl_t* jl, jl_sprd_t* sprd) {
-	jl_gr_t* jl_gr = jl->jl_gr;
-	jl_rect_t rc = { 0., 0., jl_gl_ar(jl_gr), jl_gl_ar(jl_gr) };
+static void _jl_fl_btn_makefolder_draw(jl_t* jl, jl_sprite_t* sprite) {
+	jlgr_t* jlgr = jl->jlgr;
+	jl_rect_t rc = { 0., 0., jl_gl_ar(jlgr), jl_gl_ar(jlgr) };
 	jl_vec3_t tr = { 0., 0., 0. };
 
-	jl_gr_vos_image(jl_gr, jl_gr->gl.temp_vo, rc, 0, JL_IMGI_ICON, 10, 255);
-	jl_gr_draw_vo(jl_gr, jl_gr->gl.temp_vo, &tr);
+	jlgr_vos_image(jlgr, jlgr->gl.temp_vo, rc, 0, JL_IMGI_ICON, 10, 255);
+	jlgr_draw_vo(jlgr, jlgr->gl.temp_vo, &tr);
 }
 
-void jl_gr_fl_init(jl_gr_t* jl_gr) {
-	jvct_t* _jl = jl_gr->jl->_jl;
+void jlgr_fl_init(jlgr_t* jlgr) {
+	jvct_t* _jl = jlgr->jl->_jl;
 	jl_rect_t rc1 = { .8, 0., .1, .1 };
 	jl_rect_t rc2 = { .9, 0., .1, .1 };
 
 	//Create the variables
 	_jl->fl.filelist = cl_list_create();
 	_jl->fl.inloop = 0;
-	_jl->fl.btns[0] = jl_gr_sp_new(jl_gr, rc1,
+	_jl->fl.btns[0] = jlgr_sprite_new(jlgr, rc1,
 		_jl_fl_btn_makefile_draw, _jl_fl_btn_makefile_loop, 0);
-	_jl->fl.btns[1] = jl_gr_sp_new(jl_gr, rc2,
+	_jl->fl.btns[1] = jlgr_sprite_new(jlgr, rc2,
 		_jl_fl_btn_makefolder_draw, _jl_fl_btn_makefolder_loop, 0);
 	_jl->has.fileviewer = 1;
 }
