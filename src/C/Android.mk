@@ -4,13 +4,14 @@ include $(CLEAR_VARS)
 
 LOCAL_MODULE := main
 
-LIB_ZIP := lib/libzip/
-LIB_SDL := lib/sdl/
-LIB_MIX := lib/sdl-mixer/
-LIB_NET := lib/sdl-net/
-LIB_IMG := lib/sdl-image/
+LIB_ZIP := ../lib/libzip/
+LIB_SDL := ../lib/sdl/
+LIB_MIX := ../lib/sdl-mixer/
+LIB_NET := ../lib/sdl-net/
+LIB_IMG := ../lib/sdl-image/
+LIB_CLM := ../lib/clump/
 
-LOCAL_C_INCLUDES :=
+LOCAL_C_INCLUDES := $(shell find jni/src/C/ -type d)
 
 # Load The Programmers C & media files
 LOCAL_SRC_FILES += $(subst $(LOCAL_PATH),,\
@@ -18,8 +19,13 @@ LOCAL_SRC_FILES += $(subst $(LOCAL_PATH),,\
 	$(wildcard $(LOCAL_PATH)gen/src/*.c)\
 )
 
-# Load The Default Graphics
-LOCAL_SRC_FILES += gen/media.c
+# Load The JL_Lib
+LOCAL_SRC_FILES += $(subst $(LOCAL_PATH),,\
+	$(wildcard $(LOCAL_PATH)*.c)\
+	$(wildcard $(LOCAL_PATH)jl_audio/*.c)\
+	$(wildcard $(LOCAL_PATH)jl_comm/*.c)\
+	$(wildcard $(LOCAL_PATH)jl_graphics/*.c)\
+)
 
 # Load SDL_image
 LOCAL_SRC_FILES +=\
@@ -249,7 +255,7 @@ LOCAL_SRC_FILES += \
 
 #load libzip
 LOCAL_SRC_FILES += $(subst $(LOCAL_PATH),, \
-	$(wildcard $(LOCAL_PATH)lib/libzip/*.c) \
+	$(wildcard $(LOCAL_PATH)$(LIB_ZIP)*.c) \
 )
 
 # Load SDL_net
@@ -257,20 +263,15 @@ LOCAL_SRC_FILES += $(subst $(LOCAL_PATH),, \
 
 # Load Clump
 LOCAL_SRC_FILES +=\
-	lib/clump/clump.c\
-	lib/clump/pool.c\
-	lib/clump/list.c\
-	lib/clump/hash.c\
-	lib/clump/tree.c\
-	lib/clump/bitarray.c\
-	lib/clump/hcodec.c
+	$(LIB_CLM)/clump.c\
+	$(LIB_CLM)/pool.c\
+	$(LIB_CLM)/list.c\
+	$(LIB_CLM)/hash.c\
+	$(LIB_CLM)/tree.c\
+	$(LIB_CLM)/bitarray.c\
+	$(LIB_CLM)/hcodec.c
 
-# Load JLVM
-LOCAL_SRC_FILES +=\
-	me.c cl.c io.c fl.c cm.c ct.c\
-	sg.c dl.c gl.c gr.c vi.c au.c
-
-LOCAL_CFLAGS += -Ijni/src/include/ -Ijni/src/lib/include/ -DGL_GLEXT_PROTOTYPES -DHAVE_CONFIG_H -DNDEBUG -O3 -Ijni/src/lib/sdl-mixer/external/libvorbis-1.3.3/include/ -Ijni/src/lib/sdl-mixer/external/libvorbis-1.3.3/lib/
+LOCAL_CFLAGS += -Ijni/src/include/ -Ijni/src/lib/include/ -DGL_GLEXT_PROTOTYPES -DHAVE_CONFIG_H -DNDEBUG -O3 -Ijni/src/lib/sdl-mixer/external/libvorbis-1.3.3/include/ -Ijni/src/lib/sdl-mixer/external/libvorbis-1.3.3/lib/ -Ijni/src/lib/sdl-image/external/jpeg-9/
 
 LOCAL_C_INCLUDES +=\
 	jni/src/lib/libzip/

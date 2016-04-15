@@ -108,6 +108,8 @@ typedef struct{
 	jl_err_t errf; //Set if error
 	void* _jl; //The library's context
 	//
+	m_u8_t mode_switch_skip;
+	//
 	jl_ctx_t jl_ctx[16];
 	// Program's context.
 	void* prg_context;

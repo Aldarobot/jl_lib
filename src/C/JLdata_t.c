@@ -186,7 +186,7 @@ void jl_data_insert_data(jl_t *jl, data_t* pstr, void* data, u32_t size) {
 
 /**
  * At the cursor in string 'a' replace 'bytes' bytes of 'b' at it's cursor.
- * jl_data_strt(jl, { data="HELLO", curs=2 }, { "WORLD", curs=2 }, 2);
+ * jl_data_data(jl, { data="HELLO", curs=2 }, { "WORLD", curs=2 }, 2);
  *  would make 'a'
  *	"HELLO"-"LL" = "HE\0\0O"
  *	"WORLD"[2] and [3] = "RL"
@@ -196,16 +196,16 @@ void jl_data_insert_data(jl_t *jl, data_t* pstr, void* data, u32_t size) {
  * @param b: string being copied into 'a'
  * @param bytes: the number of bytes to copy over
  */
-void jl_data_strt(jl_t *jl, data_t* a, const data_t* b, uint64_t bytes) {
+void jl_data_data(jl_t *jl, data_t* a, const data_t* b, uint64_t bytes) {
 	int32_t i;
 	uint32_t size = a->size;
 	uint32_t sizeb = a->curs + bytes;
 
 	if(a == NULL) {
-		jl_print(jl, "jl_data_strt: NULL A STRING");
+		jl_print(jl, "jl_data_data: NULL A STRING");
 		exit(-1);
 	}else if(b == NULL) {
-		jl_print(jl, "jl_data_strt: NULL B STRING");
+		jl_print(jl, "jl_data_data: NULL B STRING");
 		exit(-1);
 	}
 	if(sizeb > size) size = sizeb;
@@ -225,7 +225,7 @@ void jl_data_strt(jl_t *jl, data_t* a, const data_t* b, uint64_t bytes) {
  */
 void jl_data_merg(jl_t *jl, data_t* a, const data_t* b) {
 	a->curs = a->size;
-	jl_data_strt(jl, a, b, b->size);
+	jl_data_data(jl, a, b, b->size);
 }
 
 /**

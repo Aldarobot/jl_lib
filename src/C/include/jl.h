@@ -43,7 +43,7 @@
 	void jl_data_free(data_t* pstr);
 	data_t* jl_data_mkfrom_str(str_t string);
 	data_t* jl_data_mkfrom_data(jl_t* jl, u32_t size, const void *data);
-	void jl_data_strt(jl_t *jl, data_t* a, const data_t* b, uint64_t bytes);
+	void jl_data_data(jl_t *jl, data_t* a, const data_t* b, uint64_t bytes);
 	void jl_data_merg(jl_t *jl, data_t* a, const data_t* b);
 	void jl_data_trunc(jl_t *jl, data_t* a, uint32_t size);
 	u8_t jl_data_byte(data_t* pstr);
@@ -79,11 +79,13 @@
 // "JLfile.c"
 	void jl_file_print(jl_t* jl, str_t fname, str_t msg);
 	u8_t jl_file_exist(jl_t* jl, str_t path);
+	void jl_file_rm(jl_t* jl, str_t filename);
 	void jl_file_save(jl_t* jl, const void *file, const char *name,
 		uint32_t bytes);
 	data_t* jl_file_load(jl_t* jl, str_t file_name);
 	char jl_file_pk_save(jl_t* jl, str_t packageFileName, str_t fileName,
 		void *data, uint64_t dataSize);
+	data_t* jl_file_pk_load_fdata(jl_t* jl, data_t* data, str_t file_name);
 	data_t* jl_file_pk_load(jl_t* jl, const char *packageFileName,
 		const char *filename);
 	data_t* jl_file_media(jl_t* jl, str_t Fname, str_t pzipfile,
@@ -95,6 +97,8 @@
 	uint8_t jl_thread_current(jl_t *jl);
 	int32_t jl_thread_old(jl_t *jl, u8_t threadnum);
 	SDL_mutex* jl_thread_mutex_new(jl_t *jl);
+	void jl_thread_mutex_lock(jl_t *jl, SDL_mutex* mutex);
+	void jl_thread_mutex_unlock(jl_t *jl, SDL_mutex* mutex);
 	void jl_thread_mutex_use(jl_t *jl, SDL_mutex* mutex, jl_fnct fn_);
 	void jl_thread_mutex_cpy(jl_t *jl, SDL_mutex* mutex, void* src,
 		void* dst, u32_t size);

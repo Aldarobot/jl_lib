@@ -1,6 +1,6 @@
 #include <stdint.h>
 #include <stdlib.h>
-#include "clump/clump.h"
+#include "clump.h"
 #include "JLgr.h"
 
 typedef struct {

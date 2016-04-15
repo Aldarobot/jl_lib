@@ -9,16 +9,13 @@
 #include "JLGRinternal.h"
 
 static void jlgr_sprite_draw_to_pr__(jl_t *jl) {
-	jl_print(jl, "get");
 	jl_sprite_t *sprite = jl_mem_temp(jl, NULL);
 
-	jl_print(jl, "%d\\%p", sizeof(jl_sprite_t), sprite->draw);
 	((jlgr_sprite_fnt)sprite->draw)(jl, sprite);
 }
 
 
 static inline void jlgr_sprite_redraw_tex__(jlgr_t* jlgr, jl_sprite_t *spr) {
-	jl_print(jlgr->jl, "%p", spr->draw);
 	jl_mem_temp(jlgr->jl, spr);
 	jl_gl_pr(jlgr, spr->pr, jlgr_sprite_draw_to_pr__);
 }
@@ -28,6 +25,14 @@ static inline void jlgr_sprite_redraw_tex__(jlgr_t* jlgr, jl_sprite_t *spr) {
 //
 
 /**
+ * THREAD: Any thread.
+ * Empty sprite loop. ( Don't do anything )
+ * @param jl: The library context
+ * @param spr: The sprite
+**/
+void jlgr_sprite_dont(jl_t* jl, jl_sprite_t* sprite) { }
+
+/**
  * THREAD: Draw thread only.
  * Run a sprite's draw routine to draw on it's pre-rendered texture.
  *
@@ -35,7 +40,6 @@ static inline void jlgr_sprite_redraw_tex__(jlgr_t* jlgr, jl_sprite_t *spr) {
  * @param spr: Which sprite to draw.
 **/
 void jlgr_sprite_redraw(jlgr_t* jlgr, jl_sprite_t *spr) {
-	jl_print(jlgr->jl, "Redraw on thread #%d", jl_thread_current(jlgr->jl));
 	// If pre-renderer hasn't been intialized, initialize & redraw.
 	if(!spr->pr) jlgr_sprite_resize(jlgr, spr);
 	// Else, Redraw texture.
@@ -50,7 +54,6 @@ void jlgr_sprite_redraw(jlgr_t* jlgr, jl_sprite_t *spr) {
  * @param spr: The sprite.
 **/
 void jlgr_sprite_draw(jlgr_t* jlgr, jl_sprite_t *spr) {
-	jl_print(jlgr->jl, "Draw on thread #%d", jl_thread_current(jlgr->jl));
 	jl_pr_t *pr = spr->pr;
 
 	if(!pr) {
@@ -68,7 +71,6 @@ void jlgr_sprite_draw(jlgr_t* jlgr, jl_sprite_t *spr) {
  * Resize a sprite to the current window - and redraw.
 **/
 void jlgr_sprite_resize(jlgr_t* jlgr, jl_sprite_t *spr) {
-	jl_print(jlgr->jl, "Resize on thread #%d", jl_thread_current(jlgr->jl));
 	u16_t res = (jlgr->gl.cp ? jlgr->gl.cp->w : jlgr->dl.full_w)
 		* spr->rw;
 

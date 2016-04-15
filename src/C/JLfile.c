@@ -220,6 +220,17 @@ u8_t jl_file_exist(jl_t* jl, str_t path) {
 }
 
 /**
+ * Delete a file.
+ * @param jl: The library context.
+ * @param filename: The path of the file to delete.
+**/
+void jl_file_rm(jl_t* jl, str_t filename) {
+	str_t converted_filename = jl_file_convert__(jl, filename);
+
+	unlink(converted_filename);
+}
+
+/**
  * Save A File To The File System.  Save Data of "bytes" bytes in "file" to
  * file "name"
  * @param jl: Library Context
@@ -228,9 +239,8 @@ u8_t jl_file_exist(jl_t* jl, str_t path) {
  * @param bytes: Size of "File"
  */
 void jl_file_save(jl_t* jl, const void *file, const char *name, uint32_t bytes) {
-	str_t converted_filename = jl_file_convert__(jl, name);
 	// delete file
-	unlink(converted_filename);
+	jl_file_rm(jl, name);
 	// make file
 	jl_file_save_(jl, file, name, bytes);
 }
@@ -256,7 +266,14 @@ data_t* jl_file_load(jl_t* jl, str_t file_name) {
 		jl_print(jl, "jl_file_load/open: ");
 		jl_print(jl, "\tFailed to open file: \"%s\"", file_name);
 		jl_print(jl, "\tLoad failed because: %s", strerror(errsv));
-		jl_sg_kill(jl);
+		if(errsv == ENOENT) {
+			// Doesn't exist
+			jl_print_return(jl, "FL_Load");
+		}else{
+			// Is a Directory
+			exit(-1);
+		}
+		return NULL;
 	}
 	int Read = read(fd, file, MAXFILELEN);
 	jl->info = Read;
@@ -264,8 +281,7 @@ data_t* jl_file_load(jl_t* jl, str_t file_name) {
 	jl_print(jl, "jl_file_load(): read %d bytes", jl->info);
 	close(fd);
 
-	data_t* rtn = jl->info ?
-		jl_data_mkfrom_data(jl, jl->info, file) : NULL;
+	data_t* rtn = jl->info ? jl_data_mkfrom_data(jl, jl->info, file) : NULL;
 	
 	jl_print_return(jl, "FL_Load"); //Close Block "FLLD"
 	return rtn;
@@ -290,7 +306,7 @@ char jl_file_pk_save(jl_t* jl, str_t packageFileName, str_t fileName,
 	jl_print_function(jl, "FL_PkSave");
 	jl_print(jl, "opening \"%s\"....", converted);
 	struct zip *archive = zip_open(converted, ZIP_CREATE 
-		/*| ZIP_CHECKCONS*/, NULL);
+		| ZIP_CHECKCONS, NULL);
 	if(archive == NULL) {
 		jl_print_return(jl, "FL_PkSave");
 		return 1;
@@ -323,46 +339,51 @@ static void _jl_file_pk_load_quit(jl_t* jl) {
 }
 
 /**
- * Load file "filename" in package "packageFileName" & Return contents
- * May return NULL.  If it does jl->errf will be set.
- * -ERR:
- *	-ERR_NERR:	File is empty.
- *	-ERR_NONE:	Can't find filename in packageFileName. [ DNE ]
- *	-ERR_FIND:	Can't find packageFileName. [ DNE ]
- * @param jl: Library Context
- * @param packageFileName: Package to load file from
- * @param filename: file within package to load
- * @returns: contents of file ( "filename" ) in package ( "packageFileName" )
-*/
-data_t* jl_file_pk_load(jl_t* jl, const char *packageFileName,
-	const char *filename)
-{
-	str_t converted = jl_file_convert__(jl, packageFileName);
+ * Load a zip package from memory.
+ * @param jl: The library context.
+ * @param data: The data that contains the zip file.
+ * @param file_name: The name of the file to load.
+**/
+data_t* jl_file_pk_load_fdata(jl_t* jl, data_t* data, str_t file_name) {
+	data_t* rtn;
+	zip_error_t ze; ze.zip_err = ZIP_ER_OK;
+	zip_source_t *file_data;
 	int zerror = 0;
 
-	jl->errf = JL_ERR_NERR;
-	jl_print_function(jl, "FL_PkLd");
+	file_data = zip_source_buffer_create(data->data, data->size, 0, &ze);
 
-	JL_PRINT_DEBUG(jl, "loading package:\"%s\"...", converted);
-	JL_PRINT_DEBUG(jl, "error check 1.");
-	struct zip *zipfile = zip_open(converted, ZIP_CHECKCONS, &zerror);
-	JL_PRINT_DEBUG(jl, "error check 2.");
-	if(zerror == ZIP_ER_NOENT) {
-		JL_PRINT_DEBUG(jl, " NO EXIST!");
-		jl->errf = JL_ERR_FIND;
-		_jl_file_pk_load_quit(jl);
+	if(ze.zip_err != ZIP_ER_OK) {
+		jl_print(jl, "couldn't make pckg buffer!");
+		//zip_error_init_with_code(&ze, ze.zip_err);
+		jl_print(jl, "because: \"%s\"", zip_error_strerror(&ze));
+		exit(-1);
 		return NULL;
 	}
+
+	JL_PRINT_DEBUG(jl, "error check 2.");
+	struct zip *zipfile = zip_open_from_source(file_data,
+		ZIP_CHECKCONS | ZIP_RDONLY, &ze);
+
+	if(ze.zip_err != ZIP_ER_OK) {
+		zip_error_init_with_code(&ze, ze.zip_err);
+		jl_print(jl, "couldn't load pckg file");
+		jl_print(jl, "because: \"%s\"", zip_error_strerror(&ze));
+		char name[3]; name[0] = data->data[0]; name[1] = '\0';
+		jl_print(jl, "First character = %1s", name);
+		exit(-1);
+		return NULL;
+	}
+
+//	struct zip *zipfile = zip_open(converted, ZIP_CHECKCONS, &zerror);
 	JL_PRINT_DEBUG(jl, "error check 3.");
 	if(zipfile == NULL) {
-		jl_print(jl, "couldn't load pckg \"%s\" because: ",
-			packageFileName);
+		jl_print(jl, "couldn't load zip because:");
 		if(zerror == ZIP_ER_INCONS) {
-			jl_print(jl, "\tcorrupt file", packageFileName);
+			jl_print(jl, "\tcorrupt file");
 		}else if(zerror == ZIP_ER_NOZIP) {
-			jl_print(jl, "\tnot a zip file", packageFileName);
+			jl_print(jl, "\tnot a zip file");
 		}else{
-			jl_print(jl, "\tunknown error", packageFileName);
+			jl_print(jl, "\tunknown error");
 		}
 		_jl_file_pk_load_quit(jl);
 		jl_sg_kill(jl);
@@ -373,11 +394,11 @@ data_t* jl_file_pk_load(jl_t* jl, const char *packageFileName,
 	JL_PRINT_DEBUG(jl, "loaded package.");
 	unsigned char *fileToLoad = malloc(PKFMAX);
 	JL_PRINT_DEBUG(jl, "opening file in package....");
-	struct zip_file *file = zip_fopen(zipfile, filename, ZIP_FL_UNCHANGED);
+	struct zip_file *file = zip_fopen(zipfile, file_name, ZIP_FL_UNCHANGED);
 	JL_PRINT_DEBUG(jl, "call pass.");
 	if(file == NULL) {
-		jl_print(jl, "couldn't open up file: \"%s\" in \"%s\":",
-			filename, converted);
+		jl_print(jl, "couldn't open up file: \"%s\" in package:",
+			file_name);
 		jl_print(jl, "because: %s", (void *)zip_strerror(zipfile));
 		jl->errf = JL_ERR_NONE;
 		_jl_file_pk_load_quit(jl);
@@ -398,12 +419,44 @@ data_t* jl_file_pk_load(jl_t* jl, const char *packageFileName,
 	zip_close(zipfile);
 	JL_PRINT_DEBUG(jl, "closed file.");
 	// Make a data_t* from the data.
-	data_t* rtn = jl->info ?
-		jl_data_mkfrom_data(jl, jl->info, fileToLoad) : NULL;
+	rtn = jl->info ? jl_data_mkfrom_data(jl, jl->info, fileToLoad) : NULL;
 	JL_PRINT_DEBUG(jl, "done.");
 	jl->errf = JL_ERR_NERR;
 	_jl_file_pk_load_quit(jl);
 	return rtn;
+}
+
+/**
+ * Load file "filename" in package "packageFileName" & Return contents
+ * May return NULL.  If it does jl->errf will be set.
+ * -ERR:
+ *	-ERR_NERR:	File is empty.
+ *	-ERR_NONE:	Can't find filename in packageFileName. [ DNE ]
+ *	-ERR_FIND:	Can't find packageFileName. [ DNE ]
+ * @param jl: Library Context
+ * @param packageFileName: Package to load file from
+ * @param filename: file within package to load
+ * @returns: contents of file ( "filename" ) in package ( "packageFileName" )
+*/
+data_t* jl_file_pk_load(jl_t* jl, const char *packageFileName,
+	const char *filename)
+{
+	str_t converted = jl_file_convert__(jl, packageFileName);
+
+	jl->errf = JL_ERR_NERR;
+	jl_print_function(jl, "FL_PkLd");
+
+	JL_PRINT_DEBUG(jl, "loading package:\"%s\"...", converted);
+
+	data_t* data = jl_file_load(jl, converted);
+	JL_PRINT_DEBUG(jl, "error check 1.");
+	if(data == NULL) {
+		JL_PRINT_DEBUG(jl, "!Package File doesn't exist!");
+		jl->errf = JL_ERR_FIND;
+		_jl_file_pk_load_quit(jl);
+		return NULL;
+	}
+	return jl_file_pk_load_fdata(jl, data, filename);
 }
 
 /**
@@ -483,6 +536,9 @@ data_t* jl_file_mkfile(jl_t* jl, str_t pzipfile, str_t pfilebase,
 data_t* jl_file_media(jl_t* jl, str_t Fname, str_t pzipfile,
 	void *pdata, uint64_t psize)
 {
+	// Delete if package exists.
+	// Make package
+	
 	data_t* rtn = jl_file_pk_load(jl, pzipfile, Fname);
 	JL_PRINT_DEBUG(jl, "JL_FL_MEDIA Returning");
 	//If Package doesn't exist!! - create
@@ -491,6 +547,10 @@ data_t* jl_file_media(jl_t* jl, str_t Fname, str_t pzipfile,
 	else
 		return rtn;
 }
+
+/**
+ * Load 
+**/
 
 /**
  * Get the designated location for a resource file. Resloc = Resource Location

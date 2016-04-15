@@ -2,6 +2,8 @@
 
 #if JL_PLAT == JL_PLAT_PHONE
 	#include <jni.h>
+
+	str_t JL_FL_BASE;
 #endif
 
 //Initialize The Libraries Needed At Very Beginning: The Base Of It All

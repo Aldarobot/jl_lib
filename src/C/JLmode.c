@@ -77,11 +77,15 @@ void jl_mode_reset(jl_t* jl) {
  * @param mode: The mode to switch to.
  */
 void jl_mode_switch(jl_t* jl, u16_t mode) {
+	if(jl->mode_switch_skip) return;
+
 	jl_fnct kill_ = jl->mode.mode.kill;
 	jl_fnct init_;
 
 	// Run the previous mode's kill function
+	jl->mode_switch_skip = 1;
 	kill_(jl);
+	jl->mode_switch_skip = 0;
 	// Switch mode
 	jl->mode.which = mode;
 	// Update mode functions

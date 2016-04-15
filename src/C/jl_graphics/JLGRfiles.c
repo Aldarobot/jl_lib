@@ -99,8 +99,8 @@ static uint8_t _jl_fl_user_select_open_dir(jlgr_t* jlgr, char *dirname) {
  * @returns 0: if can't open the directory. ( Doesn't exist, Bad permissions )
  * @returns 1: on success.
 **/
-uint8_t jl_fl_user_select_init(jlgr_t* jlgr, const char *program_name,
-	void *newfiledata, uint64_t newfilesize)
+uint8_t jlgr_openfile_init(jlgr_t* jlgr, str_t program_name, void *newfiledata,
+	uint64_t newfilesize)
 {
 	jvct_t * _jl = jlgr->jl->_jl;
 	_jl->fl.returnit = 0;
@@ -205,7 +205,7 @@ static void _jl_fl_user_select_do(jl_t* jl) {
  * Run the file viewer.
  * @param jlgr: The jlgr library Context.
 **/
-void jl_fl_user_select_loop(jlgr_t* jlgr) {
+void jlgr_openfile_loop(jlgr_t* jlgr) {
 	jvct_t * _jl = jlgr->jl->_jl;
 	struct cl_list_iterator *iterator;
 	int i;
@@ -287,7 +287,7 @@ void jl_fl_user_select_loop(jlgr_t* jlgr) {
  * @param jl: Library Context.
  * @returns: If done, name of selected file.  If not done, NULL is returned.
 **/
-char *jl_fl_user_select_get(jlgr_t* jlgr) {
+str_t jlgr_openfile_kill(jlgr_t* jlgr) {
 	jvct_t * _jl = jlgr->jl->_jl;
 	
 	if(_jl->fl.returnit)

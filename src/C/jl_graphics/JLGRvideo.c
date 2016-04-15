@@ -8,6 +8,8 @@
 #undef HAVE_STDLIB_H
 #include "jpeglib.h"
 
+typedef long unsigned int jpeg_long_int_t;
+
 /**
  * Save a JPEG to data
  * @param jl: The library context.
@@ -18,7 +20,7 @@
 **/
 data_t* jl_vi_make_jpeg_(jl_t* jl,i32_t quality,m_u8_t* pxdata,u16_t w,u16_t h) {
 	uint8_t* data = NULL;
-	m_u64_t data_size = 0;
+	jpeg_long_int_t data_size = 0;
 
 	jl_print(jl, "w:%d h:%d", w, h);
 

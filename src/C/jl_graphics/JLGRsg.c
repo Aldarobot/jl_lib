@@ -23,10 +23,6 @@ void jl_gl_pr_scr_set(jlgr_t* jlgr, jl_vo_t* vo);
 	#define IMG_FORMAT_PIC 3145728
 	//
 	#define IMG_SIZE_LOW (1+strlen(JL_IMG_HEADER)+(256*4)+(1024*1024)+1)
-
-	#if JL_PLAT == JL_PLAT_PHONE
-	str_t JL_FL_BASE;
-	#endif
 	
 //Functions:
 

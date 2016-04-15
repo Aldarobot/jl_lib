@@ -66,14 +66,15 @@ clean-deps:
 
 # The Build Options.
 build-depends: src/lib/include/ build-sdl build-libzip build-sdl-net build-sdl-image build-clump
-build-android:
+build-android-jl_lib:
 	# Copy android build files into android build project.
 	cp -u -t build/android/jni/ android-src/*.mk
 	cp -u -t build/android/ android-src/*.properties
 	cp -u -t build/android/src/org/libsdl/app/ android-src/SDL*.java 
+	cp -u --recursive -t build/android/jni/src/ src/*
+build-android: build-android-jl_lib
 	# Copy SDL2 into android build project
 	cp -u android-src/SDL_android_main.c build/android/jni/SDL_android_main.c
-	cp -u --recursive -t build/android/jni/src/ src/*
 	cp -u --recursive -t build/android/jni/src/lib/sdl/\
 	 deps/SDL2-2.0.3/src/*
 	rm build/android/jni/src/lib/include/SDL_config.h

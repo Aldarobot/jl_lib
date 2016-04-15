@@ -141,26 +141,6 @@ void jl_print_set(jl_t* jl, jl_print_fnt fn_) {
 		jl->print.printfn = jl_print_toconsole__;
 }
 
-/**
- * Print text to the terminal.
- * @param jl: the library context.
- * @param format: what to print.
-*/
-void jl_print(jl_t* jl, str_t format, ... ) {
-	u8_t thread_id = jl_thread_current(jl);
-	jl_print_fnt print_out_ = jl->print.printfn;
-	va_list arglist;
-
-	// Store the format in jl->temp.
-	va_start( arglist, format );
-	vsprintf( jl->jl_ctx[jl_thread_current(jl)].temp, format, arglist );
-	va_end( arglist );
-	// Check to see if too many blocks are open.
-	jl_print_test_overreach(jl, thread_id);
-	// Print out.
-	print_out_(jl, jl->jl_ctx[jl_thread_current(jl)].temp);
-}
-
 static void jl_print_function__(jl_t* jl, str_t fn_name, u8_t thread_id) {
 //	uint8_t thread_id = jl_thread_current(jl);
 	int size = strlen(fn_name);
@@ -184,6 +164,30 @@ static void jl_print_function__(jl_t* jl, str_t fn_name, u8_t thread_id) {
 }
 
 /**
+ * Print text to the terminal.
+ * @param jl: the library context.
+ * @param format: what to print.
+*/
+void jl_print(jl_t* jl, str_t format, ... ) {
+	jl_thread_mutex_lock(jl, jl->print.mutex);
+
+	u8_t thread_id = jl_thread_current(jl);
+	jl_print_fnt print_out_ = jl->print.printfn;
+	va_list arglist;
+
+	// Store the format in jl->temp.
+	va_start( arglist, format );
+	vsprintf( jl->jl_ctx[jl_thread_current(jl)].temp, format, arglist );
+	va_end( arglist );
+	// Check to see if too many blocks are open.
+	jl_print_test_overreach(jl, thread_id);
+	// Print out.
+	print_out_(jl, jl->jl_ctx[jl_thread_current(jl)].temp);
+
+	jl_thread_mutex_unlock(jl, jl->print.mutex);
+}
+
+/**
  * Open a printing block.
  * @param jl: The library context.
  * @param fn_name: The name of the block.
@@ -191,10 +195,9 @@ static void jl_print_function__(jl_t* jl, str_t fn_name, u8_t thread_id) {
 void jl_print_function(jl_t* jl, str_t fn_name) {
 	uint8_t thread_id = jl_thread_current(jl);
 
+	jl_thread_mutex_lock(jl, jl->print.mutex);
 	jl_print_function__(jl, fn_name, thread_id);
-//	jl_mem_copyto(fn_name, jl->jl_ctx[jl_thread_current(jl)].temp,
-//		strlen(fn_name));
-//	jl_thread_mutex_use(jl, jl->print.mutex, jl_print_function__);
+	jl_thread_mutex_unlock(jl, jl->print.mutex);
 }
 
 /**
@@ -205,6 +208,7 @@ void jl_print_function(jl_t* jl, str_t fn_name) {
 void jl_print_return(jl_t* jl, str_t fn_name) {
 	uint8_t thread_id = jl_thread_current(jl);
 
+	jl_thread_mutex_lock(jl, jl->print.mutex);
 	if(strcmp(fn_name, jl->jl_ctx[thread_id].print.stack
 		[jl->jl_ctx[thread_id].print.level]))
 	{
@@ -219,6 +223,7 @@ void jl_print_return(jl_t* jl, str_t fn_name) {
 		[jl->jl_ctx[thread_id].print.level], 30);
 	jl->jl_ctx[thread_id].print.level--;
 	jl->jl_ctx[thread_id].print.ofs2 -= 1;
+	jl_thread_mutex_unlock(jl, jl->print.mutex);
 }
 
 /**
@@ -231,9 +236,13 @@ void jl_print_stacktrace(jl_t* jl) {
 
 	jl_print(jl, "Stacktrace for thread #%d (Most Recent Call Last):",
 		thread_id);
+	jl_thread_mutex_lock(jl, jl->print.mutex);
 	for(i = 0; i <= jl->jl_ctx[thread_id].print.level; i++) {
+		jl_thread_mutex_unlock(jl, jl->print.mutex);
 		jl_print(jl, jl->jl_ctx[thread_id].print.stack[i]);
+		jl_thread_mutex_lock(jl, jl->print.mutex);
 	}
+	jl_thread_mutex_unlock(jl, jl->print.mutex);
 }
 
 void jl_print_init_thread__(jl_t* jl, u8_t thread_id) {

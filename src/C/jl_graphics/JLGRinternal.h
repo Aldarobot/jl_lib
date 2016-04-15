@@ -2,15 +2,17 @@
 #include "jl_pr.h"
 
 typedef struct{
-	// Used for all icons on the taskbar.
+	// Used for all icons on the menubar.
 	jl_vo_t* icon;
 	// Not Pressed & Pressed & Redraw Functions for 10 icons.
 	jlgr_fnct func[3][10];
 	// Redraw? - 0 = no, 1 = yes
 	m_u8_t redraw;
-	// Cursor
-	m_i8_t cursor;
-}jl_taskbar_t;
+	// Draw thread Cursor
+	m_i8_t draw_cursor;
+	// Main thread cursor
+	m_i8_t main_cursor;
+}jl_menubar_t;
 
 typedef enum{
 	JL_GRTP_NOT,
@@ -34,7 +36,13 @@ typedef enum{
 	JLGR_COMM_DRAWFIN,	/** main <-- draw: Stop waiting, fool! */
 	JLGR_COMM_INIT,		/** main --> draw: Send program's init func. */
 	JLGR_COMM_SEND,		/** main --> draw: Send redraw func.'s */
+	JLGR_COMM_NOTIFY,	/** main --> draw: Draw a notification */
 }jlgr_thread_asdf_t;
+
+typedef struct{
+	uint8_t id;
+	char string[256];
+}jlgr_comm_notify_t;
 
 void jl_sg_add_some_imgs_(jlgr_t* jlgr, u16_t x);
 uint32_t _jl_sg_gpix(/*in */ SDL_Surface* surface, int32_t x, int32_t y);
@@ -82,7 +90,8 @@ void jl_gl_init__(jlgr_t* jlgr);
 void jlgr_init__(jlgr_t* jlgr);
 void jl_ct_init__(jlgr_t* jlgr);
 void jlgr_fl_init(jlgr_t* jlgr);
-void jlgr_gui_init_(jlgr_t* jlgr);
+void jlgr_menubar_init__(jlgr_t* jlgr);
+void jlgr_mouse_init__(jlgr_t* jlgr);
 void jlgr_thread_init(jlgr_t* jlgr);
 // loop
 void jl_ct_loop__(jlgr_t* jlgr);
@@ -92,15 +101,7 @@ void _jlgr_loopa(jlgr_t* jlgr);
 void jl_dl_kill__(jlgr_t* jlgr);
 void jlgr_thread_kill(jlgr_t* jlgr);
 //
-void jlgr_gui_draw_(jl_t* jl);
 void jlgr_thread_send(jlgr_t* jlgr, u8_t id, u16_t x, u16_t y, jl_fnct fn);
-
-// Sprites' Functions
-void jlgr_mouse_loop_(jl_t* jlc, jl_sprite_t* sprite);
-void jlgr_taskbar_loop_(jl_t* jlc, jl_sprite_t* sprite);
-
-void jlgr_mouse_draw_(jl_t* jlc, jl_sprite_t* sprite);
-void jlgr_taskbar_draw_(jl_t* jlc, jl_sprite_t* sprite);
 
 //
 void jl_wm_updatewh_(jlgr_t* jlgr);

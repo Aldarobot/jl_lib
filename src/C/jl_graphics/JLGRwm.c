@@ -50,6 +50,9 @@ static SDL_Window* jl_dl_mkwindow(jlgr_t* jlgr) {
 		// width, height, flags
 		jlgr->dl.current.w, jlgr->dl.current.h, flags
     	);
+	#if JL_PLAT == JL_PLAT_COMPUTER
+	SDL_ShowCursor(SDL_DISABLE);
+	#endif
 	if(rtn == NULL) jl_dl_killedit(jlgr->jl, "SDL_CreateWindow");
 	return rtn;
 }
@@ -73,17 +76,6 @@ static void _jl_dl_fscreen(jlgr_t* jlgr, uint8_t a) {
 	jlgr_resz(jlgr, jlgr->dl.current.w, jlgr->dl.current.h);
 }
 
-static inline void jlvmpi_ini_sdl(jlgr_t* jlgr) {
-	jl_print_function(jlgr->jl, "InitSDL"); // {
-	JL_PRINT_DEBUG(jlgr->jl, "Starting up....");
-	SDL_Init(JL_DL_INIT);
-	JL_PRINT_DEBUG(jlgr->jl, "input....");
-	#if JL_PLAT == JL_PLAT_COMPUTER
-	SDL_ShowCursor(SDL_DISABLE);
-	#endif
-	jl_print_return(jlgr->jl, "InitSDL"); // }
-}
-
 //Update the SDL_displayMode structure
 void jl_wm_updatewh_(jlgr_t* jlgr) {
 	if(SDL_GetCurrentDisplayMode(0, &jlgr->dl.current)) {
@@ -91,20 +83,12 @@ void jl_wm_updatewh_(jlgr_t* jlgr) {
 			(char *)SDL_GetError());
 		jl_sg_kill(jlgr->jl);
 	}
-	JL_PRINT_DEBUG(jlgr->jl, "%d,%d", jlgr->dl.current.w,
+	JL_PRINT_DEBUG(jlgr->jl, "Got wh: %d,%d", jlgr->dl.current.w,
 		jlgr->dl.current.h);
 }
 
 //This is the code that actually creates the window by accessing SDL
 static inline void _jlvm_crea_wind(jlgr_t* jlgr) {
-	#if defined(__ANDROID__)
-	jlgr->dl.current.w = 640;
-	jlgr->dl.current.h = 480;
-	#elif defined(__PSP__)
-	jlgr->dl.current.w = 480;
-	jlgr->dl.current.h = 272;
-	#endif
-	
 	// Allocate space for "displayWindow"
 	jlgr->dl.displayWindow = jl_memi(jlgr->jl, sizeof(jl_window_t));
 	//
@@ -120,7 +104,6 @@ static inline void _jlvm_crea_wind(jlgr_t* jlgr) {
 	// Create window.
 	jlgr->dl.displayWindow->w = jl_dl_mkwindow(jlgr);
 //	SDL_GL_SetAttribute(SDL_GL_SHARE_WITH_CURRENT_CONTEXT, 0);
-	
 	jlgr->dl.displayWindow->c = jl_dl_gl_context(jlgr);
 	// Clear and update
 	jl_gl_clear(jlgr, 2, 255, 5, 255);
@@ -129,11 +112,19 @@ static inline void _jlvm_crea_wind(jlgr_t* jlgr) {
 
 // ETOM FUNCTIONS
 
+int oldtick = 0;
+int newtick = 0;
+
 void jl_dl_loop__(jlgr_t* jlgr) {
 	//Update Screen
 	SDL_GL_SwapWindow(jlgr->dl.displayWindow->w); //end current draw
 	// Clear the screen of anything wierd.
 	jl_gl_clear(jlgr, 2, 5, 255, 255);
+//
+	oldtick = newtick;
+	newtick = SDL_GetTicks();
+	// milliseconds / 1000 to get seconds
+	jlgr->psec = ((double)(newtick - oldtick)) / 1000.;
 }
 
 void jl_dl_resz__(jlgr_t* jlgr, uint16_t x, uint16_t y) {
@@ -145,8 +136,8 @@ void jl_dl_resz__(jlgr_t* jlgr, uint16_t x, uint16_t y) {
 	jl_gl_viewport_screen(jlgr);
 	jlgr->dl.shiftx = 0.;
 	jlgr->dl.shifty = 0.;
+	jlgr->jl->smde = 0;
 	if(y < x * .5625) {
-		jlgr->jl->smde = 0;
 		offx = x;
 		x = y * 16./9.; //Widesceen
 		jlgr->dl.shiftx += ((float)offx - (float)x)/((float)offx);
@@ -156,7 +147,7 @@ void jl_dl_resz__(jlgr_t* jlgr, uint16_t x, uint16_t y) {
 		jlgr->dl.window.w = x;
 		jlgr->dl.window.h = y;
 	}else if(y > x * 1.125) {//DOUBLE SCREEN
-		jlgr->jl->smde = 1;
+/*		jlgr->jl->smde = 1;
 		if(y > x * 1.5) {
 			offy = y;
 			y = x * 1.5; //Standard
@@ -172,9 +163,12 @@ void jl_dl_resz__(jlgr_t* jlgr, uint16_t x, uint16_t y) {
 			jlgr->dl.window.y = y / 2.;
 			jlgr->dl.window.w = x;
 			jlgr->dl.window.h = y / 2.;
-		}
+		}*/
+		jlgr->dl.window.x = 0.;
+		jlgr->dl.window.y = 0.;
+		jlgr->dl.window.w = x;
+		jlgr->dl.window.h = y;
 	}else if(y > x * .75) {
-		jlgr->jl->smde = 0;
 		offy = y;
 		y = x * .75; //Standard
 		jlgr->dl.shifty += ((float)offy-(float)y)/((float)offy);
@@ -184,7 +178,6 @@ void jl_dl_resz__(jlgr_t* jlgr, uint16_t x, uint16_t y) {
 		jlgr->dl.window.w = x;
 		jlgr->dl.window.h = y;
 	}else{
-		jlgr->jl->smde = 0;
 		jlgr->dl.window.x = 0.;
 		jlgr->dl.window.y = 0.;
 		jlgr->dl.window.w = x;
@@ -196,6 +189,8 @@ void jl_dl_resz__(jlgr_t* jlgr, uint16_t x, uint16_t y) {
 	jlgr->dl.aspect = ((double)y) / ((double)x);
 	// Clear the screen of anything wierd.
 	jl_gl_clear(jlgr, 122, 255, 125, 255);
+	//
+	//jl_wm_updatewh_(jlgr);
 }
 
 // TODO: Make not exported, but called in jlgr_init()
@@ -220,7 +215,7 @@ void jl_dl_progname(jl_t* jl, data_t* name) {
 }
 
 void jl_dl_init__(jlgr_t* jlgr) {
-	jlvmpi_ini_sdl(jlgr);
+	SDL_Init(JL_DL_INIT);
 	//Get Information On How Big To Make Window
 	jl_wm_updatewh_(jlgr);
 	//Create Window With SDL

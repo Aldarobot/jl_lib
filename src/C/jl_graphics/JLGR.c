@@ -40,7 +40,7 @@ jlgr_t* jlgr_init(jl_t* jl, str_t window_name, u8_t fullscreen, jl_fnct fn_) {
 	jl_print_function(jl, "JL/GR/INIT");
 	jl->jlgr = jlgr;
 	jlgr->dl.fullscreen = fullscreen;
-	jlgr->gr.taskbar = NULL;
+	jlgr->menubar.menubar = NULL;
 	jlgr->mouse = NULL;
 	jlgr->jl = jl;
 	// Initialize Subsystem
@@ -66,6 +66,8 @@ jlgr_t* jlgr_init(jl_t* jl, str_t window_name, u8_t fullscreen, jl_fnct fn_) {
 	while(!jlgr->main.rtn)
 		jl_thread_comm_recv(jl,jlgr->comm2main,jlgr_init_event);
 	jl_print(jl, "Main thread done did wait....");
+	// Send resize function
+	jlgr_resz(jlgr, 0, 0);
 	return jlgr;
 }
 
@@ -95,12 +97,14 @@ void jlgr_loop_set(jlgr_t* jlgr, jl_fnct onescreen, jl_fnct upscreen,
 }
 
 /**
- * Make sure that the screen is redrawn.
+ * Update input.
  * @param jlgr: The jlgr library context.
 **/
 void jlgr_loop(jlgr_t* jlgr) {
 	// Update events.
 	jl_ct_loop__(jlgr);
+	// Run any selected menubar items.
+	jlgr_sprite_loop(jlgr, jlgr->menubar.menubar);
 }
 
 /**
@@ -122,8 +126,6 @@ void jlgr_kill(jlgr_t* jlgr) {
 	jl_thread_comm_send(jlgr->jl, jlgr->comm2draw, &packet);
 	jl_print(jlgr->jl, "Waiting on threads....");
 	jlgr_thread_kill(jlgr); // Shut down thread.
-	jlgr_pr_old(jlgr, jlgr->sg.bg.up);
-	jlgr_pr_old(jlgr, jlgr->sg.bg.dn);
 }
 
 // End of file.

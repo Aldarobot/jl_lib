@@ -134,7 +134,16 @@ void jl_gl_pr_scr(jlgr_t* jlgr);
 // Functions:
 
 #ifdef JL_DEBUG_LIB
-	static void jl_gl_get_error___(jlgr_t* jlgr, int width, char *fname) {
+	static void jl_gl_get_error___(jlgr_t* jlgr, int width, str_t fname) {
+		uint8_t thread = jl_thread_current(jlgr->jl);
+		if(thread != 1) {
+			jl_print(jlgr->jl, "\"%s\" is on the Wrong Thread: %d",
+				fname, thread);
+			jl_print(jlgr->jl, "Must be on thread 1!");
+			jl_print_stacktrace(jlgr->jl);
+			exit(-1);
+		}
+
 		GLenum err= glGetError();
 		if(err == GL_NO_ERROR) return;
 		char *fstrerr;

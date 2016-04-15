@@ -32,11 +32,11 @@ printf "[JL/ANDR] Cleaning Up...\n"
 cd $USERPROG
 ### clean-up ###
 # java #
-rm $ANDROID_PROJECT/src/jlw/$USERNAME/$PACKNAME/jl_Activity.java
+rm -f $ANDROID_PROJECT/src/jlw/$USERNAME/$PACKNAME/jl_Activity.java
 rmdir $ANDROID_PROJECT/src/jlw/$USERNAME/$PACKNAME/
 rmdir $ANDROID_PROJECT/src/jlw/$USERNAME/
 # C #
-rm $ANDROID_PROJECT/jni/src/gen/src/*
+rm -f $ANDROID_PROJECT/jni/src/gen/src/*
 
 printf "[JL/ANDR] DONE!\n"
 

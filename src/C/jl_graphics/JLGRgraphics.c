@@ -9,16 +9,6 @@
  */
 #include "JLGRinternal.h"
 
-/*screen being displayed ( on two screens which one on bottom, if keyboard is
-	being displayed on bottom screen then this will be displayed on top )*/
-float timeTilMessageVanish = 0.f;
-
-char *GMessage[3] = {
-	"SWITCHED SCREEN: UPPER",
-	"SWITCHED SCREEN: LOWER",
-	"SINGLE SCREEN MODE"
-};
-
 //Upper OpenGL prototypes
 void jl_gl_vo_free(jlgr_t* jlgr, jl_vo_t *pv);
 void jl_gl_draw_pr(jlgr_t* jlgr, jl_vo_t* pv);
@@ -37,18 +27,6 @@ static void _jlgr_textbox_lt(jl_t* jl);
 
 	static inline void _jlgr_init_vos(jlgr_t* jlgr) {
 		jlgr->gr.vos.whole_screen = jl_gl_vo_make(jlgr, 1);
-	}
-	
-	static inline void _jlgr_flip_scrn(jlgr_t* jlgr) {
-		if(jlgr->sg.cscreen == JL_SCR_UP) {
-			jlgr->sg.cscreen = JL_SCR_DN;
-			timeTilMessageVanish = 8.5f;
-		}else if(jlgr->sg.cscreen == JL_SCR_DN) {
-			jlgr->sg.cscreen = JL_SCR_UP;
-			timeTilMessageVanish = 8.5f;
-		}else{
-			timeTilMessageVanish = 8.5f;
-		}
 	}
 
 	static void _jlgr_popup_loop(jl_t *jl) {
@@ -70,77 +48,6 @@ static void _jlgr_textbox_lt(jl_t* jl);
 		jl_ct_typing_disable();
 		if(jlgr->gr.textbox_string->curs < jlgr->gr.textbox_string->size)
 			jlgr->gr.textbox_string->curs++;
-	}
-
-	static void jlgr_taskbar_icon__(jlgr_t* jlgr, uint16_t g, uint16_t i,
-		uint8_t c)
-	{
-		jl_rect_t rc_icon = { 0., 0., .1, .1};
-		jl_taskbar_t* ctx = jlgr->gr.taskbar->ctx;
-		jl_vec3_t tr = { .9 - (.1 * ctx->cursor), 0., 0. };
-
-		jlgr_vos_image(jlgr, &(ctx->icon[1]), rc_icon, g, i, c, 255);
-		jlgr_draw_vo(jlgr, &(ctx->icon[1]), &tr);
-	}
-
-	static void jlgr_taskbar_text__(jlgr_t* jlgr, m_u8_t* color,
-		str_t text)
-	{
-		jl_taskbar_t* ctx = jlgr->gr.taskbar->ctx;
-		jl_vec3_t tr = { .9 - (.1 * ctx->cursor), 0., 0. };
-
-		jlgr_draw_text(jlgr, text, tr,
-			(jl_font_t) { 0, JL_IMGI_ICON, 0, color, 
-				.1 / strlen(text)});
-	}
-	
-	static void jlgr_menu_flip_draw__(jlgr_t* jlgr) {
-		jlgr_taskbar_icon__(jlgr, 0, JL_IMGI_ICON, JLGR_ID_FLIP_IMAGE);
-	}
-
-	static void jlgr_menu_flip_press__(jlgr_t* jlgr) {
-		if(jlgr->jl->ctrl.h != 1) return;
-		_jlgr_flip_scrn(jlgr);
-	}
-	
-	static void jlgr_menu_name_draw2__(jlgr_t* jlgr) {
-		jlgr_taskbar_icon__(jlgr, 0, JL_IMGI_ICON, JLGR_ID_UNKNOWN);
-	}
-
-	static void jlgr_menu_name_draw__(jlgr_t* jlgr) {
-		jl_taskbar_t* ctx = jlgr->gr.taskbar->ctx;
-		f32_t text_size = jl_gl_ar(jlgr) * .5;
-
-		jlgr_menu_name_draw2__(jlgr);
-		jlgr_draw_text(jlgr, jlgr->dl.windowTitle[0],
-			(jl_vec3_t) { 1. - (jl_gl_ar(jlgr) * (ctx->cursor+1.)),
-				0., 0. },
-			(jl_font_t) { 0, JL_IMGI_ICON, 0, jlgr->fontcolor, 
-				text_size});
-		jlgr_draw_text(jlgr, jlgr->dl.windowTitle[1],
-			(jl_vec3_t) { 1. - (jl_gl_ar(jlgr) * (ctx->cursor+1.)),
-				text_size, 0. },
-			(jl_font_t) { 0, JL_IMGI_ICON, 0, jlgr->fontcolor, 
-				text_size});
-	}
-
-	static void _jlgr_menu_slow_draw(jlgr_t* jlgr) {
-		jl_t* jl = jlgr->jl;
-		m_u8_t color[] = { 255, 255, 255, 255 };
-
-		// Draw the icon based on whether on time or not.
-		jlgr_taskbar_icon__(jlgr, 0, JL_IMGI_ICON, jlgr->sg.on_time ?
-			JLGR_ID_GOOD_IMAGE : JLGR_ID_SLOW_IMAGE);
-		// If not on time report the seconds that passed.
-		if(!jlgr->sg.on_time)
-			jlgr_taskbar_text__(jlgr, color,
-				jl_mem_format(jl, "%d fps", jl->time.fps));
-	}
-
-	static void _jlgr_menu_slow_loop(jlgr_t* jlgr) {
-		jl_taskbar_t* ctx = jlgr->gr.taskbar->ctx;
-
-		if(jlgr->sg.changed || !jlgr->sg.on_time) ctx->redraw = 1;
 	}
 
 /**      @endcond      **/
@@ -527,11 +434,15 @@ static void _jlgr_textbox_lt(jl_t* jl);
 	/**
 	 * Print message on the screen.
    	 * @param 'jl': library context.
-	 * @param 'message': the message 
+	 * @param 'g':
+	 * @param 'i':
+	 * @param 'c':
+	 * @param 'format': the message
 	 */
-	void jlgr_draw_msge_(jlgr_t* jlgr,u16_t g,u16_t i,u8_t c,
-		m_str_t message)
+	void jlgr_draw_msge(jlgr_t* jlgr, u16_t g, u16_t i, u8_t c,
+		m_str_t format, ...)
 	{
+//		jl_mem_format(jlgr->jl, __VA_ARGS__);
 /*		jl_print_function(jlgr->jl, "JLGR_MSGE");
 		JL_PRINT_DEBUG(jlgr->jl, "Printing %p", message);
 
@@ -702,57 +613,18 @@ static void _jlgr_textbox_lt(jl_t* jl);
 	}
 
 	/**
-	 * Add an icon to the menubar
-	 *
+	 * THREAD: Main thread.
+	 * Pop-Up a notification bar.
 	 * @param jl: the libary context
-	 * @param fno: the function to run when the icon isn't pressed.
-	 * @param fnc: the function to run when the icon is pressed.
-	 * @param rdr: the function to run when redraw is called.
-	**/
-	void jlgr_addicon(jlgr_t* jlgr, jlgr_fnct fno, jlgr_fnct fnc,
-		jlgr_fnct rdr)
-	{
-		jl_taskbar_t* ctx = jlgr->gr.taskbar->ctx;
-		m_u8_t i;
+	 * @param notification: The message to display.
+	*/
+	void jlgr_notify(jlgr_t* jlgr, str_t notification) {
+		jlgr_comm_notify_t packet;
+		packet.id = JLGR_COMM_NOTIFY;
+		jl_mem_copyto(notification, packet.string, 256);
+		packet.string[strlen(notification)] = '\0';
 
-		ctx->redraw = 2;
-		for(i = 0; i < 10; i++) if(!ctx->func[0][i]) break;
-		// Set functions for: draw, press, not press
-		ctx->func[JL_GRTP_NOT][i] = fno;
-		ctx->func[JL_GRTP_YES][i] = fnc;
-		ctx->func[JL_GRTP_RDR][i] = rdr;
-	}
-
-	/**
-	 * Add the flip screen icon to the menubar.
-	 * @param jl: the libary context
-	**/
-	void jlgr_addicon_flip(jlgr_t* jlgr) {
-		jlgr_addicon(jlgr, jlgr_dont, jlgr_menu_flip_press__,
-			jlgr_menu_flip_draw__);	
-	}
-
-	/**
-	 * Add slowness detector to the menubar.
-	 * @param jl: the libary context
-	**/
-	void jlgr_addicon_slow(jlgr_t* jlgr) {
-		jlgr_addicon(jlgr, _jlgr_menu_slow_loop, jlgr_dont,
-			_jlgr_menu_slow_draw);
-	}
-
-	/**
-	 * Add program title to the menubar.
-	 * @param jl: the libary context
-	**/
-	void jlgr_addicon_name(jlgr_t* jlgr) {
-		int i;
-		for(i = 0; i < 4; i++) {
-			jlgr_addicon(jlgr, jlgr_dont, jlgr_dont,
-				jlgr_menu_name_draw2__);
-		}
-		jlgr_addicon(jlgr, jlgr_dont, jlgr_dont,
-			jlgr_menu_name_draw__);
+		jl_thread_comm_send(jlgr->jl, jlgr->comm2draw, &packet);
 	}
 
 /***      @cond       ***/
@@ -760,67 +632,81 @@ static void _jlgr_textbox_lt(jl_t* jl);
 /***  ETOM Functions  ***/
 /************************/
 
-	void _jlgr_loopb(jlgr_t* jlgr) {
-		//Message Display
-		if(timeTilMessageVanish > 0.f) {
-			if(timeTilMessageVanish > 4.25) {
-				uint8_t color[] = { 255, 255, 255, 255 };
-				jlgr_draw_ctxt(jlgr,
-					GMessage[jlgr->sg.cscreen],
-					0, color);
-			}else{
-				uint8_t color[] = { 255, 255, 255, (uint8_t)
-					(timeTilMessageVanish * 255.f / 4.25)};
-				jlgr_draw_ctxt(jlgr,
-					GMessage[jlgr->sg.cscreen],
-					0, color);
+void _jlgr_loopb(jlgr_t* jlgr) {
+	//Message Display
+	if(jlgr->gr.notification.timeTilVanish > 0.f) {
+		if(jlgr->gr.notification.timeTilVanish > 4.25) {
+			uint8_t color[] = { 255, 255, 255, 255 };
+			jlgr_draw_ctxt(jlgr, jlgr->gr.notification.message, 0,
+				color);
+		}else{
+			uint8_t color[] = { 255, 255, 255, (uint8_t)
+				(jlgr->gr.notification.timeTilVanish *
+					255. / 4.25)};
+			jlgr_draw_ctxt(jlgr, jlgr->gr.notification.message, 0,
+				color);
+		}
+		jlgr->gr.notification.timeTilVanish-=jlgr->jl->time.psec;
+	}
+}
+
+void _jlgr_loopa(jlgr_t* jlgr) {
+	jvct_t* _jl = jlgr->jl->_jl;
+
+	jl_print_function(jlgr->jl, "GR_LP");
+	// Draw the pre-rendered Menubar.
+	if(!_jl->fl.inloop) jlgr_sprite_draw(jlgr, jlgr->menubar.menubar);
+	// Update mouse
+	if(jlgr->mouse) jlgr_sprite_loop(jlgr, jlgr->mouse);
+	// Update messages.
+	_jlgr_loopb(jlgr);
+	jl_print_return(jlgr->jl, "GR_LP");
+	// Draw menubar, if needed
+	if(!_jl->fl.inloop) {
+		jl_menubar_t *ctx = jlgr->menubar.menubar->ctx;
+
+		if(ctx->redraw == 1) {
+			for( ctx->draw_cursor = 0; ctx->draw_cursor < 10;
+				ctx->draw_cursor++)
+			{
+				if(!(ctx->func[0][ctx->draw_cursor])) break;
+				jlgr_sprite_redraw(jlgr, jlgr->menubar.menubar);
 			}
-			timeTilMessageVanish-=jlgr->jl->time.psec;
+			ctx->redraw = 0;
 		}
 	}
+	// Draw mouse
+	if(jlgr->mouse) jlgr_sprite_draw(jlgr, jlgr->mouse);
+}
 
-	void _jlgr_loopa(jlgr_t* jlgr) {
-		jvct_t* _jl = jlgr->jl->_jl;
-
-		jl_print_function(jlgr->jl, "GR_LP");
-		// Menu Bar
-		if(!_jl->fl.inloop) jlgr->gr.menuoverlay(jlgr->jl, NULL);
-		// Update mouse
-		if(jlgr->mouse) jlgr_sprite_loop(jlgr, jlgr->mouse);
-		// Update messages.
-		_jlgr_loopb(jlgr);
-		jl_print_return(jlgr->jl, "GR_LP");
-		// Draw mouse and taskbar.
-		jlgr_gui_draw_(jlgr->jl);
-	}
-	
-	void jlgr_init__(jlgr_t* jlgr) {
-		_jlgr_init_vos(jlgr);
-		JL_PRINT_DEBUG(jlgr->jl, "Draw Loading Screen");
-		jlgr_draw_msge(jlgr, 0, 0, 0, 0);
-		// Create Font
-		jlgr->fontcolor[0] = 0;
-		jlgr->fontcolor[1] = 0;
-		jlgr->fontcolor[2] = 0;
-		jlgr->fontcolor[3] = 255;
-		jlgr->font = (jl_font_t)
-			{ 0, JL_IMGI_FONT, 0, jlgr->fontcolor, .04 };
-		JL_PRINT_DEBUG(jlgr->jl, "Loading 1 image");
-		jl_sg_add_some_imgs_(jlgr, 1);
-		//
-		JL_PRINT_DEBUG(jlgr->jl, "First font use try");
-		jlgr_draw_msge(jlgr,0,0,0,"LOADING JL_LIB GRAPHICS...");
-		JL_PRINT_DEBUG(jlgr->jl, "First font use succeed");
-		// Load the other images.
-		JL_PRINT_DEBUG(jlgr->jl, "Loading 2 image");
-		jl_sg_add_some_imgs_(jlgr, 2);
-		jlgr_draw_msge(jlgr, 0, 0, 0, "LOADED JL_LIB GRAPHICS!");
-		// Draw message on the screen
-		jlgr_draw_msge(jlgr, 0, 0, 0, "LOADING JLLIB....");
-		JL_PRINT_DEBUG(jlgr->jl, "started up display %dx%d",
-			jlgr->dl.full_w, jlgr->dl.full_h);
-
-	}
+void jlgr_init__(jlgr_t* jlgr) {
+	_jlgr_init_vos(jlgr);
+	JL_PRINT_DEBUG(jlgr->jl, "Draw Loading Screen");
+	jlgr_draw_msge(jlgr, 0, 0, 0, 0);
+	// Create Font
+	jlgr->fontcolor[0] = 0;
+	jlgr->fontcolor[1] = 0;
+	jlgr->fontcolor[2] = 0;
+	jlgr->fontcolor[3] = 255;
+	jlgr->font = (jl_font_t)
+		{ 0, JL_IMGI_FONT, 0, jlgr->fontcolor, .04 };
+	JL_PRINT_DEBUG(jlgr->jl, "Loading 1 image");
+	jl_sg_add_some_imgs_(jlgr, 1);
+	//
+	JL_PRINT_DEBUG(jlgr->jl, "First font use try");
+	jlgr_draw_msge(jlgr,0,0,0,"LOADING JL_LIB GRAPHICS...");
+	JL_PRINT_DEBUG(jlgr->jl, "First font use succeed");
+	// Load the other images.
+	JL_PRINT_DEBUG(jlgr->jl, "Loading 2 image");
+	jl_sg_add_some_imgs_(jlgr, 2);
+	jlgr_draw_msge(jlgr, 0, 0, 0, "LOADED JL_LIB GRAPHICS!");
+	// Draw message on the screen
+	jlgr_draw_msge(jlgr, 0, 0, 0, "LOADING JLLIB....");
+	JL_PRINT_DEBUG(jlgr->jl, "started up display %dx%d",
+		jlgr->dl.full_w, jlgr->dl.full_h);
+	// Set other variables
+	jlgr->gr.notification.timeTilVanish = 0.f;
+}
 
 /**      @endcond      **/
 /***   #End of File   ***/

@@ -32,7 +32,7 @@ printf "ANDROID_HOME = $ANDROID_HOME\n"
 
 cp $JLL_PATH/android-src/AndroidManifest.xml \
 $ANDROID_PROJECT/AndroidManifest.xml
-rm $ANDROID_PROJECT/res/values/strings.xml
+rm -f $ANDROID_PROJECT/res/values/strings.xml
 cp $JLL_PATH/android-src/strings.xml \
 $ANDROID_PROJECT/res/values/strings.xml
 cp $JLL_PATH/android-src/build.xml \
@@ -49,7 +49,7 @@ sed -i "s|JLR_APPNAME|$PACKNAME|g" \
 $ANDROID_PROJECT/AndroidManifest.xml
 sed -i "s|JLR_IS_DEBUG|$IS_DEBUG|g" \
 $ANDROID_PROJECT/AndroidManifest.xml
-rm -r $ANDROID_PROJECT/src/jlw/
+rm -f -r $ANDROID_PROJECT/src/jlw/
 mkdir -p $ANDROID_PROJECT/src/jlw/$USERNAME/$PACKNAME/
 cp \
 $JLL_PATH/android-src/jl_Activity.java \
@@ -68,9 +68,9 @@ if [ ! -e build/android-release-key.keystore ];then
 	printf "[JL/ANDR] a key.  Create your key for jarsigner:\n"
 	keytool -sigalg SHA1withRSA -keyalg RSA -keysize 1024 -genkey -keystore build/android-release-key.keystore -alias daliasle -validity 3650
 fi
-rm -r $ANDROID_PROJECT/jni/src/gen/src/
-mkdir $ANDROID_PROJECT/jni/src/gen/src/
-cp --recursive -t $ANDROID_PROJECT/jni/src/gen/src/ `find src/*`
+rm -f -r $ANDROID_PROJECT/jni/src/C/gen/src/
+mkdir $ANDROID_PROJECT/jni/src/C/gen/src/
+cp --recursive -t $ANDROID_PROJECT/jni/src/C/gen/src/ `find src/*`
 cp build/android-release-key.keystore $ANDROID_PROJECT/
 cp media/icon.png $ANDROID_PROJECT/res/drawable/prgm_icon.png
 

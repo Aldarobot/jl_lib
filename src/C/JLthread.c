@@ -104,21 +104,38 @@ SDL_mutex* jl_thread_mutex_new(jl_t *jl) {
 }
 
 /**
+ * Lock a mutex.
+ * @param jl: The library context.
+ * @param mutex: The mutex created by jl_thread_mutex_new().
+**/
+void jl_thread_mutex_lock(jl_t *jl, SDL_mutex* mutex) {
+	if (SDL_LockMutex(mutex) != 0) {
+		jl_print(jl, "jl_thread_mutex_use: Couldn't lock mutex");
+		exit(-1);
+	}
+}
+
+/**
+ * Unlock a mutex.
+ * @param jl: The library context.
+ * @param mutex: The mutex created by jl_thread_mutex_new().
+**/
+void jl_thread_mutex_unlock(jl_t *jl, SDL_mutex* mutex) {
+	SDL_UnlockMutex(mutex);
+}
+
+/**
  * Run a function that uses the mutex.
  * @param jl: The library context.
  * @param mutex: The mutex created by jl_thread_mutex_new().
  * @param fn_: The function that uses data locked by the mutex.
 **/
 void jl_thread_mutex_use(jl_t *jl, SDL_mutex* mutex, jl_fnct fn_) {
-	if (SDL_LockMutex(mutex) == 0) {
-		// Do stuff while mutex is locked
-		fn_(jl);
-		// Give up for other threads
-		SDL_UnlockMutex(mutex);
-	} else {
-		jl_print(jl, "jl_thread_mutex_use: Couldn't lock mutex");
-		exit(-1);
-	}
+	jl_thread_mutex_lock(jl, mutex);
+	// Do stuff while mutex is locked
+	fn_(jl);
+	// Give up for other threads
+	jl_thread_mutex_unlock(jl, mutex);
 }
 
 /**

@@ -35,7 +35,9 @@ static inline void _jlvm_jl_mem_resz(jvct_t* _jl, uint32_t kb) {
 u64_t jl_mem_tbiu(void) {
 	struct mallinfo mi;
 
+#if JL_PLAT != JL_PLAT_PHONE
 	malloc_trim(0); //Remove Free Memory
+#endif
 	mi = mallinfo();
 	return mi.uordblks;
 }

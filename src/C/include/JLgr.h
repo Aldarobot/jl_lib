@@ -121,7 +121,6 @@ typedef struct{
 	jl_font_t font;
 	jl_sprite_t* mouse; //jl_sprite_t: Sprite to represent mouse pointer
 
-	uint8_t running; // Whether program running or not.
 	uint8_t thread; // Graphical Thread ID.
 	SDL_mutex* mutex; // Mutex to lock wshare structure.
 	jl_comm_t* comm2draw; // thread communication variable.
@@ -275,10 +274,16 @@ typedef struct{
 		jl_pr_t* bg; // Screen currently being drawn on.
 	}gl;
 
+	struct {
+		jl_sprite_t *menubar;
+	}menubar;
+
 	//Graphics
 	struct {
-		jlgr_sprite_fnt menuoverlay;
-		jl_sprite_t *taskbar;
+		struct {
+			double timeTilVanish;
+			char message[256];
+		} notification;
 		struct {
 			char* window_name;
 			char* message;
@@ -318,18 +323,21 @@ typedef struct{
 		double aspect;
 		uint16_t inner_y;
 	}dl;
+
+	double psec;
 }jlgr_t;
 
 typedef void(*jlgr_fnct)(jlgr_t* jlgr);
 typedef void(*jl_ct_event_fnct)(jlgr_t* jlgr, jl_fnct prun, jl_fnct pno);
 
-// Main Thread:
+// JLGR.c:
 jlgr_t* jlgr_init(jl_t* jl, str_t window_name, u8_t fullscreen, jl_fnct fn_);
 void jlgr_loop_set(jlgr_t* jlgr, jl_fnct onescreen, jl_fnct upscreen,
 	jl_fnct downscreen, jl_fnct resize);
 void jlgr_loop(jlgr_t* jlgr);
 void jlgr_kill(jlgr_t* jlgr);
-// Main Thread -> JLGRsprite.c
+// JLGRsprite.c
+void jlgr_sprite_dont(jl_t* jl, jl_sprite_t* sprite);
 void jlgr_sprite_redraw(jlgr_t* jlgr, jl_sprite_t *spr);
 void jlgr_sprite_resize(jlgr_t* jlgr, jl_sprite_t *spr);
 void jlgr_sprite_loop(jlgr_t* jlgr, jl_sprite_t *spr);
@@ -338,11 +346,15 @@ jl_sprite_t * jlgr_sprite_new(jlgr_t* jlgr, jl_rect_t rc,
 	jlgr_sprite_fnt draw, jlgr_sprite_fnt loop, u32_t ctxs);
 u8_t jlgr_sprite_collide(jlgr_t* jlgr,
 	jl_sprite_t *sprite1, jl_sprite_t *sprite2);
-// Draw Thread:
+// JLGRmenu.c
+void jlgr_menu_toggle(jlgr_t* jlgr);
+void jlgr_menu_draw_icon(jlgr_t* jlgr, u16_t g, u16_t i, u8_t c);
+void jlgr_menu_addicon(jlgr_t* jlgr,jlgr_fnct fno,jlgr_fnct fnc,jlgr_fnct rdr);
+void jlgr_menu_addicon_flip(jlgr_t* jlgr);
+void jlgr_menu_addicon_slow(jlgr_t* jlgr);
+void jlgr_menu_addicon_name(jlgr_t* jlgr);
 
-// Either Thread:
-
-// JLGRgraphics:
+// JLGRgraphics.c:
 void jlgr_dont(jlgr_t* jlgr);
 void jlgr_fill_image_set(jlgr_t* jlgr, u16_t g, u16_t i, u8_t c, u8_t a);
 void jlgr_fill_image_draw(jlgr_t* jlgr);
@@ -370,9 +382,8 @@ void jlgr_draw_float(jlgr_t* jlgr, f64_t num, u8_t dec, jl_vec3_t loc,
 void jlgr_draw_text_area(jlgr_t* jlgr, jl_sprite_t * spr, str_t txt);
 void jlgr_draw_text_sprite(jlgr_t* jlgr,jl_sprite_t * spr, str_t txt);
 void jlgr_draw_ctxt(jlgr_t* jlgr, char *str, float yy, uint8_t* color);
-void jlgr_draw_msge_(jlgr_t* jlgr,u16_t g,u16_t i,u8_t c, m_str_t message);
-#define jlgr_draw_msge(jlgr,g,i,c,...);\
-	jlgr_draw_msge_(jlgr,g,i,c,jl_mem_format(jlgr->jl, __VA_ARGS__));
+void jlgr_draw_msge(jlgr_t* jlgr, u16_t g, u16_t i, u8_t c,
+	m_str_t format, ...);
 void jlgr_term_msge(jlgr_t* jlgr, char* message);
 void jlgr_slidebtn_rsz(jlgr_t* jlgr, jl_sprite_t * spr, str_t txt);
 void jlgr_slidebtn_rnl(jlgr_t* jlgr, jl_sprite_t * spr,
@@ -381,12 +392,7 @@ void jlgr_draw_glow_button(jlgr_t* jlgr, jl_sprite_t * spr,
 	char *txt, jl_fnct prun);
 uint8_t jlgr_draw_textbox(jlgr_t* jlgr, float x, float y, float w,
 	float h, data_t* *string);
-void jlgr_togglemenubar(jlgr_t* jlgr);
-void jlgr_addicon(jlgr_t* jlgr, jlgr_fnct fno, jlgr_fnct fnc,
-	jlgr_fnct rdr);
-void jlgr_addicon_flip(jlgr_t* jlgr);
-void jlgr_addicon_slow(jlgr_t* jlgr);
-void jlgr_addicon_name(jlgr_t* jlgr);
+void jlgr_notify(jlgr_t* jlgr, str_t notification);
 // OpenGL
 void jl_gl_pbo_new(jlgr_t* jlgr, jl_tex_t* texture, u8_t* pixels,
 	u16_t w, u16_t h, u8_t bpp);
@@ -416,10 +422,10 @@ float jl_ct_gmousey(jlgr_t* jlgr);
 uint8_t jl_ct_typing_get(jlgr_t* pusr);
 void jl_ct_typing_disable(void);
 // JLGRfiles.c
-uint8_t jl_fl_user_select_init(jlgr_t* jl, const char *program_name,
-	void *newfiledata, uint64_t newfilesize);
-void jl_fl_user_select_loop(jlgr_t* jl);
-char *jl_fl_user_select_get(jlgr_t* jl);
+uint8_t jlgr_openfile_init(jlgr_t* jlgr, str_t program_name, void *newfiledata,
+	uint64_t newfilesize);
+void jlgr_openfile_loop(jlgr_t* jlgr);
+str_t jlgr_openfile_kill(jlgr_t* jlgr);
 // Window Management
 void jlgr_wm_setfullscreen(jlgr_t* jlgr, uint8_t is);
 void jlgr_wm_togglefullscreen(jlgr_t* jlgr);
