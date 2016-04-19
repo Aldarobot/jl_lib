@@ -828,7 +828,9 @@ static void _jl_gl_pr_unuse(jlgr_t* jlgr) {
 		jl_gl_framebuffer_off__(jlgr);
 	#endif
 	// Reset the aspect ratio.
+	jl_thread_mutex_lock(jlgr->jl, jlgr->mutex);
 	jlgr->gl.cp = NULL;
+	jl_thread_mutex_unlock(jlgr->jl, jlgr->mutex);
 }
 
 static void _jl_gl_pr_obj_free(jlgr_t* jlgr, jl_pr_t *pr) {
@@ -852,7 +854,9 @@ static void jl_gl_pr_obj_make_tx__(jlgr_t* jlgr, jl_pr_t *pr) {
 // Initialize an already allocated pr object with width and hieght of "pr->w" &
 // "pr->h".
 static void _jl_gl_pr_obj_make(jlgr_t* jlgr, jl_pr_t *pr) {
+	jl_thread_mutex_lock(jlgr->jl, jlgr->mutex);
 	jlgr->gl.cp = NULL;
+	jl_thread_mutex_unlock(jlgr->jl, jlgr->mutex);
 	if(pr->w < 1) {
 		jl_print(jlgr->jl,
 			"_jl_gl_pr_obj_make() failed: 'w' must be more than 1");
@@ -1030,7 +1034,9 @@ void jl_gl_pr_use_(jlgr_t* jlgr, jl_pr_t* pr) {
 	jl_gl_framebuffer_use__(jlgr, pr->fb, pr->db, pr->tx, pr->w, pr->h);
 #endif
 	// Reset the aspect ratio.
+	jl_thread_mutex_lock(jlgr->jl, jlgr->mutex);
 	jlgr->gl.cp = pr;
+	jl_thread_mutex_unlock(jlgr->jl, jlgr->mutex);
 }
 
 // Use a vertex object's pre-renderer for rendering.
@@ -1560,7 +1566,12 @@ void jl_gl_vo_txmap(jlgr_t* jlgr, jl_vo_t* pv, u8_t map) {
  * @param jl: The library context.
 **/
 double jl_gl_ar(jlgr_t* jlgr) {
-	return jlgr->gl.cp ? jlgr->gl.cp->ar : jlgr->dl.aspect;
+	double ar;
+
+	jl_thread_mutex_lock(jlgr->jl, jlgr->mutex);
+	ar = jlgr->gl.cp ? jlgr->gl.cp->ar : jlgr->dl.aspect;
+	jl_thread_mutex_unlock(jlgr->jl, jlgr->mutex);
+	return ar;
 }
 
 /**
@@ -1688,7 +1699,9 @@ void jl_gl_pr(jlgr_t* jlgr, jl_pr_t * pr, jl_fnct par__redraw) {
 
 void jl_gl_resz__(jlgr_t* jlgr) {
 	// Deselect any pre-renderer.
+	jl_thread_mutex_lock(jlgr->jl, jlgr->mutex);
 	jlgr->gl.cp = NULL;
+	jl_thread_mutex_unlock(jlgr->jl, jlgr->mutex);
 	// Deselect the screen.
 	jl_gl_pr_scr_set(jlgr, NULL);
 }
@@ -1701,7 +1714,9 @@ void jl_gl_init__(jlgr_t* jlgr) {
 		jl_sg_kill(jlgr->jl);
 	}
 #endif
+	jl_thread_mutex_lock(jlgr->jl, jlgr->mutex);
 	jlgr->gl.cp = NULL;
+	jl_thread_mutex_unlock(jlgr->jl, jlgr->mutex);
 	jlgr->gl.bg = NULL;
 	_jl_gl_make_res(jlgr);
 	//Set uniform values

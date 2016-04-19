@@ -84,12 +84,13 @@ typedef struct {
 }jl_font_t;
 
 typedef struct{
-	jl_vec3_t tr;				// The translate vector.
-	jl_rect_t cb;				// Collision Box
-	float rh, rw;				// Real Height & Width
-	void* ctx;				// The sprite's context.
+	SDL_mutex* mutex;	// The mutex for threads to use sprite.
+	jl_rect_t cb;		// Collision Box
+	float rh, rw;		// Real Height & Width
+	void* ctx;		// The sprite's context.
 	void* loop;		// (jlgr_sprite_fnt) Loop function
 	void* draw;		// (jlgr_sprite_fnt) Draw function
+	uint8_t update;		// Whether sprite should redraw or not.
 	jl_pr_t *pr;		// Pre-renderer.
 }jl_sprite_t;
 
@@ -325,6 +326,8 @@ typedef struct{
 	}dl;
 
 	double psec;
+
+	jl_sprite_t* temp_sprite;
 }jlgr_t;
 
 typedef void(*jlgr_fnct)(jlgr_t* jlgr);
@@ -339,13 +342,14 @@ void jlgr_kill(jlgr_t* jlgr);
 // JLGRsprite.c
 void jlgr_sprite_dont(jl_t* jl, jl_sprite_t* sprite);
 void jlgr_sprite_redraw(jlgr_t* jlgr, jl_sprite_t *spr);
-void jlgr_sprite_resize(jlgr_t* jlgr, jl_sprite_t *spr);
+void jlgr_sprite_resize(jlgr_t* jlgr, jl_sprite_t *spr, jl_rect_t* rc);
 void jlgr_sprite_loop(jlgr_t* jlgr, jl_sprite_t *spr);
 void jlgr_sprite_draw(jlgr_t* jlgr, jl_sprite_t *spr);
 jl_sprite_t * jlgr_sprite_new(jlgr_t* jlgr, jl_rect_t rc,
 	jlgr_sprite_fnt draw, jlgr_sprite_fnt loop, u32_t ctxs);
 u8_t jlgr_sprite_collide(jlgr_t* jlgr,
 	jl_sprite_t *sprite1, jl_sprite_t *sprite2);
+void* jlgr_sprite_getcontext(jl_sprite_t *sprite1);
 // JLGRmenu.c
 void jlgr_menu_toggle(jlgr_t* jlgr);
 void jlgr_menu_draw_icon(jlgr_t* jlgr, u16_t g, u16_t i, u8_t c);
@@ -392,6 +396,8 @@ void jlgr_draw_glow_button(jlgr_t* jlgr, jl_sprite_t * spr,
 	char *txt, jl_fnct prun);
 uint8_t jlgr_draw_textbox(jlgr_t* jlgr, float x, float y, float w,
 	float h, data_t* *string);
+jl_sprite_t* jlgr_gui_slider(jlgr_t* jlgr, jl_rect_t rectangle,
+		u8_t isdouble, m_f32_t* x1, m_f32_t* x2);
 void jlgr_notify(jlgr_t* jlgr, str_t notification);
 // OpenGL
 void jl_gl_pbo_new(jlgr_t* jlgr, jl_tex_t* texture, u8_t* pixels,

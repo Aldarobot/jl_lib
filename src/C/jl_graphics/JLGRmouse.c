@@ -37,11 +37,8 @@ void jlgr_mouse_loop_(jl_t* jl, jl_sprite_t* sprite) {
 	jl_sprite_t* mouse = jlgr->mouse;
 
 //Update Mouse
-	mouse->tr.x = jl_ct_gmousex(jlgr);
-	mouse->tr.y = jl_ct_gmousey(jlgr);
-	mouse->tr.z = 0.;
-	mouse->cb.x = mouse->tr.x;
-	mouse->cb.y = mouse->tr.y;
+	mouse->cb.x = jl_ct_gmousex(jlgr);
+	mouse->cb.y = jl_ct_gmousey(jlgr);
 }
 
 void jlgr_mouse_init__(jlgr_t* jlgr) {
@@ -64,7 +61,7 @@ void jlgr_mouse_init__(jlgr_t* jlgr) {
 		((jl_sprite_t*)jlgr->mouse)->ctx = NULL;
 	#endif
 	mouse = jlgr->mouse;
-	jlgr_sprite_resize(jlgr, mouse);
+	jlgr_sprite_resize(jlgr, mouse, NULL);
 	// Set the mouse's collision width and height to 0
 	mouse->cb.w = 0.f;
 	mouse->cb.h = 0.f;

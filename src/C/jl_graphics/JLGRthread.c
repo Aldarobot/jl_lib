@@ -22,10 +22,10 @@ static void jlgr_thread_resize(jlgr_t* jlgr, u16_t w, u16_t h) {
 
 		//Menu Bar
 		ctx->redraw = 2;
-		jlgr_sprite_resize(jlgr, jlgr->menubar.menubar);
+		jlgr_sprite_resize(jlgr, jlgr->menubar.menubar, NULL);
 	}
 	// Mouse resize
-	if(jlgr->mouse) jlgr_sprite_resize(jlgr, jlgr->mouse);
+	if(jlgr->mouse) jlgr_sprite_resize(jlgr, jlgr->mouse, NULL );
 	// Program's Resize
 	jl_fnct resize_ = jlgr->draw.redraw.resize;
 	resize_(jlgr->jl);

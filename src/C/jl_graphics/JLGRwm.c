@@ -189,8 +189,6 @@ void jl_dl_resz__(jlgr_t* jlgr, uint16_t x, uint16_t y) {
 	jlgr->dl.aspect = ((double)y) / ((double)x);
 	// Clear the screen of anything wierd.
 	jl_gl_clear(jlgr, 122, 255, 125, 255);
-	//
-	//jl_wm_updatewh_(jlgr);
 }
 
 // TODO: Make not exported, but called in jlgr_init()
@@ -221,7 +219,9 @@ void jl_dl_init__(jlgr_t* jlgr) {
 	//Create Window With SDL
 	_jlvm_crea_wind(jlgr);
 	//Get Window Size
-	jl_wm_updatewh_(jlgr);
+	SDL_GetWindowSize(jlgr->dl.displayWindow->w, &jlgr->dl.current.w,
+		&jlgr->dl.current.h);
+//	jl_wm_updatewh_(jlgr);
 	//Update screensize to fix any rendering glitches
 	jl_dl_resz__(jlgr, jlgr->dl.current.w, jlgr->dl.current.h);
 	// Update The Screen
