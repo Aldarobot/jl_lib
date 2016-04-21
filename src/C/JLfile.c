@@ -129,17 +129,16 @@ static inline void jl_file_get_root__(jvct_t * _jl) {
 	// Get the operating systems prefered path
 	m_str_t pref_path = SDL_GetPrefPath(JL_ROOT_DIRNAME, "\0");
 
-	if(pref_path) {
-		// Erase extra non-needed '/'s
-		pref_path[strlen(pref_path) - 1] = '\0';
-		// Set root path to pref path
-		root_path = jl_data_mkfrom_str(pref_path);
-		// Free the pointer to pref path
-		SDL_free(pref_path);
-	}else{
+	if(!pref_path) {
 		jl_print(_jl->jl, "This platform has no pref path!");
-		jl_sg_kill(_jl->jl);
+		exit(-1);
 	}
+	// Erase extra non-needed '/'s
+	pref_path[strlen(pref_path) - 1] = '\0';
+	// Set root path to pref path
+	root_path = jl_data_mkfrom_str(pref_path);
+	// Free the pointer to pref path
+	SDL_free(pref_path);
 #endif
 	// Make "-- JL_ROOT_DIR"
 	if(jl_file_mkdir(_jl->jl, (str_t) root_path->data) == 2) {

@@ -307,8 +307,6 @@ typedef struct{
 		uint8_t fullscreen;
 
 		char windowTitle[2][16];
-
-		SDL_DisplayMode current;
 		jl_window_t* displayWindow;
 	#if JL_GLRTEX == JL_GLRTEX_SDL
 		jl_window_t* whichwindow;
@@ -320,7 +318,7 @@ typedef struct{
 		jl_rect_t window;
 		
 		// The complete width and height of the window.
-		uint16_t full_w, full_h;
+		int32_t full_w, full_h;
 		double aspect;
 		uint16_t inner_y;
 	}dl;

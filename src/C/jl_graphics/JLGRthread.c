@@ -97,19 +97,15 @@ static void jlgr_thread_draw_init__(jl_t* jl) {
 	jlgr_menubar_init__(jlgr);
 	JL_PRINT_DEBUG(jl, "Creating Mouse sprite....");
 	jlgr_mouse_init__(jlgr);
-//	JL_PRINT_DEBUG(jl, "Force Resize");
-//	jl_wm_updatewh_(jlgr);
-	jlgr_thread_resize(jlgr, jlgr->dl.current.w,jlgr->dl.current.h);
+	JL_PRINT_DEBUG(jl, "Resize Adjust");
+	jl_wm_updatewh_(jlgr);
+	jlgr_thread_resize(jlgr, jlgr_wm_getw(jlgr), jlgr_wm_geth(jlgr));
 	JL_PRINT_DEBUG(jl, "Looking for init packet....");
 	// Wait until recieve init packet....
 	while(jlgr_thread_draw_event__(jl) != 2);
 	JL_PRINT_DEBUG(jl, "Sending finish packet....");
 	// Tell main thread to stop waiting.
 	jl_thread_comm_send(jl, jlgr->comm2main, &packet);
-	//
-//	jl_wm_updatewh_(jlgr);
-//	SDL_SetWindowSize(jlgr->dl.displayWindow->w,jlgr->dl.current.w,
-//		jlgr->dl.current.h);
 }
 
 void jlgr_thread_send(jlgr_t* jlgr, u8_t id, u16_t x, u16_t y, jl_fnct fn) {

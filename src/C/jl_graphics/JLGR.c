@@ -17,7 +17,9 @@ static void jlgr_init_event(jl_t* jl, void* data) {
 		case JLGR_COMM_DRAWFIN:
 			jlgr->main.rtn = 1;
 			break;
-		default: break;
+		default:
+			SDL_Delay(1);
+			break;
 	}
 }
 
@@ -66,8 +68,6 @@ jlgr_t* jlgr_init(jl_t* jl, str_t window_name, u8_t fullscreen, jl_fnct fn_) {
 	while(!jlgr->main.rtn)
 		jl_thread_comm_recv(jl,jlgr->comm2main,jlgr_init_event);
 	jl_print(jl, "Main thread done did wait....");
-	// Send resize function
-	jlgr_resz(jlgr, 0, 0);
 	return jlgr;
 }
 

@@ -13,16 +13,9 @@ endif
 
 HEADER = -Isrc/lib/ -Isrc/lib/include/ -I/opt/vc/include/ \
 	$(addprefix -I, $(shell find src/C/ -type d ))
-CFLAGS_MEDIA = $(HEADER) -O3
-CFLAGS_DEBUG = $(HEADER) -Wall -g
-CFLAGS_RELEASE = $(HEADER) -O3
-
 CC = gcc
-CFLAGS = $(CFLAGS_DEBUG) $(PLATFORM_CFLAGS)
 
 CLUMP_SRC = src/lib/clump
-JPEG_SRC = src/lib/jpeg-9
-
 SRC = src/C
 BUILD = build/obj
 # 
@@ -122,6 +115,12 @@ build/jl.o: $(BUILD) $(OBJS)
 	printf "[COMP] compiling singular jl_lib object file....\n"
 	ar csr build/jl.o build/obj/*.o build/deps/*.o
 
+-test: 
+	$(eval CFLAGS=-Wall -g $(HEADER) $(PLATFORM_CFLAGS))
+
+-release:
+	$(eval CFLAGS=-Wall -O3 $(HEADER) $(PLATFORM_CFLAGS))
+
 build-notify:
 	echo Modules: $(MODULES)
 	echo Headers: $(HEADERS)
@@ -129,7 +128,11 @@ build-notify:
 	printf "[COMP] Building jl_lib for target=$(PLATFORM)\n"
 
 # Build modules.
-build-library: build-notify build/jl.o
+test: -test build-notify build/jl.o
+	# Make "jl.o"
+	printf "[COMP] done!\n"
+
+release: -release build-notify build/jl.o
 	# Make "jl.o"
 	printf "[COMP] done!\n"
 

@@ -14,7 +14,7 @@
 
 static inline void *_jl_cl_list_alphabetize_lowest(struct cl_list *list) {
 	int i, j, k;
-	char *rtn;
+	char *rtn = NULL;
 	//Allocate and clear checked
 	uint8_t *notchecked = malloc(sizeof(uint8_t) * cl_list_count(list));
 	for(i = 0; i < cl_list_count(list); i++) notchecked[i] = 1;

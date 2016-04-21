@@ -277,9 +277,9 @@ static void jl_sg_init_ds_(jl_t* jl) {
 	
 	// Update the rectangle backgrounds.
 	jlgr_vos_rec(jlgr, jlgr->sg.bg.up, rcrd, rclr_up, 0);
-	jlgr_pr_new(jlgr, jlgr->sg.bg.up, jlgr->dl.current.w);
+	jlgr_pr_new(jlgr, jlgr->sg.bg.up, jlgr_wm_getw(jlgr));
 	jlgr_vos_rec(jlgr, jlgr->sg.bg.dn, rcrd, rclr_dn, 0);
-	jlgr_pr_new(jlgr, jlgr->sg.bg.dn, jlgr->dl.current.w);
+	jlgr_pr_new(jlgr, jlgr->sg.bg.dn, jlgr_wm_getw(jlgr));
 	// Set double screen loop.
 	jlgr->sg.loop = _jl_sg_loop_ds;
 	if(jlgr->sg.cscreen == JL_SCR_SS) jlgr->sg.cscreen = JL_SCR_DN;
@@ -303,7 +303,7 @@ static void jl_sg_init_ss_(jl_t* jl) {
 	
 	// Update the rectangle backgrounds.
 	jlgr_vos_rec(jlgr, jlgr->sg.bg.dn, rcrd, rclr_bg, 0);
-	jlgr_pr_new(jlgr, jlgr->sg.bg.dn, jlgr->dl.current.w);
+	jlgr_pr_new(jlgr, jlgr->sg.bg.dn, jlgr_wm_getw(jlgr));
 	// Set single screen loop.
 	jlgr->sg.loop = _jl_sg_loop_ss;
 	jlgr->sg.cscreen = JL_SCR_SS;

@@ -53,17 +53,19 @@ FOLDERS = build/ libs/ media/ src/
 
 ################################################################################
 
-test: build-notify $(FOLDERS) -debug $(OBJS_PRG) -build
+-release: build-notify $(FOLDERS) -publish $(OBJS_RLS) -build
+-test: build-notify $(FOLDERS) -debug $(OBJS_PRG) -build
+
+test: -test
 	./$(JL_OUT)
 
-debug: build-notify $(FOLDERS) -debug $(OBJS_PRG) -build
+debug: -test
 	gdb ./$(JL_OUT)
 
-android:
-	sh $(shell echo $(JLL_HOME))/compile-scripts/jl_android\
-	 $(shell echo $(JLL_HOME))
+release: -release
+	./$(JL_OUT)
 
-install: build-notify $(FOLDERS) -publish $(OBJS_RLS) -build
+install: -release
 	printf "Installing....\n"
 	if [ -z "$(JLL_PATH)" ]; then \
 		printf "Where to install? ( hint: /bin or $$HOME/bin ) [ Set"\
@@ -73,6 +75,10 @@ install: build-notify $(FOLDERS) -publish $(OBJS_RLS) -build
 	printf "Copying files to $$JLL_PATH/....\n"; \
 	cp -u --recursive -t $$JLL_PATH/ build/bin/*; \
 	printf "Done!\n"
+
+android:
+	sh $(shell echo $(JLL_HOME))/compile-scripts/jl_android\
+	 $(shell echo $(JLL_HOME))
 
 init: $(FOLDERS)
 	printf "[COMPILE] Done!\n"
@@ -93,6 +99,8 @@ $(BUILD)/%.o: %.c $(HEADERS_PRG) $(HEADERS_DEPS)
 	$(COMPILE) $(CFLAGS) -o $@ -c $< $(JL_DEBUG)
 $(BUILD_TEST)/%.o: %.c $(HEADERS_PRG) $(HEADERS_DEPS)
 	$(COMPILE) $(CFLAGS) -o $@ -c $< $(JL_DEBUG)
+$(BUILD_OBJS)/%.o: %.c $(HEADERS_PRG) $(HEADERS_DEPS)
+	$(COMPILE) $(CFLAGS) -o $@ -c $< $(JL_DEBUG)
 $(BUILD_DEPS)/%.o: %.c $(HEADERS_DEPS)
 	printf "[COMP/DEPS] Compiling \"$<\" -to- \"$@\"....\n";
 	$(CC) -o $@ -c $< -O3 $(CFLAGS)
@@ -106,9 +114,7 @@ $(BUILD_DEPS)/%.o: %.c $(HEADERS_DEPS)
 		-I$(shell echo $(JLL_HOME))/src/lib/include/\
 		-iquote $(addprefix -I, $(shell find src/ -type d ))\
 		$(addprefix -I, $(shell find $(SRC_DEPS)/ -type d)))
-	$(eval CFLAGS=\
-		$(CFLAGS_INCLUDES) -Wall -Werror)
-#	echo the in $(CFLAGS)
+	$(eval CFLAGS=$(CFLAGS_INCLUDES) -Wall)
 
 -debug: -init-vars
 #	$(eval GL_VERSION=-lGL) ## OpenGL
@@ -119,7 +125,7 @@ $(BUILD_DEPS)/%.o: %.c $(HEADERS_DEPS)
 -publish: -init-vars
 #	$(eval GL_VERSION=-lGL) ## OpenGL
 	$(eval GL_VERSION=-lGLESv2) ## OpenGL ES
-	$(eval JL_DEBUG=-O3)
+	$(eval JL_DEBUG=-O3 -Werror)
 	$(eval JL_OUT=build/bin/$(shell echo `sed -n '4p' data.txt`))
 	$(eval OBJS=$(OBJS_RLS))
 -build:

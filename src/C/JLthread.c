@@ -29,7 +29,7 @@ static void jl_thread_init_new(jl_t* jl, u8_t thread_id) {
  * @returns: The thread ID number.
 **/
 uint8_t jl_thread_new(jl_t *jl, str_t name, SDL_ThreadFunction fn) {
-	uint8_t i, rtn;
+	int8_t i, rtn = -1;
 
 	// Skip main thread ( i = 1 )
 	for(i = 1; i < 16; i++) {
@@ -46,11 +46,14 @@ uint8_t jl_thread_new(jl_t *jl, str_t name, SDL_ThreadFunction fn) {
 				jl_print(jl, "SDL_CreateThread failed: %s",
 					SDL_GetError());
 				exit(-1);
-			}else{
-				rtn = i;
-				break;
 			}
+			rtn = i;
+			break;
 		}
+	}
+	if(rtn == -1) {
+		jl_print(jl, "More than 16 threads!");
+		exit(-1);
 	}
 	JL_PRINT_DEBUG(jl, "Made thread #%d", rtn);
 	return rtn;
