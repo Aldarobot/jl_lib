@@ -16,7 +16,7 @@
 //Update Memory To Size "kb" kilobytes
 static inline void _jlvm_jl_mem_resz(jvct_t* _jl, uint32_t kb) {
 	printf("[jl_me] updating memory size....\n");
-	printf("[jl_me] total size = %ld\n", jl_mem_tbiu());
+	printf("[jl_me] total size = %ld\n", (long int) jl_mem_tbiu());
 	printf("[jl_me] update to =  %d\n", kb);
 	printf("[jl_me] SDL Size =   %d\n", 0);
 	printf("[jl_me] JLVM Size =  %d\n", 0);

@@ -123,14 +123,19 @@ int jlgr_thread_draw(void* data) {
 	jl_thread_mutex_use(jl, jlgr->mutex, jlgr_thread_draw_init__);
 	// Redraw loop
 	while(1) {
+		JL_PRINT_DEBUG(jl, "EVENT");
 		// Check for events.
 		if(jlgr_thread_draw_event__(jl)) break;
 		// Deselect any pre-renderer.
+		JL_PRINT_DEBUG(jl, "Deselect");
 		jlgr->gl.cp = NULL;
 		//Redraw screen.
+		JL_PRINT_DEBUG(jl, "Loop");
 		_jl_sg_loop(jlgr);
 		//Update Screen.
+		JL_PRINT_DEBUG(jl, "Redraw");
 		jl_dl_loop__(jlgr);
+		JL_PRINT_DEBUG(jl, "Complete");
 	}
 	jl_dl_kill__(jlgr); // Kill window
 	jlgr_pr_old(jlgr, jlgr->sg.bg.up);

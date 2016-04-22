@@ -346,7 +346,7 @@ typedef struct{
 	 */
 	void jlgr_draw_int(jlgr_t* jlgr, i64_t num, jl_vec3_t loc, jl_font_t f) {
 		char display[10];
-		sprintf(display, "%ld", num);
+		sprintf(display, "%ld", (long int) num);
 		jlgr_draw_text(jlgr, display, loc, f);
 	}
 

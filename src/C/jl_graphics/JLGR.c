@@ -18,7 +18,6 @@ static void jlgr_init_event(jl_t* jl, void* data) {
 			jlgr->main.rtn = 1;
 			break;
 		default:
-			SDL_Delay(1);
 			break;
 	}
 }
