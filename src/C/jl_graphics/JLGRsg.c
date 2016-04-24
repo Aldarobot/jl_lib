@@ -215,7 +215,7 @@ void jl_sg_add_image(jl_t* jl, str_t pzipfile, u16_t pigid) {
 
 static void _jl_sg_screen_draw(jl_t* jl, f32_t ytrans, jl_vo_t* bg, jl_fnct f){
 	jlgr_t* jlgr = jl->jlgr;
-	jl_vec3_t translate = { jlgr->sg.offsx, jlgr->sg.offsy + ytrans, 0. };
+	jl_vec3_t translate = { 0., ytrans, 0. };
 	jl_vec3_t transform = { 1., -1., 1. };
 
 	// Turn off all pre-renderers.
@@ -240,11 +240,11 @@ static void _jl_sg_screen_draw(jl_t* jl, f32_t ytrans, jl_vo_t* bg, jl_fnct f){
 static void _jl_sg_loop_ds(jlgr_t* jlgr) {
 	// Draw upper screen - alternate screen
 	_jl_sg_screen_draw(jlgr->jl, 0.f, jlgr->sg.bg.up,
-		(jlgr->sg.cscreen == JL_SCR_UP) ? jlgr->draw.redraw.lower :
+		(jlgr->sg.cs == JL_SCR_UP) ? jlgr->draw.redraw.lower :
 			 jlgr->draw.redraw.upper);
 	// Draw lower screen - default screen
 	_jl_sg_screen_draw(jlgr->jl, jlgr->sg.screen_height, jlgr->sg.bg.dn,
-		(jlgr->sg.cscreen == JL_SCR_UP) ? jlgr->draw.redraw.upper :
+		(jlgr->sg.cs == JL_SCR_UP) ? jlgr->draw.redraw.upper :
 			 jlgr->draw.redraw.lower);
 }
 
@@ -265,9 +265,8 @@ void _jl_sg_loop(jlgr_t* jlgr) {
 
 static void jl_sg_init_ds_(jl_t* jl) {
 	jlgr_t* jlgr = jl->jlgr;
-	const float shifty = jlgr->dl.shifty / 2.;
-	const float rcrdw = 1. - jlgr->dl.shiftx;
-	const float rcrdh = .5 - shifty;
+	const float rcrdw = 1.;
+	const float rcrdh = .5;
 	jl_rect_t rcrd = {
 		0.f, 0.f,
 		rcrdw, rcrdh * jl_gl_ar(jlgr)
@@ -282,52 +281,46 @@ static void jl_sg_init_ds_(jl_t* jl) {
 	jlgr_pr_new(jlgr, jlgr->sg.bg.dn, jlgr_wm_getw(jlgr));
 	// Set double screen loop.
 	jlgr->sg.loop = _jl_sg_loop_ds;
-	if(jlgr->sg.cscreen == JL_SCR_SS) jlgr->sg.cscreen = JL_SCR_DN;
+	if(jlgr->sg.cs == JL_SCR_SS) jlgr->sg.cs = JL_SCR_DN;
 	//
-	jlgr->sg.bg.up->pr->ar = jlgr->dl.aspect / 2.;
-	jlgr->sg.bg.dn->pr->ar = jlgr->dl.aspect / 2.;
+	jlgr->sg.bg.up->pr->ar = jlgr->wm.ar / 2.;
+	jlgr->sg.bg.dn->pr->ar = jlgr->wm.ar / 2.;
 	
 	jlgr->sg.screen_height = rcrd.h;
 }
 
 static void jl_sg_init_ss_(jl_t* jl) {
 	jlgr_t* jlgr = jl->jlgr;
-	const float shifty = jlgr->dl.shifty;
-	const float rcrdw = 1. - jlgr->dl.shiftx;
-	const float rcrdh = 1. - shifty;
+	const float rcrdw = 1.;
+	const float rcrdh = 1.;
 	jl_rect_t rcrd = {
 		0.f, 0.f,
 		rcrdw, rcrdh * jl_gl_ar(jlgr)
 	};
-	uint8_t rclr_bg[4] = { 0,	255,	0,	255 };
+	uint8_t rclr_bg[4] = { 0, 255, 0, 255 };
 	
 	// Update the rectangle backgrounds.
 	jlgr_vos_rec(jlgr, jlgr->sg.bg.dn, rcrd, rclr_bg, 0);
 	jlgr_pr_new(jlgr, jlgr->sg.bg.dn, jlgr_wm_getw(jlgr));
 	// Set single screen loop.
 	jlgr->sg.loop = _jl_sg_loop_ss;
-	jlgr->sg.cscreen = JL_SCR_SS;
+	jlgr->sg.cs = JL_SCR_SS;
 	//
-	jlgr->sg.bg.dn->pr->ar = jlgr->dl.aspect;
+	jlgr->sg.bg.dn->pr->ar = jlgr->wm.ar;
 	
 	jlgr->sg.screen_height = rcrd.h;
 }
 
 void jl_sg_resz__(jl_t* jl) {
 	jlgr_t* jlgr = jl->jlgr;
-	const float isDoubleScreen = (double)(jl->smde);
 
 	// Turn Off Pre-renderer.
 	jl_gl_pr_off(jlgr);
 	// Check screen count.
-	if(jl->smde)
-		jl_sg_init_ds_(jl);
-	else
+	if(jlgr->sg.cs == JL_SCR_SS)
 		jl_sg_init_ss_(jl);
-	// Set screen buffer space
-	jlgr->sg.offsx = jlgr->dl.shiftx/2.;
-	jlgr->sg.offsy = (((jlgr->dl.shifty / (1. + isDoubleScreen)) *
-		(1. + isDoubleScreen))/2.) * jl_gl_ar(jlgr);
+	else
+		jl_sg_init_ds_(jl);
 	// Use the screen's pre-renderer
 	jl_gl_pr_scr_set(jlgr, jlgr->sg.bg.dn);
 	jl_gl_pr_scr(jlgr);
@@ -357,6 +350,6 @@ void jl_sg_inita__(jlgr_t* jlgr) {
 	jl_gl_pr_scr_set(jlgr, jlgr->sg.bg.dn);
 	jl_gl_pr_scr(jlgr);
 	// Resize for 2 screen Default - so they initialize.
-	jlgr->jl->smde = 1;
+	jlgr->sg.cs = JL_SCR_DN;
 	jl_sg_init_ds_(jlgr->jl);
 }

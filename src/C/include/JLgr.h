@@ -195,9 +195,6 @@ typedef struct{
 		uint16_t igid;
 		data_t* image_data;
 		
-		// Offset x and y
-		float offsx, offsy;
-		
 		// 1 Background for each screen
 		struct {
 			jl_vo_t* up;
@@ -207,7 +204,7 @@ typedef struct{
 		float screen_height;
 
 		void* loop; // ( jlgr_fnct ) For upper or lower screen.
-		m_u8_t cscreen; // The current screen "jlgr_which_screen_t"
+		m_u8_t cs; // The current screen "jlgr_which_screen_t"
 	}sg;
 	
 	//Opengl Data
@@ -302,26 +299,17 @@ typedef struct{
 		data_t* textbox_string;
 	}gr;
 
-	// SDL
+	// Window Management
 	struct {
 		uint8_t fullscreen;
 
 		char windowTitle[2][16];
 		jl_window_t* displayWindow;
-	#if JL_GLRTEX == JL_GLRTEX_SDL
-		jl_window_t* whichwindow;
-	#endif
-
-		float shifty;
-		float shiftx;
-		
-		jl_rect_t window;
-		
-		// The complete width and height of the window.
-		int32_t full_w, full_h;
-		double aspect;
-		uint16_t inner_y;
-	}dl;
+		// The full width and height of the window.
+		int32_t w, h;
+		// Aspect Ratio of the window
+		double ar;
+	}wm;
 
 	double psec;
 

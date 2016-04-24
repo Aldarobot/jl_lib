@@ -355,7 +355,7 @@ static void jl_ct_handle_resize__(jlgr_t* jlgr) {
 				SDL_WINDOWEVENT_RESIZED) &&
 			(SDL_GetWindowFromID(
 				jlgr->main.ct.event.window.windowID) ==
-					jlgr->dl.displayWindow->w))
+					jlgr->wm.displayWindow->w))
 		{
 			jlgr_resz(jlgr,
 				jlgr->main.ct.event.window.data1,
@@ -427,7 +427,7 @@ void jl_ct_quickloop_(jlgr_t* jlgr) {
 	_jl->has.quickloop = 1;
 	if(_jl->has.input) {
 		jl_ct_getevents_(jlgr);
-		if(jlgr->main.ct.back == 1) jl_mode_exit(jlgr->jl);
+		jl_ct_testquit__(jlgr);
 	}else{
 		while(SDL_PollEvent(&jlgr->main.ct.event))
 			jl_ct_handle_resize__(jlgr);
@@ -446,34 +446,33 @@ void jl_ct_loop__(jlgr_t* jlgr) {
 	#if JL_PLAT == JL_PLAT_COMPUTER
 		//Get Whether mouse is down or not and xy coordinates
 		SDL_GetMouseState(&jlgr->main.ct.msxi,&jlgr->main.ct.msyi);
-		if(jlgr->main.ct.msxi < jlgr->dl.window.x ||
-			jlgr->main.ct.msxi > jlgr->dl.window.x + jlgr->dl.window.w ||
-			jlgr->main.ct.msyi < jlgr->dl.window.y ||
-			jlgr->main.ct.msyi > jlgr->dl.window.y + jlgr->dl.window.h)
-		{
+
+		int32_t mousex = jlgr->main.ct.msxi;
+		int32_t mousey = jlgr->main.ct.msyi;
+		//translate integer into float by clipping [0-1]
+		jlgr->main.ct.msx = ((float)mousex) / jlgr_wm_getw(jlgr);
+		jlgr->main.ct.msy = ((float)mousey) / jlgr_wm_geth(jlgr);
+		if(jlgr->sg.cs != JL_SCR_SS) jlgr->main.ct.msy -= .5;
+		jlgr->main.ct.msy *= jlgr->wm.ar;
+		
+		jl_print(jlgr->jl, "%f %f",jlgr->main.ct.msx,jlgr->main.ct.msy);
+		// Ignore mouse input on upper screen.
+		if(jlgr->sg.cs != JL_SCR_SS && jlgr->main.ct.msy < 0.) {
+			jlgr->main.ct.msy = 0.;
+			jlgr->main.ct.heldDown = 0;
+			// Show native cursor.
 			if(!jlgr->main.ct.sc) {
 				SDL_ShowCursor(SDL_ENABLE);
 				jlgr->main.ct.sc = 1;
 			}
 		}else{
+			// Show JL_Lib cursor
 			if(jlgr->main.ct.sc) {
 				SDL_ShowCursor(SDL_DISABLE);
 				jlgr->main.ct.sc = 0;
 			}
 		}
-		int32_t mousex = jlgr->main.ct.msxi - jlgr->dl.window.x;
-		int32_t mousey = (jlgr->main.ct.msyi - jlgr->dl.window.y) *
-			(1 + jlgr->jl->smde);
-		//translate integer into float by clipping [0-1]
-		jlgr->main.ct.msx =
-			((float)(mousex-2)) / jlgr_wm_getw(jlgr);
-		jlgr->main.ct.msy =
-			((float)mousey) /
-			(jlgr_wm_geth(jlgr) * (1 + jlgr->jl->smde));
-		if(jlgr->jl->smde && jlgr->main.ct.msy < 0.) {
-			jlgr->main.ct.msy = 0.;
-			jlgr->main.ct.heldDown = 0;
-		}
+		// F11 toggle fullscreen.
 		if(jl_ct_key_pressed(jlgr, SDL_SCANCODE_F11) == 1)
 			jlgr_wm_togglefullscreen(jlgr);
 	#endif

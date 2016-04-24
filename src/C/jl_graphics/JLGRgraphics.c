@@ -777,8 +777,6 @@ void _jlgr_loopa(jlgr_t* jlgr) {
 	jl_print_function(jlgr->jl, "GR_LP");
 	// Draw the pre-rendered Menubar.
 	if(!_jl->fl.inloop) jlgr_sprite_draw(jlgr, jlgr->menubar.menubar);
-	// Update mouse
-	if(jlgr->mouse) jlgr_sprite_loop(jlgr, jlgr->mouse);
 	// Update messages.
 	_jlgr_loopb(jlgr);
 	jl_print_return(jlgr->jl, "GR_LP");
@@ -824,7 +822,7 @@ void jlgr_init__(jlgr_t* jlgr) {
 	// Draw message on the screen
 	jlgr_draw_msge(jlgr, 0, 0, 0, "LOADING JLLIB....");
 	JL_PRINT_DEBUG(jlgr->jl, "started up display %dx%d",
-		jlgr->dl.full_w, jlgr->dl.full_h);
+		jlgr->wm.w, jlgr->wm.h);
 	// Set other variables
 	jlgr->gr.notification.timeTilVanish = 0.f;
 }

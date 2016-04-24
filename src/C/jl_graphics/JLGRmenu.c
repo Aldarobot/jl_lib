@@ -9,9 +9,9 @@
 #include "JLGRinternal.h"
 
 char *GMessage[3] = {
-	"SWITCHED SCREEN: UPPER",
-	"SWITCHED SCREEN: LOWER",
-	"SINGLE SCREEN MODE"
+	"SCREEN: UPPER",
+	"SCREEN: LOWER",
+	"SCREEN: SINGLE"
 };
 
 static u8_t jlgr_menubar_idle__(jlgr_t* jlgr, jl_menubar_t *ctx) {
@@ -158,13 +158,15 @@ static void jlgr_menu_flip_press__(jlgr_t* jlgr) {
 	jl_print(jlgr->jl, "FLIPYYYYYYY %d", jlgr->jl->ctrl.h);
 	if(jlgr->jl->ctrl.h != 1) return;
 	// Actually Flip the screen.
-
-	if(jlgr->sg.cscreen == JL_SCR_UP) {
-		jlgr->sg.cscreen = JL_SCR_DN;
-	}else if(jlgr->sg.cscreen == JL_SCR_DN) {
-		jlgr->sg.cscreen = JL_SCR_UP;
+	if(jlgr->sg.cs == JL_SCR_UP) {
+		jlgr->sg.cs = JL_SCR_SS;
+	}else if(jlgr->sg.cs == JL_SCR_DN) {
+		jlgr->sg.cs = JL_SCR_UP;
+	}else{
+		jlgr->sg.cs = JL_SCR_DN;
 	}
-	jlgr_notify(jlgr, GMessage[jlgr->sg.cscreen]);
+	jlgr_notify(jlgr, GMessage[jlgr->sg.cs]);
+	jlgr_resz(jlgr, 0, 0);
 }
 
 static void jlgr_menu_name_draw2__(jlgr_t* jlgr) {
@@ -176,12 +178,12 @@ static void jlgr_menu_name_draw__(jlgr_t* jlgr) {
 	f32_t text_size = jl_gl_ar(jlgr) * .5;
 
 	jlgr_menu_name_draw2__(jlgr);
-	jlgr_draw_text(jlgr, jlgr->dl.windowTitle[0],
+	jlgr_draw_text(jlgr, jlgr->wm.windowTitle[0],
 		(jl_vec3_t) { 1. - (jl_gl_ar(jlgr) * (ctx->draw_cursor+1.)),
 			0., 0. },
 		(jl_font_t) { 0, JL_IMGI_ICON, 0, jlgr->fontcolor, 
 			text_size});
-	jlgr_draw_text(jlgr, jlgr->dl.windowTitle[1],
+	jlgr_draw_text(jlgr, jlgr->wm.windowTitle[1],
 		(jl_vec3_t) { 1. - (jl_gl_ar(jlgr) * (ctx->draw_cursor+1.)),
 			text_size, 0. },
 		(jl_font_t) { 0, JL_IMGI_ICON, 0, jlgr->fontcolor, 

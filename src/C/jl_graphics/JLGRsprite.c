@@ -86,7 +86,7 @@ void jlgr_sprite_draw(jlgr_t* jlgr, jl_sprite_t *spr) {
  * @param spr: The sprite to use.
 **/
 void jlgr_sprite_resize(jlgr_t* jlgr, jl_sprite_t *spr, jl_rect_t* rc) {
-	u16_t res = (jlgr->gl.cp ? jlgr->gl.cp->w : jlgr->dl.full_w)
+	u16_t res = (jlgr->gl.cp ? jlgr->gl.cp->w : jlgr->wm.w)
 		* spr->rw;
 
 	jl_thread_mutex_lock(jlgr->jl, spr->mutex);

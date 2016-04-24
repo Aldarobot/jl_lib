@@ -3,9 +3,6 @@
  * 	Variable Types.
 **/
 
-#if JL_GLRTEX == JL_GLRTEX_EGL
-	#include <EGL/egl.h>
-#endif
 #include "jl_sdl.h"
 
 typedef float jl_ccolor_t;
@@ -84,10 +81,10 @@ typedef struct{
 		SDL_mutex* mutex; // Mutex for printing to terminal
 	}print;
 	struct{
-		float psec; // Secomms since last frame.
-		uint32_t prev_tick; // Time 1 frame ago started
-		uint32_t this_tick; // Time this frame started
-		uint16_t fps; // Frames per secomm.
+		m_f64_t psec; // Seconds since last frame.
+		m_u32_t prev_tick; // Time 1 frame ago started
+		m_u32_t this_tick; // Time this frame started
+		m_u16_t fps; // Frames per second.
 	}time;
 	struct{
 		float x; //X position 0-1
@@ -103,7 +100,6 @@ typedef struct{
 		uint16_t which;
 		uint16_t count;
 	}mode;
-	uint8_t smde; //Whether 2 or 1 Screens are showing.
 	uint32_t info; //@startup:# images loaded from media.zip.Set by others.
 	jl_err_t errf; //Set if error
 	void* _jl; //The library's context

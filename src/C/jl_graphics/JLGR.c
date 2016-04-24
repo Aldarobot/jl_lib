@@ -40,9 +40,7 @@ jlgr_t* jlgr_init(jl_t* jl, str_t window_name, u8_t fullscreen, jl_fnct fn_) {
 
 	jl_print_function(jl, "JL/GR/INIT");
 	jl->jlgr = jlgr;
-	jlgr->dl.fullscreen = fullscreen;
-	jlgr->menubar.menubar = NULL;
-	jlgr->mouse = NULL;
+	jlgr->wm.fullscreen = fullscreen;
 	jlgr->jl = jl;
 	// Initialize Subsystem
 	JL_PRINT_DEBUG(jl, "Initializing Input....");
@@ -104,6 +102,8 @@ void jlgr_loop(jlgr_t* jlgr) {
 	jl_ct_loop__(jlgr);
 	// Run any selected menubar items.
 	jlgr_sprite_loop(jlgr, jlgr->menubar.menubar);
+	// Update mouse
+	if(jlgr->mouse) jlgr_sprite_loop(jlgr, jlgr->mouse);
 }
 
 /**
