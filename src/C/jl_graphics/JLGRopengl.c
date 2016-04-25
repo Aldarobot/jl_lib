@@ -537,22 +537,17 @@ static void _jl_gl_col_begin(jlgr_t* jlgr, jl_vo_t* pv) {
 void jl_gl_pbo_new(jlgr_t* jlgr, jl_tex_t* texture, u8_t* pixels,
 	u16_t w, u16_t h, u8_t bpp)
 {
-	printf("Making pbo\n");
 	jl_print_function(jlgr->jl, "GL_PBO_NEW");
 	jl_gl_buffer_new__(jlgr, &(texture->gl_buffer));
 	jl_gl_texture_make__(jlgr, &(texture->gl_texture));
 	jl_gl_texture__bind__(jlgr, texture->gl_texture);
 	jl_gl_texpar_set__(jlgr);
 	jl_gl_texture_set__(jlgr, pixels, w, h, bpp);
-	printf("Buff'eer\n");
 //	jl_gl_buffer_set__(jlgr,texture->gl_buffer, pixels, w * h * bpp);
 	jl_gl_buffer_use__(jlgr, texture->gl_buffer);
-	printf("Buff'ee 2r %d %d %p\n", w, h, pixels);
 	glBufferData(GL_ARRAY_BUFFER, w * h * bpp, pixels, GL_DYNAMIC_DRAW);
-	printf("Buff'eer 3\n");
 	JL_GL_ERROR(jlgr, 0, "jl_gl_pbo_set__: glBufferData");
 	jl_print_return(jlgr->jl, "GL_PBO_NEW");
-	printf("Made pbo\n");
 }
 // TODO: MOVE
 void jl_gl_pbo_set(jlgr_t* jlgr, jl_tex_t* texture, u8_t* pixels,

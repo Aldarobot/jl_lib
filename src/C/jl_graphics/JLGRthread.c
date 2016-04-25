@@ -46,17 +46,12 @@ static void jlgr_thread_event(jl_t* jl, void* data) {
 			jl_print(jl, "Thread exiting....");
 			jlgr->draw.rtn = 1;
 			break;
-		} case JLGR_COMM_INIT: {
-			JL_PRINT_DEBUG(jl,"Running prg's graphical init func....");
-			packet->fn(jl);
-			jlgr->draw.rtn = 2;
-			break;
 		} case JLGR_COMM_SEND: {
 			if(packet->x==0) jlgr->draw.redraw.single = packet->fn;
 			if(packet->x==1) jlgr->draw.redraw.upper = packet->fn;
 			if(packet->x==2) jlgr->draw.redraw.lower = packet->fn;
 			if(packet->x==3) {
-				jlgr->draw.redraw.resize = packet->fn;
+				jlgr->draw.fn = packet->fn;
 				packet->fn(jl);
 			}
 			break;
@@ -65,6 +60,31 @@ static void jlgr_thread_event(jl_t* jl, void* data) {
 			jl_mem_copyto(packeta->string,
 				jlgr->gr.notification.message, 255);
 			jlgr->gr.notification.timeTilVanish = 8.5;
+			break;
+		} default: {
+			break;
+		}
+	}
+}
+
+static void jlgr_thread_resize_event(jl_t* jl, void* data) {
+	jlgr_t* jlgr = jl->jlgr;
+	jlgr_thread_packet_t* packet = data;
+
+	switch(packet->id) {
+		case JLGR_COMM_RESIZE: {
+			uint16_t w = packet->x;
+			uint16_t h = packet->y;
+			jl_print(jlgr->jl, "Resizing to %dx%d....", w, h);
+			// Reset aspect ratio stuff.
+			jl_dl_resz__(jlgr, w, h);
+			// Update the actual window.
+			jl_gl_resz__(jlgr);
+			jlgr->draw.rtn++;
+			break;
+		} case JLGR_COMM_INIT: {
+			jlgr->draw.fn = packet->fn;
+			jlgr->draw.rtn++;
 			break;
 		} default: {
 			break;
@@ -87,6 +107,12 @@ static void jlgr_thread_draw_init__(jl_t* jl) {
 	// Initialize subsystems
 	JL_PRINT_DEBUG(jl, "Creating the window....");
 	jl_dl_init__(jlgr);
+	JL_PRINT_DEBUG(jl, "Resize Adjust");
+	jlgr->draw.rtn = 0;
+	while(jlgr->draw.rtn != 2) {
+		jl_thread_comm_recv(jl, jlgr->comm2draw,
+			jlgr_thread_resize_event);
+	}
 	JL_PRINT_DEBUG(jl, "Loading default graphics from package....");
 	jl_sg_inita__(jlgr);
 	JL_PRINT_DEBUG(jl, "Setting up OpenGL....");
@@ -97,12 +123,9 @@ static void jlgr_thread_draw_init__(jl_t* jl) {
 	jlgr_menubar_init__(jlgr);
 	JL_PRINT_DEBUG(jl, "Creating Mouse sprite....");
 	jlgr_mouse_init__(jlgr);
-	JL_PRINT_DEBUG(jl, "Resize Adjust");
-	jl_wm_updatewh_(jlgr);
+	JL_PRINT_DEBUG(jl, "User's Init....");
+	jlgr->draw.fn(jl);
 	jlgr_thread_resize(jlgr, jlgr_wm_getw(jlgr), jlgr_wm_geth(jlgr));
-	JL_PRINT_DEBUG(jl, "Looking for init packet....");
-	// Wait until recieve init packet....
-	while(jlgr_thread_draw_event__(jl) != 2);
 	JL_PRINT_DEBUG(jl, "Sending finish packet....");
 	// Tell main thread to stop waiting.
 	jl_thread_comm_send(jl, jlgr->comm2main, &packet);
@@ -123,19 +146,14 @@ int jlgr_thread_draw(void* data) {
 	jl_thread_mutex_use(jl, jlgr->mutex, jlgr_thread_draw_init__);
 	// Redraw loop
 	while(1) {
-		JL_PRINT_DEBUG(jl, "EVENT");
 		// Check for events.
 		if(jlgr_thread_draw_event__(jl)) break;
 		// Deselect any pre-renderer.
-		JL_PRINT_DEBUG(jl, "Deselect");
 		jlgr->gl.cp = NULL;
 		//Redraw screen.
-		JL_PRINT_DEBUG(jl, "Loop");
 		_jl_sg_loop(jlgr);
 		//Update Screen.
-		JL_PRINT_DEBUG(jl, "Redraw");
 		jl_dl_loop__(jlgr);
-		JL_PRINT_DEBUG(jl, "Complete");
 	}
 	jl_dl_kill__(jlgr); // Kill window
 	jlgr_pr_old(jlgr, jlgr->sg.bg.up);

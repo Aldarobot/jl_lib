@@ -351,12 +351,12 @@ static inline void _jl_ct_handle_events_platform_dependant(jlgr_t* jlgr) {
 
 static void jl_ct_handle_resize__(jlgr_t* jlgr) {
 	if(jlgr->main.ct.event.type==SDL_WINDOWEVENT) { //Resize
-		if((jlgr->main.ct.event.window.event ==
-				SDL_WINDOWEVENT_RESIZED) &&
-			(SDL_GetWindowFromID(
+		if((jlgr->main.ct.event.window.event == SDL_WINDOWEVENT_RESIZED)
+			 && (SDL_GetWindowFromID(
 				jlgr->main.ct.event.window.windowID) ==
 					jlgr->wm.displayWindow->w))
 		{
+			JL_PRINT_DEBUG(jlgr->jl, "INPUT/RESIZE");
 			jlgr_resz(jlgr,
 				jlgr->main.ct.event.window.data1,
 				jlgr->main.ct.event.window.data2);
@@ -454,8 +454,7 @@ void jl_ct_loop__(jlgr_t* jlgr) {
 		jlgr->main.ct.msy = ((float)mousey) / jlgr_wm_geth(jlgr);
 		if(jlgr->sg.cs != JL_SCR_SS) jlgr->main.ct.msy -= .5;
 		jlgr->main.ct.msy *= jlgr->wm.ar;
-		
-		jl_print(jlgr->jl, "%f %f",jlgr->main.ct.msx,jlgr->main.ct.msy);
+
 		// Ignore mouse input on upper screen.
 		if(jlgr->sg.cs != JL_SCR_SS && jlgr->main.ct.msy < 0.) {
 			jlgr->main.ct.msy = 0.;

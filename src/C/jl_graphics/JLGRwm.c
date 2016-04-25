@@ -126,6 +126,7 @@ void jl_dl_resz__(jlgr_t* jlgr, uint16_t w, uint16_t h) {
 	jlgr->wm.h = h;
 	jlgr->wm.ar = ((double)h) / ((double)w);
 	jl_gl_viewport_screen(jlgr);
+	JL_PRINT_DEBUG(jlgr->jl, "Resized");
 }
 
 // TODO: Make not exported, but called in jlgr_init()
@@ -162,10 +163,11 @@ void jl_dl_init__(jlgr_t* jlgr) {
 	JL_PRINT_DEBUG(jlgr->jl, "Got wh: %d,%d", current.w, current.h);
 	// Create Window
 	jlgr_wm_create__(jlgr, current.w, current.h);
+	// Maximize if not in fullscreen mode.
+	jl_ct_quickloop_(jlgr);
 	// Get Window Size
 	jl_wm_updatewh_(jlgr);
-	JL_PRINT_DEBUG(jlgr->jl, "size = %dx%d\n", jlgr->wm.w,
-		jlgr->wm.h);
+	JL_PRINT_DEBUG(jlgr->jl, "size = %dx%d", jlgr->wm.w, jlgr->wm.h);
 	//Update screensize to fix any rendering glitches
 	jl_dl_resz__(jlgr, jlgr->wm.w, jlgr->wm.h);
 	// Update The Screen

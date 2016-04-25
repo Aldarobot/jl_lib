@@ -178,6 +178,7 @@ typedef struct{
 
 	struct {
 		m_u8_t rtn;
+		jl_fnct fn;
 		jlgr_redraw_t redraw;
 	} draw;
 

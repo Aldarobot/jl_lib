@@ -821,8 +821,6 @@ void jlgr_init__(jlgr_t* jlgr) {
 	jlgr_draw_msge(jlgr, 0, 0, 0, "LOADED JL_LIB GRAPHICS!");
 	// Draw message on the screen
 	jlgr_draw_msge(jlgr, 0, 0, 0, "LOADING JLLIB....");
-	JL_PRINT_DEBUG(jlgr->jl, "started up display %dx%d",
-		jlgr->wm.w, jlgr->wm.h);
 	// Set other variables
 	jlgr->gr.notification.timeTilVanish = 0.f;
 }
